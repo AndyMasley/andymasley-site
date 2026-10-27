@@ -1,7 +1,7 @@
 {
   "name": "Second Summer",
   "short_name": "Second Summer",
-  "description": "A gentle city-builder in a valley in the pines.",
+  "description": "A town-building game in a valley in the pines.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

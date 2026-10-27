@@ -10,10 +10,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Second Summer">
 <meta name="format-detection" content="telephone=no">
-<meta name="description" content="A gentle city-builder in a valley in the pines, where goods float down water channels and the town grows over seven chapters.">
+<meta name="description" content="A town-building game in a valley in the pines, where goods float along channels of water.">
 <link rel="canonical" href="https://andymasley.com/games/second-summer/">
 <meta property="og:title" content="Second Summer">
-<meta property="og:description" content="A gentle city-builder in a valley in the pines, where goods float down water channels and the town grows over seven chapters.">
+<meta property="og:description" content="A town-building game in a valley in the pines, where goods float along channels of water.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://andymasley.com/games/second-summer/">
 <meta property="og:image" content="https://andymasley.com/games/second-summer/og.jpg">
@@ -84,7 +84,6 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .crest .mark { width: 32px; height: 32px; flex: none; }
 .crest .ct { display: flex; flex-direction: column; min-width: 0; }
 .townname { font-weight: 600; font-size: 16.5px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chapterline { font-size: 12.5px; color: var(--band-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .crestdate { display: none; }
 .crest:hover .townname { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .when { display: flex; align-items: center; gap: 10px; flex: none; }
@@ -182,6 +181,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 #hud > .tourpin { position: absolute; left: 0; top: 0; pointer-events: none; background: var(--band); color: var(--band-ink); font-size: 12.5px; font-weight: 500; line-height: 1; padding: 5px 9px 6px; border-radius: 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(16, 24, 20, 0.28); will-change: transform; }
 #hud > .tourpin::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: none; border-top-color: var(--band); }
 .study { cursor: pointer; }
+/* with no school yet, or nothing left to learn, the study steps aside */
+.plan > .study.quiet { display: none; }
 .study:hover { background: var(--card-2); }
 .study .r1 { display: flex; align-items: center; gap: 9px; }
 .study .r1 img { width: 30px; height: 30px; flex: none; }
@@ -345,7 +346,6 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .jd:hover { background: var(--card-2); }
 .jd.on { background: var(--jc); border-color: var(--ink); color: var(--ink); }
 .jd[disabled] { opacity: 0.4; cursor: default; background: var(--card-2); }
-.jnote { font-size: 12.5px !important; margin-top: 4px !important; }
 .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .btn { border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13.5px; font-weight: 500; }
 .btn:hover { background: var(--card-2); }
@@ -563,7 +563,6 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
 
 /* ---------- small screens ---------- */
 @media (max-width: 1100px) {
-  .chapterline { display: none; }
   .crest { max-width: 170px; }
   .datelabel { min-width: 0; }
   .when canvas { display: none; }
@@ -612,8 +611,6 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
   .study .packs:not(:has(.miss)) { display: none; }
   .study .unl { margin-top: 4px; }
   .study .unl img { width: 20px; height: 20px; }
-  /* with no school yet the goals already say to build one */
-  .plan > .study.quiet { display: none; }
   .goals header { margin-bottom: 4px; }
   .goals h2 { font-size: 14.5px; }
   .goal .gt { font-size: 13px; }
@@ -677,7 +674,7 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
 /* a phone turned on its side, or any short window: one low band, a slim drawer, and the valley between them */
 @media (max-height: 520px) and (min-width: 561px) {
   .band { min-height: 0; gap: 10px; flex-wrap: nowrap; padding-top: calc(4px + env(safe-area-inset-top, 0px)); padding-bottom: 4px; }
-  .band .sep, .chapterline, .when canvas { display: none; }
+  .band .sep, .when canvas { display: none; }
   .crest { max-width: 150px; gap: 7px; }
   .crest .mark { width: 24px; height: 24px; }
   .townname { font-size: 14.5px; }
@@ -750,7 +747,7 @@ button, .tab, .tool, .chip, a { -webkit-tap-highlight-color: transparent; }
     <header class="band" id="band">
       <button class="crest" id="crest" title="Read the chronicle (J)">
         <canvas class="mark" id="crestMark" width="64" height="64"></canvas>
-        <span class="ct"><span class="townname" id="townName">Fernmere</span><span class="chapterline" id="chapterLine">Chapter one</span><span class="crestdate" id="crestDate"></span></span>
+        <span class="ct"><span class="townname" id="townName">Fernmere</span><span class="crestdate" id="crestDate"></span></span>
       </button>
       <span class="sep"></span>
       <div class="when">
@@ -803,7 +800,7 @@ button, .tab, .tool, .chip, a { -webkit-tap-highlight-color: transparent; }
     <div class="titleblock">
       <canvas class="titlemark" id="titleMark" width="148" height="148"></canvas>
       <h1>Second Summer</h1>
-      <p class="lede">Build a gentle city in a valley in the pines. Mark land and let the homes grow, float goods along channels of water to the works that need them, and study your way from cabins to glass domes and stepped garden houses, through four seasons a year.</p>
+      <p class="lede">Build a town in a valley in the pines, and float its goods along channels of water.</p>
       <label class="namefield"><span>Name your settlement</span><input id="townInput" maxlength="24" autocomplete="off" spellcheck="false"></label>
       <div class="titlebtns" id="titleBtns">
         <button class="bigbtn" id="bContinue" hidden>Continue</button>
@@ -813,7 +810,7 @@ button, .tab, .tool, .chip, a { -webkit-tap-highlight-color: transparent; }
       <p class="titlenote" id="titleNote" hidden></p>
       <p class="titletip" id="titleTip" hidden></p>
       <div class="confirmline" id="confirmNew" hidden><span>Start over? Your saved settlement will be replaced.</span><button class="btn primary" id="bConfirmNew">Start over</button><button class="btn" id="bCancelNew">Keep it</button></div>
-      <div class="titlefoot">Sound on, if you can. Drag to look around, scroll to zoom.</div>
+      <div class="titlefoot">Sound on, if you can.</div>
     </div>
   </div>
 
@@ -6118,7 +6115,7 @@ function loadVoyage(e, item) {
 }
 function sailVoyage(e) {
   const v = e.voy; v.st = 'away'; v.t = VOYAGE_TIME; v.left = S.time;
-  toast(`The Sky Ship has sailed for ${VOYAGES[v.place].place}. It will be home in about ${Math.round(VOYAGE_TIME / 60)} minutes.`, 'good');
+  toast(`The Sky Ship has sailed for ${VOYAGES[v.place].place}.`, 'good');
   EV.emit('voyage', e, 'sail');
 }
 function voyageOffer() {
@@ -6156,10 +6153,10 @@ function onNewDay() {
   hzNewDay(was);
   if (S.season !== was) {
     EV.emit('season', S.season);
-    if (S.season === 2 && !S.second) toast('Autumn. Winter is a day away; put by grain, and charcoal or timber for the stoves.', 'warn');
+    if (S.season === 2 && !S.second) toast('Autumn. Winter is a day away.', 'warn');
     if (S.season === 3) { if (!S.second) firstEvent('firstWinter'); for (const e of S.ents.values()) if (BUILD[e.type] && BUILD[e.type].extract) e.count = extractCount(e); }
     if (S.season === 0 && S.day > 1) firstEvent('firstSpring');
-    if (S.season === 0) { S.flags.fairBasket = fairBasket(); if (fairsOpen()) toast('Spring. The midsummer fair is on the last evening of summer. See what its basket needs.', 'good'); }
+    if (S.season === 0) { S.flags.fairBasket = fairBasket(); if (fairsOpen()) toast('Spring. The midsummer fair is at the end of summer.', 'good'); }
   }
 }
 function seasonBlend() {
@@ -6342,18 +6339,18 @@ function computeAlerts() {
   hzAlerts(A);
   { const sh = skyship(); const v = sh && sh.voy; if (v && v.st === 'back') A.push({ k: 'voyage', item: String(sh.id), text: `The Sky Ship is home from ${VOYAGES[v.place].place}. Choose one thing to keep.`, icon: 'b_skyship' }); }
   let labs = 0; for (const e of S.ents.values()) if (BUILD[e.type] && BUILD[e.type].lab && !BUILD[e.type].great) labs++;
-  if (!S.research.cur && labs && Object.keys(TECHS).some((id) => techAvailable(id))) A.push({ k: 'research', text: 'Nothing is being studied. Choose research.', icon: 'slates' });
+  if (!S.research.cur && labs && Object.keys(TECHS).some((id) => techAvailable(id))) A.push({ k: 'research', text: 'Nothing being studied.', icon: 'slates' });
   else if (S.research.cur && !labs) A.push({ k: 'research', text: 'Build a Schoolhouse to study.', icon: 'b_school' });
   else if (S.research.cur && !S.research.active) { const t = TECHS[S.research.cur]; const miss = t.packs.find((p) => S.stores[p] < 1); if (miss) A.push({ k: 'pack', text: 'Research is waiting for ' + ITEMS[miss].name.toLowerCase() + '.', icon: miss, item: miss }); }
   for (let t = 5; t >= 1; t--) {
     if (S.eff[t] >= 0.999) continue;
     const far = [...S.ents.values()].filter((e) => e.handsWhy === 'far' && (BUILD[e.type].tier || 1) === t);
-    if (far.length) A.push({ k: 'far', item: String(far[0].id), tier: t, text: `${far.length} works ${far.length === 1 ? 'is' : 'are'} too far from ${t === 1 ? 'any homes with hands to spare' : `homes whose people could work ${far.length === 1 ? 'it' : 'them'}`}. People ${S.mods.commute ? 'ride' : 'walk'} up to ${commuteRadius()} hexes to work${S.techs.has('bikes') ? '' : ', further once they have Bicycles'}.`, icon: 'home' + t });
+    if (far.length) A.push({ k: 'far', item: String(far[0].id), tier: t, text: `${far.length} works ${far.length === 1 ? 'is' : 'are'} too far from ${HOMES[t].people} with hands to spare.`, icon: 'home' + t });
     else A.push({ k: 'hands', tier: t, text: `Short of ${HOMES[t].people} hands: ${Math.round(S.eff[t] * 100)}% at their works.`, icon: 'home' + t });
   }
   let jam = null, jams = 0; for (const e of S.ents.values()) if (e.jam) { jams++; if (!jam) jam = e; }
-  if (jam) A.push({ k: 'jam', item: String(jam.id), text: `${BUILD[jam.type].name} is jammed: ${ITEMS[jam.jam].name.toLowerCase()} ${ITEMS[jam.jam].plural ? 'are' : 'is'} blocking the channel that should bring ${ITEMS[jam.need].name.toLowerCase()}.${jams > 1 ? ` (${jams} works jammed)` : ''}`, icon: jam.jam });
-  if (S.power.use > 0 && S.power.sat < 0.999) A.push({ k: 'power', text: `Power is short: ${Math.round(S.power.sat * 100)}% to the works that need it.`, icon: 'b_turbine' });
+  if (jam) A.push({ k: 'jam', item: String(jam.id), text: `${jams > 1 ? `${jams} works are jammed` : `${BUILD[jam.type].name} is jammed`}.`, icon: jam.jam });
+  if (S.power.use > 0 && S.power.sat < 0.999) A.push({ k: 'power', text: `Power short, ${Math.round(S.power.sat * 100)}% supplied.`, icon: 'b_turbine' });
   const short = {}; let cold = 0, unserved = 0;
   for (const e of S.ents.values()) if (e.type === 'home' && e.built >= 1) {
     if (!e.served) unserved++;
@@ -6361,12 +6358,12 @@ function computeAlerts() {
     if (e.cold) cold++;
   }
   for (const k in short) A.push({ k: 'need', item: k, text: `${short[k]} home${short[k] > 1 ? 's are' : ' is'} short of ${ITEMS[k].name.toLowerCase()}.`, icon: k });
-  if (cold) A.push({ k: 'cold', text: `${cold} home${cold > 1 ? 's are' : ' is'} cold. Bring charcoal or timber to the stores.`, icon: 'charcoal' });
+  if (cold) A.push({ k: 'cold', text: `${cold} home${cold > 1 ? 's are' : ' is'} cold.`, icon: 'charcoal' });
   if (unserved) A.push({ k: 'reach', text: `${unserved} home${unserved > 1 ? 's are' : ' is'} outside the reach of a Commons.`, icon: 'b_commons' });
-  if (S.demand.why === 'land') A.push({ k: 'land', text: `${S.demand.want} newcomer${S.demand.want === 1 ? ' wants' : 's want'} to settle. Mark more land for homes (Z).`, icon: 'home1' });
-  else if (S.demand.why === 'materials') A.push({ k: 'build', text: 'Newcomers need 6 timber and 2 stone in store to build a cabin.', icon: 'timber' });
-  else if (S.demand.why === 'food') A.push({ k: 'food', text: 'Newcomers will not come while the stores have no water or grain.', icon: 'grain' });
-  else if (S.demand.why === 'short') A.push({ k: 'lean', text: `Newcomers are staying away while ${S.demand.short} homes go short of what they need.`, icon: 'home1' });
+  if (S.demand.why === 'land') A.push({ k: 'land', text: `${S.demand.want} want${S.demand.want === 1 ? 's' : ''} to move in. Mark land for homes (Z).`, icon: 'home1' });
+  else if (S.demand.why === 'materials') A.push({ k: 'build', text: 'A new cabin needs 6 timber and 2 stone.', icon: 'timber' });
+  else if (S.demand.why === 'food') A.push({ k: 'food', text: 'No one moves in without water and grain.', icon: 'grain' });
+  else if (S.demand.why === 'short') A.push({ k: 'lean', text: `No one moves in while ${S.demand.short} homes go short.`, icon: 'home1' });
   // what most often holds homes back from growing, with the one thing that would help
   const grow = {}; for (const e of S.ents.values()) if (e.type === 'home' && e.built >= 1 && e.blocker && /^(svc:|harmony|materials|comforts|tech)/.test(e.blocker) && !(e.blocker === 'tech' && S.chapter === 1)) (grow[e.blocker] = grow[e.blocker] || []).push(e);
   let gk = null, gn = 0; for (const k in grow) if (grow[k].length > gn) { gn = grow[k].length; gk = k; }
@@ -6386,10 +6383,10 @@ function computeAlerts() {
       if (e.type !== 'woodcutter' || e.status !== 'working') continue;
       const t0 = tileOf(e); if (lodges.some((l) => hexDist(l.q, l.r, t0.q, t0.r) <= 2)) continue;
       const src = adjTiles(tileOf(e), 'forest'); const left = src.reduce((a, t) => a + Math.max(0, t.amount), 0), max = src.reduce((a, t) => a + (t.maxAmount || FOREST_WOOD), 0);
-      if (max && left < max * 0.3) { A.push({ k: 'thin', item: String(e.id), text: S.techs.has('forestry') ? 'The woods by a Woodcutter are thinning. A Forester\'s Lodge nearby would keep them growing.' : 'The woods by a Woodcutter are thinning. Research Forestry to plant what you cut, or move it to fresh woods.', icon: 'b_woodcutter' }); break; }
+      if (max && left < max * 0.3) { A.push({ k: 'thin', item: String(e.id), text: 'The woods by a Woodcutter are thinning.', icon: 'b_woodcutter' }); break; }
     }
   }
-  if (S.overflowed) { A.push({ k: 'full', item: S.overflowed, text: `The stores are full of ${ITEMS[S.overflowed].name.toLowerCase()}; the extra is given away. Tell its works when to rest.`, icon: S.overflowed }); S.overflowed = null; }
+  if (S.overflowed) { A.push({ k: 'full', item: S.overflowed, text: `The stores are full of ${ITEMS[S.overflowed].name.toLowerCase()}.`, icon: S.overflowed }); S.overflowed = null; }
   S.alerts = A;
 }
 
@@ -7106,7 +7103,7 @@ function hzAlerts(A) {
     const watched = H.watch && H.blighted.filter((i) => H.watch[i]).length;
     A.push({ k: 'blight', item: String(t.i), text: `Blight in ${H.blighted.length} field${H.blighted.length > 1 ? 's' : ''} by ${reachName(HZR.of[t.i])}.${watched ? ' Wardens are curing it.' : ' Wardens cure it. Burning a field stops it there.'}`, icon: 'b_hedgerow' });
   }
-  if (H.dry > 0.08) A.push({ k: 'dry', text: `A dry summer. Windpumps and fields away from a cistern give ${Math.round(H.dry * 55)}% less, and channels run ${Math.round(H.dry * 30)}% slower.`, icon: 'b_cistern' });
+  if (H.dry > 0.08) A.push({ k: 'dry', text: 'A dry summer.', icon: 'b_cistern' });
 }
 
 /* ---------- saving ---------- */
@@ -9527,7 +9524,7 @@ function tryBuild(t, quiet) {
   if (!e) return false;
   AUDIO.sfx('place');
   if (OVER.mode === 'sites') paintOverlay('sites', type);
-  if ((def.extract || def.recipe) && !S.flags.tipSpout && !TOUR.on) { S.flags.tipSpout = true; setTimeout(() => toast('Now press C and drag from this building to the Commons to lay a flume.', ''), 400); }
+  if ((def.extract || def.recipe) && !S.flags.tipSpout && !TOUR.on) { S.flags.tipSpout = true; setTimeout(() => toast(UI.touch ? 'Lay a flume from it to the Commons.' : 'Press C and drag a flume from it to the Commons.', ''), 400); }
   if (def.size === 7) setTool(null);
   return true;
 }
@@ -9553,7 +9550,7 @@ function placeChanAt(t, dir, tap) {
   if (!canAfford(BUILD[type].cost)) { toast('Not enough ' + shortItems(BUILD[type].cost).map((k) => ITEMS[k].name.toLowerCase()).join(' or '), 'warn'); UI.flashChips(shortItems(BUILD[type].cost)); AUDIO.sfx('deny'); return false; }
   const e = place(type, t, dir);
   if (e && aim) setJunction(e, aim.out, aim.alt);
-  if (e) { AUDIO.sfx('chan'); if (type === 'culvert' && e.exit) { toast('The culvert is joined. Goods will pass underneath.', 'good'); } }
+  if (e) { AUDIO.sfx('chan'); if (type === 'culvert' && e.exit) { toast('Culvert joined.', 'good'); } }
   return !!e;
 }
 function chanDragStart(t) {
@@ -9576,7 +9573,7 @@ function chanDragMove(t) {
     if (po && isChan(po) && po.type !== 'crossing' && po.type !== 'culvert') { if (po.type === 'junction') junctionBranch(po, dir); else if (po.out !== dir) rotateEntity(po, dir); }
     d.lastDir = dir;
     const oT = entAtTile(tt);
-    if (!INPUT.steepWarned && Math.abs(prev.level - tt.level) > 1 && INPUT.tool.type !== 'aqueduct' && tt.type !== 'water' && prev.type !== 'water') { INPUT.steepWarned = true; toast('Too steep here. Channels climb one step per hex; aqueducts climb any height.', 'warn'); }
+    if (!INPUT.steepWarned && Math.abs(prev.level - tt.level) > 1 && INPUT.tool.type !== 'aqueduct' && tt.type !== 'water' && prev.type !== 'water') { INPUT.steepWarned = true; toast('Too steep. Channels climb one step per hex.', 'warn'); }
     if (oT && !isChan(oT)) { d.path.push(tt); d.stopped = true; break; }
     if (!placeChanAt(tt, dir)) { d.stopped = true; break; }
     // a line drawn into a junction: an outlet left pointing back up it turns away
@@ -9622,14 +9619,14 @@ function ropeDrag(t, finish) {
   for (let i = n; i < 64; i++) pts.setXYZ(i, 0, -50, 0);
   pts.needsUpdate = true; OVER.trail.visible = n > 0; OVER.trail.material.color.set(chk.ok ? 0xffe08a : 0xe07a5a);
   const dist = hexDist(s.q, s.r, t.q, t.r);
-  if (!same) { UI.showTip(`<b>Ropeway, ${dist} hex${dist === 1 ? '' : 'es'}</b><br><span class="num">Goods ride from where you started to where you let go. It reaches ${ropeSpan()} hexes.</span>${chk.ok ? '' : `<br><span class="warn">${chk.reason}</span>`}`); UI.tipSource = 'build'; }
+  if (!same) { UI.showTip(`<b>Ropeway, ${dist} hex${dist === 1 ? '' : 'es'}</b><br><span class="num">Reaches ${ropeSpan()}.</span>${chk.ok ? '' : `<br><span class="warn">${chk.reason}</span>`}`); UI.tipSource = 'build'; }
   if (!finish) return;
   OVER.trail.visible = false;
-  if (same) { toast('Drag from the near station to the far one. Goods ride from where you start to where you let go.', ''); return; }
+  if (same) { toast('Drag from the near station to the far one.', ''); return; }
   if (!chk.ok) { toast(chk.reason, 'warn'); AUDIO.sfx('deny'); if (chk.short) UI.flashChips(Object.keys(BUILD.ropeway.cost)); return; }
   const pr = buildRopeway(s, t); if (!pr) { AUDIO.sfx('deny'); return; }
   AUDIO.sfx('chan'); AUDIO.sfx('place');
-  if (!S.flags.tipRope) { S.flags.tipRope = true; toast('The ropeway is strung. Bring goods to the near station by channel, from any side. They leave the far one by its spout, and R turns the spout.', 'good'); }
+  if (!S.flags.tipRope) { S.flags.tipRope = true; toast('Ropeway strung. Feed the near station from any side.', 'good'); }
   setTool(null); select(pr[1].id);
 }
 
@@ -9922,7 +9919,7 @@ function onKey(ev) {
   else if (k === 'g') UI.toggleOverlay('services');
   else if (k === 'f') UI.toggleOverlay('flow');
   else if (k === 'k') UI.toggleOverlay('hazard');
-  else if (k === 'l') { const t = INPUT.hover; if (t && !t.outer) { if (!S.techs.has('wardens') && !lodges().length) toast('Study Wardens, then build a Warden\'s Lodge, to have crews to call.', ''); else callWardens(t); } }
+  else if (k === 'l') { const t = INPUT.hover; if (t && !t.outer) { if (!S.techs.has('wardens') && !lodges().length) toast('Needs a Warden\'s Lodge.', ''); else callWardens(t); } }
   else if (k === 'c') UI.pickTool(unlocked('swift') ? 'swift' : unlocked('channel') ? 'channel' : 'flume');
   else if (k === 'z') UI.pickTool(ev.shiftKey ? 'unzone' : 'zone');
   else if (k === 't') UI.openModal('research');
@@ -10035,7 +10032,7 @@ UI.init = function () {
     ch.addEventListener('click', () => { UI.hideTip(); UI.ledgerTab = 'goods'; UI.openModal('ledger'); });
     st.appendChild(ch);
   }
-  const lb = document.createElement('button'); lb.className = 'bandbtn'; lb.textContent = 'Ledger'; lb.title = 'Every good: what is in store, made and used (P)'; lb.onclick = () => UI.openModal('ledger'); st.appendChild(lb);
+  const lb = document.createElement('button'); lb.className = 'bandbtn'; lb.textContent = 'Ledger'; lb.title = 'Ledger (P)'; lb.onclick = () => UI.openModal('ledger'); st.appendChild(lb);
   const pe = $('people');
   pe.innerHTML = '<span class="ppl" id="popLine">0 people</span><span class="tierbar" id="tierBar"></span><span class="newcomers" id="demand"></span>';
   pe.addEventListener('mouseenter', (ev) => { UI.tipSource = 'people'; UI.peopleTip(); UI.moveTip(ev.clientX, ev.clientY); });
@@ -10098,7 +10095,7 @@ UI.renderTabs = function () {
   const fold = document.createElement('button'); fold.className = 'tabfold';
   const folded = $('palette').classList.contains('folded');
   fold.innerHTML = `<svg viewBox="0 0 14 10" width="14" height="10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="${folded ? 'M2 7l5-4 5 4' : 'M2 3l5 4 5-4'}"/></svg>`;
-  fold.setAttribute('aria-label', folded ? 'Open the drawer' : 'Fold the drawer away'); fold.title = folded ? 'Open the drawer' : 'Fold the drawer away for more of the valley';
+  fold.setAttribute('aria-label', folded ? 'Open the drawer' : 'Fold the drawer away'); fold.title = folded ? 'Open the drawer' : 'Fold the drawer';
   fold.onclick = () => UI.foldDrawer(!$('palette').classList.contains('folded'));
   tabs.appendChild(fold);
 };
@@ -10145,9 +10142,9 @@ UI.refreshPalette = function () {
     b.onmouseleave = () => UI.hideTip();
     box.appendChild(b);
   };
-  mk('copy', 'Copy', 'B', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14l11 6.3v12.7L20 39.3 9 33V20.3z" stroke-opacity=".5"/><path d="M33 14l11 6.3v12.7L33 39.3 22 33V20.3z"/></svg>`, '<b>Copy</b><br>Drag outward from a centre to copy a patch of works and channels, then click to stamp it down somewhere else. R turns it.');
-  mk('move', 'Move', 'M', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M27 12v30M12 27h30"/><path d="M22 17l5-5 5 5M22 37l5 5 5-5M17 22l-5 5 5 5M37 22l5 5-5 5"/></svg>`, '<b>Move</b><br>Pick up a works and put it down somewhere else, keeping its settings and refits. It costs nothing.');
-  mk('remove', 'Clear', 'X', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M27 8l16.5 9.5v19L27 46 10.5 36.5v-19z" stroke-opacity=".45"/><path d="M20 20l14 14M34 20L20 34"/></svg>`, '<b>Clear</b><br>Take down a building or channel. Everything it cost goes back into the stores.');
+  mk('copy', 'Copy', 'B', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14l11 6.3v12.7L20 39.3 9 33V20.3z" stroke-opacity=".5"/><path d="M33 14l11 6.3v12.7L33 39.3 22 33V20.3z"/></svg>`, '<b>Copy</b><br>Drag out from a centre to copy works and channels.');
+  mk('move', 'Move', 'M', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M27 12v30M12 27h30"/><path d="M22 17l5-5 5 5M22 37l5 5 5-5M17 22l-5 5 5 5M37 22l5 5-5 5"/></svg>`, '<b>Move</b><br>Moves a works and keeps its settings.');
+  mk('remove', 'Clear', 'X', `<svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2"><path d="M27 8l16.5 9.5v19L27 46 10.5 36.5v-19z" stroke-opacity=".45"/><path d="M20 20l14 14M34 20L20 34"/></svg>`, '<b>Clear</b><br>Takes down a building or channel and refunds it.');
 };
 // the sign over the drawer says what the tool in hand does and how to put it away
 const NEAR_WORD = { forest: 'forest', rock: 'a rock outcrop', water: 'water', sand: 'a sandy shore', ruin: 'the ruins', clay: 'a clay bank', bloom: 'flowering meadow' };
@@ -10156,28 +10153,27 @@ UI.renderToolSign = function () {
   const el = $('toolSign'); if (!el) return; const T = INPUT.tool;
   if (!T) { el.hidden = true; el.dataset.sig = ''; clearTimeout(UI.signT); $('hud').classList.remove('tooling'); return; }
   let name = '', how = '';
-  if (T.kind === 'build' && T.carry) { name = 'Moving the ' + lower(BUILD[T.type].name); how = `Click where it should go.${BUILD[T.type].rot && !UI.touch ? ' R turns the spout.' : ''}`; el.innerHTML = `<b>${name}</b><span>${how}</span><span class="esc">${UI.touch ? 'Tap the tool again to put it back.' : 'Right-click or Esc puts it back where it was.'}</span>`; UI.signShown(el); return; }
-  if (T.kind === 'move') { name = 'Move'; how = 'Click a works to pick it up, then click where it should go. Nothing is lost.'; }
+  if (T.kind === 'build' && T.carry) { el.innerHTML = `<b>Moving the ${lower(BUILD[T.type].name)}</b><span>${noKeys('Click where it goes.')}${BUILD[T.type].rot && !UI.touch ? ' R turns it.' : ''}</span><span class="esc">${UI.touch ? 'Tap Move to put it back.' : 'Esc puts it back.'}</span>`; UI.signShown(el); return; }
+  if (T.kind === 'move') { name = 'Move'; how = 'Click a works to pick it up.'; }
   else if (T.kind === 'build') {
     const def = BUILD[T.type]; name = def.name;
-    if (def.zoneTool) how = 'Drag to mark land for homes. It has to be within reach of a Commons.';
-    else if (def.unzoneTool) how = 'Drag over marked land to unmark it.';
-    else if (T.type === 'culvert') how = 'Drag from the entrance to the exit, two to five hexes in a straight line.';
-    else if (T.type === 'ropeway') how = `Drag from where the goods start to where they should come down, up to ${ropeSpan()} hexes, over anything in between.`;
-    else if (T.type === 'junction') how = 'Click a channel to split it in two. The yellow outlet carries the line on and the side outlet turns off toward a branch, which you lay by dragging out of the junction.';
-    else if (T.type === 'crossing') how = 'Click where two lines should pass through each other. Goods go straight across and never mix.';
-    else if (def.chan) how = 'Drag from a spout toward where the goods should go. Drag over slower channels to upgrade them.';
-    else if (def.extract && def.extract.near) how = `Place it beside ${nearKinds(def.extract).map((k) => NEAR_WORD[k]).join(' or ')}. Lit hexes can take it; brighter ones gather more.`;
-    else if (def.extract && def.extract.fields) how = `Place it in open meadow, which becomes ${FIELD_WORD[def.extract.fields]} around it. Brighter hexes have more room.`;
-    else if (def.genKind === 'water') how = 'Place it beside the river or a lake. Lit hexes show where.';
-    else if (def.service) how = `Place it near homes. Lit hexes already have one nearby.`;
-    else how = 'Click a hex to place it.';
-    if (def.rot && !def.chan && !UI.touch) how += ' R turns the spout.';
-  } else if (T.kind === 'remove') { name = 'Clear'; how = 'Click a building or channel to take it down. What it cost goes back into the stores.'; }
-  else if (T.kind === 'copy') { name = 'Copy'; how = 'Drag outward from a centre to copy a patch of works and channels.'; }
-  else if (T.kind === 'paste') { name = 'Paste'; how = 'Click to stamp the copy down. R turns it.'; }
-  else if (T.kind === 'call') { name = 'Call the wardens'; how = 'Click where they should go. Every crew within reach comes, works whatever needs it there, and stands by.'; }
-  el.innerHTML = `<b>${name}</b><span>${noKeys(how)}</span><span class="esc">${UI.touch ? 'Tap the tool again to put it away.' : 'Right-click or Esc puts it away.'}</span>`;
+    if (def.zoneTool) how = 'Drag across land near a Commons.';
+    else if (def.unzoneTool) how = 'Drag across marked land.';
+    else if (T.type === 'culvert') how = 'Drag from entrance to exit, two to five hexes.';
+    else if (T.type === 'ropeway') how = `Drag from start to end, up to ${ropeSpan()} hexes.`;
+    else if (T.type === 'junction') how = 'Click a channel to split it.';
+    else if (T.type === 'crossing') how = 'Click where two lines cross.';
+    else if (def.chan) how = 'Drag from a spout.';
+    else if (def.extract && def.extract.near) how = `Place it beside ${nearKinds(def.extract).map((k) => NEAR_WORD[k]).join(' or ')}.`;
+    else if (def.extract && def.extract.fields) how = 'Place it in open meadow.';
+    else if (def.genKind === 'water') how = 'Place it beside water.';
+    else if (def.service) how = 'Place it near homes.';
+    if (def.rot && !def.chan && !UI.touch) how += (how ? ' ' : '') + 'R turns the spout.';
+  } else if (T.kind === 'remove') { name = 'Clear'; how = 'Click something to take it down.'; }
+  else if (T.kind === 'copy') { name = 'Copy'; how = 'Drag out from a centre.'; }
+  else if (T.kind === 'paste') { name = 'Paste'; how = 'Click to stamp it down. R turns it.'; }
+  else if (T.kind === 'call') { name = 'Call the wardens'; how = 'Click where they should go.'; }
+  el.innerHTML = `<b>${name}</b>${how ? `<span>${noKeys(how)}</span>` : ''}<span class="esc">${UI.touch ? 'Tap again to put it away.' : 'Esc puts it away.'}</span>`;
   UI.signShown(el);
 };
 // on a phone the sign fades once there has been time to read it, and comes back when another tool is picked
@@ -10199,7 +10195,7 @@ const MAP_VIEWS = [[null, 'Plain', '', 'The valley as it is.'], ['flow', 'Flow o
 UI.toggleMenu = function (which) {
   const el = which === 'map' ? $('mapMenu') : $('mainMenu'); const btn = which === 'map' ? $('bMap') : $('bMenu');
   const opening = el.hidden; UI.closeMenus(); if (!opening) return;
-  if (which === 'map') el.innerHTML = MAP_VIEWS.map(([m, nm, key, desc]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}"><span class="dot"></span><span>${nm}</span><span class="key">${key}</span><span class="desc">${desc}</span></button>`).join('');
+  if (which === 'map') el.innerHTML = MAP_VIEWS.map(([m, nm, key, desc]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}" title="${desc}"><span class="dot"></span><span>${nm}</span><span class="key">${key}</span></button>`).join('');
   else {
     // a phone has no room in the band for the map views, so they come into this menu
     const views = UI.form() === 'phone' ? '<hr><div class="mh">Map view</div><div class="mapviews">' + MAP_VIEWS.map(([m, nm]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}"><span class="dot"></span><span>${nm}</span></button>`).join('') + '</div>' : '';
@@ -10281,7 +10277,7 @@ UI.update = function () {
   if (UI.tierSig !== tb) { UI.tierSig = tb; $('tierBar').innerHTML = tb; }
   const D = S.demand, dm = $('demand');
   const wv = D.want === 1 ? 'wants' : 'want';
-  const dt = D.why === 'food' ? 'Nobody comes without food' : D.why === 'short' ? 'Nobody comes while homes go short' : D.want > 0 ? (D.why === 'land' ? `${D.want} ${wv} to move in: mark land` : D.why === 'materials' ? `${D.want} waiting for timber and stone` : `${D.want} ${wv} to move in`) : 'Nobody waiting to move in';
+  const dt = D.why === 'food' ? 'Newcomers need food' : D.why === 'short' ? 'Homes are going short' : D.want > 0 ? (D.why === 'materials' ? `${D.want} waiting for timber and stone` : `${D.want} ${wv} to move in`) : '';
   if (dm.textContent !== dt) dm.textContent = dt;
   dm.classList.toggle('want', D.want > 0 || D.why === 'food' || D.why === 'short');
   $('people').classList.toggle('want', D.want > 0 || D.why === 'food' || D.why === 'short');
@@ -10298,7 +10294,6 @@ UI.update = function () {
   if ($('crestDate').textContent !== dl) $('crestDate').textContent = dl;
   drawClock();
   if ($('townName').textContent !== S.name) $('townName').textContent = S.name;
-  const cl = 'Chapter ' + lower(WORDNUM[S.chapter]) + ': ' + CHAPTERS[S.chapter].title; if ($('chapterLine').textContent !== cl) $('chapterLine').textContent = cl;
   UI.renderStudy(); UI.renderSky(); UI.renderHappen(); UI.renderAlerts();
   UI.renderGoals(); UI.refreshPalette();
   UI.layout();
@@ -10346,7 +10341,7 @@ UI.renderStudy = function () {
     const un = (t.unlocks || []).map((k) => `<span title="${BUILD[k].name}">${iconImg('b_' + k)}${BUILD[k].name}</span>`);
     for (const ef of t.effects || []) if (ef.k === 'home') un.push(`<span>${iconImg('home' + ef.level)}${HOMES[ef.level].name}s</span>`);
     box.classList.remove('idle', 'pulse', 'quiet'); box.classList.add('learned');
-    box.innerHTML = `<div class="r1">${iconImg(techIcon(UI.learned.id))}<span class="nm">Learned: ${t.name}<small>${un.length ? 'You can now build:' : t.desc}</small></span></div>${un.length ? `<div class="unl">${un.join('')}</div>` : ''}`;
+    box.innerHTML = `<div class="r1">${iconImg(techIcon(UI.learned.id))}<span class="nm">Learned ${t.name}</span></div>${un.length ? `<div class="unl">${un.join('')}</div>` : ''}`;
     return;
   }
   box.classList.remove('learned');
@@ -10355,14 +10350,14 @@ UI.renderStudy = function () {
     sig = 'idle' + any + S.techs.size + (S.labSpeed > 0);
     if (sig === UI.studySig) return; UI.studySig = sig;
     box.classList.toggle('quiet', !any || !(S.labSpeed > 0));
-    h = `<div class="r1">${iconImg('slates')}<span class="nm">${any ? 'Nothing is being studied' : 'Everything is learned'}<small>${!any ? 'The valley knows all it can, for now.' : noKeys(S.labSpeed > 0 ? 'Choose what to study next (T)' : 'Build a Schoolhouse, then choose a topic (T)')}</small></span></div>`;
+    h = `<div class="r1">${iconImg('slates')}<span class="nm">Choose what to study</span></div>`;
     box.classList.add('idle'); box.classList.toggle('pulse', any && S.labSpeed > 0);
   } else {
     const t = TECHS[R.cur]; const units = techUnits(R.cur); const p = (R.prog + (R.active ? R.unit : 0)) / units;
     sig = R.cur + Math.round(p * 200) + R.queue.length + t.packs.map((k) => Math.floor(S.stores[k])).join();
     if (sig === UI.studySig) return; UI.studySig = sig;
     box.classList.remove('idle', 'pulse', 'quiet');
-    h = `<div class="r1">${iconImg(techIcon(R.cur))}<span class="nm">${t.name}${t.repeat ? ' ' + ((S.techLevel[R.cur] || 0) + 1) : ''}<small>Studying${R.queue.length ? `, ${R.queue.length} more after this` : ''}</small></span><span class="frac">${R.prog} of ${units}</span></div><span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>`;
+    h = `<div class="r1">${iconImg(techIcon(R.cur))}<span class="nm">${t.name}${t.repeat ? ' ' + ((S.techLevel[R.cur] || 0) + 1) : ''}</span><span class="frac">${R.prog} of ${units}</span></div><span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>`;
     h += `<div class="packs"><span>In store:</span>${t.packs.map((k) => `<span class="${S.stores[k] < 1 ? 'miss' : ''}" title="${ITEMS[k].name}">${iconImg(k)}${fmt(Math.floor(S.stores[k]))}</span>`).join('')}</div>`;
   }
   box.innerHTML = h;
@@ -10416,22 +10411,22 @@ UI.renderSky = function () {
   if (F) {
     const total = HZ.RISE + HZ.HOLD + HZ.FALL, pct = Math.round(clamp(1 - F.t / total, 0, 1) * 100); const hit = F.hit;
     const ft = floodFocus(F);
-    parts.push(`<div class="r1">${iconImg('b_bank')}<span class="nm">The river is over its banks<small>at ${reachName(F.reach)}, up to the ${ORD[F.H]} terrace</small></span></div><span class="meter ebb"><i style="width:${pct}%"></i></span>${hit.works + hit.homes ? `<p>The water is in ${listWords([hit.works ? `${hit.works} works` : '', hit.homes ? `${hit.homes} home${hit.homes > 1 ? 's' : ''}` : ''])}. Whatever it reaches will need mending when it goes down.</p>` : F.held.length ? '<p>The banks are holding.</p>' : ''}<div class="btns"><button class="btn" data-a="skyShow" data-v="${ft ? ft.i : ''}">Show</button>${haveL && ft ? `<button class="btn" data-a="skyCall" data-v="${ft.i}">Send the wardens</button>` : ''}</div>`);
+    parts.push(`<div class="r1">${iconImg('b_bank')}<span class="nm">Flood at ${reachName(F.reach)}</span></div><span class="meter ebb"><i style="width:${pct}%"></i></span>${hit.works + hit.homes ? `<p>${capName(listWords([hit.works ? `${hit.works} works` : '', hit.homes ? `${hit.homes} home${hit.homes > 1 ? 's' : ''}` : '']))} under water.</p>` : F.held.length ? '<p>The banks are holding.</p>' : ''}<div class="btns"><button class="btn" data-a="skyShow" data-v="${ft ? ft.i : ''}">Show</button>${haveL && ft ? `<button class="btn" data-a="skyCall" data-v="${ft.i}">Send the wardens</button>` : ''}</div>`);
   }
   for (const ev of floods) {
     const pred = floodPredict(ev), toll = floodToll(pred), ft = floodFocus(ev); const words = tollWords(toll);
-    parts.push(`<div class="r1">${iconImg('b_bank')}<span class="nm">${reachName(ev.reach)} will flood ${hzWhen(ev)}<small>up to the ${ORD[ev.H]} terrace, reaching ${ev.R} hexes from the water</small></span></div><p>${words ? `In its way: ${words}.` : 'Nothing of ours is in its way.'}${pred.held.size ? ` ${pred.held.size} bank${pred.held.size > 1 ? 's' : ''} will hold it back.` : ''}${toll.over ? ` ${toll.over} will be overtopped.` : ''}${!S.techs.has('river') && words ? ' Study River Lore to raise banks against it.' : ''}</p>${!station && (S.techs.has('weather') || techAvailable('weather')) ? '<p>A Weather Station would see it two days ahead.</p>' : ''}<div class="btns"><button class="btn" data-a="skyShow" data-v="${ft ? ft.i : ''}">Show me</button>${haveL && ft && words ? `<button class="btn" data-a="skyCall" data-v="${ft.i}">Wardens stand by</button>` : ''}</div>`);
+    parts.push(`<div class="r1">${iconImg('b_bank')}<span class="nm">${capName(reachName(ev.reach))} floods ${hzWhen(ev)}</span></div><p>${words ? `In its way: ${words}.` : 'Nothing of ours in its way.'}${pred.held.size ? ` ${pred.held.size} bank${pred.held.size > 1 ? 's' : ''} will hold.` : ''}${toll.over ? ` ${toll.over} will be overtopped.` : ''}</p><div class="btns"><button class="btn" data-a="skyShow" data-v="${ft ? ft.i : ''}">Show</button>${haveL && ft && words ? `<button class="btn" data-a="skyCall" data-v="${ft.i}">Wardens stand by</button>` : ''}</div>`);
   }
   if (dryEv) {
     const D = H.dry, now = H.dryNow && D > 0.04, K = rainKitesState();
     const kites = K && !K.done ? `<button class="btn${K.can ? ' primary' : ''}" data-a="skyKites" ${K.can ? '' : 'disabled'} title="${K.station ? `${HZ.KITE_COST.kites} kites and ${HZ.KITE_COST.charcoal} charcoal` : 'Needs a Weather Station'}">Send up the rain kites</button>` : '';
-    if (now) parts.push(`<div class="r1">${iconImg('b_cistern')}<span class="nm">A dry summer<small>${dryEv.cut ? 'the rain kites brought a little rain' : 'the river is low'}</small></span></div><span class="meter dry"><i style="width:${Math.round(D * 100)}%"></i></span><p>Windpumps give ${Math.round(D * 55)}% less water. Fields away from a cistern give ${Math.round(D * 60)}% less, and channels away from one run ${Math.round(D * 30)}% slower.</p>${kites ? `<div class="btns">${kites}</div>` : ''}`);
-    else parts.push(`<div class="r1">${iconImg('b_cistern')}<span class="nm">A dry summer is coming<small>beginning ${hzWhen(dryEv)}</small></span></div><p>Fill the stores with water while you can. A cistern keeps the channels and fields near it running as if it had rained.</p>${kites ? `<div class="btns">${kites}</div>` : ''}`);
+    if (now) parts.push(`<div class="r1">${iconImg('b_cistern')}<span class="nm">A dry summer</span></div><span class="meter dry"><i style="width:${Math.round(D * 100)}%"></i></span><p>Windpumps give ${Math.round(D * 55)}% less water. Away from a cistern, fields give ${Math.round(D * 60)}% less and channels run ${Math.round(D * 30)}% slower.</p>${kites ? `<div class="btns">${kites}</div>` : ''}`);
+    else parts.push(`<div class="r1">${iconImg('b_cistern')}<span class="nm">A dry summer ${hzWhen(dryEv) === 'now' ? 'is starting' : hzWhen(dryEv)}</span></div><p>Store water. Cisterns keep the fields and channels near them going.</p>${kites ? `<div class="btns">${kites}</div>` : ''}`);
   }
   if (H.blighted.length) {
     const worst = H.blighted.reduce((a, i) => (W.tiles[i].blight > W.tiles[a].blight ? i : a), H.blighted[0]); const t = W.tiles[worst];
     const watched = H.watch && H.blighted.some((i) => H.watch[i]);
-    parts.push(`<div class="r1">${iconImg('b_hedgerow')}<span class="nm">Blight in ${H.blighted.length} field${H.blighted.length > 1 ? 's' : ''}<small>by ${reachName(HZR.of[worst])}</small></span></div><p>${watched ? 'Wardens are curing it.' : haveL ? 'It is out of the wardens’ reach. Call them to it, or burn a field to stop it there.' : 'It spreads from field to field of the same crop. Wardens cure it; burning a field stops it there.'}</p><div class="btns"><button class="btn" data-a="skyShow" data-v="${worst}" data-sel="1">Show</button>${haveL && !watched ? `<button class="btn" data-a="skyCall" data-v="${worst}">Call the wardens</button>` : ''}</div>`);
+    parts.push(`<div class="r1">${iconImg('b_hedgerow')}<span class="nm">Blight in ${H.blighted.length} field${H.blighted.length > 1 ? 's' : ''} by ${reachName(HZR.of[worst])}</span></div><p>${watched ? 'Wardens are curing it.' : haveL ? 'Out of the wardens’ reach.' : 'It spreads between fields of the same crop.'}</p><div class="btns"><button class="btn" data-a="skyShow" data-v="${worst}" data-sel="1">Show</button>${haveL && !watched ? `<button class="btn" data-a="skyCall" data-v="${worst}">Call the wardens</button>` : ''}</div>`);
   }
   box.className = 'sky' + (F ? ' flooding' : dryEv && H.dry > 0.04 ? ' parched' : '');
   box.innerHTML = parts.map((p) => `<div class="skyrow">${p}</div>`).join('');
@@ -10452,25 +10447,24 @@ UI.renderHappen = function () {
   const ship = skyship(), sv = ship && ship.voy;
   if (sv && sv.st === 'back') {
     const sig = 'V' + sv.n + (sv.offer || []).join(); if (sig === UI.happenSig) return; UI.happenSig = sig;
-    h = `<div class="r1">${iconImg('b_skyship')}<span class="nm">The Sky Ship is home<small>from ${VOYAGES[sv.place].place}, voyage ${sv.n}</small></span></div><p class="hp">They sent back more than the ship could keep. Choose one thing.</p><div class="finds">${(sv.offer || []).map((id) => `<button data-a="find" data-v="${id}"><b>${FINDS[id].name}</b><span>${FINDS[id].desc}</span></button>`).join('')}</div>`;
+    h = `<div class="r1">${iconImg('b_skyship')}<span class="nm">The Sky Ship is back from ${VOYAGES[sv.place].place}</span></div><p class="hp">Choose one thing to keep.</p><div class="finds">${(sv.offer || []).map((id) => `<button data-a="find" data-v="${id}"><b>${FINDS[id].name}</b><span>${FINDS[id].desc}</span></button>`).join('')}</div>`;
     cls = 'post';
   } else if (L) {
     const T = LETTERS[L.i], unit = ITEM_UNIT[L.item] || ITEMS[L.item].name.toLowerCase(); const can = (S.stores[L.item] || 0) >= L.n;
     const sig = 'L' + L.i + L.item + L.n + can; if (sig === UI.happenSig) return; UI.happenSig = sig;
     const gift = L.gift ? KEEPSAKES[L.gift] : null;
-    h = `<div class="r1">${iconImg('paper')}<span class="nm">A letter<small>from ${T.from}</small></span></div><div class="letter">${escapeHtml(letterText(L))}</div>`;
-    h += `<div class="gift">${gift ? `They will send back <b>${lower(gift.name)}</b>. ${gift.desc}` : 'They will be grateful, and say so.'}</div>`;
+    h = `<div class="r1">${iconImg('paper')}<span class="nm">A letter from ${T.from}</span></div><div class="letter">${escapeHtml(letterText(L))}</div>`;
+    if (gift) h += `<div class="gift">In return, <b>${lower(gift.name)}</b>. ${gift.desc}</div>`;
     h += `<div class="btns"><button class="btn primary" data-a="letterYes" ${can ? '' : 'disabled'}>Send ${L.n} ${unit}</button><button class="btn" data-a="letterNo">Not this time</button></div>`;
     cls = 'post';
   } else if (S.season <= 1 && !SETTINGS.golden && S.flags.fairDay !== S.day && fairsOpen()) {
     const st = fairState(); const b = st.basket;
     const sig = 'F' + S.season + Object.keys(b).map((k) => k + b[k] + ((S.stores[k] || 0) >= b[k] ? 'y' : 'n')).join(); if (sig === UI.happenSig) return; UI.happenSig = sig;
-    const when = S.season === 0 ? 'At the end of summer' : 'This evening';
-    h = `<div class="r1">${iconImg('kites')}<span class="nm">The midsummer fair<small>${when}. A full basket makes every home happier for a year.</small></span></div>`;
+    h = `<div class="r1" title="A full basket makes every home happier for a year">${iconImg('kites')}<span class="nm">${S.season === 0 ? 'The midsummer fair' : 'The fair is tonight'}</span></div>`;
     h += `<div class="basket">${Object.keys(b).map((k) => { const ok = (S.stores[k] || 0) >= b[k]; return `<span class="${ok ? 'ok' : 'short'}" title="${ITEMS[k].name}: ${Math.floor(S.stores[k] || 0)} in store of ${b[k]}">${iconImg(k)}${b[k]}</span>`; }).join('')}</div>`;
   } else if (festivalOn()) {
     const g = S.flags.fairGrade; const sig = 'N' + g; if (sig === UI.happenSig) return; UI.happenSig = sig;
-    h = `<div class="r1">${iconImg('kites')}<span class="nm">The fair is on tonight<small>${['There was hardly anything to share.', 'Short of a few things, but everyone came. Homes are a little happier this year.', 'A full basket. Every home is happier until next midsummer.'][g]}</small></span></div>`;
+    h = `<div class="r1">${iconImg('kites')}<span class="nm">${['The fair is on, with little to share', 'The fair is on, short of a few things', 'The fair is on, with a full basket'][g]}</span></div>`;
     cls = 'festive';
   } else { if (UI.happenSig !== '') { UI.happenSig = ''; box.innerHTML = ''; box.className = 'happen'; UI.layout(); } return; }
   box.className = 'happen ' + cls; box.innerHTML = h; UI.layout();
@@ -10494,7 +10488,7 @@ UI.renderGoals = function (force) {
   ch.goals.forEach((g, i) => {
     if (fold && done[i]) return;
     const p = done[i] ? 1 : goalProgress(g); const lab = done[i] ? '' : ofText(goalLabel(g));
-    const autoOpen = S.chapter <= 2 && !UI.goalsTouched && i === next && !touring;
+    const autoOpen = false;
     h += `<div class="goal${done[i] ? ' done' : ''}${i === next ? ' next' : ''}${(keepOpen && open.has(String(i)) && !done[i]) || autoOpen ? ' open' : ''}" data-i="${i}"><span class="box"></span><span class="gt">${g.text}</span><span class="gp">${lab}</span>${done[i] ? '' : `<span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>`}<span class="hint">${noKeys(g.hint)}</span></div>`;
   });
   box.innerHTML = h;
@@ -10548,12 +10542,11 @@ UI.peopleTip = function () {
     h += `<div class="check ${S.eff[t] < 0.999 ? 'no' : ''}"><span class="m" style="background:${TIER_COL[t]};border-color:${TIER_COL[t]}"></span><span>${n} ${L.people} in ${S.homesTier[t] || 0} ${lower(L.name)}${(S.homesTier[t] || 0) === 1 ? '' : 's'}</span><span class="num">${S.handsNeed[t] ? Math.round(S.eff[t] * 100) + '% at work' : ''}</span></div>`;
   }
   const D = S.demand;
-  h += `<div class="num" style="margin-top:6px">${D.want > 0 ? `${D.want} more would like to settle here.` : 'Nobody is waiting to settle just now.'} ${D.plots} empty plot${D.plots === 1 ? '' : 's'} marked for homes, and room for ${D.vacant} more in homes already built.</div>`;
-  if (D.why === 'land') h += `<div class="warn">Mark more land for homes${UI.touch ? '' : ' (Z)'}, within reach of a Commons.</div>`;
-  if (D.why === 'materials') h += `<div class="warn">Each new cabin needs 6 timber and 2 stone in store.</div>`;
-  if (D.why === 'food') h += `<div class="warn">Nobody will come while the stores have no water or grain.</div>`;
-  if (D.why === 'short') h += `<div class="warn">Nobody will come while ${D.short} homes are short of what they need. Feed the town you have first.</div>`;
-  h += `<div class="num" style="margin-top:4px">Newcomers come when there is work for them, and idle hands keep them away, though a valley whose homes average harmony above 3 draws a trickle all the same. Nobody comes while more than one home in six is going short. Click for the ledger.</div>`;
+  h += `<div class="num" style="margin-top:6px">${D.want > 0 ? `${D.want} want to move in. ` : ''}${D.plots} empty plot${D.plots === 1 ? '' : 's'}, room for ${D.vacant} more in homes built.</div>`;
+  if (D.why === 'land') h += `<div class="warn">Mark land for homes${UI.touch ? '' : ' (Z)'}.</div>`;
+  if (D.why === 'materials') h += `<div class="warn">A cabin needs 6 timber and 2 stone in store.</div>`;
+  if (D.why === 'food') h += `<div class="warn">No one comes while there is no water or grain.</div>`;
+  if (D.why === 'short') h += `<div class="warn">No one comes while ${D.short} homes go short.</div>`;
   UI.showTip(h);
 };
 UI.tierTip = function () { UI.peopleTip(); };
@@ -10601,14 +10594,14 @@ function eqHtml(ins, outs, per = 'a minute') {
 UI.toolTip = function (type) {
   const def = BUILD[type];
   let h = `<b>${def.name}</b>`;
-  if (!unlocked(type)) h += `<br><span class="warn">Needs research: ${TECHS[def.tech].name}. Click to see it.</span>`;
+  if (!unlocked(type)) h += `<br><span class="warn">Needs research: ${TECHS[def.tech].name}.</span>`;
   h += `<br>${def.desc}`;
   if (def.recipe && Object.keys(def.recipe.out).length) { const r = recipeRates(def, typeSpeed(type)); h += eqHtml(r.ins, r.outs); h += feedsHtml(def, typeSpeed(type)); }
   if (def.extract) { const ex = def.extract; h += `<div class="eq"><span>${iconImg(ex.item)}${ex.flat ? ex.per : 'up to ' + fmtRate(ex.per * ex.cap * typeSpeed(type))}</span><span class="per">a minute${ex.flat ? '' : `, ${ex.per} for each ${ex.fields ? { field: 'field', pasture: 'pasture', orchard: 'orchard plot' }[ex.fields] : { forest: 'forest hex', rock: 'outcrop', water: 'water hex', sand: 'sandy hex', ruin: 'ruin', clay: 'clay bank', bloom: 'flowering hex' }[ex.near]}`}</span></div>`; }
   { const ok = def.extract ? def.extract.item : def.recipe && !def.gen ? Object.keys(def.recipe.out)[0] : null; if (ok) { const u = usersOf(ok); if (u.length) h += `<span class="num">${ITEMS[ok].name} goes to ${u.slice(0, 5).join(', ')}${u.length > 5 ? ' and more' : ''}.</span><br>`; } }
   if (def.chan && def.speed) h += `<span class="num">Carries up to ${Math.round(def.speed / SPACING * 60)} goods a minute.</span><br>`;
   if (def.great) h += `<span class="num">Needs ${Object.entries(def.great).map(([k, n]) => n + ' ' + ITEMS[k].name.toLowerCase()).join(', ')}.</span><br>`;
-  if (NEIGHBOURS[type]) h += `<span class="num">Runs ${pctWord(NEIGHBOURS[type].bonus)} faster beside ${partnerList(NEIGHBOURS[type])}: ${NEIGHBOURS[type].why}.</span><br>`;
+  if (NEIGHBOURS[type]) h += `<span class="num">Runs ${pctWord(NEIGHBOURS[type].bonus)} faster beside ${partnerList(NEIGHBOURS[type])}.</span><br>`;
   const bits = [];
   if (def.hands) bits.push(`${def.hands} ${HOMES[def.tier || 1].people} from homes within ${commuteRadius()} hexes to work it`);
   if (def.power) bits.push(`${def.power} power`);
@@ -10640,7 +10633,8 @@ UI.buildTip = function (t, type, chk, rot) {
   }
   if (def.zoneTool) h += `<br><span class="num">${S.reach[t.i] ? 'Within reach of a Commons.' : 'Outside the reach of every Commons, so nobody will build here.'} Harmony ${S.harmony[t.i].toFixed(1)}. Drag to paint.</span>`;
   else if (def.harmony || def.service) h += `<br><span class="num">Harmony here: ${S.harmony[t.i].toFixed(1)}</span>`;
-  if (def.chan) h += `<br><span class="num">${type === 'culvert' ? 'Drag from the entrance to the exit, two to five hexes in a straight line.' : type === 'ropeway' ? `Drag from the near station to the far one, up to ${ropeSpan()} hexes. It costs two stations.` : type === 'junction' ? 'Click a channel to split it. The arrows show where its yellow and side outlets will point. Drag out of a junction to lay a branch.' : type === 'crossing' ? 'Click where two lines should cross.' : 'Drag to lay a line. R turns it. Drag over slower channels to upgrade them.'}</span>`;
+  if (type === 'channel' || type === 'swift') h += `<br><span class="num">Drag over slower channels to upgrade them.</span>`;
+  else if (type === 'ropeway') h += `<br><span class="num">Costs two stations.</span>`;
   else if (def.rot && !UI.touch) h += `<br><span class="num">R turns the spout.</span>`;
   if (INPUT.tool && INPUT.tool.carry) h += `<br><span class="num">Moving it costs nothing.</span>`;
   else if (Object.keys(def.cost).length) h += costLine(def.cost);
@@ -10663,7 +10657,7 @@ UI.hoverTip = function (t) {
     const fk = t.field ? fieldKind(t) : null;
     const names = { forest: 'Forest', rock: 'Rock outcrop', water: t.river ? 'River' : 'Lake', sand: 'Sandy shore', ruin: 'Ruins of the Long Before', clay: 'Clay bank', meadow: fk === 'field' ? 'Grain field' : fk === 'pasture' ? 'Pasture' : fk === 'orchard' ? 'Orchard' : t.zone ? 'Marked for a home' : 'Meadow', site: '' };
     let h = names[t.type] ? `<b>${names[t.type]}</b>` : '';
-    if (t.type === 'mountain' && W.mountains[t.mtn - 1]) { UI.showTip(`<b>${capName(W.mountains[t.mtn - 1].name)}</b><br><span class="num">A mountain, too steep to build on. Its snow feeds the streams below it.</span>`); UI.tipSource = 'hover'; return; }
+    if (t.type === 'mountain' && W.mountains[t.mtn - 1]) { UI.showTip(`<b>${capName(W.mountains[t.mtn - 1].name)}</b><br><span class="num">Too steep to build on.</span>`); UI.tipSource = 'hover'; return; }
     if ((t.type === 'rock' || t.type === 'ruin' || t.type === 'clay') && !t.outer) h += `<br><span class="num">${Math.round(t.amount)} left to dig</span>`;
     if (t.type === 'forest' && !t.outer && t.maxAmount) h += `<br><span class="num">${Math.round(t.amount)} of ${t.maxAmount} timber standing</span>`;
     if (!t.outer && h) h += `<br><span class="num">Harmony ${S.harmony[t.i].toFixed(1)}, terrace ${t.level}${S.reach[t.i] ? '' : ', outside the reach of a Commons'}</span>`;
@@ -10693,7 +10687,7 @@ function hazardTip(t, busy) {
   if (busy) return h;
   if (t.field) {
     if (t.fallowDay && S.day < t.fallowDay) h += `<br><span class="num">Burnt, fallow until spring.</span>`;
-    else if (t.blight >= HZ.B_SHOW) h += `<br><span class="warn">Blighted. Click it to call the wardens or burn it.</span>`;
+    else if (t.blight >= HZ.B_SHOW) h += `<br><span class="warn">Blighted.</span>`;
     else if (t.blight > 0) h += `<br><span class="warn">Blight is taking hold.</span>`;
     else if (t.siltDay && S.day < t.siltDay) h += `<br><span class="num">Rich with silt: it gives ${Math.round((HZ.SILT - 1) * 100)}% more.</span>`;
   }
@@ -10712,20 +10706,20 @@ function chanFlowHtml(e) {
 function statusText(e) {
   const s = e.status; const def = BUILD[e.type];
   if (s === 'working') { const sp = speedOf(e); return [sp < 0.999 ? `Working at ${Math.round(sp * 100)}% speed.` : 'Working at full speed.', sp < 0.95 ? 'amber' : '']; }
-  if (s === 'nores') return ['Nothing to work beside it. Move it next to what it gathers.', 'warn'];
-  if (s === 'full') return ['Its spout is blocked: nothing is taking its goods.', 'warn'];
-  if (s === 'waiting' && e.jam) return [`Jammed. ${ITEMS[e.jam].name} ${ITEMS[e.jam].plural ? 'are' : 'is'} blocking the way in, so ${ITEMS[e.need].name.toLowerCase()} cannot reach it. Give each good its own channel and side.`, 'warn'];
+  if (s === 'nores') return ['Nothing to gather beside it.', 'warn'];
+  if (s === 'full') return ['Spout blocked.', 'warn'];
+  if (s === 'waiting' && e.jam) return [`Jammed: ${ITEMS[e.jam].name.toLowerCase()} in the way of ${ITEMS[e.need].name.toLowerCase()}.`, 'warn'];
   if (s === 'waiting') return [e.need ? `Waiting for ${ITEMS[e.need].name.toLowerCase()}.` : 'Waiting for goods.', 'idle'];
   if (s === 'paused') return ['Paused.', 'idle'];
-  if (s === 'noitem') return ['Choose a good for it to send out.', 'idle'];
+  if (s === 'noitem') return ['Choose a good to send.', 'idle'];
   if (s === 'empty') return ['None of that good is in store.', 'idle'];
-  if (s === 'nocommons') return ['It has to stand beside a Commons.', 'warn'];
-  if (s === 'nohands') return e.handsWhy === 'far' ? [`Nobody lives near enough to work here. People ${S.mods.commute ? 'ride' : 'walk'} up to ${commuteRadius()} hexes, so mark land for homes closer by${S.techs.has('bikes') ? '' : ' or study Bicycles'}.`, 'warn'] : [`No ${HOMES[(def && def.tier) || 1].people} are free to work here.`, 'warn'];
+  if (s === 'nocommons') return ['Must stand beside a Commons.', 'warn'];
+  if (s === 'nohands') return e.handsWhy === 'far' ? [`Nobody lives within ${commuteRadius()} hexes to work it.`, 'warn'] : [`No ${HOMES[(def && def.tier) || 1].people} free to work here.`, 'warn'];
   if (s === 'nopower') return ['No power.', 'warn'];
-  if (s === 'flooded') return ['Under water. It will start again when the river goes down.', 'warn'];
-  if (s === 'mending') return [S.hz.claims && S.hz.claims.has('e' + e.id) ? 'Damaged by the flood. Wardens are mending it.' : e.mendPaid ? `Damaged by the flood. Its own crew is mending it, slowly${lodges().length ? '; wardens would be quicker' : ''}.` : `Damaged by the flood, and waiting for ${BUILD[e.type] && BUILD[e.type].bank ? 'stone' : 'planks'} in store to mend it with.`, 'warn'];
+  if (s === 'flooded') return ['Under water.', 'warn'];
+  if (s === 'mending') return [S.hz.claims && S.hz.claims.has('e' + e.id) ? 'Flood damage. Wardens are mending it.' : e.mendPaid ? 'Flood damage. Its crew is mending it.' : `Flood damage. Needs ${BUILD[e.type] && BUILD[e.type].bank ? 'stone' : 'planks'} to mend.`, 'warn'];
   if (s === 'dormant') return [`Resting until the weather turns.`, 'idle'];
-  if (s === 'resting') { const it = def.extract ? def.extract.item : Object.keys(def.recipe.out)[0]; return [`Resting, as you asked: the stores hold ${fmt(Math.floor(S.stores[it]))} ${ITEMS[it].name.toLowerCase()}.`, 'idle']; }
+  if (s === 'resting') { const it = def.extract ? def.extract.item : Object.keys(def.recipe.out)[0]; return [`Resting with ${fmt(Math.floor(S.stores[it]))} ${ITEMS[it].name.toLowerCase()} in store.`, 'idle']; }
   return ['Starting up.', 'idle'];
 }
 const chk = (ok, label, right = '') => `<div class="check ${ok === null ? '' : ok ? 'ok' : 'no'}"><span class="m">${ok ? '✓' : ok === false ? '✕' : ''}</span><span>${label}</span><span class="num">${right}</span></div>`;
@@ -10748,38 +10742,38 @@ UI.renderInspect = function (periodic) {
   const done = () => { box.innerHTML = h; box.hidden = false; UI.layout(); };
   if (e.type === 'home' && e.arc) {
     const L = HOMES[e.level]; const cap = e.cap || 0, most = Math.round(HOME_CAP(e.level) * 7 * ARCOLOGY.mult);
-    h += placardHead(e, iconImg('arcology'), escapeHtml(e.arcName), `Arcology, home to ${e.residents} ${L.people}${cord ? ', ' + cord : ''}`) + '<div class="pbody">';
-    if (e.raising < 1) h += `<div class="status amber">Being raised, ${Math.round(e.raising * 100)}% done. The seven households live in it while it goes up.</div>`;
+    h += placardHead(e, iconImg('arcology'), escapeHtml(e.arcName), `Arcology, ${e.residents} ${L.people}`) + '<div class="pbody">';
+    if (e.raising < 1) h += `<div class="status amber">Being raised, ${Math.round(e.raising * 100)}% done.</div>`;
     else if (!e.served) h += `<div class="status warn">Too far from a Commons to be supplied.</div>`;
     else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).join(' and ')}.</div>`;
     else h += `<div class="status">Well supplied.</div>`;
-    h += `<div class="rows"><div class="row"><span>${iconImg('arcology')}</span><span class="meter"><i style="width:${Math.round(e.residents / most * 100)}%"></i></span><span class="num">${e.residents} of ${cap} now, ${most} at most</span></div></div>`;
-    h += `<div class="ph">Needs: each one met makes room for ${Math.round(L.per * 7 * ARCOLOGY.mult)} more</div>`;
+    h += `<div class="rows"><div class="row"><span>${iconImg('arcology')}</span><span class="meter"><i style="width:${Math.round(e.residents / most * 100)}%"></i></span><span class="num">${e.residents} of ${most}</span></div></div>`;
+    h += `<div class="ph" title="Each one met makes room for ${Math.round(L.per * 7 * ARCOLOGY.mult)} more">Needs</div>`;
     for (const k of L.needs) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute');
-    h += `<div class="ph">Comforts: each one adds harmony</div>`; for (const k of L.comforts) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute');
-    h += `<p>${e.raising < 1 ? 'Once it is finished it' : 'It'} keeps its own school, baths, library and concert hall, open to every home within ${ARCOLOGY.cover} hexes, and its gardens make the ground around it pleasant.</p>`;
+    h += `<div class="ph" title="Each one adds harmony">Comforts</div>`; for (const k of L.comforts) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute');
+    h += `<p>Its school, baths, library and concert hall serve every home within ${ARCOLOGY.cover} hexes.</p>`;
     h += facts([['Harmony here', (e.harmony || 0).toFixed(1), 'good']]);
-    h += `<div class="btns"><button class="btn danger" data-a="arcClear">Clear</button></div><div id="arcConfirm" class="confirmline" hidden><span>All of ${escapeHtml(e.arcName)} will come down and everyone in it will leave.</span><button class="btn danger" data-a="arcClearYes">Clear it</button><button class="btn" data-a="arcClearNo">Keep it</button></div>`;
+    h += `<div class="btns"><button class="btn danger" data-a="arcClear">Clear</button></div><div id="arcConfirm" class="confirmline" hidden><span>Everyone in ${escapeHtml(e.arcName)} will leave.</span><button class="btn danger" data-a="arcClearYes">Clear it</button><button class="btn" data-a="arcClearNo">Keep it</button></div>`;
     h += '</div>'; done(); return;
   }
   if (e.type === 'home') {
     const L = HOMES[e.level], nx = HOMES[e.level + 1]; const cap = e.cap || 0;
-    h += placardHead(e, iconImg('home' + e.level), L.name, `Home to ${e.residents} ${L.people}${cord ? ', ' + cord : ''}`) + '<div class="pbody">';
+    h += placardHead(e, iconImg('home' + e.level), L.name, `${e.residents} ${L.people}`) + '<div class="pbody">';
     if (e.built < 1) h += `<div class="status idle">Being built.</div>`;
-    else if (e.flooded) h += `<div class="status warn">Under water. The family is staying with friends on higher ground until it goes down.</div>`;
-    else if (e.wet > 0) h += `<div class="status warn">Damp after the flood, and unhappy until it dries out${S.hz.claims && S.hz.claims.has('e' + e.id) ? '. Wardens are on their way' : ' or the wardens put it right'}.</div>`;
+    else if (e.flooded) h += `<div class="status warn">Under water.</div>`;
+    else if (e.wet > 0) h += `<div class="status warn">Damp after the flood${S.hz.claims && S.hz.claims.has('e' + e.id) ? '. Wardens are on their way' : ''}.</div>`;
     else if (!e.served) h += `<div class="status warn">Too far from a Commons to be supplied.</div>`;
-    else if (e.cold) h += `<div class="status warn">Cold. There is no charcoal or timber in store for the stove.</div>`;
+    else if (e.cold) h += `<div class="status warn">Cold: no charcoal or timber in store.</div>`;
     else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).join(' and ')}.</div>`;
     else h += `<div class="status">Well supplied.</div>`;
     if (!nx && S.techs.has('arcology') && arcRing(e)) {
       const ok = canAfford(ARCOLOGY.cost);
-      h += `<div class="ph">Raise an arcology</div><p>The six Belvederes around this one stand on the same ground. Together they can be raised into one great house with room for half as many people again, and its own school, baths, library and concert hall.</p>${costLine(ARCOLOGY.cost)}<div class="btns" style="margin-top:6px"><button class="btn primary" data-a="raiseArc" ${ok ? '' : 'disabled'}>Raise it</button></div>`;
+      h += `<div class="ph">Raise an arcology</div><p>These seven Belvederes can become one great house, with room for half as many people again.</p>${costLine(ARCOLOGY.cost)}<div class="btns" style="margin-top:6px"><button class="btn primary" data-a="raiseArc" ${ok ? '' : 'disabled'}>Raise it</button></div>`;
     }
-    h += `<div class="rows"><div class="row"><span>${iconImg('home' + e.level)}</span><span class="meter"><i style="width:${Math.round(e.residents / HOME_CAP(e.level) * 100)}%"></i></span><span class="num">${e.residents} of ${cap} now, ${HOME_CAP(e.level)} at most</span></div></div>`;
-    h += `<div class="ph">Needs: each one met makes room for ${L.per} more</div>`;
+    h += `<div class="rows"><div class="row"><span>${iconImg('home' + e.level)}</span><span class="meter"><i style="width:${Math.round(e.residents / HOME_CAP(e.level) * 100)}%"></i></span><span class="num">${e.residents} of ${HOME_CAP(e.level)}</span></div></div>`;
+    h += `<div class="ph" title="Each one met makes room for ${L.per} more">Needs</div>`;
     for (const k of L.needs) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute');
-    if (L.comforts.length) { h += `<div class="ph">Comforts: each one adds harmony</div>`; for (const k of L.comforts) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute'); }
+    if (L.comforts.length) { h += `<div class="ph" title="Each one adds harmony">Comforts</div>`; for (const k of L.comforts) h += chk(!!(e.met && e.met[k]), iconImg(k) + ITEMS[k].name, fmtRate(NEED_RATE[k] * e.residents) + ' a minute'); }
     if (S.season === 3 && !S.second) h += chk(!e.cold, iconImg('charcoal') + 'Warmth from charcoal or timber', 'winter');
     if (L.services.length) { h += `<div class="ph">Nearby</div>`; for (const s of L.services) h += chk(!!S.cover[s][e.tile], 'A ' + SERVICE_NAMES[s]); }
     h += facts([['Harmony here', (e.harmony || 0).toFixed(1), nx && (e.harmony || 0) < nx.harmony ? 'bad' : 'good']]);
@@ -10801,38 +10795,38 @@ UI.renderInspect = function (periodic) {
       if (S.techs.has('arcology')) {
         if (!ring) {
           const n = arcRingCount(e);
-          h += `<div class="ph">An arcology here</div><p>${n} of the six hexes around this Belvedere ${n === 1 ? 'holds a Belvedere' : 'hold Belvederes'} on the same level. With all six, the seven can be raised into one great house.</p>`;
+          h += `<div class="ph">An arcology here</div><p>${n} of the six hexes around it ${n === 1 ? 'holds a Belvedere' : 'hold Belvederes'} on the same level. Six would make an arcology.</p>`;
         }
-      } else if (ring && (techAvailable('arcology') || S.techs.has('observatory'))) h += `<div class="ph">An arcology here</div><p>Seven Belvederes stand in a ring here. Study Arcologies to raise them into one great house.</p>`;
+      } else if (ring && (techAvailable('arcology') || S.techs.has('observatory'))) h += `<div class="ph">An arcology here</div><p>Study Arcologies to raise these seven into one house.</p>`;
       h += `<div class="btns"><button class="btn danger" data-a="remove">Clear</button></div>`;
     }
     h += '</div>'; done(); return;
   }
   const catName = CATS.find((c) => c.id === def.cat).name;
-  h += placardHead(e, iconImg('b_' + e.type), def.name, `${catName}${cord ? ', ' + cord : ''}`) + '<div class="pbody">';
+  h += placardHead(e, iconImg('b_' + e.type), def.name, catName) + '<div class="pbody">';
   if (e.type === 'ropeway') {
     const mate = e.pair ? S.ents.get(e.pair) : null; const far = e.exit ? e : mate; const air = far && far.under ? far.under.length : 0;
     const flowN = Math.round(e.flow || 0), capN = Math.round(ropeSpeed() / ROPE_SPACING * 60);
     if (!mate) h += `<div class="status warn">No rope: its other station is gone.</div>`;
-    else if (e.exit) h += chanStuck(e) ? `<div class="status warn">Backed up: whatever is in front of the spout is not taking goods.</div>` : flowN ? `<div class="status">Bringing down ${flowN} goods a minute.</div>` : `<div class="status idle">${air ? 'Buckets on the way.' : 'Nothing coming over just now.'}</div>`;
-    else h += flowN ? `<div class="status">Sending up ${flowN} goods a minute.</div>` : `<div class="status idle">Waiting for goods. Bring them by channel, from any side.</div>`;
-    h += `<p>${e.exit ? 'The far station. Goods come down off the rope here and leave by its spout, into a channel or straight into the works or store in front of it.' : 'The near station. Goods brought to it by channel, from any side, go up into the buckets and ride the rope to the far station.'}</p>`;
+    else if (e.exit) h += chanStuck(e) ? `<div class="status warn">Backed up.</div>` : flowN ? `<div class="status">Bringing down ${flowN} goods a minute.</div>` : `<div class="status idle">${air ? 'Buckets on the way.' : 'Nothing coming over.'}</div>`;
+    else h += flowN ? `<div class="status">Sending up ${flowN} goods a minute.</div>` : `<div class="status idle">Waiting for goods.</div>`;
+    h += `<p>${e.exit ? 'The far station. Goods leave by its spout.' : 'The near station. Feed it by channel from any side.'}</p>`;
     if (mate) { const a = tileOf(e), b = tileOf(mate); h += facts([['The other end', `${hexDist(a.q, a.r, b.q, b.r)} hexes away`], ['In the buckets now', `${air}`], ['Can carry', `${capN} a minute`], ['Carried so far, valley-wide', fmt(S.flags.roped || 0)]]); }
     h += `<div class="btns">${mate ? '<button class="btn" data-a="ropeOther">The other end</button>' : ''}${e.exit ? `<button class="btn" data-a="rot">Turn the spout${UI.touch ? '' : ' (R)'}</button>` : ''}<button class="btn danger" data-a="remove">Clear both</button></div>`;
     h += '</div>'; done(); return;
   }
   if (isChan(e)) {
     const capN = Math.round(def.speed / SPACING * 60), flowN = Math.round(e.flow || 0);
-    h += chanStuck(e) ? `<div class="status warn">Backed up: whatever is downstream is not taking goods.</div>` : flowN ? `<div class="status">Carrying ${flowN} goods a minute.</div>` : `<div class="status idle">Nothing afloat just now.</div>`;
+    h += chanStuck(e) ? `<div class="status warn">Backed up.</div>` : flowN ? `<div class="status">Carrying ${flowN} goods a minute.</div>` : `<div class="status idle">Nothing afloat.</div>`;
     // a junction leads with where its goods go and how it chooses, since that is what anyone opening it wants to change
     if (e.type === 'junction') {
       h += junctionDials(e);
-      h += `<div class="ph">What it does</div><div class="seg"><button class="${e.mode === 'alt' ? 'on' : ''}" data-a="mode" data-v="alt">Share in turn</button>`;
-      if (S.mods.overflow) h += `<button class="${e.mode === 'over' ? 'on' : ''}" data-a="mode" data-v="over">Spill over</button>`;
-      h += `</div><div class="ph">Or send one good out of the side</div><div class="seg">`;
+      h += `<div class="ph">Mode</div><div class="seg"><button class="${e.mode === 'alt' ? 'on' : ''}" data-a="mode" data-v="alt" title="Goods take turns between the two outlets">Share in turn</button>`;
+      if (S.mods.overflow) h += `<button class="${e.mode === 'over' ? 'on' : ''}" data-a="mode" data-v="over" title="Goods go out of the side only when the yellow outlet is backed up">Spill over</button>`;
+      h += `</div><div class="ph">Sort one good to the side</div><div class="seg">`;
       for (const k of ITEM_ORDER) if (S.made[k] > 0 || S.stores[k] >= 1) h += `<button class="${e.mode === k ? 'on' : ''}" data-a="mode" data-v="${k}" title="Send ${ITEMS[k].name.toLowerCase()} out of the side">${iconImg(k)}</button>`;
-      h += `</div><p>${e.mode === 'alt' ? 'Goods go to the yellow outlet and the side outlet in turn. If one is backed up, everything goes to the other.' : e.mode === 'over' ? 'Goods go out of the yellow outlet. Only when it is backed up do they spill out of the side.' : ITEMS[e.mode].name + ' leave by the side outlet. Everything else goes on through the yellow one.'}</p>`;
-    } else h += `<p>${def.desc}</p>`;
+      h += `</div>`;
+    }
     h += `<span class="meter"><i style="width:${Math.min(100, Math.round(flowN / capN * 100))}%"></i></span>` + facts([['Carrying now', `${flowN} a minute`], ['Can carry', `${capN} a minute`]]);
     const mix = chanMix(e); if (mix.length) h += `<div class="ph">Afloat here</div><div class="costline">${mix.map(([k, n]) => `<span title="${ITEMS[k].name}">${iconImg(k)}${n}</span>`).join('')}</div>`;
     if (e.type === 'culvert') h += facts([[e.exit ? 'Exit' : 'Entrance', e.pair ? 'joined, ' + (e.gap || 0) + ' hexes apart' : 'no partner yet', e.pair ? 'good' : 'bad']]);
@@ -10843,12 +10837,12 @@ UI.renderInspect = function (periodic) {
   if (e.type === 'skyship' && e.done && e.voy) {
     const v = e.voy, V = VOYAGES[v.place];
     if (v.st === 'load') {
-      h += `<div class="status amber">Loading for ${V.place}, voyage ${v.n}.</div><p>${capName(V.who)} at ${V.place} would be glad of these. Bring them to the mast by channel; a Dispatch beside a Commons sends any good out of the stores. The ship sails as soon as the hold is full.</p><div class="rows">`;
+      h += `<div class="status amber">Loading for ${V.place}.</div><p>It sails when the hold is full.</p><div class="rows">`;
       for (const k in v.cargo) h += `<div class="row">${iconImg(k)}<span class="meter"><i style="width:${Math.round(Math.min(1, v.got[k] / v.cargo[k]) * 100)}%"></i></span><span class="num">${v.got[k]} of ${v.cargo[k]} ${lower(ITEMS[k].name)}</span></div>`;
       h += `</div>`;
     } else if (v.st === 'away') {
       const m = Math.max(1, Math.round(v.t / 60));
-      h += `<div class="status">Away over the hills to ${V.place}. Home in about ${m} minute${m > 1 ? 's' : ''}.</div><p>It carried ${Object.keys(v.cargo).map((k) => `${v.cargo[k]} ${ITEM_UNIT[k] || ITEMS[k].name.toLowerCase()}`).join(', ')}.</p>`;
+      h += `<div class="status">Away to ${V.place}, back in about ${m} minute${m > 1 ? 's' : ''}.</div><p>It carried ${Object.keys(v.cargo).map((k) => `${v.cargo[k]} ${ITEM_UNIT[k] || ITEMS[k].name.toLowerCase()}`).join(', ')}.</p>`;
     } else {
       h += `<div class="status good">Home from ${V.place}. Choose one thing to keep.</div><div class="finds">${(v.offer || []).map((id) => `<button data-a="find" data-v="${id}"><b>${FINDS[id].name}</b><span>${FINDS[id].desc}</span></button>`).join('')}</div>`;
     }
@@ -10871,7 +10865,7 @@ UI.renderInspect = function (periodic) {
   }
   if (def.extract || def.recipe || def.dispatch || def.forester) { const [txt, cls] = statusText(e); h += `<div class="status ${cls}">${txt}</div>`; }
   const hz = hazardCard(e, def); if (hz !== null) { h += hz + '</div>'; done(); return; }
-  h += `<p>${def.desc}</p>`;
+  if (!(def.extract || def.recipe || def.gen || def.service || def.lab || def.accepts || def.dispatch || def.forester || def.upkeep)) h += `<p>${def.desc}</p>`;
   const sp = speedOf(e); const rows = [];
   if (def.extract) {
     const ex = def.extract; const n = e.count || 0; const rate = extractRate(e) / typeSpeed(e.type) * speedOf(e);
@@ -10881,7 +10875,7 @@ UI.renderInspect = function (periodic) {
     if (ex.deplete) { const left = nearTiles(tileOf(e), ex).reduce((a, t) => a + Math.max(0, t.amount), 0); rows.push(['Left to take beside it', fmt(Math.round(left))]); }
     if (e.type === 'woodcutter') {
       const t0 = tileOf(e); const lodge = [...S.ents.values()].some((o) => o.type === 'forester' && hexDist(tileOf(o).q, tileOf(o).r, t0.q, t0.r) <= 2);
-      rows.push(["Forester's Lodge nearby", lodge ? 'Yes, the woods are tended' : S.techs.has('forestry') ? 'None within two hexes' : 'Study Forestry to build one', lodge ? 'good' : '']);
+      rows.push(["Forester's Lodge nearby", lodge ? 'Yes' : 'No', lodge ? 'good' : '']);
     }
   }
   if (def.recipe && Object.keys(def.recipe.out).length) {
@@ -10956,42 +10950,37 @@ function hazardCard(e, def) {
   let h = '';
   if (def.bank && !def.chan) {
     const t = tileOf(e); const crest = t.level + def.bank; const next = hzKnownPlan().find((p) => p.kind === 'flood');
-    if (e.flooded) h += `<div class="status warn">Under water: the flood came over the top.</div>`;
-    else if (e.wet > 0) h += `<div class="status warn">Breached by the flood. Water will come through here until it is mended${S.hz.claims && S.hz.claims.has('e' + e.id) ? ', and the wardens are on their way' : ''}.</div>`;
+    if (e.flooded) h += `<div class="status warn">Under water.</div>`;
+    else if (e.wet > 0) h += `<div class="status warn">Breached${S.hz.claims && S.hz.claims.has('e' + e.id) ? '. Wardens are on their way' : ' until it is mended'}.</div>`;
     else h += `<div class="status">Holds a flood back up to the ${ORD[Math.min(5, crest - 1)] || 'top'} terrace.</div>`;
-    h += `<p>${def.desc}</p>`;
     const rows = [['Stands on', `the ${ORD[t.level]} terrace`], ['Holds water up to', `the ${ORD[Math.min(5, crest - 1)]} terrace`]];
     if (next) { const p = floodPredict(next); rows.push([`${reachName(next.reach)}, ${hzWhen(next)}`, p.held.has(e.id) ? 'it will hold' : next.H >= crest ? 'the water will go over it' : 'the water will not reach it', p.held.has(e.id) ? 'good' : next.H >= crest ? 'bad' : '']); }
     h += facts(rows);
-    if (e.type === 'bank' && unlocked('floodwall')) h += `<p>Drag a Floodwall over it to raise it a terrace higher.</p>`;
     h += `<div class="btns"><button class="btn danger" data-a="remove">Clear</button></div>`;
     return h;
   }
   if (def.lodge) {
     const crews = e.crews || []; const out = crews.filter((c) => c.st !== 'home').length; const R = lodgeReach();
-    h += e.flooded ? `<div class="status warn">Under water. The crews will go out when it goes down.</div>` : e.wet > 0 ? `<div class="status warn">Damaged by the flood. Its crews mend it themselves first.</div>` : !crews.length ? `<div class="status warn">No crews: ${e.handsWhy === 'far' ? 'nobody lives near enough to be a warden here' : 'nobody is free to be a warden'}.</div>` : out ? `<div class="status amber">${out} of ${crews.length} crew${crews.length > 1 ? 's are' : ' is'} out.</div>` : `<div class="status">The crews are in, waiting.</div>`;
-    h += `<p>${def.desc}</p>`;
+    h += e.flooded ? `<div class="status warn">Under water.</div>` : e.wet > 0 ? `<div class="status warn">Flood damage. Its crews mend it first.</div>` : !crews.length ? `<div class="status warn">No crews: ${e.handsWhy === 'far' ? 'nobody lives near enough to be a warden here' : 'nobody is free to be a warden'}.</div>` : out ? `<div class="status amber">${out} of ${crews.length} crew${crews.length > 1 ? 's are' : ' is'} out.</div>` : `<div class="status">The crews are in, waiting.</div>`;
     if (crews.length) h += `<div class="ph">The crews</div>` + crews.map((c, i) => `<div class="check"><span class="m">${i + 1}</span><span>${crewDoing(c)}</span><span class="num"></span></div>`).join('');
     h += facts([['Goes out to', `${R} hexes, ${R * 2} when called`], ['Crews', `${crews.length} of ${def.lodge.crews}, one for each warden`], ['Cured so far, valley-wide', `${S.hz.cured} field${S.hz.cured === 1 ? '' : 's'}`], ['Mended so far', `${S.hz.mended}`]]);
-    h += `<p>Fields they walk spread blight more slowly. Press L over any hex, or use the button, to call every crew in reach to it.</p>`;
+    h += `<p>Fields they walk resist blight.</p>`;
     h += `<div class="btns"><button class="btn primary" data-a="callTool">Call the wardens to…</button><button class="btn" data-a="toggle">${e.enabled ? 'Pause' : 'Resume'}</button>${canMove(e) ? '<button class="btn" data-a="move">Move</button>' : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
     return h;
   }
   if (def.station) {
     const on = e.enabled && workEff(e) >= 0.5; const known = hzKnownPlan();
-    h += on ? `<div class="status">Watching the sky. Floods and dry summers are seen two days ahead.</div>` : `<div class="status warn">${e.enabled ? 'Nobody is keeping the gauges' : 'Paused'}, so the valley sees only a few hours ahead.</div>`;
-    h += `<p>${def.desc}</p>`;
+    h += on ? `<div class="status">Seeing two days ahead.</div>` : `<div class="status warn">${e.enabled ? 'Nobody is keeping the gauges' : 'Paused'}, so the valley sees only a few hours ahead.</div>`;
     h += `<div class="ph">The forecast</div>` + (known.length ? known.map((ev) => `<div class="check"><span class="m"></span><span>${ev.kind === 'flood' ? `${reachName(ev.reach)} floods, up to the ${ORD[ev.H]} terrace` : 'A dry summer'}</span><span class="num">${hzWhen(ev)}</span></div>`).join('') : `<p>Fair weather as far as it can see.</p>`);
     const K = rainKitesState();
-    if (S.mods.rain) h += `<div class="ph">Rain kites</div><p>${K ? (K.done ? 'The kites have gone up for this summer.' : `Flying ${HZ.KITE_COST.kites} kites with smoking tails into the clouds blunts a dry summer by two thirds.`) : 'For a dry summer, when one comes.'}</p>${costLine(HZ.KITE_COST)}${K && !K.done ? `<div class="btns" style="margin-top:6px"><button class="btn primary" data-a="kites" ${K.can ? '' : 'disabled'}>Send up the rain kites</button></div>` : ''}`;
-    else if (techAvailable('rainmaking') || S.techs.has('film')) h += `<p>Study Rainmaking to fly rain kites from here in a dry summer.</p>`;
+    if (S.mods.rain) h += `<div class="ph">Rain kites</div><p>${K ? (K.done ? 'Flown this summer.' : 'They blunt a dry summer by two thirds.') : 'For a dry summer.'}</p>${costLine(HZ.KITE_COST)}${K && !K.done ? `<div class="btns" style="margin-top:6px"><button class="btn primary" data-a="kites" ${K.can ? '' : 'disabled'}>Send up the rain kites</button></div>` : ''}`;
+    else if (techAvailable('rainmaking') || S.techs.has('film')) h += `<p>Study Rainmaking for rain kites.</p>`;
     h += `<div class="btns"><button class="btn" data-a="toggle">${e.enabled ? 'Pause' : 'Resume'}</button>${canMove(e) ? '<button class="btn" data-a="move">Move</button>' : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
     return h;
   }
   if (def.cistern) {
     const D = S.hz.dry; const t = tileOf(e); let n = 0; for (const [dq, dr] of hexesWithin(def.cistern.r)) { const m = tileAt(t.q + dq, t.r + dr); if (m && (m.field || (m.ent && isChan(S.ents.get(m.ent))))) n++; }
-    h += !e.enabled ? `<div class="status idle">Paused.</div>` : D <= 0.05 ? `<div class="status">Full, and waiting for a dry summer.</div>` : e.on ? `<div class="status amber">Watering ${n} field${n === 1 ? '' : 's'} and channels nearby, from the stores.</div>` : `<div class="status warn">Dry. The stores have no water to give it.</div>`;
-    h += `<p>${def.desc}</p>`;
+    h += !e.enabled ? `<div class="status idle">Paused.</div>` : D <= 0.05 ? `<div class="status">Full.</div>` : e.on ? `<div class="status amber">Watering ${n} field${n === 1 ? '' : 's'} and channels nearby.</div>` : `<div class="status warn">Dry: no water in store.</div>`;
     h += facts([['Waters', `every field and channel within ${def.cistern.r} hexes`], ['Water from the stores', `${def.cistern.use} a minute, only in a dry summer`], ['Fields and channels in reach', `${n}`]]);
     h += `<div class="btns"><button class="btn" data-a="toggle">${e.enabled ? 'Pause' : 'Resume'}</button>${canMove(e) ? '<button class="btn" data-a="move">Move</button>' : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
     return h;
@@ -10999,7 +10988,7 @@ function hazardCard(e, def) {
   if (def.hedge) {
     const t = tileOf(e); let n = 0; for (let d = 0; d < 6; d++) { const m = nbr(t, d); if (m && m.field) n++; }
     h += n ? `<div class="status">Guarding ${n} field${n === 1 ? '' : 's'} beside it.</div>` : `<div class="status idle">No fields beside it to guard.</div>`;
-    h += `<p>${def.desc}</p>` + facts([['Blight spreads into fields beside it', 'less than half as often', 'good'], ['Harmony nearby', '+0.50', 'good']]);
+    h += facts([['Blight spreads into fields beside it', 'less than half as often', 'good'], ['Harmony nearby', '+0.50', 'good']]);
     h += `<div class="btns">${canMove(e) ? '<button class="btn" data-a="move">Move</button>' : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
     return h;
   }
@@ -11014,11 +11003,11 @@ UI.renderTileCard = function (periodic) {
   if (periodic && sig === UI.inspectSig) return; UI.inspectSig = sig;
   const name = fk === 'field' ? 'Grain field' : fk === 'pasture' ? 'Pasture' : fk === 'orchard' ? 'Orchard' : t.type === 'forest' ? 'Forest' : 'Meadow';
   box.style.setProperty('--k', 'var(--k-weather)');
-  let h = placardHead(null, owner ? iconImg('b_' + owner.type) : iconImg('b_hedgerow'), name, owner ? `Worked by the ${lower(BUILD[owner.type].name)}, by ${reachName(HZR.of[t.i])}` : `By ${reachName(HZR.of[t.i])}`) + '<div class="pbody">';
+  let h = placardHead(null, owner ? iconImg('b_' + owner.type) : iconImg('b_hedgerow'), name, owner ? BUILD[owner.type].name : capName(reachName(HZR.of[t.i]))) + '<div class="pbody">';
   if (t.wet) h += `<div class="status warn">Under water.</div>`;
   else if (fk && t.fallowDay && S.day < t.fallowDay) h += `<div class="status idle">Burnt, and lying fallow until spring.</div>`;
-  else if (t.blight >= HZ.B_SHOW) h += `<div class="status warn">Blighted. It gives nothing, and the blight is spreading to the ${fk === 'orchard' ? 'trees' : 'fields'} beside it.</div>`;
-  else if (t.blight > 0) h += `<div class="status amber">Blight is taking hold here. It will give nothing soon unless it is cured.</div>`;
+  else if (t.blight >= HZ.B_SHOW) h += `<div class="status warn">Blighted, and spreading to the ${fk === 'orchard' ? 'trees' : 'fields'} beside it.</div>`;
+  else if (t.blight > 0) h += `<div class="status amber">Blight is taking hold.</div>`;
   else if (t.siltDay && S.day < t.siltDay) h += `<div class="status">Rich with silt from the flood. It gives ${Math.round((HZ.SILT - 1) * 100)}% more until ${['spring', 'summer', 'autumn', 'winter'][seasonOf(t.siltDay)]}.</div>`;
   else if (fk) h += `<div class="status">Healthy.</div>`;
   const rows = [];
@@ -11034,7 +11023,6 @@ UI.renderTileCard = function (periodic) {
   if (fk && t.blight > 0 && lodges().some((L) => L.crews && L.crews.length)) bt += `<button class="btn primary" data-a="callHere" data-v="${t.i}">Call the wardens</button>`;
   if (fk && !(t.fallowDay && S.day < t.fallowDay)) bt += `<button class="btn ${t.blight > 0 ? 'danger' : ''}" data-a="burn" title="The blight stops here, and the field gives nothing until spring">Burn it</button>`;
   if (bt) h += `<div class="btns">${bt}</div>`;
-  if (fk && t.blight > 0) h += `<p>Burning stops the blight on this hex. The field lies fallow until spring.</p>`;
   h += '</div>';
   box.innerHTML = h; box.hidden = false; UI.layout();
 };
@@ -11088,7 +11076,7 @@ function junctionDials(e) {
     const on = e[which] === x.d, deg = Math.round(x.ang * 180 / Math.PI);
     return `<button class="jd${on ? ' on' : ''}${x.takes ? ' to' : ''}" data-a="${which === 'out' ? 'jOut' : 'jAlt'}" data-v="${x.d}"${x.feeds ? ' disabled title="Goods come in this way"' : ''} aria-pressed="${on}" aria-label="${label}: ${on ? 'points this way' : 'point it this way'}">${arrow(deg)}</button>`;
   }).join('')}</span></div>`;
-  return `<div class="ph">Outlets</div>${row('out', 'Yellow', '#e3b04b')}${row('alt', 'Side', JSIDE_COL(e))}<p class="jnote">The arrows point the way they do on the screen. Dark ones lead to a channel or works, and greyed ones are where goods come in.</p>`;
+  return `<div class="ph">Outlets</div>${row('out', 'Yellow', '#e3b04b')}${row('alt', 'Side', JSIDE_COL(e))}`;
 }
 
 /* ---------- research tree ---------- */
@@ -11128,7 +11116,7 @@ UI.renderTree = function () {
   return `<div class="tree" style="width:${L.W}px;height:${L.H}px">${svg}${nodes}</div>`;
 };
 UI.techCard = function (id) {
-  const t = TECHS[id]; if (!t) return `<p>Choose a topic to study. ${UI.touch ? 'Tap one to start it now.' : 'Click one to start it now, or shift-click to add it to the queue.'} A locked topic queues the topics it needs first.</p>`;
+  const t = TECHS[id]; if (!t) return `<p>${UI.touch ? 'Choose a topic.' : 'Choose a topic. Shift-click to queue one.'}</p>`;
   const st = techState(id);
   let h = `<div><h3>${t.name}${t.repeat ? ' ' + ((S.techLevel[id] || 0) + 1) : ''}</h3><p>${t.desc}</p>`;
   const un = (t.unlocks || []).map((k) => `<div>${iconImg('b_' + k)}<span>${BUILD[k].name}</span></div>`);
@@ -11147,8 +11135,8 @@ UI.techCard = function (id) {
 UI.treeHead = function () {
   const R = S.research;
   let h = `<div class="cur">`;
-  if (R.cur) { const t = TECHS[R.cur]; const u = techUnits(R.cur); h += `${iconImg(techIcon(R.cur))}<div><b>Studying ${t.name}</b><small>${R.prog} of ${u} rounds done, ${(S.labSpeed * LAB_RATE * 60).toFixed(1)} rounds a minute</small></div>`; }
-  else h += `<div><b>Nothing is being studied</b><small>${S.labSpeed > 0 ? 'Your schools are waiting. Pick a topic below.' : 'Build a Schoolhouse to study.'}</small></div>`;
+  if (R.cur) { const t = TECHS[R.cur]; const u = techUnits(R.cur); h += `${iconImg(techIcon(R.cur))}<div><b>Studying ${t.name}</b><small>${R.prog} of ${u}, ${(S.labSpeed * LAB_RATE * 60).toFixed(1)} a minute</small></div>`; }
+  else h += `<div><b>${S.labSpeed > 0 ? 'Nothing being studied' : 'Build a Schoolhouse to study'}</b></div>`;
   h += `</div><div class="queue">${R.queue.length ? 'Then ' + R.queue.map((id) => `<span title="${TECHS[id].name}">${iconImg(techIcon(id))}</span>`).join('') : ''}</div>`;
   return h;
 };
@@ -11201,7 +11189,7 @@ UI.renderLedger = function () {
       for (const s of L.services) { const homes = [...S.ents.values()].filter((e) => e.type === 'home' && e.level === t); const f = homes.length ? homes.filter((e) => S.cover[s][e.tile]).length / homes.length : 0; h += chk(f >= 0.999 ? true : f <= 0 ? false : null, `A ${SERVICE_NAMES[s]} nearby`, Math.round(f * 100) + '%'); }
       h += '</div>';
     }
-    h += `</div><p class="note-small">Anyone can work at a works of their own kind or a simpler one. ${S.handsFree} hands are idle.</p>`;
+    h += `</div><p class="note-small">${S.handsFree} hands idle.</p>`;
     body.innerHTML = h; return;
   }
   const cats = UI.ledgerTab === 'goods' ? ITEM_CATS.map((c) => c.id) : [UI.ledgerTab];
@@ -11216,7 +11204,7 @@ UI.renderLedger = function () {
   }
   h += '</tbody></table></div>';
   if (!rows.length) h += '<p>Nothing made yet.</p>';
-  h += '<p class="note-small">Made counts everything the works produce, wherever it goes. Used counts what works, homes, schools and building take. In the small charts, green is made and red is used.</p>';
+
   body.innerHTML = h;
   for (const c of body.querySelectorAll('canvas[data-k]')) sparkline(c, c.dataset.k);
 };
@@ -11247,7 +11235,7 @@ UI.openModal = function (kind, arg) {
   } else if (kind === 'ledger') {
     h += `<div class="ltabs">${[['goods', 'All goods'], ['raw', 'Gathered'], ['part', 'Parts'], ['good', 'Goods for homes'], ['study', 'Study goods'], ['works', 'Works'], ['people', 'People']].map(([id, nm]) => `<button class="ltab${UI.ledgerTab === id ? ' on' : ''}" data-a="ltab" data-v="${id}">${nm}</button>`).join('')}</div><div id="ledgerBody"></div>`;
   } else if (kind === 'guide') {
-    h += `<div class="tourline"><button class="btn" data-a="tour">Take the quick tour</button><span>Five short steps through the basics, on your own valley.</span></div>
+    h += `<div class="tourline"><button class="btn" data-a="tour">Take the quick tour</button></div>
       <h4 style="margin-top:4px">Homes</h4><p>Press Z and paint land for homes near a Commons. Newcomers build cabins there by themselves when there is work for them, food in store, homes enough already fed, and 6 timber and 2 stone to build with. Each need a home has met makes room for more people. When a home has every need and comfort, the services it wants nearby, enough harmony, and the materials in store, it grows into the next kind of home, once you have studied how.</p>
       <h4>Goods and channels</h4><p>Every works has a yellow spout. Goods come out there into whatever is in front of it: a channel, another works, or a Commons. Press C and drag to lay a line; the water flows the way you drag. Flumes climb one terrace step per hex. Stone and swift channels carry more; drag them over slower ones to upgrade. A junction set onto a line splits it. Its yellow outlet carries the line on and its side outlet turns off for a branch, which you lay by dragging out of the junction. Select a junction to point either outlet another way, or to have it send one good out of the side. Culverts run under anything. Ropeways, once studied, carry goods in hanging buckets straight over water, hills and works, up to twelve hexes: drag from the near station to the far one, feed the near one from any side, and the goods leave the far one by its spout. Storehouses and every Commons take deliveries into the shared stores. A channel carrying two goods into one works can jam, so give each good its own way in.</p>
       <h4>Hands and power</h4><p>About half of everyone works. Each works needs hands of a certain kind of people, and anyone can work at a works of their own kind or a simpler one. People walk up to ${COMMUTE} hexes to work, so a works far from any home stands idle until you mark land for homes nearer to it. Bicycles let them ride further. Newer works also need power from turbines, water wheels or steam engines. When power runs short, the works slow down together.</p>
@@ -11424,13 +11412,13 @@ const TOUR_STEPS = [
       if (!TOUR.replay && GAME.aim && Math.hypot(CAM.tx - GAME.aim.x, CAM.tz - GAME.aim.z) < 0.05) { const c = S.ents.get(S.homeCommons); if (c) { const t = tileOf(c); aimAt(t.x, t.z, CAM.tdist); GAME.aim = { x: CAM.tx, z: CAM.tz }; } }
       TOUR.cam0 = { x: CAM.tx, z: CAM.tz, d: CAM.tdist, yaw: CAM.tyaw };
     },
-    text: () => UI.touch ? 'Drag to look around the valley. Pinch to zoom, and twist two fingers to turn the view.' : 'Drag to look around the valley. Scroll to zoom, and hold the right button as you drag to turn the view.',
+    text: () => UI.touch ? 'Drag to look around. Pinch to zoom, and twist two fingers to turn.' : 'Drag to look around. Scroll to zoom, and drag with the right button to turn.',
     // any deliberate pan, zoom or turn counts: a short drag, two notches of the wheel, a small turn
     done() { const c = TOUR.cam0; return !!c && (Math.hypot(CAM.tx - c.x, CAM.tz - c.z) > c.d * 0.055 || Math.abs(Math.log(CAM.tdist / c.d)) > 0.15 || Math.abs(CAM.tyaw - c.yaw) > 0.25); },
   },
   {
     title: 'Cut timber', hint: 'woodcutter',
-    text: () => `Everything here starts with timber. Choose the Woodcutter in the drawer below, then ${UI.touch ? 'tap' : 'click'} a lit hex beside the forest. The brightest hexes gather the most.`,
+    text: () => `Choose the Woodcutter below, then ${UI.touch ? 'tap' : 'click'} a lit hex beside the forest.`,
     done: () => tourCount('woodcutter') > 0,
     // put the tool away so a stray click does not set down a second one
     after() { if (INPUT.tool && INPUT.tool.kind === 'build' && INPUT.tool.type === 'woodcutter' && !INPUT.drag) setTool(null); },
@@ -11450,15 +11438,15 @@ const TOUR_STEPS = [
       return 'wait';
     },
     text() {
-      if (TOUR.sub !== 'lay') return 'The flume is laid. Watch for the first timber to float down to the Commons.';
-      return `Goods leave every works by its yellow spout and float along channels of water. ${UI.touch ? 'Choose the Flume under Channels' : `Press ${tourKbd('C')} or choose the Flume under Channels`}, then drag from the woodcutter to the Commons, the big house in the middle.`;
+      if (TOUR.sub !== 'lay') return 'Watch for the first timber to reach the Commons.';
+      return `Goods leave a works by its yellow spout. ${UI.touch ? 'Choose the Flume under Channels' : `Press ${tourKbd('C')} or choose the Flume under Channels`} and drag from the woodcutter to the Commons.`;
     },
     aside() {
       const e = S.ents.get(TOUR.stuckE);
-      if (TOUR.sub === 'hands') return e && e.handsWhy === 'far' ? `Nobody lives near enough to work the woodcutter. People walk up to ${commuteRadius()} hexes to work, so move it nearer the cabins${UI.touch ? '' : ` with ${tourKbd('M')}`}, or mark land for homes beside it.` : 'Everyone who could work the woodcutter is busy elsewhere. It will start when someone is free.';
+      if (TOUR.sub === 'hands') return e && e.handsWhy === 'far' ? `Nobody lives near enough to work it. Move it nearer the cabins${UI.touch ? '' : ` (${tourKbd('M')})`}, or mark land beside it.` : 'Everyone is busy. It starts when someone is free.';
       if (TOUR.sub !== 'stuck') return '';
-      if (e && e.status === 'full') return 'The woodcutter’s spout is blocked, so the flume is not reaching the Commons. It has to end right beside the Commons.';
-      return 'If nothing arrives, check that the flume starts at the woodcutter’s yellow spout and ends right beside the Commons.';
+      if (e && e.status === 'full') return 'The spout is blocked. The flume has to end beside the Commons.';
+      return 'Check that the flume starts at the yellow spout and ends beside the Commons.';
     },
     done: () => S.delivered.timber > 0,
     // the tour has taught the flume, so the one-time reminder after the first works is not needed
@@ -11473,13 +11461,13 @@ const TOUR_STEPS = [
   {
     title: 'Mark land for homes', hint: 'zone',
     begin() { TOUR.z0 = tourZoned(); },
-    text: () => `Newcomers need somewhere to live. ${UI.touch ? 'Choose Homes under Homes &amp; Commons' : `Press ${tourKbd('Z')} or choose Homes under Homes &amp; Commons`}, then drag across open meadow near the Commons. People build cabins there by themselves.`,
+    text: () => `Newcomers need land. ${UI.touch ? 'Choose Homes under Homes &amp; Commons' : `Press ${tourKbd('Z')} or choose Homes under Homes &amp; Commons`} and drag across meadow near the Commons.`,
     done: () => tourZoned() >= TOUR.z0 + 3,
     pins() { const c = tourCommonsPin(); return c ? [c] : []; },
   },
   {
     title: 'Over to you', coach: true,
-    text: (mini) => `That covers the basics. ${mini ? 'Tap Show goals below to see' : 'The goals below say'} what to do next, with a hint under each, and the stores along the top show what you have. In this first chapter, a pulsing button in the drawer points at a good next build.`,
+    text: (mini) => `That’s the basics. ${mini ? 'Tap Show goals below for' : 'The goals below say'} what to do next.`,
   },
 ];
 
@@ -11508,7 +11496,7 @@ function tourEnd(finished) {
   TOUR.on = false; tourSave('done'); tourCoach(false); tourLayout(false); TOUR.pinPts = [];
   for (const el of TOUR.pins) el.remove(); TOUR.pins = [];
   tourRender(); tourApplyHint();
-  if (!finished) toast('The tour is in the menu under How to play, whenever you want it again.', '');
+  if (!finished) toast('Tour skipped. It’s under How to play.', '');
 }
 // what the drawer should pulse: this step's tool, or the usual first-step hint when the step has none
 function tourHint() { const st = TOUR_STEPS[TOUR.i]; if (TOUR.ok) return null; return st.hint !== undefined ? st.hint : firstStepHint(); }
@@ -12142,8 +12130,8 @@ function wireEvents() {
   EV.on('keepsake', (k) => { toast(`${KEEPSAKES[k].name} came back with the carrier. ${KEEPSAKES[k].desc}`, 'good'); });
   EV.on('fair', (grade) => { UI.happenSig = ''; UI.renderHappen(); toast(['The fair was a quiet one this year.', 'The fair is on, short of a few things.', 'The fair is on. Every home will be happier for a year.'][grade], grade ? 'good' : 'warn'); AUDIO.festival(grade); });
   EV.on('arcProgress', (e) => { const v = VIEW.ents.get(e.id); if (v) updateBuildRange(e, v); if (Math.random() < 0.35) { const t = tileOf(e); const a = Math.random() * TAU, r = Math.random() * 1.8; puff(t.x + Math.cos(a) * r, groundY(t) + 0.3 + Math.random(), t.z + Math.sin(a) * r, 8, 0xd8ccb0, 0.8); } });
-  EV.on('arcRaise', (e) => { AUDIO.sfx('grow'); toast(`Raising ${e.arcName}. Seven households have moved in together while it goes up.`, 'good'); });
-  EV.on('arcDone', (e) => { const t = tileOf(e); AUDIO.chapter(); sparkle(t.x, groundY(t) + 2.6, t.z, '#ffe08a', 40); toast(`${e.arcName} is finished. It keeps its own school, baths, library and concert hall, open to the homes around it.`, 'good'); if (!S.flags.arcShown && GAME.mode === 'play' && !CAM.cinematic && !TOUR.on && !UI.modalOpen()) arcShowcase(e); });
+  EV.on('arcRaise', (e) => { AUDIO.sfx('grow'); toast(`Raising ${e.arcName}.`, 'good'); });
+  EV.on('arcDone', (e) => { const t = tileOf(e); AUDIO.chapter(); sparkle(t.x, groundY(t) + 2.6, t.z, '#ffe08a', 40); toast(`${e.arcName} is finished.`, 'good'); if (!S.flags.arcShown && GAME.mode === 'play' && !CAM.cinematic && !TOUR.on && !UI.modalOpen()) arcShowcase(e); });
   EV.on('greatProgress', (e) => { const v = VIEW.ents.get(e.id); if (v && v.key !== modelKey(e)) refreshEntityView(e); else if (v) updateBuildRange(e, v); });
   EV.on('greatDone', (e) => {
     refreshEntityView(e); AUDIO.chapter();
@@ -12170,7 +12158,7 @@ function wireEvents() {
   EV.on('story', (line) => toast(line, 'story'));
   EV.on('season', () => { applySeasonVisuals(false); WEATHER.timer = Math.min(WEATHER.timer, 8); markBanks(); });
   // the weather: floods, blight, dry summers and the wardens who meet them
-  EV.on('forecast', (ev) => { UI.skySig = ''; markHazardOverlay(); if (ev.kind === 'flood') { toast(`${reachName(ev.reach)} will flood ${hzWhen(ev)}. The Hazards map (K) shows where the water will go.`, 'warn'); AUDIO.sfx('letter'); } else toast(`A dry summer is forecast, beginning ${hzWhen(ev)}. Windpumps and fields will give less, and channels will run slower.`, 'warn'); });
+  EV.on('forecast', (ev) => { UI.skySig = ''; markHazardOverlay(); if (ev.kind === 'flood') { toast(`${capName(reachName(ev.reach))} will flood ${hzWhen(ev)}.`, 'warn'); AUDIO.sfx('letter'); } else toast(`A dry summer begins ${hzWhen(ev)}.`, 'warn'); });
   EV.on('flood', (F) => { UI.skySig = ''; markHazardOverlay(); toast(`The river is over its banks at ${reachName(F.reach)}.`, 'warn'); AUDIO.sfx('flood'); });
   EV.on('floodTile', (t) => { refreshTile(t); });
   EV.on('dryTile', (t) => { refreshTile(t); });
@@ -12182,7 +12170,7 @@ function wireEvents() {
   EV.on('burn', (t) => { HZV.fires.push({ i: t.i, t: 0 }); AUDIO.sfx('remove'); markHazardOverlay(); });
   EV.on('mended', (e) => { const t = tileOf(e); sparkle(t.x, groundY(t) + 0.4, t.z, '#ffe08a', 6); });
   EV.on('drought', () => { UI.skySig = ''; });
-  EV.on('call', (t, n) => { AUDIO.sfx(n ? 'bell' : 'deny'); toast(n ? `Wardens are on their way to ${reachName(HZR.of[t.i])}.` : `No wardens can reach there. A Warden's Lodge sends crews ${lodgeReach()} hexes out, and twice that when called.`, n ? '' : 'warn'); });
+  EV.on('call', (t, n) => { AUDIO.sfx(n ? 'bell' : 'deny'); toast(n ? `Wardens are on their way to ${reachName(HZR.of[t.i])}.` : 'No wardens can reach there.', n ? '' : 'warn'); });
   EV.on('rainKites', () => { UI.skySig = ''; const st = [...S.ents.values()].find((e) => e.type === 'station'); if (st) { const t = tileOf(st); for (let i = 0; i < 18; i++) HZV.kites.push({ x: t.x + (Math.random() - 0.5) * 1.5, z: t.z + (Math.random() - 0.5) * 1.5, y0: groundY(t) + 0.8, t: -i * 0.35, ph: Math.random() * 6 }); } HZV.rainUntil = VIEW.time + 140; WEATHER.timer = 0; });
   EV.on('harmony', () => { if (OVER.mode === 'harmony') paintOverlay('harmony'); });
   EV.on('reach', () => { if (OVER.mode === 'reach' || OVER.mode === 'zone') paintOverlay(OVER.mode); });
@@ -12255,6 +12243,8 @@ function beginPlay(skipLeader) {
   const go = () => {
     GAME.mode = 'play'; $('title').hidden = true; $('hud').hidden = false;
     CAM.tx = 0; CAM.tz = 1.2; CAM.tdist = 22; CAM.tyaw = CAM.yaw + 0.25;
+    // what was unlocked before this sitting is not news: only what is learned from here on gets a dot in the drawer
+    for (const k of Object.keys(BUILD)) if (unlocked(k)) UI.seenUnlock[k] = 1;
     UI.palSig = ''; UI.studySig = ''; UI.alertSig = ''; UI.renderTabs(); UI.refreshPalette(); UI.update(); UI.renderGoals(true);
     // start looking at the Commons in the middle of whatever part of the screen the panels leave open
     // (a little further back on a narrow screen, which shows less of the valley across)
@@ -12290,14 +12280,13 @@ function setAsideSave(src, err) {
   reportError('saved game', err);
 }
 function bindTitle() {
-  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) { const f = document.querySelector('.titlefoot'); if (f) f.textContent = 'Sound on, if you can. Drag to look around, pinch to zoom.'; }
   // in Safari on an iPhone or iPad the browser's own bars take a third of the screen; from the Home Screen the game has all of it
   {
     const ios = /iPhone|iPod|iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const standalone = navigator.standalone === true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     let framed = true; try { framed = window.self !== window.top; } catch (e) { framed = true; }
     const tip = $('titleTip');
-    if (tip && ios && !standalone && !framed && document.querySelector('link[rel="manifest"]')) { tip.textContent = 'To play full screen, tap Share, then Add to Home Screen, and open the game from there.'; tip.hidden = false; }
+    if (tip && ios && !standalone && !framed && document.querySelector('link[rel="manifest"]')) { tip.textContent = 'For full screen, add it to your Home Screen from the Share menu.'; tip.hidden = false; }
   }
   $('townInput').addEventListener('input', (ev) => { S.name = ev.target.value.trim() || 'Fernmere'; });
   $('bBegin').onclick = () => {
