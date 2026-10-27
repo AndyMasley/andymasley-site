@@ -16,6 +16,14 @@ export interface GameEntry {
 
 export const games: GameEntry[] = [
   {
+    title: 'Out of True',
+    href: '/games/out-of-true/',
+    description:
+      'A walk through a watercolor valley of brutalist monuments and small solarpunk towns, piecing together what happened on Survey Night.',
+    searchTerms:
+      'game walking exploration mystery puzzles valley monuments brutalist spomenik concrete survey watercolor forest towns lake play browser',
+  },
+  {
     title: 'Second Summer',
     href: '/games/second-summer/',
     description:
