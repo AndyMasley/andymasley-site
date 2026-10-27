@@ -83,7 +83,7 @@ export function createTerrainMaterial(slab, shared, nlcd) {
     uDetailAmt: shared.uDetailAmt, uTime2: shared.uTime,
     uNight: shared.uNight, uCamDist: shared.uCamDist,
     uAqMode: shared.uAqMode, uAqAlpha: shared.uAqAlpha, uIsoCol: shared.uIsoCol, uIsoAmt: shared.uIsoAmt, uStateLines: shared.uStateLines, uLights: shared.uLights,
-    ...(nlcd ? nlcd.uniformsFor(slab) : { uNlcdArr: { value: null }, uNlcdIdx: { value: null }, uNlcdGrid: { value: new THREE.Vector4() }, uNlcdHas: { value: 0 } }),
+    ...(nlcd ? nlcd.uniformsFor(slab) : { uNlcdArr: { value: null }, uNlcdIdx: { value: null }, uNlcdGrid: { value: new THREE.Vector4() }, uNlcdHas: { value: 0 }, uNlcdIrr: { value: 0 } }),
   };
   const compile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
@@ -137,7 +137,7 @@ float countyAt(vec2 uv) {
         vec4 ctex = texture2D(uColorTex, vColorUv);
         float lakeW = 1.0 - smoothstep(0.12, 0.38, ctex.a);
         vec3 alb = ctex.rgb;
-        float devI = 0.0, clsC = -1.0, isoV = -1.0, stLine = 0.0;
+        float devI = 0.0, clsC = -1.0, irrC = -1.0, isoV = -1.0, stLine = 0.0;
         float pxw = length(fwidth(vWorldPos.xz));
         if (uHasCounty > 0.5 && ctex.a > 0.62) {
           vec4 land = texture2D(uLand, vColorUv);
@@ -149,14 +149,14 @@ float countyAt(vec2 uv) {
             vec2 t3 = vColorUv * uTexSize * uNlcdGrid.z;
             vec2 wq = vWorldPos.xz * 31.0;
             vec2 wob = (vec2(dnoise(wq), dnoise(wq + 17.3)) - 0.5) * 0.55 + (vec2(dnoise(wq * 3.1 + 3.1), dnoise(wq * 3.1 + 9.4)) - 0.5) * 0.30;
-            clsC = nlcdSmooth(t3, wob);
+            clsC = nlcdSmooth(t3, wob, irrC);
             if (clsC > 0.5) {
               devI = mix(devI, nlcdDev(clsC), uDetailAmt);
               if (int(clsC) == 1) lakeW = max(lakeW, uDetailAmt);
               if (int(clsC) == 20) lakeW = max(lakeW, uDetailAmt * 0.8 * smoothstep(0.58, 0.72, dnoise(vWorldPos.xz * 190.0)));
             }
           }
-          alb = groundDetail(alb, vWorldPos.xz, land, cdat, uDetailAmt, pxw, clsC);
+          alb = groundDetail(alb, vWorldPos.xz, land, cdat, uDetailAmt, pxw, clsC, irrC);
           if (cidD >= 0.0) {
             vec4 cv = choroAt(cidD);
             if (uChoroMode > 2.5) {

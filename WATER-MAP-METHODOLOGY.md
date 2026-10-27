@@ -6,7 +6,7 @@ sources" section is the short version; the corrections the map has had are liste
 
 If you find an error, email AndyMasley@gmail.com.
 
-Last updated: 2026-10-26.
+Last updated: 2026-10-27.
 
 ---
 
@@ -49,6 +49,9 @@ estimated it for in 2015.
 | Los Angeles Aqueduct supply | LADWP, Water Supply in Acre Feet (data.lacity.org), fiscal 2014–15 | Its water for Los Angeles, drawn from the Owens River intake |
 | Dams | National Inventory of Dams, October 2026 | 92,693 dams |
 | Land cover | NLCD (MRLC): 2021 lower 48, 2016 Alaska, 2001 Hawaii and Puerto Rico | Land color, city lights, painted fields |
+| Irrigated land, 2015 | LANID, the Landsat-based Irrigation Dataset (Xie, Gibbs and Lark, 2021, Earth System Science Data 13: 5689–5710), data version 3, Zenodo doi 10.5281/zenodo.5548555 | Where the lower 48 was irrigated, the fields crop water ends on, and each county's irrigated acreage seen from space (section 13) |
+| Permitted dischargers | EPA ECHO data downloads, October 25, 2026: ICIS-NPDES Discharge Points (`npdes_outfalls_layer.zip`) and the ECHO Exporter (`echo_exporter.zip`) | Factories, mines, fish farms and farms with an individual discharge permit (section 14) |
+| Public water systems | Buchwald and others (2022), Public-supply water service areas within the conterminous United States, 2017, USGS data release doi 10.5066/P9I22Z24 (`WSA_v1`) | The public water systems listed for each county (section 15) |
 | Terrain | NOAA ETOPO 2022, 15 arc-seconds | Relief, exaggerated 24 times for the whole country, about 2 times up close |
 
 ## 3. Modeling choices
@@ -58,8 +61,11 @@ estimated it for in 2015.
 
 **Where flows start and end.** USGS gives each county's water by source (surface or ground, fresh or saline), not by
 river or well. Inside a county the map places surface intakes on its largest rivers or lakeshores, or on its mapped
-canals; wells beneath the land they serve; irrigation on cropland; golf on mapped golf courses; utilities through a
-mapped treatment plant into developed land; and power plants at their reported coordinates. Water for fields runs from
+canals; wells beneath the land they serve; irrigation on the fields LANID mapped as irrigated in 2015 (section 13), or
+on cropland in Alaska, Hawaii, Puerto Rico and counties with less than a square kilometer of it; golf on mapped golf
+courses; utilities through a mapped treatment plant into developed land; industry, mining and fish farms at the
+county's largest facilities with an EPA discharge permit (section 14), or in developed land (industry) and across the
+county (mining) where it has none; and power plants at their reported coordinates. Water for fields runs from
 each intake to a canal head and branches from there; water returned from fields gathers on its way to the nearest river.
 The volumes and shares are the estimates; the paths illustrate them.
 
@@ -228,7 +234,8 @@ disagrees with the data it comes from: the national total, the shares in the led
 exaggeration, the systems moved between counties, Imperial County's irrigation against Reclamation, every canal flow's
 unit conversion, the data center conversions, the discs' count, Konikow's High Plains depletion, the trends chart,
 the High Plains water levels against the map's grid, the strain index, the five-year history against the trends table,
-the ZIP lookup and the common questions. `src/lib/__tests__/water-map-drop.test.ts` checks Follow a drop (section 12).
+the ZIP lookup, the common questions, and the counts of permitted facilities and water systems the page gives
+(sections 14 and 15). `src/lib/__tests__/water-map-drop.test.ts` checks Follow a drop (section 12).
 
 `scripts/water-map/check_plants.mjs` lists every plant the map credits with more than ten times its own plant-model
 estimate. On 2026-10-26 it lists 22, nine of them above 50 Mgal/d: W A Parish (TX), Gerald Gentleman (NE), Stryker
@@ -392,8 +399,88 @@ of 1,000 drops: more than 95 percent entering the Hudson at Albany reach the Atl
 Pittsburgh reach the Gulf of Mexico, and entering the Saint Louis River at Duluth cross into Canada through the Great
 Lakes; more than 95 percent entering the Arkansas at Pueblo are taken out of a river and more than 60 percent are used
 up by crops; and more than half entering the Colorado at Grand Junction are used up by crops and fewer than 30 percent
-cross into Mexico. On 2026-10-26 those were 99.7, 99.3, 99.5, 100, 80.5, 62.0 and 18.3 percent. The last is more than the
-river's water does, for the reasons in section 11. The checks also hold the page's shares and its list of diversions to
+cross into Mexico. On 2026-10-27 those were 99.9, 99.1, 99.5, 100, 84.9, 55.6 and 24.2 percent (on 2026-10-26, before
+crop water moved onto the LANID fields, 99.7, 99.3, 99.5, 100, 80.5, 62.0 and 18.3). The last is more than the river's
+water does, for the reasons in section 11. It rose because the fields of counties such as Garfield and Grand in Utah now
+take their water from the rivers nearest them (the Sevier, for Garfield's) rather than the Colorado, so the Colorado
+loses less above Yuma and its last intakes take a smaller share of what reaches them. The checks also hold the page's shares and its list of diversions to
 `DROP_CONSUMED` and `DROP_DIVERSIONS`, every diversion to its measured volume, the State Water Project's weights to the
 Table A amounts and the Delta-Mendota Canal's to Reclamation's two tables, and check that each diversion's water all
 goes somewhere along its canals.
+
+## 13. Irrigated land
+
+LANID maps every 30-meter pixel of the lower 48 as irrigated or not for each year from 1997 to 2017, from Landsat
+images and environmental variables (Xie, Gibbs and Lark, 2021). The map uses 2015.
+
+1. `scripts/water-map/lanid_reduce.py`, run where the raster was downloaded (`lanid2015.tif`, 234,969,120 bytes,
+   sha256 `82123a5ca9c64b16bf0c0fb9b387744ad18d5772c37d3b7552f59f9d6fd47756`; 153,710 by 95,127 pixels in EPSG:5070),
+   counts the irrigated pixels (value 1; 0 is not irrigated and 255 is outside the mapped area) in blocks of 8 by 8,
+   240-meter cells. 274,138,269 pixels were irrigated in 2015, 246,724 km² or 61.0 million acres. USGS's county figures
+   give 63.5 million irrigated acres for crops and golf courses in 2015 (63.3 million in the lower 48).
+2. `scripts/water-map/bake_lanid.py` resamples the 240-meter counts onto the map's close-up grid (about 262 m), each
+   pixel the average of four points mapped back through the map's projection and interpolated between cells, and sums
+   the counts by county (each cell in the county under its middle, or the nearest county pixel within three texels).
+   The county sums correlate with the USGS irrigated acreage at 0.78 (on logarithms); the largest counties agree
+   (Fresno, Kern, Tulare), and a few differ widely (Mississippi County, Arkansas: 1,356 km² in LANID, 104 in USGS).
+3. The land texture's irrigated channel is LANID's fraction of each texel (about 786 m), in place of each county's
+   acreage spread over its flat cropland, which Alaska, Hawaii and Puerto Rico keep. It tints irrigated land greener
+   at every distance.
+4. The close-up class sheets carry LANID's fraction of each ~262 m pixel in eighths, in the top three bits of each byte
+   (`scripts/water-map/bake_nlcd.py`; the manifest says `irr: 7`). Up close the painted fields are irrigated where
+   LANID says: each quarter section is irrigated with the chance LANID gives its middle, by the county's mix of
+   sprinklers, drip and flooding. The pivots and rows are still illustrative.
+5. In the 1,903 counties with at least a square kilometer of LANID irrigation, crop water ends at up to 14 points drawn on
+   its irrigated pixels, weighted by their fraction (`irr` anchors in `scripts/water-map/bake_flows.py`, drawn with
+   their own random generator so the older anchor sets did not change). The county panel gives LANID's acreage beside
+   USGS's, rounded to 100 acres, and the tooltip up close says when the land under the pointer was irrigated in 2015.
+
+## 14. Permitted facilities
+
+EPA's ICIS-NPDES Discharge Points file (`npdes_outfalls_layer.csv`, 384,936,069 bytes, sha256
+`21c2fbe0fe0cc91adaa6558f540bd05a7e3d4acefef1d355950c27661f16d5af`, downloaded October 25, 2026) lists 866,296
+facility and outfall rows. `scripts/water-map/npdes_extract.py` keeps the 39,352 individual permits (type NPD) that
+are Effective or Administratively Continued, and of those the 9,231 whose SIC codes include manufacturing (20 to 39),
+mining with oil and gas (10 to 14), aquaculture (0273, 0921) or farming (01 and 02), or, with no SIC code, whose NAICS
+code is one of these; the lowest such code decides the kind. 138 of them have no usable location. Sewage plants, water utilities, power plants (already
+on the map) and other businesses are left out, as are the many facilities on general permits, which are mostly
+stormwater. `scripts/water-map/npdes_join.py` adds each facility's registry id from the ECHO Exporter
+(`ECHO_EXPORTER.csv`, 2,152,482,053 bytes, sha256 `688c2c172b7873249e951f49f27fe4300dcff41208532dcc6746be5d98c1b884`)
+for the link to EPA's Detailed Facility Report. All the other 9,093 matched.
+
+`scripts/water-map/bake_npdes.py` places each at its Facility coordinates (or its first external outfall), in the
+county its permit names when that county is within 20 km (635 facilities; USGS counts a plant's water where the plant
+is, and a point near a county line can fall on the wrong side), otherwise in the county under the point. 22 fall on
+no county. That leaves 9,071 on the map: 4,543 factories, 3,856 mining sites, 189 fish farms and hatcheries and 483
+farms, nearly all livestock operations. Names are put in ordinary case by `scripts/water-map/names.py`.
+
+The permit's design flow, recorded for 1,605 of them, is what the facility was built to discharge, and the panel says
+so. Five are flagged as more than ten times all the water USGS counted for their county in 2015, probably recorded in
+the wrong units or at the wrong place: Buford Trout Hatchery (6,033,000 Mgal/d), Fuji Vegetable Oil (125,000), the
+Northern Nevada Correctional Center (3,200), a Domtar paper mill whose coordinates fall in Hyde County, North Carolina,
+about 45 km from Plymouth, and Covia's Ottawa sand plant in Minnesota. Their panels give the figure with that warning.
+
+Each county's industrial water ends at up to eight of its permitted factories, its mining water at up to eight of its
+mining sites and its fish farm water at up to eight of its fish farms, the largest design flows first, then major
+permits, then by permit number (`ind`, `mine` and `fish` anchors; 1,395, 823 and 151 counties have them). Counties
+without them keep the old places: developed land for industry, the county's land for mining, its rivers for fish
+farms. Livestock water stays on the county's farmland, since the permitted farms are a small and uneven share of the
+country's livestock. USGS gives no figure for any one facility, so a facility's panel shows its county's water for
+the use.
+
+## 15. Public water systems
+
+The USGS water service areas (`WSA_v1.shp`, 315,971,108 bytes, sha256
+`641d1f0702ef107cffd2851dff7f39539504c3ef6d44d2ab7b07ee244cdbc5db`; `WSA_v1.dbf`, sha256
+`d80b53f1071d3f325895bb05a4b3a0821c4ae04ebf463a7b01a1871aec6ef8b6`) are the areas served by 18,806 community water
+systems that ran their own intakes or wells in the lower 48 between 2010 and 2020, each with the population it serves
+(`TPOPSRV`). A wholesaler's area includes the systems it sells to, so the Metropolitan Water District of Southern
+California's covers 11.4 million people. `scripts/water-map/wsa_samples.py`, run where the shapefile was downloaded,
+rasterizes each area on a grid of 256 cells along its longer side and keeps up to 64 points spread evenly over it.
+`scripts/water-map/bake_wsa.py` finds each point's county and weights it by how built up the land under it is (NLCD
+developed intensity, plus 0.02), so that an island or farmland at the edge of a service area counts for little. A
+county's panel lists up to six systems with the most people served there by that measure (population times the
+system's weighted share in the county), among systems with at least a tenth of their weight in it or more than 20,000
+people by the measure. 3,044 of the 3,108 counties of the lower 48 list at least one. The figure shown is everyone the
+system serves, and the panel says when a system also serves other counties.
+

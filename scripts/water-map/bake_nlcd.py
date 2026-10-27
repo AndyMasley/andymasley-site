@@ -7,7 +7,9 @@ Outputs (proc/nlcd, proc/web):
                        forest, water, wet, valid
   <slab>_color.webp    colour texture re-graded with NLCD albedo on US land (relief shading kept); NLCD open
                        water joins the lake channel (alpha)
-  nlcd/<slab>_<sx>_<sy>.png + nlcd/manifest.json   3x class sheets (2048 px = 4x4 tiles of 512) for close-up views
+  nlcd/<slab>_<sx>_<sy>.png + nlcd/manifest.json   3x class sheets (2048 px = 4x4 tiles of 512) for close-up views.
+                       On the lower 48 each byte also carries LANID's irrigated fraction of the pixel in 2015
+                       (bake_lanid.py) in its top three bits: class + 32 * round(7 * fraction); the manifest says irr: 7
 """
 import json, os, sys, numpy as np
 from PIL import Image
@@ -140,9 +142,13 @@ def mode3(a):
     best_k[a == 0] = 0
     return best_k
 
+LANID3 = '/home/claude/w2/proc/lanid/conus_irr3.npy'
+
 def write_sheets(slab, cls3=None):
     if cls3 is None: cls3 = np.load(f'{OUT}/{slab}_cls3.npy')
     H3, W3 = cls3.shape
+    irr3 = np.load(LANID3, mmap_mode='r') if slab == 'conus' and os.path.exists(LANID3) else None
+    if irr3 is not None: assert irr3.shape == cls3.shape
     filt = np.zeros_like(cls3)
     for j0 in range(0, H3, 2048):
         a0, a1 = max(0, j0 - 1), min(H3, j0 + 2049)
@@ -157,6 +163,9 @@ def write_sheets(slab, cls3=None):
         for sx in range(nsx):
             a = np.zeros((T, T), np.uint8)
             part = filt[sy * T:(sy + 1) * T, sx * T:(sx + 1) * T]
+            if irr3 is not None:
+                lv = np.round(np.asarray(irr3[sy * T:(sy + 1) * T, sx * T:(sx + 1) * T], np.float32) * (7 / 255)).astype(np.uint8)
+                part = np.where(part > 0, part | (lv << 5), 0).astype(np.uint8)
             a[:part.shape[0], :part.shape[1]] = part
             if not a.any(): continue
             flags = [ty * PER + tx for ty in range(PER) for tx in range(PER) if a[ty * TILE:(ty + 1) * TILE, tx * TILE:(tx + 1) * TILE].any()]
@@ -164,7 +173,9 @@ def write_sheets(slab, cls3=None):
             sheets.append(dict(sx=sx, sy=sy, tiles=flags))
     size = sum(os.path.getsize(f'{SHEETS}/{slab}_{q["sx"]}_{q["sy"]}.webp') for q in sheets)
     print(slab, 'sheets', len(sheets), 'of', nsx * nsy, 'size', size // 1024, 'KB', flush=True)
-    return dict(w3=W3, h3=H3, tile=TILE, per=PER, nsx=nsx, nsy=nsy, sheets=sheets)
+    out = dict(w3=W3, h3=H3, tile=TILE, per=PER, nsx=nsx, nsy=nsy, sheets=sheets)
+    if irr3 is not None: out['irr'] = 7
+    return out
 
 if __name__ == '__main__':
     man = {'codes': CODES, 'f3': F3}

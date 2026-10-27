@@ -1,12 +1,12 @@
 /**
  * Close-range ground detail for the terrain shader. Up close the land cover comes from NLCD (about 262 m per class
- * pixel on the lower 48, warped along organic boundaries); finer than that the shader paints plausible texture driven
- * by the data: fields in the public-land survey's mile grid, each county's irrigated acreage split by method
- * (center-pivot sprinklers, drip, flood), forest canopy, city blocks. The patterns are illustrative; where they are
- * and how dense they are follows the data.
+ * pixel on the lower 48, warped along organic boundaries), and on the lower 48 the irrigated land from LANID 2015
+ * at the same pixels; finer than that the shader paints plausible texture driven by the data: fields in the
+ * public-land survey's mile grid, irrigated by each county's mix of methods (center-pivot sprinklers, drip, flood),
+ * forest canopy, city blocks. The patterns are illustrative; where they are and how dense they are follows the data.
  */
 export const DETAIL_GLSL = /* glsl */`
-uniform sampler2D uLand;        // r developed intensity, g cropland, b tree cover, a irrigated land (0..1)
+uniform sampler2D uLand;        // r developed intensity, g cropland, b tree cover, a irrigated land (0..1; LANID on the lower 48)
 uniform sampler2D uCountyData;  // per county: r sprinkler share, g drip share, b flood share, a irrigated fraction of land
 uniform vec2 uApex;             // apex of the lower-48 Albers cone: meridians radiate from it
 uniform float uGrid;            // 1 on the lower-48 slab
@@ -32,6 +32,17 @@ vec2 surveyCoords(vec2 p) {
   float th = atan(d.x, d.y);
   return vec2(th * 1580.0, r);
 }
+vec2 surveyToWorld(vec2 q) {
+  if (uGrid < 0.5) return q;
+  float th = q.x / 1580.0;
+  return uApex + q.y * vec2(sin(th), cos(th));
+}
+// LANID's irrigated share of the close-up pixel at a world point (-1 where no tile is loaded): a whole field is
+// irrigated or not by the share at its middle, so no pivot is cut in two
+float irrAtWorld(vec2 p) {
+  vec2 uv = vec2((p.x - uColorMap.x) * uColorMap.z, (p.y - uColorMap.y) * uColorMap.w);
+  return nlcdIrrAt(uv * uTexSize * uNlcdGrid.z);
+}
 const vec3 LUMW = vec3(0.2126, 0.7152, 0.0722);
 // the mix of class colours a colour-texture pixel averages over, estimated from the land weights (for relief shading)
 vec3 landMixAlbedo(vec4 land) {
@@ -40,21 +51,23 @@ vec3 landMixAlbedo(vec4 land) {
   return dev * 1.4 * vec3(0.215, 0.200, 0.180) + crop * vec3(0.220, 0.262, 0.088) + tree * vec3(0.062, 0.115, 0.040) + rest * vec3(0.385, 0.300, 0.150);
 }
 // colour of the ground with small-scale detail; base is the albedo from the colour texture (linear). cls is the NLCD
-// class here (or -1 when no close-up tile is loaded)
-vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw, float cls) {
+// class here (or -1 when no close-up tile is loaded), irrUp LANID's irrigated share here (or -1)
+vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw, float cls, float irrUp) {
   // irrigated land is greener in summer: a tint that shows the irrigated acreage at every zoom
   float irr0 = land.a;
   base = mix(base, base * vec3(0.78, 1.12, 0.62) + vec3(0.0, 0.012, 0.0), clamp(irr0 * 0.55, 0.0, 0.55));
   if (amt <= 0.001) return base;
   // relief shading baked into the colour texture: its brightness relative to the land it averages
   float shadeK = clamp(dot(base, LUMW) / max(1e-3, dot(landMixAlbedo(land), LUMW)), 0.35, 2.4);
+  bool lanid = cls > 0.5 && irrUp >= 0.0;
   if (cls > 0.5) {
     vec3 a = nlcdAlbedo(cls);
     int k = int(cls);
-    float irrHere = (k == 18 || k == 17) ? clamp(irr0 * 1.6, 0.0, 1.0) : 0.0;
+    // (where LANID is loaded, the land it mapped as irrigated; elsewhere the county's irrigated share on its farmland)
+    float irrHere = lanid ? irrUp : (k == 18 || k == 17) ? clamp(irr0 * 1.6, 0.0, 1.0) : 0.0;
     a = mix(a, a * vec3(0.78, 1.15, 0.62) + vec3(0.0, 0.015, 0.0), irrHere * 0.5);
     base = mix(base, a * shadeK, amt);
-    land = vec4(nlcdDev(cls), k == 18 ? 1.0 : k == 17 ? 0.6 : 0.0, (k >= 8 && k <= 10) || k == 19 ? 1.0 : 0.0, irr0);
+    land = vec4(nlcdDev(cls), k == 18 ? 1.0 : k == 17 ? 0.6 : 0.0, (k >= 8 && k <= 10) || k == 19 ? 1.0 : 0.0, lanid ? irrUp : irr0);
   }
   vec2 q = surveyCoords(p);
   const float QS = 0.15667;                 // a quarter section (half a mile) in world units
@@ -65,14 +78,17 @@ vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw,
   // pattern visibility from pixel footprint (avoid shimmer when a field is only a few pixels wide)
   float fieldVis = amt * (1.0 - smoothstep(QS / 7.0, QS / 3.0, pxw));
   // --- farmland: fields of different crops in the mile grid, with section-line roads
-  float farm = clamp(crop * 1.2 + (cls > 0.5 ? 0.0 : irr), 0.0, 1.0) * (1.0 - clamp(urban * 1.6, 0.0, 1.0)) * (1.0 - forest * 0.8);
+  // (irrigated land LANID mapped on pasture or grassland is farmland too)
+  float farm = clamp(crop * 1.2 + (cls > 0.5 ? (lanid ? irr : 0.0) : irr), 0.0, 1.0) * (1.0 - clamp(urban * 1.6, 0.0, 1.0)) * (1.0 - forest * 0.8);
   if (farm > 0.02 && fieldVis > 0.0) {
     bool hay = int(cls) == 17;
     vec3 wheat = vec3(0.42, 0.33, 0.16), green = vec3(0.17, 0.27, 0.08), fallow = vec3(0.30, 0.23, 0.15), hayc = vec3(0.27, 0.30, 0.12);
     vec3 fc = hay ? (h < 0.5 ? hayc : vec3(0.20, 0.27, 0.09)) : (h < 0.3 ? wheat : h < 0.55 ? green : h < 0.75 ? hayc : fallow);
     vec3 fieldCol = mix(base, fc * (0.85 + 0.3 * h2) * shadeK, 0.55);
-    // irrigation by method in this county: pivots (sprinkler), orchards and vineyards (drip), furrows (flood)
-    float pIrr = clamp(irr * 1.15, 0.0, 1.0);
+    // irrigation by method in this county: pivots (sprinkler), orchards and vineyards (drip), furrows (flood). With
+    // LANID loaded, a field is irrigated with the chance LANID gives the middle of it
+    float irrCell = lanid ? irrAtWorld(surveyToWorld((cell + 0.5) * QS)) : -1.0;
+    float pIrr = irrCell >= 0.0 ? irrCell : clamp(irr * 1.15, 0.0, 1.0);
     float r = dh12(cell + 3.7);
     float tot = max(1e-3, cdat.r + cdat.g + cdat.b);
     if (r < pIrr) {

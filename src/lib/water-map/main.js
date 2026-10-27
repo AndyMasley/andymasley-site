@@ -17,7 +17,7 @@ import { FlowParticles, srcKey, markerPx, srcDotPx } from './flow/particles.js';
 import { CountyOutline } from './world/outline.js';
 import { PlantLayer, DamLayer } from './net/plants.js';
 import { Aqueducts } from './net/aqueducts.js';
-import { loadDams, loadOsm, plantDots, OSM_KINDS, OSM_LABEL } from './net/infra.js';
+import { loadDams, loadOsm, loadFacilities, plantDots, OSM_KINDS, OSM_LABEL, FAC_KINDS, FAC_CAT, facCat, facLabel } from './net/infra.js';
 import { AQ_FLOWS, AQ_CITY, DATA_CENTERS } from './core/flows_data.js';
 import { projectLower48 } from './core/proj.js';
 import { Hud, srcName, plantClass, withThe } from './ui/hud.js';
@@ -533,13 +533,13 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   const wTarget = new Float32Array(CAT_KEYS.length).fill(1);   // flows ease toward these emphasis weights
   const iso = { target: 0, pending: false };                     // the isolated use's tint fades in and out
   const looks = { night: 0, aq: 0, wl: 0 };
-  const layerOn = { nid: true, infra: true, towers: false, golf: false, dc: false, flows: true, plants: true, rivers: true, labels: true };
+  const layerOn = { nid: true, infra: true, towers: false, golf: false, dc: false, fac: true, flows: true, plants: true, rivers: true, labels: true };
   // interface sounds (ui/sound.js): they play only in answer to the reader, so the app's methods can cue them freely
   const sound = new Sound(root);
   { const f0 = controls.flyTo.bind(controls); controls.flyTo = (to, ms = 1600) => { sound.fly(ms); return f0(to, ms); }; }
   const app = {
     model, flows, rivers, plants, controls, shared, CHORO, setChoro, stateList, aquifers, nlcd, canvas, stage, sound,
-    dams: null, osm: null, damCounty: null, damsByCounty: null,
+    dams: null, osm: null, fac: null, damCounty: null, damsByCounty: null,
     night: false, underground: false, iso: null, expanded: false, _home: () => home,
     // ZIP codes (the Census Bureau's 2020 ZIP code tabulation areas), each with the county holding most of its land
     // (zips.json, from scripts/water-map/bake_zips.py); fetched the first time someone types five digits
@@ -564,6 +564,12 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     loadHistory() {
       return app._histP || (app._histP = fetchJSON('history.json').then((h) => { app.history = h; return h; })
         .catch((e) => { console.warn('history', e); app._histP = null; return null; }));
+    },
+    // the public water systems serving each county (water_systems.json, from scripts/water-map/bake_wsa.py)
+    systems: null,
+    loadSystems() {
+      return app._sysP || (app._sysP = fetchJSON('water_systems.json').then((j) => { app.systems = j; return j; })
+        .catch((e) => { console.warn('water systems', e); app._sysP = null; return null; }));
     },
     // the strain index by county, and each county's rank among those with a value (0 = least strained)
     strain: null,
@@ -683,6 +689,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         b.fill(1); b[4] = k === 'dc' ? 20 : layerOn.dc ? 14 : 1; b[3] = k === 'go' ? 4 : 1; b[1] = k === 'ps' ? 5 : 1;
         app.osm.uniforms.uPx.value = 1;
       }
+      // (the permitted factories, mines, fish farms and livestock farms of the use isolated, from farther out)
+      if (app.fac) FAC_KINDS.forEach((fk, j) => { const c = FAC_CAT[fk]; app.fac.kindVis[j] = (!k && layerOn.fac) || k === c ? 1 : 0; app.fac.kindBoost[j] = k === c ? 3 : 1; });
       if (app.dams) app.dams.group.visible = !k && layerOn.nid && !app.underground;
       pdots.kindBoost[0] = k === 'pt' ? 120 : 1;
       pdots.group.visible = k === 'pt';
@@ -744,6 +752,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         if (name === 'golf') v[3] = onv ? 1 : 0;
         if (name === 'dc') { v[4] = onv ? 1 : 0; b[4] = onv ? 14 : 1; }
       }
+      if (name === 'fac' && app.fac && !app.iso) app.fac.kindVis.fill(onv ? 1 : 0);
     },
     /** fly to a view, with its point centred in the part of the frame the panels leave free (unless `free` is false) */
     flyTo(view, ms = 1800, free = true) {
@@ -764,7 +773,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (wasHome && !(app.tour && app.tour.busy)) controls.flyTo({ ...home }, 900);
     },
     viewDirty: false,
-    clearMarks() { if (app.dams) app.dams.uniforms.uSel.value = -1; if (app.osm) app.osm.uniforms.uSel.value = -1; shared.uAqSel.value = -1; aqueducts.setHi(-1); },
+    clearMarks() { if (app.dams) app.dams.uniforms.uSel.value = -1; if (app.osm) app.osm.uniforms.uSel.value = -1; if (app.fac) app.fac.uniforms.uSel.value = -1; shared.uAqSel.value = -1; aqueducts.setHi(-1); },
     selectCounty(i, fly = true) {
       if (i < 0) return app.clearSelection();
       if (i !== selCounty || selPlant >= 0) sound.drop(model.total[i]);
@@ -857,6 +866,36 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         app.fitBox(x0 - 0.5, x1 + 0.5, z0 - 0.5, z1 + 0.5, { minD: 14, maxD: 420, tilt: Math.max(0.9, controls.state.tilt) });
       } else if (fly) app.flyTo({ x: app.osm.data.x[i], z: app.osm.data.z[i] + 0.2, d: 9, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
     },
+    /**
+     * A factory, mine, fish farm or livestock farm with an EPA permit: USGS gives no figure for one facility, so the map
+     * shows the water its county drew for that use, which it draws to the county's largest permitted facilities.
+     */
+    async selectFac(i, fly = false) {
+      if (!app.fac) return;
+      await app.fac.loadNames();
+      const F = app.fac.data, cat = facCat(FAC_KINDS[F.kind[i]], app.fac.meta.code[i]), ci = F.county[i];
+      sound.drop(F.flow[i] > 0 && !(F.flags[i] & 2) ? F.flow[i] : 2);
+      hud.welcomeOff();
+      app.clearMarks(); clearTrace(); outline.clear(); app.fac.uniforms.uSel.value = i;
+      selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
+      const ss = ci >= 0 ? (flows.byCounty.get(ci) || []).filter((q) => q.cat === cat && q.kind !== KIND.vapor && q.kind !== KIND.ret) : [];
+      if (ss.length) { flows.setFocus(ss, { county: ci, cat: CAT_KEYS.indexOf(cat) }); traceFacility(ci, cat, ss); } else flows.clearFocus();
+      syncTop();
+      hud.hintDone();
+      hud.showFac(i);
+      const x = F.x[i], z = F.z[i];
+      if (ss.length) {
+        let x0 = x, x1 = x, z0 = z, z1 = z;
+        for (const q of ss) for (const p of [...q.from, ...q.to]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+        app.fitBox(x0 - 0.5, x1 + 0.5, z0 - 0.5, z1 + 0.5, { minD: 12, maxD: 420, tilt: Math.max(0.9, controls.state.tilt) });
+      } else if (fly) app.flyTo({ x, z: z + 0.2, d: 9, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
+    },
+    /** whether the map draws its county's water for the use to this facility (one of the county's largest by design flow) */
+    facDrawn(i) {
+      const F = app.fac && app.fac.data; if (!F) return false;
+      const k = { factory: 'ind', mine: 'mine', fish: 'fish' }[FAC_KINDS[F.kind[i]]], a = model.anchors[F.county[i]];
+      return !!(k && a && a[k] && a[k].some((p) => Math.abs(p[0] - F.x[i]) < 2e-3 && Math.abs(p[1] - F.z[i]) < 2e-3));
+    },
     /** fly so a box of the map fills the part of the frame the panels leave open */
     fitBox(x0, x1, z0, z1, { tilt = Math.max(0.9, controls.state.tilt), minD = 10, maxD = 900, pad = 1.15 } = {}) {
       const [xl, xr] = freeRegion();
@@ -891,7 +930,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (app.iso) hud.showCategory(app.iso); else if (app.underground) hud.showGroundwater(); else hud.showNational();
       writeHash();
     },
-    loadNames() { if (app.dams) app.dams.loadNames().then(() => { app._index = null; }); if (app.osm) app.osm.loadNames().then(() => { app._index = null; }); },
+    loadNames() { for (const L of [app.dams, app.osm, app.fac]) if (L) L.loadNames().then(() => { app._index = null; }); },
     _index: null,
     searchIndex() {
       if (app._index) return app._index;
@@ -921,6 +960,10 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         const o = app.osm.data, N = app.osm.names;
         for (let i = 0; i < o.n; i++) { const k = o.kind[i]; if (!N[i] || k === 0) continue; idx.push({ key: N[i].toLowerCase(), label: N[i], kind: OSM_LABEL[OSM_KINDS[k]], weight: k === 4 ? 0.5 : 0, osm: i }); }
       }
+      if (app.fac && app.fac.names) {
+        const F = app.fac.data, N = app.fac.names, M = app.fac.meta;
+        for (let i = 0; i < F.n; i++) { if (!N[i]) continue; const f = F.flow[i] > 0 && !(F.flags[i] & 2) ? F.flow[i] : 0; idx.push({ key: N[i].toLowerCase(), label: `${N[i]}${M.place[i] ? ` (${M.place[i]})` : ''}`, kind: facLabel(FAC_KINDS[F.kind[i]], M.code[i]), weight: Math.log10(1 + f) * 0.5 - 0.2, fac: i }); }
+      }
       app._index = idx;
       return idx;
     },
@@ -930,6 +973,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (it.plant != null) return app.selectPlant(it.plant, true);
       if (it.dam != null) return app.selectDam(it.dam, true);
       if (it.osm != null) return app.selectOsm(it.osm, true);
+      if (it.fac != null) return app.selectFac(it.fac, true);
       if (it.aquifer != null) return app.selectAquifer(it.aquifer, true);
       if (it.aqi != null) return app.selectAqueduct(it.aqi, true);
       if (it.kind === 'County' || it.kind === 'ZIP code') return it.county >= 0 ? app.selectCounty(it.county, true) : null;
@@ -1240,10 +1284,12 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   // dams and mapped facilities load after the first frame
   (async () => {
     try {
-      const [dams, osm] = await Promise.all([loadDams(shared, slabAt, slabs), loadOsm(shared, slabAt, slabs)]);
-      if (disposed) return;
-      app.dams = dams; app.osm = osm;
+      const [dams, osm, fac] = await Promise.all([loadDams(shared, slabAt, slabs), loadOsm(shared, slabAt, slabs),
+        loadFacilities(shared, slabAt, slabs).catch((e) => { console.warn('permitted facilities', e); return null; })]);
+      if (disposed) { fac?.dispose(); return; }
+      app.dams = dams; app.osm = osm; app.fac = fac;
       scene.add(dams.group, osm.group);
+      if (fac) scene.add(fac.group);
       const dc = new Int32Array(dams.data.n), byC = new Map();
       for (let i = 0; i < dams.data.n; i++) {
         const c = countyAt(dams.data.x[i], dams.data.z[i]); dc[i] = c;
@@ -1252,7 +1298,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         a.n++; if (!dams.data.fl[i]) a.stor += dams.data.stor[i];
       }
       app.damCounty = dc; app.damsByCounty = byC;
-      for (const k of ['nid', 'infra', 'towers', 'golf', 'dc']) app.setLayer(k, hud.layers[k], true);
+      for (const k of ['nid', 'infra', 'towers', 'golf', 'dc', 'fac']) app.setLayer(k, hud.layers[k], true);
       if (app.iso) app.isolate(app.iso, true);
       app._index = null;
       dams.loadNames().then(() => {
@@ -1285,7 +1331,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     previewTimer = setTimeout(() => { if (!disposed && !flows.focus && hovered && hovered.county === ci) { flows.setPreview(flows.byCounty.get(ci) || []); previewCi = ci; } }, 120);
   };
   const clearHover = () => {
-    previewCounty(-1); hud.tip(0, 0, null); shared.uHoverCounty.value = -1; plants.uHoverPlant.value = -1; if (app.dams) app.dams.uniforms.uHover.value = -1; if (app.osm) app.osm.uniforms.uHover.value = -1; pdots.uniforms.uHover.value = -1; shared.uAqHover.value = -1; canvas.classList.remove('pointing'); hovered = null; };
+    previewCounty(-1); hud.tip(0, 0, null); shared.uHoverCounty.value = -1; plants.uHoverPlant.value = -1; if (app.dams) app.dams.uniforms.uHover.value = -1; if (app.osm) app.osm.uniforms.uHover.value = -1; if (app.fac) app.fac.uniforms.uHover.value = -1; pdots.uniforms.uHover.value = -1; shared.uAqHover.value = -1; canvas.classList.remove('pointing'); hovered = null; };
   const subsurfaceAt = (g) => {
     // the aquifer seen at this pixel: march down the view ray from the glass surface to the bodies' top
     if (!aquifers) return 0;
@@ -1296,7 +1342,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     return aquifers.at(slabAt(ax, az), ax, az);
   };
   // a hovered thing worth a tick: a plant, dam, facility, aquifer, disc or channel (not the county or river under it)
-  const thingOf = (h) => (!h ? null : h.plant != null ? `p${h.plant}` : h.dam != null ? `m${h.dam}` : h.osm != null ? `o${h.osm}` : h.nid != null ? `n${h.nid}` : h.aquifer ? `a${h.aquifer}` : h.disc || h.chan || null);
+  const thingOf = (h) => (!h ? null : h.plant != null ? `p${h.plant}` : h.dam != null ? `m${h.dam}` : h.osm != null ? `o${h.osm}` : h.fac != null ? `f${h.fac}` : h.nid != null ? `n${h.nid}` : h.aquifer ? `a${h.aquifer}` : h.disc || h.chan || null);
   const doHover = () => {
     if (!hoverPending) return;
     const hp = hoverPending; hoverPending = null;
@@ -1306,6 +1352,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     const d = controls.state.d;
     if (app.dams) app.dams.uniforms.uHover.value = -1;
     if (app.osm) app.osm.uniforms.uHover.value = -1;
+    if (app.fac) app.fac.uniforms.uHover.value = -1;
     pdots.uniforms.uHover.value = -1;
     const pi = plants.enabled !== false ? plants.pick(camera, cx, cy, rect, shared.uExag.value) : -1;
     if (pi >= 0) { hovered = { plant: pi }; plants.uHoverPlant.value = pi; shared.uHoverCounty.value = -1; hud.tip(cx, cy, hud.plantTip(pi)); canvas.classList.add('pointing'); return; }
@@ -1325,6 +1372,14 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         app.osm.uniforms.uHover.value = oi; hovered = { osm: oi };
         if (!app.osm.names) app.osm.loadNames().then(() => { if (hovered && hovered.osm === oi) hud.tip(cx, cy, hud.osmTip(oi)); });
         hud.tip(cx, cy, hud.osmTip(oi)); canvas.classList.add('pointing'); return;
+      }
+    }
+    if (app.fac && app.fac.group.visible) {
+      const fi = app.fac.pick(camera, cx, cy, rect, g, d);
+      if (fi >= 0) {
+        app.fac.uniforms.uHover.value = fi; hovered = { fac: fi };
+        if (!app.fac.names) app.fac.loadNames().then(() => { if (hovered && hovered.fac === fi) hud.tip(cx, cy, hud.facTip(fi)); });
+        hud.tip(cx, cy, hud.facTip(fi)); canvas.classList.add('pointing'); return;
       }
     }
     if (app.dams && app.dams.group.visible) {
@@ -1356,10 +1411,10 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     const ci = countyAt(g.x, g.z);
     if (aq) { hovered = { aq }; shared.uHoverCounty.value = ci; hud.tip(cx, cy, hud.aqTip(aq)); canvas.classList.add('pointing'); return; }
     shared.uHoverCounty.value = ci;
-    const cls = d < 120 && s ? nlcd.classAt(s, g.x, g.z) : -1;
+    const cls = d < 120 && s ? nlcd.classAt(s, g.x, g.z) : -1, irr = cls > 0 ? nlcd.irrAt(s, g.x, g.z) : -1;
     previewCounty(ci);
     if (rv && rv.name) { hovered = { river: rv, county: ci }; hud.tip(cx, cy, hud.riverTip(rv)); canvas.classList.add('pointing'); return; }
-    if (ci >= 0) { hovered = { county: ci }; hud.tip(cx, cy, hud.countyTip(ci, cls)); canvas.classList.add('pointing'); return; }
+    if (ci >= 0) { hovered = { county: ci }; hud.tip(cx, cy, hud.countyTip(ci, cls, irr)); canvas.classList.add('pointing'); return; }
     clearHover();
   };
   controls.onStart = (kind) => { if (kind === 'drag') { hud.tip(0, 0, null); canvas.classList.add('dragging'); } app.drop?.userMoved(kind); };
@@ -1395,6 +1450,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     const g = pickGround(cx, cy);
     if (g && pdots.group.visible) { const k = pdots.pick(camera, cx, cy, rect, g, controls.state.d); if (k >= 0) { tour.stop(); return app.selectPlant(pdots.plantIndex[k], true); } }
     if (g && app.osm) { const oi = app.osm.pick(camera, cx, cy, rect, g, controls.state.d); if (oi >= 0) { tour.stop(); return app.selectOsm(oi); } }
+    if (g && app.fac && app.fac.group.visible) { const fi = app.fac.pick(camera, cx, cy, rect, g, controls.state.d); if (fi >= 0) { tour.stop(); return app.selectFac(fi); } }
     if (g && app.dams && app.dams.group.visible) { const ni = app.dams.pick(camera, cx, cy, rect, g, controls.state.d); if (ni >= 0) { tour.stop(); return app.selectDam(ni); } }
     if (g && app.underground && hovered && hovered.aquifer) { tour.stop(); return app.selectAquifer(hovered.aquifer, false); }
     if (g && layerOn.flows !== false && !app.underground) {
@@ -1576,6 +1632,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     // facilities step back behind a selected place's water, like everything else
     if (app.osm) app.osm.uniforms.uFade.value = flows.focus && !(app.osm.uniforms.uSel.value >= 0) ? 0.35 : 1;
     if (app.osm) app.osm.setPx(app.iso === 'dc' ? mk * 1.5 : mk);
+    if (app.fac) { app.fac.uniforms.uFade.value = flows.focus && !(app.fac.uniforms.uSel.value >= 0) ? 0.35 : 1; app.fac.setPx(mk); }
     pdots.setPx(mk);
     flows.update(d, controls.state.x, controls.state.z);
     outline.update();

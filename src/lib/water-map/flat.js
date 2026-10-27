@@ -39,7 +39,7 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = ids[y * W + x]; if (c >= 0 && c < n) { cx[c] += x; cz[c] += y; cn[c]++; } }
   for (let c = 0; c < n; c++) if (cn[c]) { cx[c] /= cn[c]; cz[c] /= cn[c]; }
   const area = (i) => (cdata[i] && cdata[i].area > 0 ? cdata[i].area / 2.58999 : 0);   // square miles
-  let strain = null, history = null;
+  let strain = null, history = null, systems = null;
 
   // ---- the page: a map, a panel beside it, a lens picker and a search box
   for (const el of stage.children) el.hidden = true;
@@ -154,6 +154,11 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
     else if (m.propIr.has(i)) html += `<p class="wm-note">${esc(propIrNote(m.propIr.size - 1))}</p>`;
     if (strain && strain.sui[i] >= 0) html += `<h5>Strain on its rivers and streams</h5><p class="wm-sub">In an average month of water years 2010 to 2020, ${Math.round(100 * strain.sui[i])} percent of the usual streamflow in its watersheds was missing, because of dry spells or because it was consumed (USGS surface water supply and use index).</p>`;
     if (history && history.t[i][4] > 0.05 && history.t[i][6] != null) html += `<h5>Since 2005</h5><p class="wm-sub">It withdrew ${mgd(history.t[i][4])} Mgal/d in 2005 and ${mgd(history.t[i][6])} in 2015 (USGS county estimates).</p>`;
+    // (as in the 3D map's panel: the irrigated land a satellite map shows, and the water systems serving it)
+    const lk = cdata[i] && cdata[i].lanid_km2;
+    if (lk >= 0.5) html += `<p class="wm-note">A satellite map of irrigated land (LANID; Xie, Gibbs and Lark, 2021) shows about ${nf(Math.round(lk * 247.105 / 100) * 100)} acres irrigated here in 2015${c.acres.ir > 0 ? `, where USGS counted ${nf(c.acres.ir * 1000)} acres` : ''}.</p>`;
+    const sys = systems && systems.by[i];
+    if (sys && sys.length) html += `<h5>Public water systems</h5><p class="wm-sub">${sys.map(([k, sh]) => { const [nm, , pop] = systems.sys[k]; return `${esc(nm)}, serving ${pop >= 1e6 ? `${nf(pop / 1e6, 1)} million` : nf(pop)} people${sh < 0.9 ? ' here and in other counties' : ''}`; }).join('; ')}.</p><p class="wm-note">The systems serving the most people here, from the USGS map of water service areas (Buchwald and others, 2022).</p>`;
     html += `<p class="wm-note">Million gallons a day, USGS county estimates for 2015.</p>`;
     panel.innerHTML = html;
   };
@@ -226,6 +231,7 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
   // (the county figures load with the panel; the strain index and the history only when asked for)
   fetchJSON('strain.json').then((s) => { strain = s; if (sel >= 0) showCounty(sel); }).catch(() => {});
   fetchJSON('history.json').then((h) => { history = h; if (sel >= 0) showCounty(sel); }).catch(() => {});
+  fetchJSON('water_systems.json').then((j) => { systems = j; if (sel >= 0) showCounty(sel); }).catch(() => {});
   key(); select(-1, false);
   root.dataset.ready = 'true';
   return { dispose() { ro.disconnect(); wrap.remove(); for (const el of stage.children) el.hidden = false; stage.classList.remove('wm-stage-flat'); } };

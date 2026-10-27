@@ -80,6 +80,60 @@ export async function loadOsm(shared, slabAt, slabs) {
   return layer;
 }
 
+export const FAC_KINDS = ['factory', 'mine', 'fish', 'farm'];
+// the use of water each kind belongs to, in the USGS categories
+export const FAC_CAT = { factory: 'in', mine: 'mi', fish: 'aq', farm: 'li' };
+/** the use of water a permitted facility belongs to (a crop farm's is crops, not livestock) */
+export function facCat(kind, code) { return kind === 'farm' && facLabel(kind, code) === 'Crop farm' ? 'ir' : FAC_CAT[kind]; }
+/** what a permitted facility is, from its kind and the SIC code (or N and the NAICS code) that set the kind */
+export function facLabel(kind, code) {
+  const c = code || '', sic = c[0] === 'N' ? '' : c, na = c[0] === 'N' ? c.slice(1) : '';
+  if (kind === 'mine') return sic.startsWith('13') || na.startsWith('211') || na.startsWith('2131') ? 'Oil or gas site' : 'Mine or quarry';
+  if (kind === 'fish') return sic === '0921' ? 'Fish hatchery' : 'Fish farm';
+  if (kind === 'farm') return sic.startsWith('02') || na.startsWith('112') ? 'Livestock farm' : 'Crop farm';
+  return 'Factory';
+}
+
+/**
+ * Factories, mines, fish farms and livestock operations with an individual EPA discharge (NPDES) permit in effect
+ * (EPA ECHO, October 2026; scripts/water-map/bake_npdes.py), each in the color of the use of water it belongs to and
+ * a little larger for a larger permitted design flow. flags: 1 major permit, 2 design flow over ten times everything
+ * USGS counted for its county (probably recorded in the wrong units).
+ */
+export async function loadFacilities(shared, slabAt, slabs) {
+  const buf = await fetchPacked('npdes.dat.png');
+  const dv = new DataView(buf);
+  const n = dv.getUint32(4, true);
+  let o = 8;
+  const take = (T, cnt) => { const a = new T(buf.slice(o, o + cnt * T.BYTES_PER_ELEMENT)); o += cnt * T.BYTES_PER_ELEMENT; return a; };
+  const x = take(Float32Array, n), z = take(Float32Array, n), kind = take(Uint8Array, n), slab = take(Uint8Array, n), county = take(Int16Array, n);
+  const flow = take(Float32Array, n), flags = take(Uint8Array, n);
+  if (slabs) moveBaked(slabs, x, z);
+  const size = new Float32Array(n), dmax = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const f = flow[i] > 0 && !(flags[i] & 2) ? flow[i] : 0;
+    size[i] = 0.10 + 0.14 * Math.min(1, Math.log10(1 + f) / 2.5);
+    dmax[i] = f >= 50 ? 220 : f >= 10 ? 130 : (flags[i] & 1) || f >= 1 ? 75 : 38;
+  }
+  const kinds = [
+    { color: CAT.in.color, shape: 1 },   // factory: a square, like the place a factory gathers its water
+    { color: CAT.mi.color, shape: 2 },   // mine: diamond
+    { color: CAT.aq.color, shape: 0 },   // fish farm: disc
+    { color: CAT.li.color, shape: 0 },   // livestock or crop farm: disc
+  ];
+  const layer = new PointLayer(shared, { n, x, z, kind, size, dmax }, kinds, slabAt, 'npdes');
+  layer.data = { n, x, z, kind, slab, county, flow, flags };
+  layer.counts = FAC_KINDS.map((_, k) => kind.reduce((s, v) => s + (v === k ? 1 : 0), 0));
+  layer.byCounty = new Map();
+  for (let i = 0; i < n; i++) { const c = county[i]; if (c < 0) continue; let a = layer.byCounty.get(c); if (!a) layer.byCounty.set(c, (a = [])); a.push(i); }
+  layer.loadNames = async () => {
+    if (layer.names || layer._ln) return layer._ln;
+    layer._ln = fetchJSON('npdes.json').then((j) => { layer.meta = j; layer.names = j.names; return j; });
+    return layer._ln;
+  };
+  return layer;
+}
+
 /** every modeled power plant as a dot sized by the water it withdrew: shown nationally when power plants are isolated */
 export function plantDots(shared, model, slabAt, color) {
   const P = model.plants.filter((p) => (p.w_env || 0) > 0);

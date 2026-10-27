@@ -334,3 +334,30 @@ describe('water map: the panels, the key and the tour', () => {
     expect(Math.round(nat.W.pt / 1000)).toBe(TRENDS.pt[last]);
   });
 });
+
+describe('water map: permitted facilities, water systems and irrigated land', () => {
+  const fac = json('public/water-map/data/npdes.json');
+  const sys = json('public/water-map/data/water_systems.json');
+  it('the permitted facilities the page counts, and how many each county\'s water ends at', () => {
+    const [n] = grab(page, /Factories, mines, fish farms and livestock farms are the ([\d,]+) that held an individual EPA discharge permit/, 'the number of permitted facilities');
+    expect(fac.counts.reduce((a: number, b: number) => a + b, 0)).toBe(num(n));
+    expect(fac.names.length).toBe(num(n));
+    grab(page, /ends at up to (eight) of its permitted facilities of that kind/, 'up to eight facilities');
+    expect(read('scripts/water-map/bake_npdes.py')).toMatch(/^NANCHOR = 8$/m);
+  });
+  it('the water systems the page counts, and the Metropolitan Water District\'s population', () => {
+    const [n] = grab(page, /the areas served by ([\d,]+) community water systems/, 'the number of water systems');
+    expect(sys.n).toBe(num(n));
+    const [p] = grab(page, /Metropolitan Water District of Southern California serves ([\d.]+) million people/, 'the Metropolitan Water District\'s population');
+    const mwd = sys.sys.find((r: any[]) => /^Metropolitan Water Dist/.test(r[0]));
+    expect(mwd).toBeTruthy();
+    expect(Number((mwd[2] / 1e6).toFixed(1))).toBe(Number(p));
+  });
+  it('the county panels\' irrigated acreage from LANID is on the lower 48 only', () => {
+    const cd = json('public/water-map/data/county_data.json');
+    cd.forEach((c: any, i: number) => { if (c && c.lanid_km2 != null) expect(['AK', 'HI', 'PR', 'VI'], wu.id[i]).not.toContain(wu.st[i]); });
+    // 274,138,269 irrigated 30 m pixels in 2015, nearly all of them on a county
+    const tot = cd.reduce((a: number, c: any) => a + ((c && c.lanid_km2) || 0), 0);
+    expect(Math.abs(tot - 274138269 * 900 / 1e6) / tot).toBeLessThan(0.001);
+  });
+});

@@ -10,6 +10,9 @@ import { fetchJSON, fetchPixels } from '../core/assets.js';
  * Classes (compact index): 0 none, 1 open water, 2 ice/snow, 3-6 developed (open, low, medium, high intensity),
  * 7 barren, 8 deciduous forest, 9 evergreen forest, 10 mixed forest, 11 dwarf scrub, 12 shrub/scrub, 13 grassland,
  * 14 sedge, 15 lichens, 16 moss, 17 pasture/hay, 18 cultivated crops, 19 woody wetlands, 20 emergent wetlands.
+ *
+ * On the lower 48 (the manifest says irr: 7) each byte also carries how much of the pixel LANID mapped as irrigated
+ * in 2015, in eighths from 0 to 7, in its top three bits: byte = class + 32 * level.
  */
 export const NLCD_CLASSES = ['No data', 'Open water', 'Perennial ice or snow', 'Developed, open space', 'Developed, low intensity', 'Developed, medium intensity',
   'Developed, high intensity', 'Barren land', 'Deciduous forest', 'Evergreen forest', 'Mixed forest', 'Dwarf scrub', 'Shrub and scrub', 'Grassland',
@@ -54,7 +57,8 @@ export class NlcdTiles {
   }
   uniformsFor(slab) {
     const p = this.per.get(slab.name);
-    return { uNlcdArr: { value: this.arr }, uNlcdIdx: { value: p ? p.idx : null }, uNlcdGrid: { value: p ? p.grid : new THREE.Vector4(0, 0, 3, TILE) }, uNlcdHas: { value: p ? 1 : 0 } };
+    return { uNlcdArr: { value: this.arr }, uNlcdIdx: { value: p ? p.idx : null }, uNlcdGrid: { value: p ? p.grid : new THREE.Vector4(0, 0, 3, TILE) }, uNlcdHas: { value: p ? 1 : 0 },
+      uNlcdIrr: { value: p && p.info.irr ? 1 : 0 } };
   }
   _sheet(slabName, sx, sy) {
     const key = `${slabName}_${sx}_${sy}`;
@@ -127,8 +131,8 @@ export class NlcdTiles {
       }
     }
   }
-  /** land-cover class under a world point, when its tile is loaded (for tooltips) */
-  classAt(slab, x, z) {
+  /** the byte under a world point, when its tile is loaded: class + 32 x LANID level on the lower 48 */
+  _byteAt(slab, x, z) {
     const p = this.per.get(slab.name); if (!p) return -1;
     const px = (x - slab.x0) * slab.ppu * p.grid.z, pz = (z - slab.z0) * slab.ppu * p.grid.z;
     const tx = Math.floor(px / TILE), ty = Math.floor(pz / TILE);
@@ -136,6 +140,13 @@ export class NlcdTiles {
     const li = p.idx.image.data[(ty * p.tx + tx) * 4] - 1;
     if (li < 0 || !this.cpu[li]) return -1;
     return this.cpu[li][(Math.floor(pz) - ty * TILE) * TILE + (Math.floor(px) - tx * TILE)];
+  }
+  /** land-cover class under a world point, when its tile is loaded (for tooltips) */
+  classAt(slab, x, z) { const b = this._byteAt(slab, x, z); return b < 0 ? -1 : b & 31; }
+  /** the share of the ~262 m pixel under a world point that LANID mapped as irrigated in 2015 (0 to 1), or -1 */
+  irrAt(slab, x, z) {
+    const p = this.per.get(slab.name); if (!p || !p.info.irr) return -1;
+    const b = this._byteAt(slab, x, z); return b < 0 ? -1 : (b >> 5) / p.info.irr;
   }
 }
 
@@ -145,8 +156,10 @@ uniform sampler2D uNlcdArr;   // atlas of 8 x 8 tiles
 uniform sampler2D uNlcdIdx;
 uniform vec4 uNlcdGrid;    // tiles x, tiles y, scale from colour texels, tile size
 uniform float uNlcdHas;
+uniform float uNlcdIrr;    // 1 where the bytes carry LANID's irrigated level in their top three bits (the lower 48)
 uniform vec2 uTexSize;
-float nlcdAt(vec2 t3) {
+// the byte at a close-up pixel (class + 32 x irrigated level), or -1 where no tile is loaded
+float nlcdRawAt(vec2 t3) {
   vec2 tile = floor(t3 / uNlcdGrid.w);
   if (tile.x < 0.0 || tile.y < 0.0 || tile.x >= uNlcdGrid.x || tile.y >= uNlcdGrid.y) return -1.0;
   float layer = floor(texelFetch(uNlcdIdx, ivec2(tile), 0).r * 255.0 + 0.5) - 1.0;
@@ -155,12 +168,19 @@ float nlcdAt(vec2 t3) {
   ivec2 slot = ivec2(int(mod(layer, 8.0)), int(floor(layer / 8.0))) * int(uNlcdGrid.w);
   return floor(texelFetch(uNlcdArr, slot + lp, 0).r * 255.0 + 0.5);
 }
+float nlcdClassOf(float v) { return v < 0.0 ? -1.0 : mod(v, 32.0); }
+float nlcdIrrOf(float v) { return v < 0.0 ? -1.0 : floor(v / 32.0) / 7.0; }
+float nlcdAt(vec2 t3) { return nlcdClassOf(nlcdRawAt(t3)); }
+// LANID's irrigated share of the close-up pixel (0..1), or -1 where unknown
+float nlcdIrrAt(vec2 t3) { return uNlcdIrr > 0.5 ? nlcdIrrOf(nlcdRawAt(t3)) : -1.0; }
 // the class at a point, with smooth boundaries: of the four nearest class pixels, the one whose class has the most
-// bilinear weight wins, and the weights are wobbled by noise so edges wander like real field and forest edges
-float nlcdSmooth(vec2 t3, vec2 wob) {
+// bilinear weight wins, and the weights are wobbled by noise so edges wander like real field and forest edges. irr is
+// LANID's irrigated share there, blended over the same four pixels (-1 where unknown)
+float nlcdSmooth(vec2 t3, vec2 wob, out float irr) {
   vec2 p = t3 - 0.5;
   vec2 i = floor(p), f = clamp(fract(p) + wob, 0.0, 1.0);
   float c00, c10, c01, c11;
+  irr = -1.0;
   float T = uNlcdGrid.w;
   vec2 tile = floor(i / T), lp = i - tile * T;
   if (lp.x < T - 1.0 && lp.y < T - 1.0 && tile.x >= 0.0 && tile.y >= 0.0 && tile.x < uNlcdGrid.x && tile.y < uNlcdGrid.y) {
@@ -173,9 +193,12 @@ float nlcdSmooth(vec2 t3, vec2 wob) {
     c01 = floor(texelFetch(uNlcdArr, o + ivec2(0, 1), 0).r * 255.0 + 0.5);
     c11 = floor(texelFetch(uNlcdArr, o + ivec2(1, 1), 0).r * 255.0 + 0.5);
   } else {
-    c00 = nlcdAt(i + vec2(0.5, 0.5)); c10 = nlcdAt(i + vec2(1.5, 0.5)); c01 = nlcdAt(i + vec2(0.5, 1.5)); c11 = nlcdAt(i + vec2(1.5, 1.5));
+    c00 = nlcdRawAt(i + vec2(0.5, 0.5)); c10 = nlcdRawAt(i + vec2(1.5, 0.5)); c01 = nlcdRawAt(i + vec2(0.5, 1.5)); c11 = nlcdRawAt(i + vec2(1.5, 1.5));
   }
   float w00 = (1.0 - f.x) * (1.0 - f.y), w10 = f.x * (1.0 - f.y), w01 = (1.0 - f.x) * f.y, w11 = f.x * f.y;
+  if (uNlcdIrr > 0.5 && c00 >= 0.0 && c10 >= 0.0 && c01 >= 0.0 && c11 >= 0.0)
+    irr = w00 * nlcdIrrOf(c00) + w10 * nlcdIrrOf(c10) + w01 * nlcdIrrOf(c01) + w11 * nlcdIrrOf(c11);
+  c00 = nlcdClassOf(c00); c10 = nlcdClassOf(c10); c01 = nlcdClassOf(c01); c11 = nlcdClassOf(c11);
   float s00 = w00 + (c10 == c00 ? w10 : 0.0) + (c01 == c00 ? w01 : 0.0) + (c11 == c00 ? w11 : 0.0);
   float s10 = w10 + (c00 == c10 ? w00 : 0.0) + (c01 == c10 ? w01 : 0.0) + (c11 == c10 ? w11 : 0.0);
   float s01 = w01 + (c00 == c01 ? w00 : 0.0) + (c10 == c01 ? w10 : 0.0) + (c11 == c01 ? w11 : 0.0);

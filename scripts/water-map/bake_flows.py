@@ -4,10 +4,16 @@ Anchors are scene points inside each county where flows start and end: river int
 and their downstream return points, lake and sea shores, and land / cropland / urban points sampled from the land-cover
 and urban rasters. Volumes come from the USGS 2015 county table (wu.json) at runtime; anchors only place them.
 
+On the lower 48, irrigated land comes from LANID 2015 (bake_lanid.py): the land texture's irrigated channel is its
+irrigated fraction, and each county's crop water ends at points on its irrigated fields ('irr' anchors). Elsewhere the
+county's USGS irrigated acreage is spread over its flat cropland. Factories, mines and fish farms with EPA discharge
+permits (bake_npdes.py) are the anchors for industry, mining and aquaculture where a county has them. The new anchor
+sets are drawn with their own random generator, so the older sets come out exactly as before.
+
 Outputs (proc/net):
   anchors.bin        per-county anchor sets (see layout below)
   <slab>_land.png    RGBA at half texture resolution: R urban, G cropland weight, B forest weight, A irrigated-land weight
-  county_data.json   per-county area, centroid, irrigated fraction and method mix
+  county_data.json   per-county area, centroid, irrigated fraction and method mix, LANID irrigated km2 (lower 48)
 """
 import json, struct, collections, numpy as np
 from PIL import Image, ImageDraw
@@ -54,18 +60,18 @@ def urban_mask(slab, t):
                 if len(px) >= 3: dr.polygon(list(zip(px.tolist(), pz.tolist())), fill=255 if ri == 0 else 0)
     return np.asarray(img)
 
-def pick(ix, w, k):
+def pick(ix, w, k, g=None):
     """k indices from ix with probability proportional to w (without replacement when possible)."""
     if len(ix) == 0: return ix
     w = np.asarray(w, np.float64); w = np.maximum(w, 0)
     if w.sum() <= 0: w = np.ones(len(ix))
     k = min(k, len(ix))
-    return rng.choice(ix, size=k, replace=False, p=w / w.sum())
+    return (g or rng).choice(ix, size=k, replace=False, p=w / w.sum())
 
-def spread_pick(ix, w, k, W, min_px):
+def spread_pick(ix, w, k, W, min_px, g=None):
     """Like pick, but rejects points closer than min_px to an earlier pick (spreads anchors over the county)."""
     if len(ix) == 0: return ix
-    cand = pick(ix, w, min(len(ix), k * 6))
+    cand = pick(ix, w, min(len(ix), k * 6), g)
     out = []
     for c in cand:
         cy, cx = divmod(int(c), W)
@@ -90,8 +96,12 @@ def downstream(r, vert, reach, dist_units):
             k = r['start'][rr]
     return float(x), float(z)
 
-TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp']
-NPTS = dict(land=14, crop=14, urban=10)
+TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp', 'irr', 'ind', 'mine', 'fish']
+NPTS = dict(land=14, crop=14, urban=10, irr=14)
+# the new sets (irrigated fields, permitted facilities) draw from their own generator, so the older ones are unchanged
+rng2 = np.random.default_rng(20152)
+LANID = '/home/claude/w2/proc/lanid'
+LANID_MIN_KM2 = 1.0   # a county's crop water ends on its LANID fields when it has at least this much irrigated land
 # OpenStreetMap points (bake_osm.py): golf courses, water treatment works, wastewater plants, by county
 def osm_points():
     b = open(f'{NET}/osm_points.bin', 'rb').read()
@@ -139,6 +149,9 @@ def main():
             if c >= 0: OSM_BY[kid][int(c)] = idx[OC[idx] == c]
     anchors = [None] * NC
     cdata = [None] * NC
+    lanid_tex = np.load(f'{LANID}/conus_irr.npy', mmap_mode='r')
+    lanid_km2 = json.load(open(f'{LANID}/county_irr.json'))['km2']
+    npd = json.load(open(f'{NET}/npdes_anchors.json'))
     irr_ac = np.array([(WU['ic_ac'][i] if WU['ic_ac'][i] is not None else (WU['ir_spr'][i] or 0) + (WU['ir_mic'][i] or 0) + (WU['ir_sur'][i] or 0)) or 0 for i in range(NC)], float)
     for slab in ['conus', 'ak', 'hi', 'pr']:
         t = Terrain(slab)
@@ -182,6 +195,7 @@ def main():
         coast = land & ndimage.binary_dilation(ocean, iterations=2)
         # irrigated-land weight raster (per county irrigated acres spread over cropland, then over open land)
         irr = np.zeros((H, W), np.float32)
+        lanid_flat = np.asarray(lanid_tex, np.float32).ravel() if slab == 'conus' else None
         r = read_rivers(slab) if slab != 'hi' else None
         if r is not None:
             fx, fy = t.px(r['x'], r['z'])
@@ -198,9 +212,9 @@ def main():
             jj, ii = np.divmod(pix, W)
             cx = t.x0 + (ii.mean() + 0.5) / t.ppu; cz = t.z0 + (jj.mean() + 0.5) / t.ppu
             a = {k: [] for k in TYPES}
-            def to_xy(ix):
+            def to_xy(ix, g=None):
                 yy, xx = np.divmod(ix, W)
-                return np.stack([t.x0 + (xx + rng.random(len(ix))) / t.ppu, t.z0 + (yy + rng.random(len(ix))) / t.ppu], 1)
+                return np.stack([t.x0 + (xx + (g or rng).random(len(ix))) / t.ppu, t.z0 + (yy + (g or rng).random(len(ix))) / t.ppu], 1)
             minpx = max(2, int(np.sqrt(len(pl)) / 5))
             a['land'] = to_xy(spread_pick(pl, np.ones(len(pl)), NPTS['land'], W, minpx))
             cw = (crop.ravel()[pl] + 0.5 * hay.ravel()[pl] + 0.1 * (1 - forest.ravel()[pl]) * (1 - urb.ravel()[pl])) * (0.2 + flat.ravel()[pl]) + 0.002
@@ -245,9 +259,15 @@ def main():
                         q = float(r['q'][rr])
                         a['riv'].append([r['x'][v], r['z'][v], q])
                         a['ret'].append(list(downstream(r, v, rr, 0.8)))
-            # irrigated land: spread acres over cropland first
+            # the fields LANID mapped as irrigated in 2015, where the crop water ends
+            if slab == 'conus' and lanid_km2[ci] >= LANID_MIN_KM2:
+                lw = lanid_flat[pl]; nz = lw > 0
+                if nz.any(): a['irr'] = to_xy(spread_pick(pl[nz], lw[nz], NPTS['irr'], W, minpx, rng2), rng2)
+            # factories, mines and fish farms with EPA discharge permits (the largest first, up to eight of each)
+            for k, lst in npd.get(str(ci), {}).items(): a[k] = np.asarray(lst, float)
+            # irrigated land: spread acres over cropland first (the lower 48 takes LANID's map instead, below)
             A_irr = irr_ac[ci] * 1000 * 0.00404686
-            if A_irr > 0:
+            if A_irr > 0 and slab != 'conus':
                 # flat cropland first, then flat open land; never forest or city
                 fl = flat.ravel()[pl]
                 cl = (crop.ravel()[pl] + 0.6 * hay.ravel()[pl]) * fl; A_crop = cl.sum() * px_km2
@@ -264,10 +284,17 @@ def main():
             tot = spr + mic + sur
             cdata[ci] = dict(slab=slab, cx=round(float(cx), 3), cz=round(float(cz), 3), area=round(area, 1),
                              irr_km2=round(A_irr, 2), mix=[round(spr / tot, 3), round(mic / tot, 3), round(sur / tot, 3)] if tot > 0 else [0, 0, 0])
-        irr = np.clip(ndimage.gaussian_filter(irr, 2.0), 0, 1)
+            if slab == 'conus': cdata[ci]['lanid_km2'] = round(float(lanid_km2[ci]), 2)
+        if slab == 'conus':
+            # LANID's irrigated fraction of each texel (on land; its 240 m cells reach a little over the shore)
+            irr = np.clip(np.asarray(lanid_tex, np.float32), 0, 1) * land
+            print('conus LANID irrigated km2 on the land texture', round(float(irr.sum()) * px_km2), flush=True)
+        else:
+            irr = np.clip(ndimage.gaussian_filter(irr, 2.0), 0, 1)
         # land texture at half resolution. Natural Earth's "greener than brown" class is cropland in the humid east but
         # mostly grassland in the arid west, where nearly all farmland is irrigated: keep it on flat land and fade it
-        # west of about 102 W (the irrigated-land channel, from USGS acreage, carries the western farms).
+        # west of about 102 W (the irrigated-land channel carries the western farms: LANID's map on the lower 48, USGS
+        # acreage spread over cropland elsewhere).
         crop_vis = np.clip(crop + 0.45 * hay, 0, 1)
         rgba = np.clip(np.stack([urb, crop_vis, forest, irr], -1), 0, 1)
         im = Image.fromarray((rgba * 255 + 0.5).astype(np.uint8), 'RGBA')
@@ -284,6 +311,7 @@ def main():
         rp = g.representative_point()
         pts = np.array([[rp.x, rp.y]] * 4) + rng.normal(0, 0.05, (4, 2))
         anchors[ci] = (f['slab'], {k: (pts if k in ('land', 'crop', 'urban') else []) for k in TYPES})
+        for k, lst in npd.get(str(ci), {}).items(): anchors[ci][1][k] = np.asarray(lst, float)
         cdata[ci] = dict(slab=f['slab'], cx=round(rp.x, 3), cz=round(rp.y, 3), area=round(g.area * 26.37, 1), irr_km2=0, mix=[0, 0, 0])
         # rivers near the point
         r = read_rivers(f['slab']) if f['slab'] != 'hi' else None
@@ -309,9 +337,9 @@ def main():
             a['ret'] = [list(downstream(rr_, kk, reach, 0.8))]
             filled += 1
     print('counties given a nearby river outside their borders:', filled)
-    # ---- write anchors.bin: per county: uint8 slab, uint8 counts[7], then float32 pairs (riv has q as a third value)
+    # ---- write anchors.bin: per county: uint8 slab, uint8 counts[len(TYPES)], then float32 pairs (riv has q as a third value)
     SL = {'conus': 0, 'ak': 1, 'hi': 2, 'pr': 3}
-    buf = bytearray(struct.pack('<4sI', b'ANC2', NC))
+    buf = bytearray(struct.pack('<4sI', b'ANC3', NC))
     stats = collections.Counter()
     for ci in range(NC):
         slab, a = anchors[ci]
