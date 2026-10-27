@@ -3,7 +3,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { normalizeHeadings, requireContent } from './substack';
+import { fetchSubstackPosts, normalizeHeadings, requireContent } from './substack';
 import { lintPostContent } from './content-lint';
 import { normalizePlainText, smartenHtmlText, tidyInlineTagBoundaries } from './smarten';
 
@@ -63,7 +63,27 @@ function restoreCachedPosts(cached: CachedPosts): EAForumPost[] {
   }));
 }
 
+// Andy crossposts blog posts to the EA Forum after they go out on Substack,
+// and the Forum gives each copy its own slug (the-direction-i-d-like-for-
+// effective-altruism against Substack's the-direction-id-like-for-effective),
+// so the slug checks on every page can't catch the pair. A Forum post with
+// the same title as a Substack post is that crosspost, and the site lists
+// and links only the blog copy: the archive, post pages, RSS, sitemap,
+// search and cited-in all read this list. The disk cache stays raw.
 export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
+  const posts = await fetchEAForumPostList();
+  if (posts.length === 0) return posts;
+  const blogTitles = new Set((await fetchSubstackPosts()).map(post => crosspostKey(post.title)));
+  return posts.filter(post => !blogTitles.has(crosspostKey(post.title)));
+}
+
+// Letters and digits only, since the two sites differ on quotes and
+// punctuation (Substack's "I’d" is the Forum's "I'd").
+function crosspostKey(title: string): string {
+  return title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+async function fetchEAForumPostList(): Promise<EAForumPost[]> {
   // Return memory cache if available (same build)
   if (memoryCache !== null) {
     return memoryCache;
@@ -146,7 +166,6 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
       eaForumPosts.push(
         ...posts
           .filter(post => !post.isEvent)
-          .filter(post => post.slug !== 'alcohol-is-so-bad-for-society-that-you-should-probably-stop')
           .map(post => ({
             title: normalizePlainText(post.title),
             slug: post.slug,

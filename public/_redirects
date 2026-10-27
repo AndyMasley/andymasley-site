@@ -40,3 +40,9 @@
 # the site (still on Substack); links unwrap, old URL lands on the archive.
 /writing/guiding-ideas-i-use-to-think-about /writing 301
 /writing/guiding-ideas-i-use-to-think-about/ /writing 301
+
+# 2026-10: EA Forum crossposts of blog posts now list only the blog copy
+# (src/lib/eaforum.ts). The Forum copy of this one had its own page for a
+# week before that; its URL lands on the blog copy.
+/writing/the-direction-i-d-like-for-effective-altruism /writing/the-direction-id-like-for-effective 301
+/writing/the-direction-i-d-like-for-effective-altruism/ /writing/the-direction-id-like-for-effective 301
