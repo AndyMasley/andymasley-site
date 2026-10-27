@@ -25,6 +25,8 @@ export const ogPages: Record<string, OgPage> = {
     panel: { lines: ['Favorite things', 'Product recommendations', 'Great DC restaurants for vegans'] },
   },
   visuals: { title: 'Visuals', panel: shot('visuals') },
+  // a screenshot of the game rather than of the page, which is a single link
+  games: { title: 'Games', panel: shot('games') },
   appearances: { title: 'Appearances', panel: shot('appearances') },
   contact: { title: 'Contact', panel: shot('contact') },
   notes: { title: 'Notes', panel: shot('notes') },

@@ -4,6 +4,7 @@ import { fetchEAForumPosts } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { getOptionalCollection } from '@/lib/optional-collection';
 import { corrections } from '@/data/corrections';
+import { games } from '@/data/games';
 
 const SITE_URL = 'https://andymasley.com';
 
@@ -98,6 +99,9 @@ export async function GET() {
   for (const post of eaForumPosts) add(`/writing/${post.slug}`, lastmodFor(post.slug, post.date));
   for (const item of notes) add(`/notes/${item.slug}`, lastmodFor(item.slug, item.data.date));
   for (const item of physics) add(`/physics/${item.slug}`);
+  // The games are static pages under public/games/, so the filesystem walk
+  // above cannot see them.
+  for (const game of games) add(game.href);
 
   const body = Array.from(entries.entries())
     .sort(([a], [b]) => a.localeCompare(b))

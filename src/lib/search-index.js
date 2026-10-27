@@ -5,6 +5,7 @@ import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
 import { visuals } from '@/data/visuals';
+import { games } from '@/data/games';
 import { appearanceGroups } from '@/data/appearances';
 import { bylines } from '@/lib/bylines';
 import fs from 'node:fs';
@@ -167,6 +168,14 @@ export async function buildSearchIndex() {
       tags: [],
     },
     {
+      title: 'Games',
+      description: 'Games that play in the browser',
+      content: 'games play browser ' + games.map(g => g.title).join(' '),
+      type: 'page',
+      url: '/games',
+      tags: [],
+    },
+    {
       title: 'Lists',
       description: 'Curated lists of favorites and recommendations',
       content: 'lists favorites recommendations products books movies music restaurants',
@@ -199,6 +208,19 @@ export async function buildSearchIndex() {
         .trim(),
       type: 'visual',
       url: visual.href,
+      tags: [],
+    });
+  }
+
+  // Every game from its registry; the games are static pages, so there is
+  // no .astro source to read their text from.
+  for (const game of games) {
+    searchIndex.push({
+      title: game.title,
+      description: game.description,
+      content: [game.description, game.searchTerms || ''].join(' ').trim(),
+      type: 'game',
+      url: game.href,
       tags: [],
     });
   }
