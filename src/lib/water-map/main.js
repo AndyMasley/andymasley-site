@@ -25,6 +25,8 @@ import { Labels } from './ui/labels.js';
 import { Tour } from './ui/tour.js';
 import { Story } from './ui/story.js';
 import { Sound } from './ui/sound.js';
+import { DropModel } from './flow/drop.js';
+import { DropView } from './ui/dropview.js';
 import { esc, nf, mgdLabel, shareTxt } from './ui/fmt.js';
 
 const STATES = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', PR: 'Puerto Rico', VI: 'U.S. Virgin Islands' };
@@ -623,6 +625,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         if (app.iso) v = app.iso === k ? 1.9 : 0;
         else if (hc) v = hc === k ? 1.6 : 0.12;
         if (ff && ff.use && ff.use !== '*') v *= ff.use === k ? 1.5 : 0.08;
+        // (a drop being followed: the streaks step back behind its trail)
+        if (app._dropDim) v *= 0.3;
         w[j] = v;
       }
       flows.common.uFocusSrc.value = ff && ff.src ? ({ sf: 0, gf: 1, gs: 1, ss: 2 }[ff.src] ?? -1) : -1;
@@ -1042,6 +1046,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       else if (selCounty >= 0) p.push(`county=${model.wu.id[selCounty]}`);
       if (aquifers && shared.uAqSel.value > 0) { const a = aquifers.byIndex.get(shared.uAqSel.value); if (a) p.push(`aquifer=${a.code}`); }
       if (app.underground) p.push('under');
+      if (app.drop && app.drop.on) p.push('drop');
       if (app.measure === 'c') p.push('consumed');
       if (!app.night) p.push('day');
       const h = p.length ? `#${p.join('&')}` : '';
@@ -1049,6 +1054,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       try { history.replaceState(history.state, '', `${location.pathname}${location.search}${h}`); } catch { /* not allowed here */ }
     }, 250);
   }
+  app.writeHash = writeHash;
   function readHash() {
     const out = {};
     for (const kv of location.hash.replace(/^#/, '').split('&')) { if (!kv) continue; const [k, v = ''] = kv.split('='); out[decodeURIComponent(k)] = decodeURIComponent(v); }
@@ -1185,13 +1191,22 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
 
   const hud = new Hud(app, stage);
   app.hud = hud; hudRef = hud;
+  // a drop followed down the rivers (flow/drop.js, ui/dropview.js); its tables are built the first time it is used
+  const dropModel = new DropModel(model, flows.streams, rivers.slabs.map((s) => ({ slab: s.slab, R: s.R, grid: s.grid, cell: s.cell, reachOf: s.reachOf })),
+    { countyAt, lakes: model.features.lakes, slabMove: SLAB_MOVE });
+  app.drop = new DropView(app, { dm: dropModel, scene, shared, labels, controls, hUnits, surfaceY, slabAt, countyAt, stage, reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
+  app.dropDim = (on) => { app._dropDim = !!on; app.applyEmphasis(); };
   const tour = new Tour(app);
   app.tour = tour;
   // the tour as a scrolling essay beside the pinned map, at #story or #story=<scene>
   const story = new Story(app, root);
   app.story = story;
   const storyAt = () => { const mm = location.hash.match(/^#story(?:=([\w-]+))?$/); return mm ? story.indexOf(mm[1] || '') : -1; };
-  on(window, 'hashchange', () => { const k = storyAt(); if (k >= 0) story.open(k); });
+  on(window, 'hashchange', () => {
+    const k = storyAt(); if (k >= 0) story.open(k);
+    // (the link above the map: follow a drop)
+    if (location.hash === '#drop' && app.drop && !app.drop.on) { app.drop.open(); root.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); }
+  });
   hud.syncButtons();
   // panels are in place now: frame the opening view around them. The model opens at night and drifts into place.
   fitHome(); controls.set(home, true);
@@ -1213,6 +1228,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (pi >= 0) later(() => app.selectPlant(pi, true), 900);
     else if (ci >= 0) later(() => app.selectCounty(ci, true), 900);
     else if (aq) later(() => app.selectAquifer(aq.i, true), 900);
+    if ('drop' in h) later(() => app.drop.open(), 900);
     if (storyAt() >= 0) later(() => story.open(storyAt()), 700);
     else if (!Object.keys(h).length) later(() => hud.welcome(), 1800);
     else later(() => hud.showHint(), 2500);
@@ -1346,7 +1362,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (ci >= 0) { hovered = { county: ci }; hud.tip(cx, cy, hud.countyTip(ci, cls)); canvas.classList.add('pointing'); return; }
     clearHover();
   };
-  controls.onStart = (kind) => { if (kind === 'drag') { hud.tip(0, 0, null); canvas.classList.add('dragging'); } };
+  controls.onStart = (kind) => { if (kind === 'drag') { hud.tip(0, 0, null); canvas.classList.add('dragging'); } app.drop?.userMoved(kind); };
   on(window, 'pointerup', () => canvas.classList.remove('dragging'));
   // a ripple where the reader touches the map, two rings spreading as the sound's drop falls (not with reduced motion)
   const ripples = [];
@@ -1372,6 +1388,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   };
   controls.onClick = (cx, cy) => {
     const rect = canvas.getBoundingClientRect();
+    if (app.drop && app.drop.on) { const g = pickGround(cx, cy); ripple(g); if (g) app.drop.click(g); return; }
     ripple(pickGround(cx, cy));
     const pi = plants.enabled !== false ? plants.pick(camera, cx, cy, rect, shared.uExag.value) : -1;
     if (pi >= 0) { tour.stop(); return app.selectPlant(pi, true); }
@@ -1429,6 +1446,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (e.target && e.target.closest && e.target.closest('input, textarea, select')) return;
     if (e.key === 'Escape') {
       if (!hud.$('[data-layers]').hidden) hud.$('[data-layers]').hidden = true;
+      else if (app.drop && app.drop.on) app.drop.close();
       else if (tour.i >= 0) tour.stop();
       else if (app.expanded && !document.fullscreenElement) app.toggleExpanded();
       else if (app.iso) app.isolate(null);
@@ -1539,6 +1557,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     shared.uRipple.value = Math.min(24, Math.max(1.5, 60 / Math.sqrt(d)));
     shared.uDetailAmt.value = 1 - Math.min(1, Math.max(0, (d - 45) / 75));
     shared.uStateLines.value = Math.min(1, Math.max(0, (d - 30) / 60));
+    app.drop?.update(dt);
     controls.update(dt);
     camera.updateMatrixWorld();
     scene.fog.near = d * 1.35; scene.fog.far = d * 7 + 400;

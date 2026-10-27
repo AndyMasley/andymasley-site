@@ -22,7 +22,7 @@ export const CAT_KEYS = ['pt', 'ir', 'ps', 'in', 'aq', 'mi', 'do', 'li', 'go'];
 const ANCHOR_TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp'];
 const SLAB_NAMES = ['conus', 'ak', 'hi', 'pr'];
 
-function parseAnchors(buf) {
+export function parseAnchors(buf) {
   const dv = new DataView(buf);
   const magic = String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3));
   const types = magic === 'ANC2' ? ANCHOR_TYPES : ANCHOR_TYPES.slice(0, 7);
@@ -361,7 +361,8 @@ export class WaterModel {
         for (const [pt, w, rk] of at) {
           const v = vol * w / wsum; if (v < 0.02) continue;
           const route = densify(this._follow([pt, ...((sys.routes && sys.routes[rk]) || []), hub]), 1.2);
-          out.push({ county: t.i, exporter: f.i, cat: 'ps', kind: KIND.intake, src: sys.gw ? SRC.ground : SRC.lake, vol: v, from: [pt], to: [hub], route, xfer: sys.id });
+          // (res: the water leaves from the reservoirs given, rather than the exporting county's water works)
+          out.push({ county: t.i, exporter: f.i, cat: 'ps', kind: KIND.intake, src: sys.gw ? SRC.ground : SRC.lake, vol: v, from: [pt], to: [hub], route, xfer: sys.id, res: !!f.at });
           if (urb && urb.length > 1) out.push({ county: t.i, cat: 'ps', kind: KIND.deliver, src: SRC.delivered, vol: v, from: [hub], to: urb, xferDel: sys.id });
         }
       }

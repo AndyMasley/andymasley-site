@@ -557,6 +557,23 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-mix-v { min-width: 6.4em; color: var(--wm-dim); font-size: var(--text-xs); text-align: right; font-variant-numeric: tabular-nums; }
 .wm-mix-r.wm-mix-r2 { grid-template-columns: minmax(0, 1fr) auto; }
 
+/* a drop's journey (ui/dropview.js): one line per place, in the color of what happened there */
+.wm-drop-log { margin: var(--space-2xs) 0 0; padding: 0; list-style: none; }
+.wm-drop-log li {
+  display: grid;
+  padding: var(--space-2xs) 0;
+  border-top: 1px solid var(--wm-rule);
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: baseline;
+  font-size: var(--text-sm);
+  line-height: var(--leading-heading);
+}
+.wm-drop-log b { font-weight: 400; color: var(--wm-ink); }
+.wm-drop-log small { display: block; color: var(--wm-dim); font-size: var(--text-xs); line-height: var(--leading-note); }
+.wm-drop-log .wm-sw { width: 8px; height: 8px; transform: translateY(-1px); }
+.wm-stage.wm-dropping canvas { cursor: crosshair; }
+.wm-stage.wm-dropping canvas.dragging { cursor: grabbing; }
+
 .wm .wm-legend-line {
   margin: var(--space-2xs) 0 0;
   color: var(--wm-dim);

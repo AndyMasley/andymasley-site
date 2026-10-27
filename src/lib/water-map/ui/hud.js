@@ -135,6 +135,7 @@ export class Hud {
         </div>
         <button class="wm-btn" type="button" data-a="home" title="Back to the whole country">Reset view</button>
         <button class="wm-btn" type="button" data-a="tour" title="A guided tour" aria-pressed="false">Tour</button>
+        <button class="wm-btn" type="button" data-a="drop" title="Drop a drop of water anywhere and follow it downstream" aria-pressed="false">Follow a drop</button>
         <button class="wm-btn" type="button" data-a="night" title="The map at night" aria-pressed="false">Night</button>
         <button class="wm-btn" type="button" data-a="under" title="Look underground at the aquifers" aria-pressed="false">Underground</button>
         <button class="wm-btn" type="button" data-a="layers" title="Layers and land color" aria-expanded="false">Layers</button>
@@ -372,6 +373,8 @@ export class Hud {
     ub.classList.toggle('on', !!this.app.underground); ub.setAttribute('aria-pressed', String(!!this.app.underground));
     const fb = this.$('[data-a="full"]');
     if (fb) fb.textContent = this.app.expanded ? 'Exit full screen' : 'Full screen';
+    const db = this.$('[data-a="drop"]'), don = !!(this.app.drop && this.app.drop.on);
+    if (db) { db.classList.toggle('on', don); db.setAttribute('aria-pressed', String(don)); }
     const sb = this.$('[data-a="sound"]'), son = !!(this.app.sound && this.app.sound.on);
     if (sb) { sb.classList.toggle('on', son); sb.setAttribute('aria-pressed', String(son)); sb.title = son ? 'Sounds are on: mute them' : 'Turn the sounds on'; }
   }
@@ -382,8 +385,9 @@ export class Hud {
     this._welcomed = true;
     this.caption(`<p class="wm-cap">How to read this</p><h4>Every moving light is water</h4>
       <p>Each streak is water on its way from a river, lake, aquifer or the sea to a use, in the color of that use. The discs mark the 40 places that withdrew the most, with a white slice for the share consumed. Zoom in to see the channels the water runs through, wider for more water. ${window.matchMedia(PHONE_MQ).matches ? 'Tap a use above the map to see only its water, or a county, power plant or water treatment plant to see where its own water comes from, with the share from each source.' : 'Pick a use on the left to see only its water, or click a county, power plant or water treatment plant to see where its own water comes from, with the share from each source.'}</p>`,
-      [['zip', 'Find my county'], ['close', 'Explore on my own'], ['tour', 'Take the tour']], (a) => {
+      [['zip', 'Find my county'], ['close', 'Explore on my own'], ['drop', 'Follow a drop'], ['tour', 'Take the tour']], (a) => {
         if (a === 'tour') this.app.tour.go(0);
+        if (a === 'drop') this.app.drop?.open();
         // (where a reader's own water comes from: their ZIP code finds their county)
         if (a === 'zip') { const s = this.$('[data-search]'); s.placeholder = 'Your ZIP code'; s.focus(); }
       });
@@ -473,6 +477,7 @@ export class Hud {
   }
   setInspector(html, closable, kind = 'detail') {
     const el = this.$('[data-insp]');
+    if (kind !== 'drop' && this.app.drop && this.app.drop.on) this.app.drop.close(true);
     const keep = kind === 'view' && el.dataset.kind === 'view' ? el.scrollTop : 0;
     el.dataset.kind = kind;
     el.classList.toggle('wm-national', !closable);
@@ -498,7 +503,7 @@ export class Hud {
       grip.setAttribute('aria-label', t ? 'Show less of this panel' : 'Show more of this panel');
       if (!t) el.scrollTop = 0;
     });
-    if (closable) this.on(el.querySelector('.wm-close'), 'click', () => { if (kind === 'iso') this.app.isolate(null); else this.app.clearSelection(); });
+    if (closable) this.on(el.querySelector('.wm-close'), 'click', () => { if (kind === 'drop') this.app.drop?.close(); else if (kind === 'iso') this.app.isolate(null); else this.app.clearSelection(); });
     for (const a of el.querySelectorAll('[data-plant]')) this.on(a, 'click', () => this.app.selectPlant(+a.dataset.plant, true));
     for (const a of el.querySelectorAll('[data-county]')) this.on(a, 'click', () => this.app.selectCounty(+a.dataset.county, true));
     for (const a of el.querySelectorAll('[data-state]')) this.on(a, 'click', () => this.app.selectState(a.dataset.state, true));
@@ -584,6 +589,25 @@ export class Hud {
       ${this.sankey3For(agg, sc, fmt)}
       <p class="wm-note">${big ? 'Billion' : 'Million'} gallons a day withdrawn by the counties whose middles are in view${cu > 0 ? `; ${shown(cu)} consumed` : ''}. USGS estimated what became of the water only for crops, golf courses and power plants (${Math.round(100 * est)}% of the water here). The figures follow the view as it moves. Zoom out for the whole country.</p>
       <h5>The sources</h5>${mixBlock(this.srcRows(agg.src), (v) => volShort(v))}`), false, 'view');
+  }
+  /**
+   * A drop followed down the rivers (ui/dropview.js): its journey so far, and what became of a thousand drops entering
+   * the river at the same spot, by the same chances.
+   */
+  showDrop(d) {
+    if (d.none) { this.setInspector(`<p class="wm-cap">Follow a drop</p><h3>${esc(d.head)}</h3><p class="wm-sub">${esc(d.text)}</p>`, true, 'drop'); return; }
+    const log = d.log.map((e) => `<li><i class="wm-sw" style="background:${e.color}"></i><span><b>${esc(e.title)}</b>${e.text ? `<small>${esc(e.text)}</small>` : ''}</span></li>`).join('');
+    const used = Math.round((100 * d.used) / d.n);
+    const caveat = d.dry > 0.3 ? `<p class="wm-note">Along the way, uses upstream consume ${d.dry >= 0.95 ? 'nearly all of some rivers’ natural flow' : `as much as ${Math.round(100 * d.dry)} percent of a river’s natural flow`}, by the map’s figures. The map leaves out evaporation from reservoirs and water taken outside the United States, so in rivers this heavily used the drops get further than the rivers’ water does.</p>` : '';
+    this.setInspector(`<p class="wm-cap">Follow a drop</p><h3>${esc(d.head)}</h3>
+      ${d.log.length ? `<h5>Its journey</h5><ol class="wm-drop-log">${log}</ol>` : ''}
+      <h5>The odds from here</h5>
+      <p class="wm-sub">What became of ${nf(d.n)} drops entering the river here, by the map’s figures. ${used}% were taken out of a river at least once${d.uses > d.used ? `, some of them several times` : ''}.</p>
+      ${mixBlock(d.rows, null)}
+      ${caveat}
+      <p class="wm-note">At each place, a drop is taken with the chance that the intakes there take water out of the river: what they withdraw over the river’s natural flow, less what uses upstream consumed or piped away. It is then used up with the chance that its use consumes water, or goes back to a river nearby. <a href="#drop-method">How the odds are worked out</a></p>
+      <p class="wm-note"><button type="button" class="wm-lnk" data-drop-again>Drop another here</button></p>`, true, 'drop');
+    const b = this.$('[data-drop-again]'); if (b) this.on(b, 'click', () => d.again());
   }
   /** the panel for one use, shown while it is isolated */
   showCategory(k) {
@@ -1221,6 +1245,7 @@ export class Hud {
     const act = {
       home: () => this.app.goHome(),
       tour: () => this.app.tour.toggle(),
+      drop: () => this.app.drop?.toggle(),
       night: () => this.app.setNight(!this.app.night),
       under: () => this.app.setUnderground(!this.app.underground),
       full: () => this.app.toggleExpanded(),

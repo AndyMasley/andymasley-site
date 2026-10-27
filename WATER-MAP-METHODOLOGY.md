@@ -228,7 +228,7 @@ disagrees with the data it comes from: the national total, the shares in the led
 exaggeration, the systems moved between counties, Imperial County's irrigation against Reclamation, every canal flow's
 unit conversion, the data center conversions, the discs' count, Konikow's High Plains depletion, the trends chart,
 the High Plains water levels against the map's grid, the strain index, the five-year history against the trends table,
-the ZIP lookup and the common questions.
+the ZIP lookup and the common questions. `src/lib/__tests__/water-map-drop.test.ts` checks Follow a drop (section 12).
 
 `scripts/water-map/check_plants.mjs` lists every plant the map credits with more than ten times its own plant-model
 estimate. On 2026-10-26 it lists 22, nine of them above 50 Mgal/d: W A Parish (TX), Gerald Gentleman (NE), Stryker
@@ -280,3 +280,120 @@ matches USGS's 1950–2015 table, and the depletion figures match Konikow's Tabl
   groundwater when pumped) are as USGS counts them.
 - Intake positions inside a county are illustrative.
 - The flat map (`?flat`, or any browser without WebGL 2) gives the county figures and panels but draws no flows.
+- Follow a drop (section 12) works from natural flows, so in heavily used rivers it leaves more water in the river than
+  there is: it does not count evaporation from reservoirs, water taken outside the United States (Mexico's share of
+  the Colorado and the Rio Grande), or the canals whose water it does not trace. Gage-adjusted mean flows for every
+  reach (NHDPlus version 2's EROM flows, joined to HydroRIVERS) would fix most of it. It follows a drop only from the
+  river: what becomes of rain before it reaches one (evaporation, recharge) is not in its figures.
+
+## 12. Follow a drop
+
+`src/lib/water-map/flow/drop.js` (the chances) and `src/lib/water-map/ui/dropview.js` (the drawing and the words).
+
+**The rivers.** The HydroRIVERS reaches the map draws (natural flow at least 0.8 m³/s in the lower 48, 2 in Alaska),
+each with its downstream reach and its modeled long-term mean natural discharge, converted at 22.8245 Mgal/d per
+m³/s. A reach is in the United States when one of its points falls on a county; once no reach downstream is, the drop
+has crossed the border. A reach whose middle falls in a Natural Earth lake is in that lake, and the lake drains by the
+reach in it whose next reach is outside it.
+
+**The intakes.** Every surface intake the map draws for rivers and lakes (not wells, the sea, reclaimed water or
+utility deliveries) goes on the reach it takes from, at the map's own anchor points and split among a county's anchors
+the way its channels are (by the square root of each reach's discharge): a county's on its rivers; a plant's at the
+intake the plant model gives; a transfer system's at its reservoirs, or, where it leaves from a county's own water
+works, on that county's rivers; an import at its aqueduct's intake. Two corrections keep a county's water near where
+it is used, where the map's anchors would put it far away. A county's places of use (its fields, its water works and
+so on) more than 30 km from its anchors take their share from the biggest river within 30 km of each, so the farms
+around Panguitch, Utah, draw on the Sevier, not on the Colorado in Glen Canyon, where Garfield County's anchors are.
+And the map draws part of the surface water of every county on a lake from the lake (75 percent, or 30 where the
+county's biggest river carries more than 200 m³/s); the drop model keeps on the lake only the share of the county's
+places of use within 10 km of the shore, and takes the rest from its rivers, so most of the water for Douglas County,
+Nevada's farms in the Carson Valley comes from its rivers rather than from Lake Tahoe. Where the map draws a county's
+surface water from a canal, its intakes go on the county's rivers instead. Everything drawn from a lake is taken as a
+drop enters the lake, against the flow out of it.
+
+**Measured diversions** (`DROP_DIVERSIONS` in `src/lib/water-map/core/flows_data.js`). USGS counts these in counties
+far from the river they leave, so the drop model takes each out of that river at the volume its operator measured for
+2015, where its mapped line comes nearest a reach with at least 50 m³/s of natural flow (for the two Delta canals, at
+the first reach downstream with at least 1,000 m³/s, where the Sacramento and San Joaquin have joined, and at the
+canal's point nearest that reach). The counties that receive the water lose the same amount from their own surface
+intakes for the use (Imperial County's for crops, all of them), since USGS counts the water among those. A drop taken
+runs along the canals (the mapped lines joined into one network, with gaps of up to about 50 km between pieces bridged)
+to the county's fields or water works nearest them, or nearest the far end of the canal named, and its water goes back,
+if it is not used up, to the river nearest the fields, which for the Imperial Valley drains to the Salton Sea.
+
+| Diversion | Taken | Where it goes | Source of the split |
+|---|---|---|---|
+| Central Arizona Project | 1,518,022 af pumped from Lake Havasu, in place of the part the map routes | the county uses the map routes it to, in proportion | CAP deliveries (section 3) |
+| Colorado River Aqueduct | 1,181,597 af pumped from Lake Havasu | Los Angeles, Orange, Riverside, San Bernardino, San Diego and Ventura counties (the Metropolitan Water District's area, per its 2024 District at a Glance), in proportion to each county's public supply from surface water, at the water works nearest Lake Mathews | proportional |
+| All-American Canal | 2,816,030 af at Imperial Dam | 2,455,649 af for crops in Imperial County, at the canal's far end; 360,381 af for crops in Riverside County, down the Coachella Canal to its end | Reclamation, Colorado River accounting report 2015, table 5a |
+| California Aqueduct | 837,421 af diverted at Banks Pumping Plant (Bulletin 132-16; its 1,336,889 af of deliveries that year also drew on its reservoirs and on groundwater banks) | the contractors south of the Delta, in proportion to their maximum Table A amounts (below) | DWR Notice to Contractors 24-08, attachment A |
+| Delta-Mendota Canal | 688,723 af diverted (CVO table 21) | the districts and refuges it delivered to in 2015 (below) | Reclamation CVO tables 24 and 25 (2015) |
+
+The State Water Project's split: every contractor was allocated the same 20 percent of its maximum Table A amount in
+2015, so Banks's water is shared in proportion to those amounts (4,056,205 af in all: the 4,172,786 af total less the
+Feather River contractors' 39,800, upstream of the Delta, and the North Bay's 76,781, taken at Barker Slough). The
+amounts are 2024's (Notice 24-08). The Metropolitan Water District (1,911,500), with the Coachella Valley Water District
+(138,350) and the Desert Water Agency (55,750), who trade theirs to the Metropolitan for Colorado River water: its six
+counties, as for the Colorado River Aqueduct, at the water works nearest the ends of the East and West branches. Kern
+County Water Agency (982,730): Kern County, between crops and public supply in proportion to the surface water USGS
+counts in Kern for each. Kings County, crops: Tulare Lake Basin WSD 86,854, Dudley Ridge WD 41,350, County of Kings
+9,305, Empire West Side ID 3,617. Stanislaus County, crops: Oak Flat WD 5,700. Alameda County, public supply, at the
+end of the South Bay Aqueduct: Zone 7 80,619, Alameda County WD 42,000. Santa Clara County, public supply, the same way:
+Santa Clara Valley WD 100,000. San Luis Obispo County 25,000 and Santa Barbara County 45,486 (the Coastal Branch,
+which the map does not draw). Los Angeles County: Antelope Valley-East Kern 144,844, Santa Clarita Valley 95,200 (Castaic
+Lake WA in 2015), San Gabriel Valley MWD 28,800, Palmdale WD 21,300, Littlerock Creek ID 2,300. San Bernardino County:
+San Bernardino Valley MWD 102,600, Mojave WA 89,800, Crestline-Lake Arrowhead WA 5,800. Riverside County: San Gorgonio
+Pass WA 17,300. Ventura County: Ventura County WPD 20,000.
+
+The Delta-Mendota Canal's split, in acre-feet delivered in 2015 (table 25, along the canal; table 24, from the Mendota
+Pool where it ends), each district in the county it serves: San Joaquin County, the City of Tracy 3,246 (public
+supply) and Banta-Carbona ID 14,390; Stanislaus County, Del Puerto WD 28,072, West Stanislaus ID 13,743 and Patterson
+7,554; Merced County, the Central California ID 277,520 (all three of its rows; it farms land in Fresno, Merced and
+Stanislaus counties, and is counted in Merced, where its office is, in Los Banos), the San Luis Canal Co. 73,281, the
+San Luis WD 3,201 for farms and 107 for public supply, and the Grassland area's refuges 128,689 (Grasslands WD; the
+state's Los Banos and Volta wildlife areas and China Island and Salt Slough units; the federal Freitas and Kesterson
+units and San Luis National Wildlife Refuge), placed at the Grasslands Wildlife Management Area's coordinates on
+Wikipedia (37.161° N, 120.604° W); Fresno County, Firebaugh Canal WD 26,828, the farms and districts on the Mendota
+Pool 56,425 (Fresno Slough WD, Tranquility PUD and ID, James ID, Meyers, Dudley and Indart, Terra Linda Farms,
+Westlands' laterals 6 and 7, Reclamation District 1606, Lempesis; counted in Fresno County, where the largest of them
+are), and the Mendota Wildlife Area 19,152, at the pool; Madera County, the Columbia Canal Co. 31,549. The Exchange
+Contractors' counties are from their authority's member page (https://www.sjrecwa.net/member-districts/) and the
+Central California ID's office from its own site. That is 683,757 acre-feet; left out are 8,602 that went to
+Byron-Bethany ID's former Plainview area, the Panoche, Eagle Field, Oro Loma and Mercy Springs water districts, and an
+intertie with the California Aqueduct. The refuges' water is no USGS use, and nobody's figure for the share they use
+up is on the map, so the drop goes back.
+
+**The chances.** The flow past a reach is its natural flow less everything consumed or piped away upstream: the
+consumed share of every local intake (below) and the whole of every intake whose water is piped to another county. It
+never goes below 3 percent of the natural flow. A drop at a reach (or entering a lake) is taken with probability
+W / Q, what the intakes there withdraw over that flow, at most 1; it goes to one of them in proportion to what each
+withdraws. It is then consumed with the share its use consumes:
+
+| Use | Share consumed | Source |
+|---|---|---|
+| Crops, golf courses | the county's 2015 consumptive use over its withdrawals plus reclaimed water | Dieter and others (2018) |
+| Power plants | the plant's consumption over its withdrawals | Harris and Diehl (2019) |
+| Public supply | 0.12, the lower-48 average for water years 2010–20 (0.08 in the Gulf Coast, Atlantic Coast and Great Lakes regions to 0.23 in the Southwest Desert) | Medalie and others (2025), USGS Professional Paper 1894-D |
+| Industry | 0.10, the median of published coefficients for the Great Lakes Basin, climatically similar areas and the world | Shaffer and Runkle (2007), USGS SIR 2007-5197 |
+| Livestock, fish farms, mining, self-supplied homes | none estimated by USGS since 1995; the drop goes back | |
+| Wildlife refuges (Delta-Mendota Canal water) | none on the map; the drop goes back | |
+
+Water not consumed goes back to the nearest reach within 24 km of a point near its use: a utility's wastewater plant
+(or the county's return points), a power plant's outfall, or the county's return points along its rivers, in each case
+the one nearest the intake that took it (for a measured diversion, nearest the place its water was used, and for its
+fields and refuges the river nearest them). With no reach that near, it goes to the sea if the sea is within 12 km and
+otherwise into the ground, where the map loses it. A drop returned is not taken again at the reach it rejoins. A walk
+ends at the sea (a river mouth within 14 km of ocean, named by its longitude and latitude), in a lake with no outlet,
+at the border, at the edge of the map, or when its drop is consumed. The odds in the panel are 1,000 walks from the
+same reach.
+
+**Checks.** `src/lib/__tests__/water-map-drop.test.ts` runs the walk on the baked data and fails the build unless,
+of 1,000 drops: more than 95 percent entering the Hudson at Albany reach the Atlantic, entering the Allegheny at
+Pittsburgh reach the Gulf of Mexico, and entering the Saint Louis River at Duluth cross into Canada through the Great
+Lakes; more than 95 percent entering the Arkansas at Pueblo are taken out of a river and more than 60 percent are used
+up by crops; and more than half entering the Colorado at Grand Junction are used up by crops and fewer than 30 percent
+cross into Mexico. On 2026-10-26 those were 99.7, 99.3, 99.5, 100, 80.5, 62.0 and 18.3 percent. The last is more than the
+river's water does, for the reasons in section 11. The checks also hold the page's shares and its list of diversions to
+`DROP_CONSUMED` and `DROP_DIVERSIONS`, every diversion to its measured volume, the State Water Project's weights to the
+Table A amounts and the Delta-Mendota Canal's to Reclamation's two tables, and check that each diversion's water all
+goes somewhere along its canals.

@@ -50,6 +50,83 @@ export const DATA_CENTERS = {
   reportedSrc: '',
 };
 
+// What share of the water a use withdraws it consumes, for the drop followed down the rivers (flow/drop.js), where USGS
+// did not estimate it for 2015. Public supply: USGS's national water use assessment for water years 2010–20 (Medalie and
+// others, 2025, chapter D), whose models put public-supply consumptive use at 0.12 of withdrawals across the lower 48,
+// from 0.08 in the Gulf Coast, Atlantic Coast and Great Lakes regions to 0.23 in the Southwest Desert. Industry: the
+// median of the published consumptive-use coefficients USGS gathered for industry, 10 percent for the Great Lakes Basin,
+// climatically similar areas and the world alike (Shaffer and Runkle, 2007). USGS has estimated no share for livestock,
+// fish farms, mines or homes with their own supply since 1995, so the drop model treats their water as returned.
+export const DROP_CONSUMED = {
+  ps: { share: 0.12, range: [0.08, 0.23], src: 'Medalie and others (2025), Water use across the conterminous United States, water years 2010–20, USGS Professional Paper 1894–D', url: 'https://doi.org/10.3133/pp1894D' },
+  in: { share: 0.10, src: 'Shaffer and Runkle (2007), Consumptive water-use coefficients for the Great Lakes Basin and climatically similar areas, USGS Scientific Investigations Report 2007–5197', url: 'https://doi.org/10.3133/sir20075197' },
+};
+
+// The biggest diversions that USGS counts in counties far from the river they come out of, where the drop model takes
+// them out of that river: the Colorado at Lake Havasu and Imperial Dam, and the Sacramento–San Joaquin Delta. Each is
+// taken where its canal or aqueduct meets the river (at `mainQ`, the first reach downstream with at least that natural
+// flow in cubic meters a second, where the Delta's rivers have joined), at the volume its operator measured: `af` where
+// given, otherwise AQ_FLOWS. Its water goes to the county uses the map routes the Central Arizona Project's water to
+// (imp), or to its parts. A part with `af` gets that measured volume; the rest is shared among the parts with a weight
+// `w`, in proportion to it. A part for several counties (`to`) or uses (a list of `cat`) is shared among them in
+// proportion to the surface water USGS counts in each for the use. The drop runs along the canals in `via` (the part's
+// own, or the diversion's) to the county's fields or water works nearest them or, with `ends`, nearest the far ends of
+// the canals named; `at` is a fixed place [lon, lat]. USGS counts this water among the receiving county's own surface
+// intakes for the use, so those lose the same amount (all of it, with `replace`). `wl` is water for wildlife refuges,
+// which USGS has no use for.
+const MWD = ['06037', '06059', '06065', '06071', '06073', '06111'];
+export const DROP_SOURCES = {
+  banks: { src: 'California Department of Water Resources, Bulletin 132-16 (highlights: “In 2015, the SWP diverted 837,421 acre-feet (af) at Banks Pumping Plant.”)', url: 'https://water.ca.gov/-/media/DWR-Website/Web-Pages/Programs/State-Water-Project/Management/Files/Bulletin-132-Appendix-B-2017.pdf' },
+  tableA: { src: 'California Department of Water Resources, Notice to State Water Project Contractors 24-08, Attachment A (maximum annual Table A amounts)', url: 'https://resources.ca.gov/-/media/DWR-Website/Web-Pages/Programs/State-Water-Project/Management/NTC_24-08_SWP_2025Alloc_15per_20241223.pdf', total: 4172786, featherRiver: 39800, northBay: 76781 },
+  dmc: { src: 'Bureau of Reclamation, Central Valley Operations, Tables 24 and 25 (2015)', url: CVO(25), urls: [CVO(24), CVO(25)], table24: 508857, table25: 183502, left: 8602 },
+};
+export const DROP_DIVERSIONS = [
+  { aq: 'Central Arizona Project Canal', imp: 'cap', who: 'the Central Arizona Project' },
+  { aq: 'Colorado River Aqueduct', who: 'the Metropolitan Water District of Southern California', parts: [{ to: MWD, cat: 'ps', w: 1, ends: ['Colorado River Aqueduct'] }] },
+  { aq: 'All-American Canal', who: 'the All-American Canal', via: ['All-American Canal'],
+    parts: [
+      { fips: '06025', cat: 'ir', af: 2455649, who: 'the Imperial Irrigation District', replace: true, ends: ['All-American Canal'] },
+      { fips: '06065', cat: 'ir', af: 360381, who: 'the Coachella Valley Water District', via: ['All-American Canal', 'Coachella Canal'], ends: ['Coachella Canal'] },
+    ] },
+  // The State Water Project: what it pumped out of the Delta at Banks Pumping Plant in 2015 (its deliveries that year,
+  // 1,336,889 acre-feet, also drew on its reservoirs and on groundwater banks), shared among its contractors south of
+  // the Delta by their maximum Table A amounts, since each was allocated the same 20 percent of its amount in 2015. The
+  // Coachella Valley Water District and the Desert Water Agency trade theirs to the Metropolitan Water District for
+  // Colorado River water, so theirs goes with the Metropolitan's.
+  { aq: 'California Aqueduct', af: 837421, who: 'the State Water Project', mainQ: 1000,
+    via: ['California Aqueduct', 'San Luis Canal', 'California Aqueduct East Branch', 'California Aqueduct West Branch', 'South Bay Aqueduct'],
+    parts: [
+      { to: MWD, cat: 'ps', w: 1911500 + 138350 + 55750, who: 'the Metropolitan Water District of Southern California', ends: ['California Aqueduct West Branch', 'California Aqueduct East Branch'] },
+      { fips: '06029', cat: ['ir', 'ps'], w: 982730, who: 'the Kern County Water Agency' },
+      { fips: '06031', cat: 'ir', w: 86854 + 41350 + 9305 + 3617 },          // Tulare Lake Basin WSD, Dudley Ridge WD, County of Kings, Empire West Side ID
+      { fips: '06099', cat: 'ir', w: 5700, who: 'the Oak Flat Water District' },
+      { fips: '06001', cat: 'ps', w: 80619 + 42000, ends: ['South Bay Aqueduct'] }, // Zone 7, Alameda County WD
+      { fips: '06085', cat: 'ps', w: 100000, who: 'the Santa Clara Valley Water District', ends: ['South Bay Aqueduct'] },
+      { fips: '06079', cat: 'ps', w: 25000 },                                  // San Luis Obispo County FC&WCD (Coastal Branch)
+      { fips: '06083', cat: 'ps', w: 45486 },                                  // Santa Barbara County FC&WCD (Coastal Branch)
+      { fips: '06037', cat: 'ps', w: 144844 + 95200 + 28800 + 21300 + 2300 },  // Antelope Valley-East Kern, Santa Clarita Valley, San Gabriel Valley, Palmdale, Littlerock Creek
+      { fips: '06071', cat: 'ps', w: 102600 + 89800 + 5800 },                  // San Bernardino Valley MWD, Mojave WA, Crestline-Lake Arrowhead WA
+      { fips: '06065', cat: 'ps', w: 17300 },                                  // San Gorgonio Pass WA
+      { fips: '06111', cat: 'ps', w: 20000 },                                  // Ventura County WPD
+    ] },
+  // The Delta-Mendota Canal: shared by what it delivered in 2015 along the canal (Table 25) and from the Mendota Pool,
+  // where it ends (Table 24), each district in the county it serves (WATER-MAP-METHODOLOGY.md section 12). Left out:
+  // 8,602 acre-feet to Byron-Bethany ID's former Plainview area, four small districts and an intertie with the
+  // California Aqueduct.
+  { aq: 'Delta-Mendota Canal', who: 'the Central Valley Project', mainQ: 1000, via: ['Delta-Mendota Canal'],
+    parts: [
+      { fips: '06077', cat: 'ps', w: 3246 },                                   // City of Tracy
+      { fips: '06077', cat: 'ir', w: 14390 },                                  // Banta-Carbona ID
+      { fips: '06099', cat: 'ir', w: 28072 + 13743 + 7554 },                   // Del Puerto WD, West Stanislaus ID, Patterson
+      { fips: '06047', cat: 'ir', w: 227275 + 41503 + 8742 + 73281 + 3138 + 63 }, // Central California ID, San Luis Canal Co., San Luis WD
+      { fips: '06047', cat: 'ps', w: 107 },                                    // San Luis WD, municipal
+      { fips: '06047', cat: 'wl', w: 99038 - 19152 + 48803, at: [-120.60417, 37.16111] }, // the refuges of the Grassland area
+      { fips: '06019', cat: 'ir', w: 21226 + 5602 + 56425 },                   // Firebaugh Canal WD; the farms and districts on the Mendota Pool
+      { fips: '06019', cat: 'wl', w: 19152, ends: ['Delta-Mendota Canal'] },    // the Mendota Wildlife Area, by the pool
+      { fips: '06039', cat: 'ir', w: 31549 },                                  // Columbia Canal Co.
+    ] },
+];
+
 // Groundwater depletion, 1900–2008, from Konikow (2013), Table 1 (cubic kilometers; negative is a gain in storage),
 // matched to the principal aquifers on the map where the report's systems line up with them.
 export const DEPLETION = {
