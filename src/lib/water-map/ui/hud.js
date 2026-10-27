@@ -15,6 +15,13 @@ const genName = (g) => ({ NGCC: 'Natural gas, combined cycle', COAL: 'Coal', 'GA
 const coolName = (c) => ({ 'RECIRCULATING TOWER': 'Cooling towers (recirculating)', 'ONCE-THROUGH FRESH': 'Once-through, fresh water', 'ONCE-THROUGH SALINE': 'Once-through, salt water', 'RECIRCULATING POND': 'Cooling pond (recirculating)', COMPLEX: 'Several cooling systems' }[c] || c);
 const consumedOf = (agg, k) => (k === 'ir' ? Math.min(agg.cu.ir, agg.W.ir + agg.other.ir_rec) : k === 'go' ? Math.min(agg.cu.go, agg.W.go + agg.other.go_rec) : k === 'pt' ? Math.min(agg.cu.pt, agg.W.pt) : 0);
 const HAZ = ['Not determined', 'Low', 'Significant', 'High'];
+// the crop groups of the 65 m fields (scripts/water-map/fields_fine.py CROPS) as a tooltip says them
+const CROP_WORDS = { Corn: 'corn', Soybeans: 'soybeans', Cotton: 'cotton', Rice: 'rice', Sorghum: 'sorghum', Wheat: 'wheat', Alfalfa: 'alfalfa',
+  'Other hay': 'hay', 'Barley, oats and other grains': 'barley, oats or other grain', 'Sugar beets': 'sugar beets', Potatoes: 'potatoes',
+  'Dry beans and peas': 'dry beans or peas', Peanuts: 'peanuts', 'Sunflowers, canola and other oilseeds': 'sunflowers, canola or another oilseed',
+  'Vegetables and melons': 'vegetables or melons', Almonds: 'almonds', 'Walnuts, pecans and pistachios': 'walnuts, pecans or pistachios', Citrus: 'citrus',
+  Grapes: 'grapes', 'Other orchards': 'an orchard', Berries: 'berries', Sugarcane: 'sugarcane', Tobacco: 'tobacco', 'Other crops': 'another crop',
+  'Fallow or idle': 'fallow or idle', 'Grass and pasture': 'grass or pasture', 'Developed land': 'lawns or parks', 'Woods, wetland or other natural cover': 'woods or wetland', 'Open water': 'water' };
 const sw = (c) => `<i class="wm-sw" style="background:${c}"></i>`;
 const CONSUMED_WHITE = '#f4f1ea';
 /** "mostly from the High Plains aquifer", from a county's [[index, name, Mgal/d], ...] list (Lovelace and others, 2020) */
@@ -79,7 +86,7 @@ export class Hud {
     this.$ = (s) => stage.querySelector(s);
     this.$$ = (s) => stage.querySelectorAll(s);
     // (the National Inventory's 92,000 dams are a layer to turn on: as marks everywhere they read as noise)
-    this.layers = { rivers: true, flows: true, plants: true, labels: true, nid: false, infra: true, towers: false, golf: false, dc: false, fac: true };
+    this.layers = { rivers: true, flows: true, plants: true, labels: true, nid: false, infra: true, towers: false, golf: false, dc: false, fac: true, sew: true };
     this.choro = 'none';
     this.ac = new AbortController();
     this.build();
@@ -123,6 +130,7 @@ export class Hud {
           <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><circle cx="12" cy="6" r="4.5" fill="${RETURN_GRAY}"/><path d="M12 6 V1.5 A4.5 4.5 0 0 1 15.9 8.25 Z" fill="${CONSUMED_WHITE}"/><circle cx="12" cy="6" r="4.6" fill="none" stroke="${CAT.pt.color}" stroke-width="1.6"/><circle cx="28" cy="6" r="4.5" fill="${RETURN_GRAY}"/><path d="M28 6 V1.5 A4.5 4.5 0 1 1 23.7 4.6 Z" fill="${CONSUMED_WHITE}"/><circle cx="28" cy="6" r="4.6" fill="none" stroke="${CAT.ir.color}" stroke-width="1.6"/></svg><span>Closer in, a disc at each power plant and in each county’s fields and golf courses, ringed in the color of the use, shows what became of the water: white for the share consumed, gray for the share returned.</span></div>
           <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="3" y="3" width="6" height="6" fill="#f2cf63" stroke="#0a1310"/><circle cx="20" cy="6" r="3" fill="none" stroke="#e8dcb4" stroke-width="1.6"/><circle cx="32" cy="6" r="3" fill="${CAT.go.color}" stroke="#0a1310"/></svg><span>Water treatment plants, as OpenStreetMap maps them. Water towers, wastewater plants and golf courses are under Layers.</span></div>
           <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="3" y="3" width="6" height="6" fill="${CAT.in.color}" stroke="#0a1310"/><path d="M20 2 L24 6 L20 10 L16 6 Z" fill="${CAT.mi.color}" stroke="#0a1310"/><circle cx="32" cy="6" r="3" fill="${CAT.aq.color}" stroke="#0a1310"/></svg><span>Up close, factories, mines and fish farms with an EPA discharge permit, in the color of their use. Their county’s water for that use ends at its largest ones.</span></div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="5" y="3" width="6" height="6" fill="#d2a467" stroke="#0a1310"/><path d="M11 6 H30" stroke="#0a1310" stroke-width="1.4"/><circle cx="32" cy="6" r="2.2" fill="#d2a467" stroke="#0a1310"/></svg><span>Tan squares are sewage plants with an EPA permit. Click one for its outfalls and the water they discharge to.</span></div>
           <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="3" y="7" width="34" height="4" fill="#e7c25e" opacity=".55"/><path d="M20 7 V1" stroke="#7fe0b8" stroke-width="1.6"/></svg><span>Underground, wells lift groundwater out of the aquifers.</span></div>
           <p class="wm-note" data-scale></p>
         </div>
@@ -185,7 +193,7 @@ export class Hud {
     this.choroKey(this.app.CHORO.none);
     const L = [['rivers', 'Rivers and canals'], ['flows', 'Moving water'], ['plants', 'Power plants'], ['labels', 'Names'],
       ['nid', 'Every dam'], ['infra', 'Water treatment plants'], ['towers', 'Water towers and wastewater plants'], ['golf', 'Golf courses'], ['dc', 'Data centers'],
-      ['fac', 'Factories, mines and farms with EPA permits']];
+      ['fac', 'Factories, mines and farms with EPA permits'], ['sew', 'Sewage plants with EPA permits']];
     this.$('[data-toggles]').innerHTML = L.map(([k, n]) => `<button type="button" class="wm-tg wm-check${this.layers[k] ? ' on' : ''}" role="checkbox" aria-checked="${this.layers[k]}" data-k="${k}"><i></i>${n}</button>`).join('');
     for (const el of this.$$('[data-toggles] .wm-tg')) this.on(el, 'click', () => { const k = el.dataset.k; this.setLayer(k, !this.layers[k]); });
 
@@ -512,6 +520,8 @@ export class Hud {
     for (const a of el.querySelectorAll('[data-aq]')) this.on(a, 'click', () => this.app.selectAquifer(+a.dataset.aq, true));
     for (const a of el.querySelectorAll('[data-osm]')) this.on(a, 'click', () => this.app.selectOsm(+a.dataset.osm, true));
     for (const a of el.querySelectorAll('[data-fac]')) this.on(a, 'click', () => this.app.selectFac(+a.dataset.fac, true));
+    for (const a of el.querySelectorAll('[data-wsa]')) this.on(a, 'click', () => this.app.showSystem(+a.dataset.wsa));
+    for (const a of el.querySelectorAll('[data-sew]')) this.on(a, 'click', () => this.app.selectSew(+a.dataset.sew, true));
     for (const a of el.querySelectorAll('[data-iso]')) this.on(a, 'click', () => this.app.isolate(a.dataset.iso === 'all' ? null : a.dataset.iso));
     for (const a of el.querySelectorAll('[data-go]')) this.on(a, 'click', () => { const v = JSON.parse(a.dataset.go); this.app.flyTo(v, 1800); });
     for (const a of el.querySelectorAll('[data-under]')) this.on(a, 'click', () => this.app.setUnderground(true));
@@ -920,7 +930,7 @@ export class Hud {
       html += `<h5>Water-cooled power plants</h5><div class="wm-list">` + plants.map((p) => `<button type="button" class="wm-li" data-plant="${m.plants.indexOf(p)}"><span>${esc(p.name)}<small>${esc(genName(p.gen))} · ${esc(coolName(p.cooling))}</small></span><span>${mgd(p.w || 0)}</span></button>`).join('') +
         ph.map((h) => `<div class="wm-li"><span>Plants not in the USGS plant model<small>the county total, placed near its towns</small></span><span>${mgd(h.w)}</span></div>`).join('') + `</div>`;
     }
-    html += `<div data-facs="${i}">${this.facBlock(i)}</div><div data-sys="${i}">${this.sysBlock(i)}</div>`;
+    html += `<div data-facs="${i}">${this.facBlock(i)}</div><div data-sews="${i}">${this.sewBlock(i)}</div><div data-sys="${i}">${this.sysBlock(i)}</div>`;
     const osm = this.app.osm && this.app.osm.byCounty.get(i);
     const dams = this.app.damsByCounty && this.app.damsByCounty.get(i);
     if (osm || dams) {
@@ -935,11 +945,20 @@ export class Hud {
     // (the history and the strain index arrive after the first click: fill them in when they do)
     if (!this.app.history) this.app.loadHistory().then(() => { const el = this.$(`[data-insp] [data-hist="${i}"]`); if (el) el.innerHTML = this.historyBlock(i); });
     if (!this.app.strain) this.app.loadStrain().then(() => { const el = this.$(`[data-insp] [data-strain="${i}"]`); if (el) el.innerHTML = this.strainBlock(i); });
-    if (!this.app.systems) this.app.loadSystems?.().then(() => { const el = this.$(`[data-insp] [data-sys="${i}"]`); if (el) el.innerHTML = this.sysBlock(i); });
+    if (!this.app.systems) this.app.loadSystems?.().then(() => {
+      const el = this.$(`[data-insp] [data-sys="${i}"]`); if (!el) return;
+      el.innerHTML = this.sysBlock(i);
+      for (const a of el.querySelectorAll('[data-wsa]')) this.on(a, 'click', () => this.app.showSystem(+a.dataset.wsa));
+    });
     if (this.app.fac && !this.app.fac.names) this.app.fac.loadNames().then(() => {
       const el = this.$(`[data-insp] [data-facs="${i}"]`); if (!el) return;
       el.innerHTML = this.facBlock(i);
       for (const a of el.querySelectorAll('[data-fac]')) this.on(a, 'click', () => this.app.selectFac(+a.dataset.fac, true));
+    });
+    if (this.app.sew && !this.app.sew.names) this.app.sew.loadNames().then(() => {
+      const el = this.$(`[data-insp] [data-sews="${i}"]`); if (!el) return;
+      el.innerHTML = this.sewBlock(i);
+      for (const a of el.querySelectorAll('[data-sew]')) this.on(a, 'click', () => this.app.selectSew(+a.dataset.sew, true));
     });
   }
   /** a county's factories, mines, fish farms and livestock farms with EPA permits, the largest by design flow first */
@@ -954,13 +973,25 @@ export class Hud {
     return `<h5>Factories, mines and farms with EPA permits</h5>${list ? `<div class="wm-list">${list}</div>` : ''}
       <p class="wm-note">${words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words[0]} here ${ids.length === 1 ? 'holds' : 'hold'} an individual EPA discharge permit.${list && top.some((j) => f(j)) ? ' The figures are design flows, the most each was built to discharge, in million gallons a day.' : ''}</p>`;
   }
+  /** a county's sewage plants with EPA permits, the largest by design flow first */
+  sewBlock(i) {
+    const L = this.app.sew, ids = L && L.byCounty.get(i);
+    if (!ids || !ids.length) return '';
+    const S = L.data, M = L.meta, f = (j) => (S.flow[j] > 0 && !(S.flags[j] & 2) ? S.flow[j] : 0);
+    const top = ids.slice().sort((a, b) => f(b) - f(a) || (S.flags[b] & 1) - (S.flags[a] & 1)).slice(0, 5);
+    const list = L.names ? top.map((j) => `<button type="button" class="wm-li" data-sew="${j}"><span>${esc(L.names[j])}<small>${M.water[j] && M.water[j].length ? `to ${esc(M.water[j][0])}` : esc(M.place[j] || '')}</small></span><span>${f(j) ? mgd(f(j)) : ''}</span></button>`).join('') : '';
+    const tot = ids.reduce((a, j) => a + f(j), 0);
+    return `<h5>Sewage plants with EPA permits</h5>${list ? `<div class="wm-list">${list}</div>` : ''}
+      <p class="wm-note">${ids.length === 1 ? 'One sewage plant here holds' : `${nf(ids.length)} sewage plants here hold`} an individual EPA discharge permit${tot > 0 ? `, built to treat ${mgd(tot)} million gallons a day between them` : ''}. ${list && top.some((j) => f(j)) ? 'The figures are design flows, what each plant was built to treat.' : ''}</p>`;
+  }
   /** the public water systems that serve a county (USGS service areas), the most people served there first */
   sysBlock(i) {
     const S = this.app.systems; if (!S) return '';
     const rows = S.by[i]; if (!rows || !rows.length) return '';
     const big = (v) => (v >= 1e6 ? `${nf(v / 1e6, 1)} million` : nf(v));
-    return `<h5>Public water systems</h5><div class="wm-kv">${rows.map(([k, sh]) => { const [nm, , pop] = S.sys[k]; return `<span>${esc(nm)}${sh < 0.9 ? `<small>${sh >= 0.5 ? 'Also serves other counties' : 'Mostly serves other counties'}</small>` : ''}</span><span>${big(pop)} people</span>`; }).join('')}</div>
-      <p class="wm-note">These are the systems that serve the most people in the county, from the USGS map of water service areas (Buchwald and others, 2022). Each figure is everyone the system serves, here and beyond. A wholesaler’s area includes the towns it sells water to.</p>`;
+    const nm = (k, n) => (S.rec ? `<button type="button" class="wm-lnk" data-wsa="${k}">${esc(n)}</button>` : esc(n));
+    return `<h5>Public water systems</h5><div class="wm-kv">${rows.map(([k, sh]) => { const [n, , pop] = S.sys[k]; return `<span>${nm(k, n)}${sh < 0.9 ? `<small>${sh >= 0.5 ? 'Also serves other counties' : 'Mostly serves other counties'}</small>` : ''}</span><span>${big(pop)} people</span>`; }).join('')}</div>
+      <p class="wm-note">These are the systems that serve the most people in the county, from the USGS map of water service areas (Buchwald and others, 2022). Each figure is everyone the system serves, here and beyond. A wholesaler’s area includes the towns it sells water to.${S.rec ? ' Click a name to outline the area it serves.' : ''}</p>`;
   }
   showPlant(pi) {
     const p = this.m.plants[pi];
@@ -1127,6 +1158,34 @@ export class Hud {
       ${ci >= 0 ? `<div class="wm-list"><button type="button" class="wm-li" data-county="${ci}"><span>See all of ${esc(c.name)}</span><span>→</span></button></div>` : ''}`;
     this.setInspector(html, true);
   }
+  /** a sewage plant with an EPA discharge permit (net/infra.js loadSewage) */
+  showSew(i) {
+    const L = this.app.sew; if (!L) return;
+    const S = L.data, M = L.meta || {}, ci = S.county[i];
+    const c = ci >= 0 ? this.m.county(ci) : null;
+    const nm = (L.names && L.names[i]) || 'Sewage plant', place = M.place ? M.place[i] : '';
+    const water = M.water ? M.water[i] : [], permit = M.permit ? M.permit[i] : '', reg = M.reg ? M.reg[i] : '', own = M.owner ? M.owner[i] : '';
+    const fl = S.flags[i], flow = S.flow[i], nout = S.ostart[i + 1] - S.ostart[i];
+    const OWN = { MWD: 'A municipality or water district', CTG: 'A municipality', CNG: 'A county', STF: 'A state government', FDF: 'The federal government', TRB: 'A tribal government',
+      SDT: 'A school district', POF: 'A private owner', COR: 'A corporation', NON: 'A non-government owner', MXO: 'Public and private owners together' };
+    let html = `<p class="wm-cap">Sewage plant · EPA discharge permit</p><h3>${esc(nm)}</h3>
+      <p class="wm-sub">${esc(place)}${c && !place.includes(c.name) ? ` · ${esc(c.name)}` : ''}</p>`;
+    const kv = [['Permit', `${esc(permit)}${fl & 1 ? ' (major)' : ''}`]];
+    if (OWN[own]) kv.push(['Owner', OWN[own]]);
+    if (water.length) kv.push([nout > 1 ? 'Discharges to' : 'Discharges to', esc(water.join('; '))]);
+    if (nout > 1) kv.push(['Outfalls', nf(nout)]);
+    if (flow > 0 && !(fl & 2)) kv.push(['Design flow', `${mgd(flow)} Mgal/d`]);
+    html += `<div class="wm-kv">${kv.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('')}</div>`;
+    if (flow > 0 && !(fl & 2)) html += `<p class="wm-note">The design flow is what the plant was built to treat on an average day. What it treats is usually less, and more after heavy rain where storm water runs into the sewers.</p>`;
+    if (fl & 2 && c) html += `<p class="wm-note">EPA's record gives a design flow of ${esc(nf(flow))} million gallons a day, far more than a plant could treat for everyone in ${esc(c.name)}, so the figure is probably in the wrong units in the record.</p>`;
+    const named = M.named && M.named[i] != null ? M.named[i] : -1;
+    if (named >= 0 && c) { const nc = this.m.county(named); html += `<p class="wm-note">EPA's permit names ${esc(nc.name)}, ${esc(this.app.stateName(nc.st))}, but its coordinates put it in ${esc(c.name)}, so one of the two is probably wrong in the record. The map goes by the coordinates.</p>`; }
+    if (fl & 4) html += `<p class="wm-note">EPA has no location for the plant itself, so the map puts it at its first outfall.</p>`;
+    if (c && c.W.ps > 0) html += `<p class="wm-note">Public water systems in ${esc(c.name)} withdrew ${mgd(c.W.ps)} million gallons a day in 2015. USGS has no figure for the water that comes back through sewage plants.</p>`;
+    html += `<p class="wm-note">From EPA's Enforcement and Compliance History Online, which lists the plants holding an individual discharge permit as of October 2026. Plants on a general permit, and those that send their water into the ground rather than a river, are not on the list.${reg ? ` <a href="https://echo.epa.gov/detailed-facility-report?fid=${esc(reg)}">EPA's report on this plant</a>.` : ''}</p>
+      ${ci >= 0 ? `<div class="wm-list"><button type="button" class="wm-li" data-county="${ci}"><span>See all of ${esc(c.name)}</span><span>→</span></button></div>` : ''}`;
+    this.setInspector(html, true);
+  }
   showAqueduct(a) {
     const f = a.flow;
     const kind = a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal';
@@ -1178,13 +1237,15 @@ export class Hud {
     if (ty + r.height > H - 8) ty = y - sr.top - r.height - 14;
     el.style.transform = `translate(${Math.max(8, tx).toFixed(0)}px, ${Math.max(8, ty).toFixed(0)}px)`;
   }
-  countyTip(i, cls, irr = -1) {
+  countyTip(i, cls, irr = -1, crop = null, fine = false) {
     const c = this.m.county(i);
     const top = CAT_KEYS.slice().sort((a, b) => c.W[b] - c.W[a])[0];
     const iso = this.app.iso && CAT[this.app.iso] ? this.app.iso : null;
     const line = iso ? `${mgdLabel(c.W[iso])} for ${esc(CAT[iso].name.toLowerCase())}` : `${mgdLabel(c.total)} withdrawn${c.total > 0 ? ` · ${pct(c.W[top], c.total)}% ${esc(CAT[top].name.toLowerCase())}` : ''}`;
-    // (LANID's share of the ~262 m pixel irrigated in 2015, in eighths)
-    const irrTxt = irr >= 0.5 ? ', irrigated in 2015' : irr > 0.1 ? ', partly irrigated in 2015' : '';
+    // (LANID's share of the pixel irrigated in 2015, in eighths: ~262 m, or 65 m where the fields are loaded, with the
+    // crop the Cropland Data Layer says it grew)
+    const what = crop ? CROP_WORDS[crop] || crop.toLowerCase() : '';
+    const irrTxt = irr >= 0.5 ? `, irrigated in 2015${what ? ` (${esc(what)})` : ''}` : irr > (fine ? 0.2 : 0.1) ? `, partly irrigated in 2015${what ? ` (${esc(what)})` : ''}` : '';
     return `<b>${esc(c.name)}, ${esc(AP_STATE[c.st] || c.st)}</b><span>${line}</span>${cls > 0 ? `<span class="wm-tip-lc">Land here: ${esc(NLCD_CLASSES[cls].toLowerCase())}${irrTxt}</span>` : ''}<span class="wm-tip-hint">Click to see where its water comes from</span>`;
   }
   riverTip(r) {
@@ -1209,6 +1270,13 @@ export class Hud {
     const nm = L.names ? L.names[i] : '', lab = facLabel(k, M ? M.code[i] : '');
     const f = F.flow[i] > 0 && !(F.flags[i] & 2) ? F.flow[i] : 0;
     return `<b>${esc(nm || lab)}</b><span>${esc(lab)}${M && M.what[i] ? ` · ${esc(M.what[i].toLowerCase())}` : ''}${f ? ` · designed for ${mgd(f)} Mgal/d` : ''}</span><span class="wm-tip-hint">Click for its permit and its county's water</span>`;
+  }
+  sewTip(i) {
+    const L = this.app.sew, S = L.data, M = L.meta;
+    const nm = L.names ? L.names[i] : '';
+    const f = S.flow[i] > 0 && !(S.flags[i] & 2) ? S.flow[i] : 0;
+    const w = M && M.water[i] && M.water[i].length ? M.water[i][0] : '';
+    return `<b>${esc(nm || 'Sewage plant')}</b><span>Sewage plant${w ? ` · to ${esc(w)}` : ''}${f ? ` · built for ${mgd(f)} Mgal/d` : ''}</span><span class="wm-tip-hint">Click for its permit and outfalls</span>`;
   }
   aqTip(a) {
     const f = a.flow;

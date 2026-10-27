@@ -1,9 +1,11 @@
 /**
  * Close-range ground detail for the terrain shader. Up close the land cover comes from NLCD (about 262 m per class
  * pixel on the lower 48, warped along organic boundaries), and on the lower 48 the irrigated land from LANID 2015
- * at the same pixels; finer than that the shader paints plausible texture driven by the data: fields in the
- * public-land survey's mile grid, irrigated by each county's mix of methods (center-pivot sprinklers, drip, flood),
- * forest canopy, city blocks. The patterns are illustrative; where they are and how dense they are follows the data.
+ * at the same pixels; closer still, the irrigated fields themselves at about 65 m (world/fields.js), in the colour of
+ * the crop the USDA Cropland Data Layer says they grew. Finer than the data the shader paints plausible texture: fields
+ * in the public-land survey's mile grid (irrigated by each county's mix of methods where the 65 m fields are not
+ * loaded), crop rows and orchard trees, forest canopy, city blocks. The patterns are illustrative; where they are and
+ * how dense they are follows the data.
  */
 export const DETAIL_GLSL = /* glsl */`
 uniform sampler2D uLand;        // r developed intensity, g cropland, b tree cover, a irrigated land (0..1; LANID on the lower 48)
@@ -51,8 +53,11 @@ vec3 landMixAlbedo(vec4 land) {
   return dev * 1.4 * vec3(0.215, 0.200, 0.180) + crop * vec3(0.220, 0.262, 0.088) + tree * vec3(0.062, 0.115, 0.040) + rest * vec3(0.385, 0.300, 0.150);
 }
 // colour of the ground with small-scale detail; base is the albedo from the colour texture (linear). cls is the NLCD
-// class here (or -1 when no close-up tile is loaded), irrUp LANID's irrigated share here (or -1)
-vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw, float cls, float irrUp) {
+// class here (or -1 when no close-up tile is loaded), irrUp LANID's irrigated share here (or -1); fIrr the irrigated
+// share of the 65 m fields here (or -1 where they are not loaded), fCrop their crop group, fpx their pixels per
+// screen pixel
+vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw, float cls, float irrUp, float fIrr, float fCrop, float fpx) {
+  bool fine = fIrr >= 0.0;
   // irrigated land is greener in summer: a tint that shows the irrigated acreage at every zoom
   float irr0 = land.a;
   base = mix(base, base * vec3(0.78, 1.12, 0.62) + vec3(0.0, 0.012, 0.0), clamp(irr0 * 0.55, 0.0, 0.55));
@@ -64,7 +69,8 @@ vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw,
     vec3 a = nlcdAlbedo(cls);
     int k = int(cls);
     // (where LANID is loaded, the land it mapped as irrigated; elsewhere the county's irrigated share on its farmland)
-    float irrHere = lanid ? irrUp : (k == 18 || k == 17) ? clamp(irr0 * 1.6, 0.0, 1.0) : 0.0;
+    // (and where the 65 m fields are loaded, they draw the irrigated land themselves)
+    float irrHere = fine ? 0.0 : lanid ? irrUp : (k == 18 || k == 17) ? clamp(irr0 * 1.6, 0.0, 1.0) : 0.0;
     a = mix(a, a * vec3(0.78, 1.15, 0.62) + vec3(0.0, 0.015, 0.0), irrHere * 0.5);
     base = mix(base, a * shadeK, amt);
     land = vec4(nlcdDev(cls), k == 18 ? 1.0 : k == 17 ? 0.6 : 0.0, (k >= 8 && k <= 10) || k == 19 ? 1.0 : 0.0, lanid ? irrUp : irr0);
@@ -79,7 +85,7 @@ vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw,
   float fieldVis = amt * (1.0 - smoothstep(QS / 7.0, QS / 3.0, pxw));
   // --- farmland: fields of different crops in the mile grid, with section-line roads
   // (irrigated land LANID mapped on pasture or grassland is farmland too)
-  float farm = clamp(crop * 1.2 + (cls > 0.5 ? (lanid ? irr : 0.0) : irr), 0.0, 1.0) * (1.0 - clamp(urban * 1.6, 0.0, 1.0)) * (1.0 - forest * 0.8);
+  float farm = clamp(crop * 1.2 + (fine ? 0.0 : cls > 0.5 ? (lanid ? irr : 0.0) : irr), 0.0, 1.0) * (1.0 - clamp(urban * 1.6, 0.0, 1.0)) * (1.0 - forest * 0.8);
   if (farm > 0.02 && fieldVis > 0.0) {
     bool hay = int(cls) == 17;
     vec3 wheat = vec3(0.42, 0.33, 0.16), green = vec3(0.17, 0.27, 0.08), fallow = vec3(0.30, 0.23, 0.15), hayc = vec3(0.27, 0.30, 0.12);
@@ -88,7 +94,7 @@ vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw,
     // irrigation by method in this county: pivots (sprinkler), orchards and vineyards (drip), furrows (flood). With
     // LANID loaded, a field is irrigated with the chance LANID gives the middle of it
     float irrCell = lanid ? irrAtWorld(surveyToWorld((cell + 0.5) * QS)) : -1.0;
-    float pIrr = irrCell >= 0.0 ? irrCell : clamp(irr * 1.15, 0.0, 1.0);
+    float pIrr = fine ? 0.0 : irrCell >= 0.0 ? irrCell : clamp(irr * 1.15, 0.0, 1.0);
     float r = dh12(cell + 3.7);
     float tot = max(1e-3, cdat.r + cdat.g + cdat.b);
     if (r < pIrr) {
@@ -121,6 +127,34 @@ vec3 groundDetail(vec3 base, vec2 p, vec4 land, vec4 cdat, float amt, float pxw,
     fieldCol = mix(fieldCol, fieldCol * 0.82, edge * 0.6);
     fieldCol = mix(fieldCol, vec3(0.40, 0.38, 0.34) * clamp(shadeK, 0.6, 1.4), road * 0.55);
     col = mix(col, fieldCol, farm * fieldVis);
+  }
+  // --- the irrigated fields LANID mapped, in the colour of their crop: smooth edges between the 65 m pixels, rows,
+  // trees or standing water finer than that
+  if (fine && amt > 0.001) {
+    float aa = clamp(fpx * 0.6, 0.03, 0.5);
+    float m = smoothstep(0.5 - aa, 0.5 + aa, fIrr);
+    if (m > 0.001) {
+      float kind;
+      vec3 cc = cropAlbedo(fCrop, kind);
+      float n1 = dnoise(p * 300.0), n2 = dnoise(p * 61.0);
+      // neighbouring quarter sections a little different, as fields at different stages are
+      vec3 fc = cc * (0.82 + 0.26 * h) * vec3(1.0 + 0.12 * (h2 - 0.5), 1.0, 1.0 - 0.18 * (h2 - 0.5)) * (0.9 + 0.2 * n2) * shadeK;
+      float vis = 1.0 - smoothstep(0.002, 0.008, pxw);
+      vec3 soil = vec3(0.30, 0.25, 0.16) * shadeK;
+      if (kind < 0.5) { float rows = 0.5 + 0.5 * sin(q.x * 2600.0); fc *= mix(1.0, 0.86 + 0.24 * rows, vis); }
+      else if (kind < 1.5) { vec2 g = fract(q * 900.0) - 0.5; float tr = 1.0 - smoothstep(0.22, 0.38, length(g)); fc = mix(soil, fc, mix(0.75, tr, vis)); }
+      else if (kind < 2.5) { float r = 1.0 - smoothstep(0.12, 0.3, abs(fract(q.x * 1300.0) - 0.5)); fc = mix(soil, fc, mix(0.7, r, vis)); }
+      else if (kind < 3.5) fc = mix(fc, vec3(0.05, 0.09, 0.10) * shadeK, 0.25 + 0.15 * n1);
+      else if (kind < 4.5) fc *= 0.9 + 0.2 * n1;
+      // the field's edge a little darker, so fields side by side read apart, and the section-line roads across them
+      fc *= 1.0 - 0.18 * (1.0 - smoothstep(0.0, aa * 2.5 + 0.04, abs(fIrr - 0.5)));
+      vec2 sq = fract(q / (2.0 * QS));
+      float road = 1.0 - smoothstep(0.004, 0.012, min(min(sq.x, 1.0 - sq.x), min(sq.y, 1.0 - sq.y)));
+      float edge = 1.0 - smoothstep(0.006, 0.02, min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)));
+      fc = mix(fc, fc * 0.84, edge * 0.5 * fieldVis);
+      fc = mix(fc, vec3(0.40, 0.38, 0.34) * clamp(shadeK, 0.6, 1.4), road * 0.5 * fieldVis);
+      col = mix(col, fc, m * amt);
+    }
   }
   // --- forest canopy: stands and gaps from afar, crowns up close
   if (forest > 0.05) {

@@ -7,8 +7,10 @@ and urban rasters. Volumes come from the USGS 2015 county table (wu.json) at run
 On the lower 48, irrigated land comes from LANID 2015 (bake_lanid.py): the land texture's irrigated channel is its
 irrigated fraction, and each county's crop water ends at points on its irrigated fields ('irr' anchors). Elsewhere the
 county's USGS irrigated acreage is spread over its flat cropland. Factories, mines and fish farms with EPA discharge
-permits (bake_npdes.py) are the anchors for industry, mining and aquaculture where a county has them. The new anchor
-sets are drawn with their own random generator, so the older sets come out exactly as before.
+permits (bake_npdes.py) are the anchors for industry, mining and aquaculture where a county has them, and on the lower
+48 a county's public supply ends in its water systems' service areas ('wsa' anchors, from the USGS service areas,
+bake_wsa.py) where they serve at least WSA_MIN_PEOPLE there. The new anchor sets are drawn with their own random
+generators, so the older sets come out exactly as before.
 
 Outputs (proc/net):
   anchors.bin        per-county anchor sets (see layout below)
@@ -96,10 +98,32 @@ def downstream(r, vert, reach, dist_units):
             k = r['start'][rr]
     return float(x), float(z)
 
-TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp', 'irr', 'ind', 'mine', 'fish']
-NPTS = dict(land=14, crop=14, urban=10, irr=14)
-# the new sets (irrigated fields, permitted facilities) draw from their own generator, so the older ones are unchanged
+TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp', 'irr', 'ind', 'mine', 'fish', 'wsa']
+NPTS = dict(land=14, crop=14, urban=10, irr=14, wsa=12)
+# the new sets (irrigated fields, permitted facilities) draw from their own generator, so the older ones are unchanged;
+# the water systems' service areas from a third
 rng2 = np.random.default_rng(20152)
+rng3 = np.random.default_rng(20153)
+WSA_MIN_PEOPLE = 2000   # a county's public supply ends in its water systems' service areas when they serve this many there
+
+def wsa_people(t, urb):
+    """People served at each texel of the lower 48, from the USGS water service areas (wsa_samples.npz, bake_wsa.py): each
+    sample point of a system stands for the system's population times its weight (how built up the land under it is,
+    plus 0.02, as bake_wsa.py weighs it) over the system's total weight."""
+    from pyproj import Transformer
+    z = np.load(f'{RAW}/wsa/wsa_samples.npz')
+    pop, start = z['pop'].astype(np.float64), z['start']
+    lon, lat = Transformer.from_crs(5070, 4269, always_xy=True).transform(z['sx'].astype(np.float64), z['sy'].astype(np.float64))
+    X, Z = to_scene('conus', lon, lat)
+    fx, fy = t.px(X, Z)
+    i = np.clip(np.round(fx).astype(np.int64), 0, t.W - 1); j = np.clip(np.round(fy).astype(np.int64), 0, t.H - 1)
+    w = 0.02 + urb[j, i].astype(np.float64)
+    out = np.zeros((t.H, t.W), np.float64)
+    for s in range(len(pop)):
+        a, b = start[s], start[s + 1]
+        if b <= a or pop[s] <= 0: continue
+        np.add.at(out, (j[a:b], i[a:b]), pop[s] * w[a:b] / w[a:b].sum())
+    return out
 LANID = '/home/claude/w2/proc/lanid'
 LANID_MIN_KM2 = 1.0   # a county's crop water ends on its LANID fields when it has at least this much irrigated land
 # OpenStreetMap points (bake_osm.py): golf courses, water treatment works, wastewater plants, by county
@@ -197,6 +221,7 @@ def main():
         irr = np.zeros((H, W), np.float32)
         lanid_flat = np.asarray(lanid_tex, np.float32).ravel() if slab == 'conus' else None
         r = read_rivers(slab) if slab != 'hi' else None
+        people = wsa_people(t, urb).ravel() if slab == 'conus' else None
         if r is not None:
             fx, fy = t.px(r['x'], r['z'])
             vi = np.clip(np.round(fx).astype(int), 0, W - 1); vj = np.clip(np.round(fy).astype(int), 0, H - 1)
@@ -265,6 +290,10 @@ def main():
                 if nz.any(): a['irr'] = to_xy(spread_pick(pl[nz], lw[nz], NPTS['irr'], W, minpx, rng2), rng2)
             # factories, mines and fish farms with EPA discharge permits (the largest first, up to eight of each)
             for k, lst in npd.get(str(ci), {}).items(): a[k] = np.asarray(lst, float)
+            # where the county's public water systems deliver: their service areas, by the people served
+            if people is not None:
+                pw = people[pix]; nz = pw > 0
+                if pw.sum() >= WSA_MIN_PEOPLE: a['wsa'] = to_xy(spread_pick(pix[nz], pw[nz], NPTS['wsa'], W, max(1, minpx // 2), rng3), rng3)
             # irrigated land: spread acres over cropland first (the lower 48 takes LANID's map instead, below)
             A_irr = irr_ac[ci] * 1000 * 0.00404686
             if A_irr > 0 and slab != 'conus':
@@ -339,7 +368,7 @@ def main():
     print('counties given a nearby river outside their borders:', filled)
     # ---- write anchors.bin: per county: uint8 slab, uint8 counts[len(TYPES)], then float32 pairs (riv has q as a third value)
     SL = {'conus': 0, 'ak': 1, 'hi': 2, 'pr': 3}
-    buf = bytearray(struct.pack('<4sI', b'ANC3', NC))
+    buf = bytearray(struct.pack('<4sI', b'ANC4', NC))
     stats = collections.Counter()
     for ci in range(NC):
         slab, a = anchors[ci]

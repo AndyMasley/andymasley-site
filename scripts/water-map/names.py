@@ -48,9 +48,16 @@ def _token(w, first):
         out.append(lead + _core(core, first and k == 0) + ('.' if dot else '') + trail)
     return ''.join(out)
 
+def unentity(s):
+    """'&AMP;', '&AMP;AMP;' and '& AMP' (an ampersand escaped once or twice for the web, as some EPA records keep it) -> '&'"""
+    while True:
+        t = re.sub(r'&\s*AMP\b;?', '&', s, flags=re.I)
+        if t == s: return s
+        s = t
+
 def tidy(s, st=None):
     """s in ordinary case; st, a state code, stays in capitals where it ends the name ('... HANCEVILLE AL')"""
-    s = re.sub(r'\s+', ' ', (s or '').strip())
+    s = re.sub(r'\s+', ' ', unentity((s or '').strip()))
     if not s or any(c.islower() for c in s): return s
     words = s.split(' ')
     out = [_token(w, i == 0) for i, w in enumerate(words)]

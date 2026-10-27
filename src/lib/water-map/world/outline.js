@@ -114,7 +114,7 @@ export class CountyOutline {
       return fine;
     };
     for (let i = 0; i < loops.length; i++) loops[i] = straighten(loops[i]);
-    const smooth = (p) => {
+    const smoothLoop = (p) => {
       let a = p;
       for (let it = 0; it < 2; it++) {
         const o = [];
@@ -126,18 +126,43 @@ export class CountyOutline {
       }
       return a;
     };
+    this._build(s, loops.map((loop) => smoothLoop(loop).map(([x, y]) => [s.x0 + x / s.ppu, s.z0 + y / s.ppu])), true);
+  }
+  /**
+   * Lines through world points [x, z] over the land of slab s, in the outline's ink: closed loops (a county, a water
+   * system's service area) or open paths (a sewage plant to its outfalls), cut into pieces about a texel long so they
+   * follow the ground.
+   */
+  setPaths(s, paths, closed = false) {
+    this.clear();
+    if (!s || !paths.length) return;
+    const step = 1 / s.ppu;
+    const fine = paths.map((P0) => {
+      // (a loop is walked back to its start)
+      const P = closed && (P0[0][0] !== P0[P0.length - 1][0] || P0[0][1] !== P0[P0.length - 1][1]) ? [...P0, P0[0]] : P0;
+      const out = [P[0]];
+      for (let q = 1; q < P.length; q++) {
+        const a = P[q - 1], b = P[q], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+        for (let k = 1; k <= n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+      }
+      return out;
+    }).filter((P) => P.length >= 2);
+    if (fine.length) this._build(s, fine, closed);
+  }
+  _build(s, lines, closed) {
     const pos = [], dir = [], side = [], idx = [];
     let v = 0;
-    for (const loop of loops) {
-      const P = smooth(loop).map(([x, y]) => [s.x0 + x / s.ppu, s.z0 + y / s.ppu]);
+    for (const P of lines) {
       const n = P.length, base = v;
       for (let q = 0; q < n; q++) {
-        const a = P[(q + n - 1) % n], c = P[(q + 1) % n];
+        const a = closed ? P[(q + n - 1) % n] : P[Math.max(0, q - 1)], c = closed ? P[(q + 1) % n] : P[Math.min(n - 1, q + 1)];
         let dx = c[0] - a[0], dz = c[1] - a[1]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
         const h = Math.max(0, s.sampleH(P[q][0], P[q][1]));
         for (const sd of [-1, 1]) { pos.push(P[q][0], h, P[q][1]); dir.push(dx, dz); side.push(sd); }
-        const i = base + 2 * q, j = base + 2 * ((q + 1) % n);
-        idx.push(i, i + 1, j, j, i + 1, j + 1);
+        if (closed || q < n - 1) {
+          const i = base + 2 * q, j = base + 2 * ((q + 1) % n);
+          idx.push(i, i + 1, j, j, i + 1, j + 1);
+        }
         v += 2;
       }
     }

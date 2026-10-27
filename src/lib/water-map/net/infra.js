@@ -134,6 +134,58 @@ export async function loadFacilities(shared, slabAt, slabs) {
   return layer;
 }
 
+/** the colour of sewage plants: the tan OpenStreetMap's wastewater plants have always had on the map */
+export const SEW_COLOR = '#d2a467';
+/**
+ * Sewage treatment plants with an individual EPA discharge (NPDES) permit in effect (EPA ECHO, October 2026;
+ * scripts/water-map/bake_sewage.py), a square in the wastewater tan, a little larger for a larger design flow, with
+ * the outfalls each discharges through. own: 0 public, 1 private or other. flags: 1 major permit, 2 design flow too
+ * large for its county to be right (probably recorded in the wrong units), 4 placed at its first outfall (EPA has no
+ * location for the plant itself), 8 over 20 km from the county its permit names. dup: the OpenStreetMap wastewater
+ * plants that are these plants, which the map then leaves out.
+ */
+export async function loadSewage(shared, slabAt, slabs) {
+  const buf = await fetchPacked('sewage.dat.png');
+  const dv = new DataView(buf);
+  const n = dv.getUint32(4, true);
+  let o = 8;
+  const take = (T, cnt) => { const a = new T(buf.slice(o, o + cnt * T.BYTES_PER_ELEMENT)); o += cnt * T.BYTES_PER_ELEMENT; return a; };
+  const x = take(Float32Array, n), z = take(Float32Array, n), own = take(Uint8Array, n), slab = take(Uint8Array, n), county = take(Int16Array, n);
+  const flow = take(Float32Array, n), flags = take(Uint8Array, n), nout = take(Uint8Array, n);
+  const ostart = new Int32Array(n + 1);
+  for (let i = 0; i < n; i++) ostart[i + 1] = ostart[i] + nout[i];
+  const ox = take(Float32Array, ostart[n]), oz = take(Float32Array, ostart[n]);
+  const ndup = o + 4 <= buf.byteLength ? new DataView(buf).getUint32(o, true) : 0; o += 4;
+  const dup = ndup ? take(Uint32Array, ndup) : new Uint32Array(0);
+  if (slabs) { moveBaked(slabs, x, z); moveBaked(slabs, ox, oz); }
+  const size = new Float32Array(n), dmax = new Float32Array(n), kind = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const f = flow[i] > 0 && !(flags[i] & 2) ? flow[i] : 0;
+    size[i] = 0.10 + 0.14 * Math.min(1, Math.log10(1 + f) / 2.5);
+    dmax[i] = f >= 50 ? 240 : f >= 10 ? 140 : (flags[i] & 1) || f >= 1 ? 75 : 36;
+    kind[i] = own[i] ? 1 : 0;
+  }
+  const kinds = [{ color: SEW_COLOR, shape: 1 }, { color: SEW_COLOR, shape: 1 }];
+  const layer = new PointLayer(shared, { n, x, z, kind, size, dmax }, kinds, slabAt, 'sewage');
+  layer.data = { n, x, z, own, slab, county, flow, flags, ostart, ox, oz };
+  layer.dup = dup;
+  layer.byCounty = new Map();
+  for (let i = 0; i < n; i++) { const c = county[i]; if (c < 0) continue; let a = layer.byCounty.get(c); if (!a) layer.byCounty.set(c, (a = [])); a.push(i); }
+  layer.loadNames = async () => {
+    if (layer.names || layer._ln) return layer._ln;
+    layer._ln = fetchJSON('sewage.json').then((j) => { layer.meta = j; layer.names = j.names; return j; });
+    return layer._ln;
+  };
+  return layer;
+}
+
+/** leave out of a point layer the points given (the map shows them from another layer) */
+export function hidePoints(layer, ids) {
+  const att = layer.mesh.geometry.attributes.aAtt;
+  for (const i of ids) { if (i >= layer.items.n) continue; att.array[4 * i + 1] = 0; layer.items.dmax[i] = 0; }
+  att.needsUpdate = true;
+}
+
 /** every modeled power plant as a dot sized by the water it withdrew: shown nationally when power plants are isolated */
 export function plantDots(shared, model, slabAt, color) {
   const P = model.plants.filter((p) => (p.w_env || 0) > 0);

@@ -19,14 +19,15 @@ export const SRC = { river: 0, ground: 1, sea: 2, reclaimed: 3, delivered: 4, la
 export const SRC_NAME = ['Rivers & reservoirs', 'Groundwater', 'Saline surface water', 'Reclaimed wastewater', 'Public-supply deliveries', 'Lakes'];
 export const KIND = { intake: 0, vapor: 1, ret: 2, deliver: 3 };
 export const CAT_KEYS = ['pt', 'ir', 'ps', 'in', 'aq', 'mi', 'do', 'li', 'go'];
-// (irr: fields LANID mapped as irrigated in 2015; ind, mine, fish: factories, mines and fish farms with EPA discharge permits)
-const ANCHOR_TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp', 'irr', 'ind', 'mine', 'fish'];
+// (irr: fields LANID mapped as irrigated in 2015; ind, mine, fish: factories, mines and fish farms with EPA discharge permits;
+// wsa: the service areas of the county's public water systems, by the people they serve there)
+const ANCHOR_TYPES = ['riv', 'ret', 'lake', 'sea', 'land', 'crop', 'urban', 'golf', 'wtp', 'wwtp', 'irr', 'ind', 'mine', 'fish', 'wsa'];
 const SLAB_NAMES = ['conus', 'ak', 'hi', 'pr'];
 
 export function parseAnchors(buf) {
   const dv = new DataView(buf);
   const magic = String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3));
-  const types = magic === 'ANC3' ? ANCHOR_TYPES : magic === 'ANC2' ? ANCHOR_TYPES.slice(0, 10) : ANCHOR_TYPES.slice(0, 7);
+  const types = magic === 'ANC4' ? ANCHOR_TYPES : magic === 'ANC3' ? ANCHOR_TYPES.slice(0, 14) : magic === 'ANC2' ? ANCHOR_TYPES.slice(0, 10) : ANCHOR_TYPES.slice(0, 7);
   const n = dv.getUint32(4, true);
   let o = 8;
   const out = new Array(n);
@@ -206,8 +207,9 @@ export class WaterModel {
       };
       const sea = pick(a, 'sea', 'riv', 'land');
       // crops end on the county's irrigated fields, industry at its permitted factories, mining at its permitted mines and
-      // aquaculture at its permitted fish farms, where it has them (scripts/water-map/bake_flows.py)
-      const use = { ps: pick(a, 'urban', 'land'), do: pick(a, 'land'), in: pick(a, 'ind', 'urban', 'land'), ir: pick(a, 'irr', 'crop', 'land'),
+      // aquaculture at its permitted fish farms, and public supply in its water systems' service areas, where it has them
+      // (scripts/water-map/bake_flows.py)
+      const use = { ps: pick(a, 'wsa', 'urban', 'land'), do: pick(a, 'land'), in: pick(a, 'ind', 'urban', 'land'), ir: pick(a, 'irr', 'crop', 'land'),
         li: pick(a, 'crop', 'land'), aq: pick(a, 'fish', 'riv', 'land'), mi: pick(a, 'mine', 'land'), pt: pick(a, 'urban', 'land'), go: pick(a, 'golf', 'land') };
       // a county's public water system: intakes and wells feed a treatment plant (a mapped water works when the county
       // has one, otherwise a point near the middle of its built-up area), which then distributes the water to the city

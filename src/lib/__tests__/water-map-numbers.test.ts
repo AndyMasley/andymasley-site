@@ -353,6 +353,14 @@ describe('water map: permitted facilities, water systems and irrigated land', ()
     expect(mwd).toBeTruthy();
     expect(Number((mwd[2] / 1e6).toFixed(1))).toBe(Number(p));
   });
+  it('the sewage plants the page counts, and the OpenStreetMap plants it leaves out as the same', () => {
+    const sew = json('public/water-map/data/sewage.json');
+    const [n] = grab(page, /Sewage plants are the ([\d,]+) that held an individual EPA discharge permit/, 'the number of sewage plants');
+    expect(sew.names.length).toBe(num(n));
+    expect(sew.counts.reduce((a: number, b: number) => a + b, 0)).toBe(num(n));
+    grab(page, /wastewater plants within (750) meters of one of them are the same plant/, 'the 750 meters');
+    expect(read('scripts/water-map/bake_sewage.py')).toMatch(/T\['conus'\]\.km < 0\.75\]/);
+  });
   it('the county panels\' irrigated acreage from LANID is on the lower 48 only', () => {
     const cd = json('public/water-map/data/county_data.json');
     cd.forEach((c: any, i: number) => { if (c && c.lanid_km2 != null) expect(['AK', 'HI', 'PR', 'VI'], wu.id[i]).not.toContain(wu.st[i]); });

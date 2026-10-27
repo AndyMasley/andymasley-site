@@ -3,6 +3,7 @@ import { EFF_HEIGHT_GLSL } from './slab.js';
 import { WATER_GLSL } from './water.js';
 import { DETAIL_GLSL } from './detail.js';
 import { NLCD_GLSL } from './nlcd.js';
+import { FIELDS_GLSL } from './fields.js';
 
 export const CHUNK = 64;              // height-grid cells per chunk side
 export const STRIDES = [1, 2, 4, 8];  // level-of-detail steps
@@ -57,7 +58,7 @@ float hAt(vec2 px) { px = clamp(px, vec2(0.0), uSize - 1.0); return texelFetch(u
 float yAt(vec2 px) { return effHeight(hAt(px)) * uExag / uRect.w; }
 `;
 
-export function createTerrainMaterial(slab, shared, nlcd) {
+export function createTerrainMaterial(slab, shared, nlcd, fields) {
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0.0 });
   // the underground view draws the land as glass over the aquifers: the same shader, blended, writing no depth
   const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0.0, transparent: true, depthWrite: false });
@@ -84,6 +85,8 @@ export function createTerrainMaterial(slab, shared, nlcd) {
     uNight: shared.uNight, uCamDist: shared.uCamDist,
     uAqMode: shared.uAqMode, uAqAlpha: shared.uAqAlpha, uIsoCol: shared.uIsoCol, uIsoAmt: shared.uIsoAmt, uStateLines: shared.uStateLines, uLights: shared.uLights,
     ...(nlcd ? nlcd.uniformsFor(slab) : { uNlcdArr: { value: null }, uNlcdIdx: { value: null }, uNlcdGrid: { value: new THREE.Vector4() }, uNlcdHas: { value: 0 }, uNlcdIrr: { value: 0 } }),
+    // (the 65 m irrigated fields: the lower 48 only)
+    ...(fields && fields.slab === slab ? fields.uniforms : { uFieldArr: { value: null }, uFieldIdx: { value: null }, uFieldGrid: { value: new THREE.Vector4() }, uFieldHas: { value: 0 } }),
   };
   const compile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
@@ -127,6 +130,7 @@ varying vec3 vWorldPos;
 varying float vHeightM;
 ${WATER_GLSL}
 ${NLCD_GLSL}
+${FIELDS_GLSL}
 ${DETAIL_GLSL}
 float countyAt(vec2 uv) {
   vec4 c = texture2D(uCounty, uv);
@@ -156,7 +160,14 @@ float countyAt(vec2 uv) {
               if (int(clsC) == 20) lakeW = max(lakeW, uDetailAmt * 0.8 * smoothstep(0.58, 0.72, dnoise(vWorldPos.xz * 190.0)));
             }
           }
-          alb = groundDetail(alb, vWorldPos.xz, land, cdat, uDetailAmt, pxw, clsC, irrC);
+          // the irrigated fields at 65 m, where loaded
+          float fIrr = -1.0, fCrop = 0.0, fpx = 1.0;
+          if (uDetailAmt > 0.001 && uFieldHas > 0.5) {
+            vec2 tf = vColorUv * uTexSize * uFieldGrid.z;
+            fIrr = fieldAt(tf, fCrop);
+            fpx = length(fwidth(tf));
+          }
+          alb = groundDetail(alb, vWorldPos.xz, land, cdat, uDetailAmt, pxw, clsC, irrC, fIrr, fCrop, fpx);
           if (cidD >= 0.0) {
             vec4 cv = choroAt(cidD);
             if (uChoroMode > 2.5) {
@@ -233,18 +244,18 @@ float countyAt(vec2 uv) {
         #include <opaque_fragment>`);
   };
   mat.onBeforeCompile = compile; glass.onBeforeCompile = compile;
-  mat.customProgramCacheKey = () => 'terrain-v6';
-  glass.customProgramCacheKey = () => 'terrain-v6-glass';
+  mat.customProgramCacheKey = () => 'terrain-v7';
+  glass.customProgramCacheKey = () => 'terrain-v7-glass';
   return { mat, glass, uniforms };
 }
 
 /** Chunked, instanced, distance-LOD terrain for one slab. */
 export class TerrainSlab {
-  constructor(slab, shared, nlcd) {
+  constructor(slab, shared, nlcd, fields) {
     this.slab = slab;
     this.group = new THREE.Group();
     this.group.name = `terrain-${slab.name}`;
-    const { mat, glass, uniforms } = createTerrainMaterial(slab, shared, nlcd);
+    const { mat, glass, uniforms } = createTerrainMaterial(slab, shared, nlcd, fields);
     this.material = mat; this.glassMaterial = glass; this.uniforms = uniforms; this.glass = false;
     this.cx = Math.ceil((slab.W - 1) / CHUNK); this.cz = Math.ceil((slab.H - 1) / CHUNK);
     this.chunks = [];
