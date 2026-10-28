@@ -1340,9 +1340,10 @@ class GeoBuilder {
     const segs = full ? sides : sides;
     for (let i = 0; i <= segs; i++) {
       const a = a0 + (i / segs) * arc; const ca = Math.cos(a), sa = Math.sin(a);
-      const u = (i / segs) * arc * Math.max(r0, r1);
-      const b = this.v(cx + ca * r0, y0, cz + sa * r0, ca / nl, ny / nl, sa / nl, u, y0);
-      const t = this.v(cx + ca * r1, y0 + h, cz + sa * r1, ca / nl, ny / nl, sa / nl, u, y0 + h);
+      const u = (i / segs) * arc * (opts.uR || Math.max(r0, r1));
+      const vb = opts.v0 !== undefined ? opts.v0 : y0; // v runs up the wall from v0 (painted windows sit at a height above it)
+      const b = this.v(cx + ca * r0, y0, cz + sa * r0, ca / nl, ny / nl, sa / nl, u, vb);
+      const t = this.v(cx + ca * r1, y0 + h, cz + sa * r1, ca / nl, ny / nl, sa / nl, u, vb + h);
       ring.push([b, t]);
     }
     for (let i = 0; i < segs; i++) this.quad(ring[i][0], ring[i + 1][0], ring[i + 1][1], ring[i][1]);
@@ -1350,8 +1351,9 @@ class GeoBuilder {
       const rin = [];
       for (let i = 0; i <= segs; i++) {
         const a = a0 + (i / segs) * arc; const ca = Math.cos(a), sa = Math.sin(a);
-        const u = (i / segs) * arc * r0;
-        rin.push([this.v(cx + ca * r0 * 0.999, y0, cz + sa * r0 * 0.999, -ca, 0, -sa, u, y0), this.v(cx + ca * r1 * 0.999, y0 + h, cz + sa * r1 * 0.999, -ca, 0, -sa, u, y0 + h)]);
+        const u = (i / segs) * arc * (opts.uR || r0);
+        const vb = opts.v0 !== undefined ? opts.v0 : y0;
+        rin.push([this.v(cx + ca * r0 * 0.999, y0, cz + sa * r0 * 0.999, -ca, 0, -sa, u, vb), this.v(cx + ca * r1 * 0.999, y0 + h, cz + sa * r1 * 0.999, -ca, 0, -sa, u, vb + h)]);
       }
       for (let i = 0; i < segs; i++) this.quad(rin[i + 1][0], rin[i][0], rin[i][1], rin[i + 1][1]);
     }
@@ -1407,12 +1409,14 @@ class GeoBuilder {
     return this;
   }
   // faceted (geodesic) hemisphere
-  geodome(cx, y0, cz, r, detail = 2, squash = 1) {
+  geodome(cx, y0, cz, r, detail = 2, squash = 1, cut = null) {
     const geo = icosphere(detail);
     for (let i = 0; i < geo.f.length; i += 3) {
       const ia = geo.f[i] * 3, ib = geo.f[i + 1] * 3, ic = geo.f[i + 2] * 3;
       const A = [geo.v[ia], geo.v[ia + 1], geo.v[ia + 2]], B = [geo.v[ib], geo.v[ib + 1], geo.v[ib + 2]], C = [geo.v[ic], geo.v[ic + 1], geo.v[ic + 2]];
       if (A[1] < -0.01 || B[1] < -0.01 || C[1] < -0.01) continue;
+      // a doorway: leave out the panels it passes through (cut is asked about the panel's middle, in metres from the centre)
+      if (cut && cut((A[0] + B[0] + C[0]) / 3 * r, (A[1] + B[1] + C[1]) / 3 * r * squash, (A[2] + B[2] + C[2]) / 3 * r)) continue;
       const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
       let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
       const uvs = [[1, 0], [0, 1], [0, 0]];
@@ -1999,7 +2003,8 @@ void main() {
   float pat = floor(vInfo.z + 0.5);
   vec3 N = normalize(vN);
   vec3 fn = normalize(cross(dFdx(vWP), dFdy(vWP)));
-  if (dot(N, fn) < -0.25 && cls != 2.0) N = -N;
+  bool backFace = dot(N, fn) < -0.25; // seen from behind its own normal (glass seen from inside it, say)
+  if (backFace && cls != 2.0) N = -N;
   // people are only ever seen from a way off: they thin out and are gone as you come up to them.
   // how near you can get depends on how much of the survey is closed; once it is all closed they stay
   if ((pat == 16.0 || pat == 20.0) && uPass < 0.5 && uVanish > 0.5 && hash12(floor(gl_FragCoord.xy)) < 1.0 - smoothstep(uVanish * 0.55, uVanish, vVD)) discard;
@@ -2064,6 +2069,8 @@ void main() {
       if (hc.r < mix(0.1, 0.34, smoothstep(0.3, 0.72, open))) discard;
     }
   }
+  // glass lets the sun through: it throws no shadow, so a glasshouse is full of light
+  if (uPass > 0.5 && pat == 9.0) discard;
   if (uPass > 0.5) { oColor = vec4(1.0); oND = vec4(0.0); oLight = vec4(0.0); return; }
   vec3 base = vCol;
   float ink = 0.0;
@@ -2118,6 +2125,25 @@ void main() {
     ao *= mix(0.86, 1.0, smoothstep(-0.6, 0.0, N.y));
     gran = cls == 5.0 ? 0.65 : cls == 3.0 ? 0.45 : 0.3;
     lift = cls == 5.0 ? 1.0 : cls == 3.0 ? 0.25 : 0.55;
+    // inside a room (a part whose wind weight is negative): the light from the windows and the door, soft and
+    // even, a little more on floors and tables than on walls, and less up in the ceiling
+    float room = -min(vInfo.w, 0.0);
+    if (room > 0.0) { L = max(L, room * (0.86 + 0.16 * N.y)); ao = max(ao, 0.9); }
+    if (pat == 21.0) {
+      // a window seen from inside: the panes are the day outside, the frames and bars inked
+      float gl, fr, mu; vec3 glass;
+      windowInfo(vUv, gl, fr, mu, glass);
+      if (gl > 0.5) {
+        // the day outside, washed in: far hills under a pale sky, a darker line of trees along their crest
+        float wy = clamp((fract(vUv.y / 3.1) * 3.1 - 1.0) / 1.4, 0.0, 1.0);
+        float hz = 0.4 + 0.07 * sin(vUv.x * 2.3 + floor(vUv.y / 3.1) * 3.1) + 0.035 * sin(vUv.x * 6.7 + 1.7);
+        vec3 sky = mix(vec3(0.87, 0.91, 0.93), vec3(0.96, 0.96, 0.95), wy);
+        vec3 land = mix(vec3(0.74, 0.8, 0.64), vec3(0.6, 0.69, 0.55), smoothstep(hz - 0.3, hz, wy));
+        vec3 day = mix(land, sky, smoothstep(hz - 0.01, hz + 0.01, wy));
+        base = mix(day, vec3(0.36, 0.42, 0.54), uLamp * 0.85); L = 1.0; lift = 0.0; ao = 1.0;
+      }
+      ink = max(ink, fr * 0.9 + mu * 0.75);
+    }
     if (pat == 8.0) {
       float gl, fr, mu; vec3 glass;
       windowInfo(vUv, gl, fr, mu, glass);
@@ -2226,6 +2252,8 @@ void main() {
     if (pat == 9.0) {
       vec3 V = normalize(cameraPosition - vWP);
       base = mix(base, vec3(0.97, 0.98, 0.96), pow(1.0 - abs(dot(V, N)), 2.0) * 0.5);
+      // from inside, the panes are the day beyond them: sky overhead, the valley's greens low down
+      if (backFace) { float el = -V.y; base = mix(vec3(0.76, 0.83, 0.68), mix(vec3(0.88, 0.93, 0.95), vec3(0.96, 0.97, 0.96), smoothstep(0.3, 0.8, el)), smoothstep(-0.02, 0.12, el)); L = 0.97; ao = 1.0; }
       vec3 bc = vec3(vUv, 1.0 - vUv.x - vUv.y); vec3 fw = fwidth(bc);
       vec3 e = smoothstep(fw * 0.5, fw * 1.4, bc);
       float wire = 1.0 - min(min(e.x, e.y), e.z);
@@ -3845,7 +3873,7 @@ async function placeForest(progress) {
         let p = f * 0.86, lone = false;
         if (f < 0.12) { p = meadow * 0.011; lone = true; }
         if (r3 > p) continue;
-        if (pathAt(x, z) > 0.2 || treeBlocked(x, z)) continue;
+        if (pathAt(x, z) > 0.2 || treeBlocked(x, z) || wetAt(x, z)) continue;
         const h = heightLin(x, z); const aut = maskAt(x, z, 3);
         const alt = smoothstep(120, 330, h);
         const nearRiver = smoothstep(90, 20, riverQuery(x, z).d);
@@ -3864,7 +3892,7 @@ async function placeForest(progress) {
         const f = maskAt(x, z, 0), meadow = maskAt(x, z, 1);
         const p = f * 0.42 + f * (1 - f) * 1.1 + meadow * 0.03;
         if (r3 > p) continue;
-        if (pathAt(x, z) > 0.25 || treeBlocked(x, z)) continue;
+        if (pathAt(x, z) > 0.25 || treeBlocked(x, z) || wetAt(x, z)) continue;
         const aut = maskAt(x, z, 3);
         const t = f < 0.15 ? 5 : r4 < 0.36 ? 4 : r4 < 0.48 ? 3 : 5;
         lists[t].push(x, z, hash2i(gi, gj, 15), aut, 1);
@@ -4240,6 +4268,12 @@ function updateGrass(cam, force) {
   }
   for (const k in GRASS.meshes) { const m = GRASS.meshes[k]; m.count = fill[k]; m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; }
 }
+// is the ground at (x, z) under the river or the lake (or within m of the water's surface)
+function wetAt(x, z, m = 0.15) {
+  const y = heightAt(x, z);
+  if (Math.abs(x - LAKE.x) < LAKE.rx * 1.4 && Math.abs(z - LAKE.z) < LAKE.rz * 1.4 && y < LAKE.level + m && lakeE(x, z) < 1.4) return true;
+  const q = riverQuery(x, z); return q.d < q.hw + 8 && y < riverWaterAt(q.s) + m;
+}
 // cheap water test for placement (lake + river corridor)
 function waterQuick(x, z) {
   if (Math.abs(x - LAKE.x) < LAKE.rx * 1.2 && Math.abs(z - LAKE.z) < LAKE.rz * 1.2 && lakeE(x, z) < 1.1) return LAKE.level;
@@ -4304,6 +4338,8 @@ function figureGeometry(pose) {
   return b.build();
 }
 
+// the highest ground anywhere under a disc of radius r (three rings and the middle)
+function groundMax(x, z, r) { let m = heightAt(x, z); for (const f of [0.35, 0.7, 1]) for (let k = 0; k < 24; k++) { const a = (k / 24) * TAU; m = Math.max(m, heightAt(x + Math.cos(a) * r * f, z + Math.sin(a) * r * f)); } return m; }
 function groundStats(x, z, r) {
   let mn = heightAt(x, z), mx = mn, s = mn;
   for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; const h = heightAt(x + Math.cos(a) * r, z + Math.sin(a) * r); mn = Math.min(mn, h); mx = Math.max(mx, h); s += h; }
@@ -4380,6 +4416,66 @@ function stairFlight(b, x0, z0, y0, x1, z1, y1, w = 1.2, opts = {}) {
       b.railing(pts, 0.95, 1.4); colPoly(pts, Math.min(y0, y1), Math.max(y0, y1) + 1.0);
     }
   }
+}
+// a stair winding down round the outside of a drum's balcony, the way thread winds on a spool. wrapPlan only
+// measures one: from angle a0 and height y0 it goes round in direction dir a tread at a time until it meets the
+// ground, and gives up (null) if it never does, if it would end against a bank, or if blocked(x, z) says some
+// corner of a tread, or the ground just past its foot, is taken
+const WRAPS = []; WRAPS.links = []; // for the tests: every balcony stair, and the bridges between balconies
+function wrapPlan(cx, cz, rIn, rOut, a0, y0, dir, blocked) {
+  const rm = (rIn + rOut) / 2, dA = (0.31 / rm) * dir, dH = 0.18;
+  const P = (a, r) => [cx + Math.cos(a) * r, cz + Math.sin(a) * r];
+  const steps = [];
+  for (let k = 0; k < 64; k++) {
+    const a = a0 + k * dA, top = y0 - (k + 1) * dH;
+    const [mx, mz] = P(a + dA / 2, rm), g = heightAt(mx, mz);
+    if (top < g + 0.08) {
+      if (!steps.length || g > top + dH + 0.25) return null;
+      for (let e = 1; e <= 4; e++) { const [x, z] = P(a + dA * e, rm); if (blocked(x, z)) return null; }
+      return { cx, cz, rIn, rOut, rm, dA, dH, y0, a0, steps, end: a, foot: P(a + dA * 3, rm) };
+    }
+    for (const [x, z] of [P(a, rIn), P(a, rOut), P(a + dA, rIn), P(a + dA, rOut), P(a + dA / 2, rm)]) if (blocked(x, z)) return null;
+    steps.push({ a0: a, a1: a + dA, top, g });
+  }
+  return null;
+}
+// draw a planned stair: open treads on two stringers, a handrail on the outside all the way and on the inside once
+// it drops below the balcony's own railing (railY). where it is high it hangs off the drum (hub) on brackets like
+// the balcony's; lower down it stands on posts
+function wrapDraw(b, W, railY, hub) {
+  const { cx, cz, rIn, rOut, rm, dA, dH, y0, a0, steps } = W; const sg = Math.sign(dA), ex = 0.1;
+  const P = (a, r) => [cx + Math.cos(a) * r, cz + Math.sin(a) * r];
+  b.part(cc('wood'), CLS.WOOD, PAT.PLANK_H);
+  for (const st of steps) {
+    const lo = Math.min(st.a0, st.a1) - 0.02 / rm, hi = Math.max(st.a0, st.a1) + 0.02 / rm;
+    b.prism([P(lo, rIn), P(lo, rOut), P(hi, rOut), P(hi, rIn)], st.top - 0.07, st.top);
+    const A = P(st.a0 - (sg * ex) / rm, rm), B = P(st.a1 + (sg * ex) / rm, rm);
+    colRamp(A[0], A[1], st.top + dH + (dH * ex) / 0.31, B[0], B[1], st.top - (dH * ex) / 0.31, rOut - rIn); colSurf('wood');
+    for (const r of [rIn - 0.02, rOut + 0.02]) { const s0 = P(st.a0, r), s1 = P(st.a1, r); colSeg(s0[0], s0[1], s1[0], s1[1], st.top - 0.3, st.top + 1.0); }
+  }
+  b.part(cc('woodDark'), CLS.WOOD, 0);
+  for (const r of [rIn + 0.05, rOut - 0.05]) {
+    let prev = P(a0, r).concat([y0 - 0.14]);
+    steps.forEach((st, k) => {
+      const q = P(st.a1, r), y = st.top - 0.14; b.beam(prev[0], prev[2], prev[1], q[0], y, q[1], 0.13); prev = [q[0], q[1], y];
+    });
+  }
+  steps.forEach((st, k) => {
+    if (k % 5 !== 2 || st.top - st.g < 0.6) return;
+    const am = (st.a0 + st.a1) / 2, I = P(am, rIn + 0.05), O = P(am, rOut - 0.05);
+    const ux = I[0] - hub.x, uz = I[1] - hub.z, ul = Math.hypot(ux, uz), Wx = hub.x + (ux / ul) * (hub.r + 0.02), Wz = hub.z + (uz / ul) * (hub.r + 0.02);
+    if (st.top - st.g > 3.4 && st.top - 1.6 > hub.base + 0.3 && Math.hypot(I[0] - Wx, I[1] - Wz) < 3.2) {
+      const M = P(am, rOut - 0.35);
+      b.beam(Wx, st.top - 0.2, Wz, O[0], st.top - 0.2, O[1], 0.13); b.beam(Wx, st.top - 1.6, Wz, M[0], st.top - 0.26, M[1], 0.12);
+    } else for (const q of [I, O]) b.beam(q[0], st.g - 0.3, q[1], q[0], st.top - 0.2, q[1], 0.12);
+  });
+  const rail = (r, from) => {
+    const pts = []; const s0 = from ? steps.findIndex((st) => st.top < railY) : 0; if (s0 < 0) return;
+    pts.push(P(steps[s0].a0, r).concat([steps[s0].top + dH]));
+    for (let k = s0; k < steps.length; k++) pts.push(P(steps[k].a1, r).concat([steps[k].top]));
+    b.railing(pts.map(([x, z, y]) => [x, y, z]), 0.95, 1.1);
+  };
+  rail(rOut - 0.05, false); rail(rIn + 0.05, true);
 }
 function door(b, x, z, y, ang, r, w = 1.1, h = 2.1, color = 'woodDark') {
   b.part(cc(color), CLS.WOOD, PAT.PLANK_V);
@@ -4472,26 +4568,47 @@ function drumTower(site, x, z, rng, spec = {}) {
   const base = spec.base !== undefined ? spec.base : g.max + 0.4;
   const nLev = spec.levels || rng.int(2, 5);
   b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.5, z, r0 + 0.6, base - g.min + 1.5, 28);
-  colCyl(x, z, r0 + 0.6, g.min - 2, base, true);
+  colCyl(x, z, r0 + 0.6, g.min - 2, base, true); if (spec.doorAng !== undefined && spec.room !== false) colSurf('wood');
   TREE_BLOCK.push([x, z, r0 + 3]);
+  // first the drums' sizes and colours (drawn in the same order as always, so every town keeps its towers)
   const levels = [];
-  let r = r0, cx = x, cz = z, y = base;
+  { let r = r0, cx = x, cz = z, y = base;
+    for (let i = 0; i < nLev; i++) {
+      const tall = rng.chance(0.25) ? 2 : 1;
+      const h = STOREY * tall - 0.3;
+      const color = spec.colors ? spec.colors[i % spec.colors.length] : rng.pick(DRUM_COLORS);
+      const pat = rng.chance(0.78) ? PAT.WINDOWS : rng.chance(0.5) ? PAT.PANEL : PAT.PLANK_V;
+      const slab = rng.chance(0.5) ? 'cream' : 'concrete';
+      levels.push({ y0: y, y1: y + h + 0.3, h, r, cx, cz, color, pat, slab });
+      y += h + 0.3;
+      if (i < nLev - 1) {
+        const nr = clamp(r * rng.range(0.72, 1.12), 3.4, 8.5);
+        const slack = Math.max(0, r - nr) * 0.7 + 0.4; const a = rng.range(0, TAU), o = rng.range(0, slack);
+        cx += Math.cos(a) * o; cz += Math.sin(a) * o; r = nr;
+      }
+    } }
+  // then the drawing. the ground floor is a room with its door to the town; where there's room for it a spiral
+  // stair climbs from its middle to the floor above, which is a room too, with its door out onto the balcony
+  const da = spec.doorAng, enter = da !== undefined && spec.room !== false;
+  const L0 = levels[0], L1 = levels[1];
+  const stair = enter && L1 && L0.r - 0.3 >= 3.3 && Math.hypot(L1.cx - L0.cx, L1.cz - L0.cz) + 1.2 < L0.r - 1.6 && L1.r - 0.3 >= 3.2;
+  const hole = stair ? { x: L1.cx, z: L1.cz, r: 1.22 } : null;
   for (let i = 0; i < nLev; i++) {
-    const tall = rng.chance(0.25) ? 2 : 1;
-    const h = STOREY * tall - 0.3;
-    const color = spec.colors ? spec.colors[i % spec.colors.length] : rng.pick(DRUM_COLORS);
-    const pat = rng.chance(0.78) ? PAT.WINDOWS : rng.chance(0.5) ? PAT.PANEL : PAT.PLANK_V;
-    b.part(cc(color), CLS.BUILD, pat); b.cyl(cx, y, cz, r, h, 32, { top: false });
-    b.part(cc(rng.chance(0.5) ? 'cream' : 'concrete'), CLS.BUILD, 0); b.cyl(cx, y + h, cz, r + 0.3, 0.3, 32, { bottom: true });
-    colCyl(cx, cz, r, y, y + h + 0.3, true);
-    levels.push({ y0: y, y1: y + h + 0.3, r, cx, cz, color });
-    y += h + 0.3;
-    if (i < nLev - 1) {
-      const nr = clamp(r * rng.range(0.72, 1.12), 3.4, 8.5);
-      const slack = Math.max(0, r - nr) * 0.7 + 0.4; const a = rng.range(0, TAU), o = rng.range(0, slack);
-      cx += Math.cos(a) * o; cz += Math.sin(a) * o; r = nr;
-    }
+    const L = levels[i];
+    if (i === 0 && enter) drumRoom(b, L.cx, L.cz, L.y0, L.r, L.h, da, L.color, L.pat, { kind: spec.kind || 'home', hole, stairFrom: stair ? da : null });
+    else if (i === 1 && stair) drumRoom(b, L.cx, L.cz, L.y0, L.r, L.h, da + 0.9, L.color, L.pat, { kind: 'upper', hole, arrive: true, arriveAng: da + spiralTurn(L1.y0 - L0.y0) + 0.6 });
+    else { b.part(cc(L.color), CLS.BUILD, L.pat); b.cyl(L.cx, L.y0, L.cz, L.r, L.h, 32, { top: false }); colCyl(L.cx, L.cz, L.r, L.y0, L.y1, true); }
+    b.part(cc(L.slab), CLS.BUILD, 0);
+    if (i === 0 && stair) {
+      // the slab over the ground floor, with the stairwell through it
+      b.push(new THREE.Matrix4().makeTranslation(L.cx, L.y0 + L.h + 0.15, L.cz).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)));
+      const pts = []; for (let k = 0; k < 40; k++) { const a = (k / 40) * TAU; pts.push([Math.cos(a) * (L.r + 0.3), -Math.sin(a) * (L.r + 0.3)]); }
+      b.noLines(); b.slab(pts.reverse(), 0.3, [[hole.x - L.cx, -(hole.z - L.cz), hole.r]]); b.pop();
+      b.part(cc(L.slab), CLS.BUILD, 0); for (const yy of [L.y0 + L.h, L.y1]) b.polyLine(Array.from({ length: 49 }, (_, k) => [L.cx + Math.cos((k / 48) * TAU) * (L.r + 0.3), yy, L.cz + Math.sin((k / 48) * TAU) * (L.r + 0.3)]), false);
+      colRing(hole.x, hole.z, hole.r - 0.04, L1.r + 0.05, L1.y0);
+    } else b.cyl(L.cx, L.y0 + L.h, L.cz, L.r + 0.3, 0.3, 32, { bottom: true });
   }
+  if (stair) spiralStair(b, hole.x, hole.z, L0.y0, L1.y0, da, 1.15);
   const top = levels[levels.length - 1];
   // roof
   const roof = spec.roof || rng.pick(['garden', 'garden', 'dome', 'cone', 'flat']);
@@ -4516,9 +4633,10 @@ function drumTower(site, x, z, rng, spec = {}) {
   }
   if (rng.chance(0.6)) { b.part(cc('dark'), CLS.WOOD, 0); const a = rng.range(0, TAU); b.rod(top.cx + Math.cos(a) * top.r * 0.7, top.y1, top.cz + Math.sin(a) * top.r * 0.7, top.cx + Math.cos(a) * top.r * 0.7, top.y1 + rng.range(3, 6), top.cz + Math.sin(a) * top.r * 0.7, 0.04, 4); }
   // a pipe running down one side
-  if (rng.chance(0.5)) { b.part(cc('metal'), CLS.BUILD, 0); const a = rng.range(0, TAU); b.rod(x + Math.cos(a) * (r0 + 0.18), base, z + Math.sin(a) * (r0 + 0.18), levels[Math.min(1, levels.length - 1)].cx + Math.cos(a) * (levels[Math.min(1, levels.length - 1)].r + 0.18), levels[Math.min(1, levels.length - 1)].y1, levels[Math.min(1, levels.length - 1)].cz + Math.sin(a) * (levels[Math.min(1, levels.length - 1)].r + 0.18), 0.09, 6); }
+  if (rng.chance(0.5)) { b.part(cc('metal'), CLS.BUILD, 0); const a = rng.range(0, TAU); if (spec.doorAng === undefined || (Math.abs(wrapAngle(a - spec.doorAng)) > 0.45 && Math.abs(wrapAngle(a - spec.doorAng - 0.9)) > 0.45)) b.rod(x + Math.cos(a) * (r0 + 0.18), base, z + Math.sin(a) * (r0 + 0.18), levels[Math.min(1, levels.length - 1)].cx + Math.cos(a) * (levels[Math.min(1, levels.length - 1)].r + 0.18), levels[Math.min(1, levels.length - 1)].y1, levels[Math.min(1, levels.length - 1)].cz + Math.sin(a) * (levels[Math.min(1, levels.length - 1)].r + 0.18), 0.09, 6); }
   const doorAng = spec.doorAng !== undefined ? spec.doorAng : rng.range(0, TAU);
-  door(b, x, z, base, doorAng, r0);
+  if (spec.doorAng === undefined || spec.room === false) door(b, x, z, base, doorAng, r0);
+  else { const fr = Math.atan2(Math.cos(doorAng), Math.sin(doorAng)); entrySteps(b, x, z, fr, 0, r0 + 0.6, base, 1.5); }
   // what accretes on a lived-in tower: rooms hung off the upper drums, planters under the windows, an awning
   const used = [doorAng, doorAng + 0.9];
   const free = (a, w) => !used.some((u) => Math.abs(wrapAngle(u - a)) < w);
@@ -4538,14 +4656,14 @@ function drumTower(site, x, z, rng, spec = {}) {
     }
   }
   awning(b, x + Math.cos(doorAng) * (r0 + 0.04), base + 2.55, z + Math.sin(doorAng) * (r0 + 0.04), -doorAng + Math.PI / 2, 2.1, 1.1, rng.pick([['cream', 'terracotta'], ['cream', 'blue'], ['white', 'sage']]));
-  { const a = doorAng + rng.range(0.35, 0.6) * (rng.chance(0.5) ? 1 : -1); const px = x + Math.cos(a) * (r0 + 0.9), pz = z + Math.sin(a) * (r0 + 0.9); barrel(b, px, pz, heightAt(px, pz), rng.pick(['blueLight', 'ochre', 'terracotta', 'teal'])); colCyl(px, pz, 0.36, heightAt(px, pz) - 1, heightAt(px, pz) + 0.9, true); }
-  return { x, z, base, r0, levels, top, decks: [], doorAng };
+  let barrelAt; { const a = doorAng + rng.range(0.35, 0.6) * (rng.chance(0.5) ? 1 : -1); const px = x + Math.cos(a) * (r0 + 0.9), pz = z + Math.sin(a) * (r0 + 0.9); barrel(b, px, pz, heightAt(px, pz), rng.pick(['blueLight', 'ochre', 'terracotta', 'teal'])); colCyl(px, pz, 0.36, heightAt(px, pz) - 1, heightAt(px, pz) + 0.9, true); barrelAt = [px, pz]; }
+  return { x, z, base, r0, levels, top, decks: [], doorAng, barrel: barrelAt };
 }
 // balcony on level k of a tower (level k sits on the slab at levels[k].y0)
 function towerDeck(site, T, k, width, gaps = []) {
   const L = T.levels[k]; const y = L.y0; const below = T.levels[k - 1];
   const rin = L.r, rout = Math.max(L.r + width, below ? below.r + 0.6 : 0);
-  deckRing(site.b, L.cx, L.cz, y, rin, rout, gaps);
+  deckRing(site.b, L.cx, L.cz, y, rin, rout, gaps, { noRail: true }); // its railing goes on once the bridges and the stair have their gaps
   const d = { k, y, cx: L.cx, cz: L.cz, rin, rout }; T.decks.push(d); return d;
 }
 // covered sky bridge between two deck points
@@ -4598,21 +4716,62 @@ function house(site, x, z, w, d, rot, rng, opts = {}) {
   const base = Math.max(g.max + 0.3, (opts.floor !== undefined ? opts.floor : -1e9)) + stilts;
   const h = opts.h || rng.range(2.8, 3.4) * (opts.storeys || 1);
   const color = opts.color || rng.pick(['sage', 'blueLight', 'cream', 'ochre', 'green', 'teal', 'white']);
+  const enter = opts.room !== false; const frng = new RNG(hashStr('room' + x.toFixed(1) + ',' + z.toFixed(1)));
+  const dx = 0.2 * w, dw = 1.0, dh = 2.05, t = 0.18;
   b.pushTR(x, 0, z, rot);
   if (stilts > 0) {
     b.part(cc('woodDark'), CLS.WOOD, 0);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * (w / 2 - 0.2), g.min - 0.5, sz * (d / 2 - 0.2), 0.25, base - g.min + 0.5, 0.25);
     b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(0, base - 0.3, d / 2 + 1.0, w, 0.3, 2.0);
+    if (enter) { b.part(cc('woodDark'), CLS.WOOD, PAT.PLANK_V); b.boxY(0, base - 0.28, 0, w, 0.28, d); }
   } else { b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.boxY(0, g.min - 1.2, 0, w + 0.3, base - g.min + 1.2, d + 0.3); }
-  b.part(cc(color), CLS.BUILD, rng.chance(0.5) ? PAT.WINDOWS : PAT.PLANK_H); b.boxY(0, base, 0, w, h, d, { noBottom: true, v0: 0.3 });
+  const wallPat = rng.chance(0.5) ? PAT.WINDOWS : PAT.PLANK_H;
+  if (!enter) { b.part(cc(color), CLS.BUILD, wallPat); b.boxY(0, base, 0, w, h, d, { noBottom: true, v0: 0.3 }); }
+  else {
+    // walls you can walk through the door of: the outside as it always was, the inside plastered (or boarded, in a
+    // plank house) with the same windows looking out, a floor, a ceiling under the roof
+    const hw = w / 2, hd = d / 2, ih = hw - t, id = hd - t;
+    const uvF = (X, Y) => [X + hw, 0.3 + Y - base], uvB = (X, Y) => [hw - X, 0.3 + Y - base], uvR = (Z, Y) => [hd - Z, 0.3 + Y - base], uvL = (Z, Y) => [Z + hd, 0.3 + Y - base];
+    b.part(cc(color), CLS.BUILD, wallPat);
+    wallFace(b, -hw, hd, hw, hd, base, base + h, 0, 1, [[dx - dw / 2 + hw, 0, dx + dw / 2 + hw, dh]], (X, Y) => uvF(X, Y));
+    wallFace(b, hw, -hd, -hw, -hd, base, base + h, 0, -1, [], (X, Y) => uvB(X, Y));
+    wallFace(b, hw, hd, hw, -hd, base, base + h, 1, 0, [], (X, Y, Z) => uvR(Z, Y));
+    wallFace(b, -hw, -hd, -hw, hd, base, base + h, -1, 0, [], (X, Y, Z) => uvL(Z, Y));
+    const plank = wallPat !== PAT.WINDOWS; const inC = plank ? frng.pick(['#c4a07a', '#b8936a', '#cfae86']) : frng.pick(PLASTER);
+    rp(b, inC, CLS.BUILD, plank ? PAT.PLANK_H : 21);
+    wallFace(b, -ih, id, ih, id, base, base + h, 0, -1, [[dx - dw / 2 + ih, 0, dx + dw / 2 + ih, dh]], (X, Y) => uvF(X, Y), false);
+    wallFace(b, ih, -id, -ih, -id, base, base + h, 0, 1, [], (X, Y) => uvB(X, Y), false);
+    wallFace(b, ih, id, ih, -id, base, base + h, -1, 0, [], (X, Y, Z) => uvR(Z, Y), false);
+    wallFace(b, -ih, -id, -ih, id, base, base + h, 1, 0, [], (X, Y, Z) => uvL(Z, Y), false);
+    // the doorway's reveals, and a painted frame round it outside
+    rp(b, inC, CLS.BUILD, 0);
+    for (const sx of [-1, 1]) wallFace(b, dx + sx * dw / 2, id, dx + sx * dw / 2, hd, base, base + dh, -sx, 0, [], null, false);
+    flatQuad(b, dx - dw / 2, id, dx + dw / 2, hd, base + dh, -1);
+    b.part(cc('woodDark'), CLS.WOOD, 0);
+    b.boxY(dx, base + dh, hd + 0.03, dw + 0.24, 0.12, 0.06); for (const sx of [-1, 1]) b.boxY(dx + sx * (dw / 2 + 0.06), base, hd + 0.03, 0.12, dh, 0.06);
+    b.part(cc('stone'), CLS.BUILD, 0); b.boxY(dx, base - 0.04, hd + 0.05, dw + 0.3, 0.06, 0.3);
+    rp(b, frng.pick(FLOOR_WOOD), CLS.WOOD, PAT.PLANK_V); flatQuad(b, -ih, -id, ih, id, base + 0.006, 1);
+    const ceilWood = frng.chance(0.6); const cy = base + h - 0.22;
+    rp(b, ceilWood ? frng.pick(['#c9a57a', '#bf9a6e', '#d2b48c']) : frng.pick(['#e7dcc4', '#ddd0b4']), CLS.BUILD, PAT.PLANK_V); flatQuad(b, -ih, -id, ih, id, cy, -1);
+    // a skirting board round the floor, and beams across a boarded ceiling
+    rp(b, frng.pick(['#7a5a3c', '#6b4d33', '#8c6440']), CLS.WOOD, 0);
+    b.boxY(0, base, -id + 0.012, 2 * ih, 0.11, 0.024); for (const sx of [-1, 1]) b.boxY(sx * (ih - 0.012), base, 0, 0.024, 0.11, 2 * id);
+    { const l0 = -ih, l1 = dx - dw / 2, r0 = dx + dw / 2; b.boxY((l0 + l1) / 2, base, id - 0.012, l1 - l0, 0.11, 0.024); b.boxY((r0 + ih) / 2, base, id - 0.012, ih - r0, 0.11, 0.024); }
+    if (ceilWood) { rp(b, '#7a5a3c', CLS.WOOD, 0); const nb = Math.max(1, Math.round(d / 2.2)); for (let k = 0; k < nb; k++) b.boxY(0, cy - 0.17, -id + (2 * id) * (k + 0.5) / nb, 2 * ih, 0.17, 0.14); }
+    openLeaf(b, dx - dw / 2 + 0.03, id - 0.03, base, 1.72, dw);
+    const F = { fy: base, ceil: base + h - 0.22, cols: [] };
+    furnishRect(b, F, frng, ih, id, dx, opts.kind || ((opts.storeys || 1) > 1.45 || w * d > 70 ? 'work' : 'home'), { axleY: opts.millAxle });
+    roomColliders(F, (lx, lz) => [...toWorld(x, z, rot, lx, lz), rot]);
+    ROOMS.push({ kind: 'house', x, z, fy: base, out: toWorld(x, z, rot, dx, d / 2 + 1.4), inYaw: rot, w, d, rot });
+  }
   const roofC = opts.roof || rng.pick(['roofRed', 'roofRed', 'roofRust', 'blue', 'cream']);
   const roofH = rng.range(1.0, 1.8);
   b.part(cc(roofC), CLS.BUILD, PAT.CORR); b.gable(0, base + h, 0, w + 0.7, d + 0.7, roofH, { ends: true });
   b.part(cc(color), CLS.BUILD, 0);
-  // gable ends filled
-  b.part(cc('woodDark'), CLS.WOOD, PAT.PLANK_V); b.boxY(0.2 * w, base, d / 2 + 0.02, 1.0, 2.0, 0.08);
+  if (!enter) { b.part(cc('woodDark'), CLS.WOOD, PAT.PLANK_V); b.boxY(dx, base, d / 2 + 0.02, 1.0, 2.0, 0.08); }
   if (rng.chance(0.6)) { b.part(cc('metal'), CLS.BUILD, 0); b.cyl(-w * 0.3, base + h + 0.4, -d * 0.2, 0.16, 1.6, 8); }
   // window boxes along the front, and on the gable end when there's room
+  let porch = null;
   if (opts.dress !== false) {
     if (w > 4.6) windowBox(b, -0.22 * w, base + 0.95, d / 2, 0, 1.2); else windowBox(b, -0.25 * w, base + 0.95, d / 2, 0, 1.0);
     if (rng.chance(0.5)) windowBox(b, w / 2, base + 0.95, 0, Math.PI / 2, Math.min(1.4, d * 0.35));
@@ -4625,7 +4784,7 @@ function house(site, x, z, w, d, rot, rng, opts = {}) {
     }
     // a lean-to porch over the door
     if (!stilts && rng.chance(0.55)) {
-      const pw = Math.min(w * 0.75, 4.2);
+      const pw = Math.min(w * 0.75, 4.2); porch = { x: 0.1 * w, pw };
       b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.boxY(0.1 * w, g.min - 1.2, d / 2 + 0.95, pw - 0.1, base - 0.16 - (g.min - 1.2), 1.8);
       b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(0.1 * w, base - 0.16, d / 2 + 0.95, pw, 0.16, 1.9);
       b.part(cc('woodDark'), CLS.WOOD, 0); for (const sx of [-1, 1]) b.boxY(0.1 * w + sx * (pw / 2 - 0.12), base, d / 2 + 1.75, 0.14, 2.35, 0.14);
@@ -4642,7 +4801,16 @@ function house(site, x, z, w, d, rot, rng, opts = {}) {
     barrel(b, px, pz, py, rng.pick(['blueLight', 'teal', 'ochre', 'woodDark'])); colCyl(px, pz, 0.36, py - 1, py + 0.9, true);
   }
   // colliders (world space)
-  colBox(x, z, w, d, rot, base - 1, base + h + 1.2, false);
+  if (!enter) colBox(x, z, w, d, rot, base - 1, base + h + 1.2, false);
+  else {
+    const hw = w / 2, hd = d / 2; const wall = (lx, lz, sx, sz) => { const [cx, cz] = toWorld(x, z, rot, lx, lz); colBox(cx, cz, sx, sz, rot, base - 0.1, base + h + 1.2, false); };
+    wall(0, -hd + t / 2, w, t); wall(-hw + t / 2, 0, t, d); wall(hw - t / 2, 0, t, d);
+    const l0 = -hw, l1 = dx - dw / 2, r0 = dx + dw / 2, r1 = hw; wall((l0 + l1) / 2, hd - t / 2, l1 - l0, t); wall((r0 + r1) / 2, hd - t / 2, r1 - r0, t);
+    if (stilts > 0) { colBox(x, z, w, d, rot, base - 0.6, base, true, false); colSurf('wood'); }
+    else { colBox(x, z, w + 0.3, d + 0.3, rot, g.min - 1.2, base, true, true); colSurf('wood'); }
+    // steps up to the door, or to the porch
+    if (!stilts) { if (porch) entrySteps(b, x, z, rot, porch.x, d / 2 + 1.9, base, Math.min(1.6, porch.pw - 0.5)); else entrySteps(b, x, z, rot, dx, d / 2 + 0.15, base, 1.3); }
+  }
   if (stilts > 0) {
     const fx = Math.sin(rot) * (d / 2 + 1.0), fz = Math.cos(rot) * (d / 2 + 1.0);
     colBox(x + fx, z + fz, w, 2.0, rot, base - 0.6, base, true, false);
@@ -4652,7 +4820,7 @@ function house(site, x, z, w, d, rot, rng, opts = {}) {
     stairFlight(b, ex, ez, heightAt(ex, ez), sx, sz, base, 1.1, {});
   }
   TREE_BLOCK.push([x, z, Math.max(w, d) * 0.75 + 1]);
-  return { x, z, base, h, top: base + h };
+  return { x, z, base, h, top: base + h, door: enter ? toWorld(x, z, rot, dx, d / 2) : null };
 }
 function dishPedestal(site, x, z, r, yaw) {
   const b = site.b; const g = heightAt(x, z);
@@ -4663,31 +4831,70 @@ function dishPedestal(site, x, z, r, yaw) {
 function geodesicGreenhouse(site, x, z, r, rng, opts = {}) {
   const b = site.b; const g = groundStats(x, z, r);
   const base = opts.base !== undefined ? opts.base : g.max + 0.4;
-  b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.5, z, r + 0.4, base - g.min + 1.5, 28);
-  b.part(cc('glass'), CLS.BUILD, 9); b.geodome(x, base, z, r, 2, opts.squash || 0.92);
-  b.part(cc('leaf'), CLS.FOLIAGE, 0, 0.05); b.blob(x, base + r * 0.25, z, r * 0.62, r * 0.35, r * 0.62, 1, 0.25, Math.floor(r * 13));
-  colCyl(x, z, r * 0.97, base - 1, base + r * 0.85, false);
-  // vestibule
   const a = opts.doorAng !== undefined ? opts.doorAng : rng.range(0, TAU);
-  b.pushTR(x + Math.cos(a) * (r + 0.6), base, z + Math.sin(a) * (r + 0.6), -a + Math.PI / 2);
-  b.part(cc('glass'), CLS.BUILD, PAT.GLAZE); b.boxY(0, 0, 0, 2.2, 2.6, 2.2); b.part(cc('woodDark'), CLS.WOOD, 0); b.boxY(0, 0, 1.12, 1.0, 2.1, 0.06);
+  const grng = new RNG(hashStr('dome' + x.toFixed(1) + ',' + z.toFixed(1)));
+  b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.5, z, r + 0.4, base - g.min + 1.5, 28);
+  colCyl(x, z, r + 0.4, g.min - 2, base, true);
+  // the glass, with the panels left out where the porch goes in
+  const ca = Math.cos(a), sa = Math.sin(a);
+  b.part(cc('glass'), CLS.BUILD, 9); b.geodome(x, base, z, r, r > 7 ? 3 : 2, opts.squash || 0.92, (lx, ly, lz) => lx * ca + lz * sa > r * 0.5 && Math.abs(-lx * sa + lz * ca) < 1.15 && ly < 2.7);
+  // inside: a garden under glass. gravel paths cross it, beds of soil are raised in timber between them, citrus and
+  // figs stand in the beds, and there is a bench where the paths meet
+  const ri = r * 0.93;
+  rp(b, '#d9cdb0', CLS.BUILD, 0); b.cyl(x, base, z, ri, 0.01, 40, { lines: false });
+  const pw = 1.5; const pa = a, pb = a + Math.PI / 2;
+  const beds = [];
+  for (let k = 0; k < 4; k++) {
+    const ba = a + Math.PI / 4 + (k * Math.PI) / 2; const br = ri * 0.56, bw = ri * 0.62; const bx = x + Math.cos(ba) * br, bz = z + Math.sin(ba) * br;
+    rp(b, '#8c6440', CLS.WOOD, PAT.PLANK_H); b.pushTR(bx, base, bz, -ba + Math.PI / 4); b.boxY(0, 0, 0, bw, 0.42, bw);
+    rp(b, '#6f5a42', CLS.BUILD, 0); b.noLines(); b.boxY(0, 0.42, 0, bw - 0.16, 0.02, bw - 0.16); b.pop();
+    beds.push([bx, bz, bw]); colBox(bx, bz, bw, bw, -ba + Math.PI / 4, base, base + 0.42, true, true);
+    const nT = bw > 3.4 ? 2 : 1;
+    for (let i = 0; i < nT; i++) {
+      const ox = (nT > 1 ? (i - 0.5) * bw * 0.45 : 0); const tx = bx + Math.cos(ba + 1.57) * ox, tz = bz + Math.sin(ba + 1.57) * ox; const H = grng.range(2.6, Math.min(4.6, r * 0.55));
+      PLANT.push(['decid', tx, tz, H, grng.pick(['#7d9a4c', '#6f8c45', '#8aa555', '#94a85a']), base + 0.42]);
+      // oranges and lemons: a few bright dots in the crown
+      rp(b, grng.pick(['#e8973a', '#e9c547', '#e0a43c']), CLS.BUILD, 0); b.noLines();
+      for (let k2 = 0; k2 < 8; k2++) { const fa = grng.range(0, TAU), fr = grng.range(0.15, 0.36) * H; b.blob(tx + Math.cos(fa) * fr, base + 0.42 + H * grng.range(0.5, 0.82), tz + Math.sin(fa) * fr, 0.07, 0.07, 0.07, 0, 0.05, k2); }
+    }
+    for (let i = 0; i < 5; i++) { const ox = grng.range(-0.4, 0.4) * bw, oz = grng.range(-0.4, 0.4) * bw; PLANT.push(['shrub', bx + ox, bz + oz, grng.range(0.5, 0.9), grng.pick(PALETTE.shrub), base + 0.42]); }
+  }
+  // the bench at the crossing, facing in from the door
+  bench(b, x + Math.cos(a + Math.PI) * 1.6, z + Math.sin(a + Math.PI) * 1.6, base, Math.atan2(Math.cos(a), Math.sin(a)));
+  // the glass, as a ring of short walls, open at the vestibule
+  { const n = 40; const rc = r * 0.96; for (let k = 0; k < n; k++) { const a0 = (k / n) * TAU, a1 = ((k + 1) / n) * TAU; if (Math.abs(wrapAngle((a0 + a1) / 2 - a)) < 1.4 / rc + TAU / n * 0.5) continue; colSeg(x + Math.cos(a0) * rc, z + Math.sin(a0) * rc, x + Math.cos(a1) * rc, z + Math.sin(a1) * rc, base - 0.2, base + 2.6); } }
+  colCyl(x, z, r * 0.8, base + 2.6, base + r * 0.85, false);
+  // vestibule: glass sides and roof, open through
+  // the porch: a glass box with a timber frame, reaching in past the cut in the dome so its edges are covered
+  const vr = r + 0.25, vd = 3.3, vw = 2.9, vh = 3.0;
+  b.pushTR(x + Math.cos(a) * vr, base, z + Math.sin(a) * vr, -a + Math.PI / 2);
+  b.part(cc('glass'), CLS.BUILD, PAT.GLAZE); for (const sx of [-1, 1]) b.boxY(sx * vw / 2, 0, 0, 0.04, vh, vd); b.boxY(0, vh - 0.04, 0, vw, 0.06, vd);
+  b.part(cc('woodDark'), CLS.WOOD, 0); for (const sx of [-1, 1]) for (const sz of [-1, 0, 1]) b.boxY(sx * vw / 2, 0, sz * vd / 2, 0.1, vh, 0.1);
+  for (const sz of [-1, 1]) b.boxY(0, vh - 0.16, sz * vd / 2, vw, 0.16, 0.1);
+  b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(0, -0.06, 0, vw, 0.07, vd);
+  b.part(cc('woodDark'), CLS.WOOD, PAT.PLANK_V); b.boxY(-vw / 2 + 0.55, 0, vd / 2 + 0.45, 0.05, 2.1, 0.92);
   b.pop();
-  colBox(x + Math.cos(a) * (r + 0.6), z + Math.sin(a) * (r + 0.6), 2.2, 2.2, -a + Math.PI / 2, base - 1, base + 2.6, false);
+  for (const sx of [-1, 1]) { const [qx, qz] = toWorld(x + Math.cos(a) * vr, z + Math.sin(a) * vr, -a + Math.PI / 2, sx * vw / 2, 0); colBox(qx, qz, 0.1, vd, -a + Math.PI / 2, base - 1, base + vh, false); }
+  { const [qx, qz] = [x + Math.cos(a) * vr, z + Math.sin(a) * vr]; colBox(qx, qz, vw, vd, -a + Math.PI / 2, base - 1, base, true, false); colSurf('wood'); }
+  if (!opts.water) entrySteps(b, x, z, Math.atan2(Math.cos(a), Math.sin(a)), 0, r + 2.25, base, 1.4);
+  ROOMS.push({ kind: 'dome', x, z, fy: base, out: [x + Math.cos(a) * (r + 2.8), z + Math.sin(a) * (r + 2.8)], inYaw: Math.atan2(Math.cos(a), Math.sin(a)), r });
+  void pw; void pa; void pb; void beds;
   TREE_BLOCK.push([x, z, r + 2.5]);
   return { base, a };
 }
 function roundHouse(site, x, z, r, rng, opts = {}) {
   const b = site.b; const g = groundStats(x, z, r + 1);
   const base = g.max + 0.4; const h = rng.range(3.4, 4.4);
+  const da = opts.doorAng !== undefined ? opts.doorAng : rng.range(0, TAU);
   b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.5, z, r + 0.5, base - g.min + 1.5, 28);
-  b.part(cc(opts.color || 'cream'), CLS.BUILD, PAT.WINDOWS); b.cyl(x, base, z, r, h, 32, { top: false });
+  colCyl(x, z, r + 0.5, g.min - 2, base, true); colSurf('wood');
+  drumRoom(b, x, z, base, r, h, da, opts.color || 'cream', PAT.WINDOWS, { kind: 'home' });
   b.part(cc('concrete'), CLS.BUILD, 0); b.cyl(x, base + h, z, r + 0.35, 0.3, 32, { bottom: true });
-  colCyl(x, z, r, base - 1, base + h + 0.3, true);
+  colCyl(x, z, r + 0.35, base + h, base + h + 0.3, true, false);
   b.part(cc('glass'), CLS.BUILD, 9); b.geodome(x + r * 0.15, base + h + 0.3, z - r * 0.1, r * 0.45, 1, 0.9);
   b.part(cc('leaf'), CLS.FOLIAGE, 0, 0.1); b.ring(x, base + h + 0.55, z, r * 0.55, r - 0.1, 0.25, 24);
   for (let k = 0; k < 4; k++) { const a = rng.range(0, TAU), d = rng.range(r * 0.6, r * 0.9); PLANT.push(['shrub', x + Math.cos(a) * d, z + Math.sin(a) * d, rng.range(0.8, 1.4), rng.pick(PALETTE.shrub), base + h + 0.5]); }
-  const da = opts.doorAng !== undefined ? opts.doorAng : rng.range(0, TAU);
-  door(b, x, z, base, da, r);
+  entrySteps(b, x, z, Math.atan2(Math.cos(da), Math.sin(da)), 0, r + 0.5, base, 1.4);
   TREE_BLOCK.push([x, z, r + 2.5]);
   return { base, h, top: base + h + 0.3 };
 }
@@ -4706,8 +4913,10 @@ function waterTower(site, x, z, rng, color = 'red') {
 }
 function mushroomHouse(site, x, z, rng, s = 1) {
   const b = site.b; const g = groundStats(x, z, 4 * s); const base = g.max + 0.3;
+  let da = rng.range(0, TAU); if (Math.abs(wrapAngle(da - 0.42)) < 0.75) da += 1.5; // not into the annex
   b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.2, z, 3.4 * s, base - g.min + 1.2, 20);
-  b.part(cc('white'), CLS.BUILD, PAT.WINDOWS); b.cyl(x, base, z, 3.0 * s, 5.2 * s, 24, { top: false });
+  colCyl(x, z, 3.4 * s, g.min - 1.5, base, true); colSurf('wood');
+  drumRoom(b, x, z, base, 3.0 * s, 5.2 * s, da, 'white', PAT.WINDOWS, { kind: 'home' });
   b.part(cc('cream'), CLS.BUILD, 0); b.cyl(x, base + 5.2 * s, z, 4.4 * s, 0.35, 28, { bottom: true });
   b.part(cc('mustard'), CLS.BUILD, 0); b.sphere(x, base + 5.55 * s + 4.2 * s, z, 5.0 * s, 26, 16);
   // portholes
@@ -4723,8 +4932,8 @@ function mushroomHouse(site, x, z, rng, s = 1) {
   // annex dome
   b.part(cc('mustard'), CLS.BUILD, 0); b.sphere(x + 4.5 * s, base + 1.6 * s, z + 2.0 * s, 2.0 * s, 16, 10);
   b.part(cc('dark'), CLS.BUILD, 0); b.cyl(x + 4.5 * s + 1.95 * s, base + 1.0 * s, z + 2.0 * s, 0.7 * s, 0.1, 12);
-  colCyl(x, z, 3.0 * s, base - 1, base + 5.6 * s, false); colCyl(x, z, 4.8 * s, base + 5.4 * s, base + 14.6 * s, false); colCyl(x + 4.5 * s, z + 2.0 * s, 2.0 * s, base - 1, base + 3.2 * s, false);
-  door(b, x, z, base, rng.range(0, TAU), 3.0 * s);
+  colCyl(x, z, 4.8 * s, base + 5.4 * s, base + 14.6 * s, false); colCyl(x + 4.5 * s, z + 2.0 * s, 2.0 * s, base - 1, base + 3.2 * s, false);
+  entrySteps(b, x, z, Math.atan2(Math.cos(da), Math.sin(da)), 0, 3.4 * s, base, 1.3);
   TREE_BLOCK.push([x, z, 6.5 * s]);
 }
 
@@ -5007,7 +5216,7 @@ function buildSpool(t) {
     void L1; void d;
   }
   // bridges between nearby towers on the same bank, at deck 1
-  const linked = new Set();
+  const linked = new Set(); const bridges = [];
   for (let i = 0; i < towers.length; i++) for (let j = i + 1; j < towers.length; j++) {
     const A = towers[i], B = towers[j]; if (A.side !== B.side) continue;
     const dA = A.decks[0], dB = B.decks[0]; if (!dA || !dB) continue;
@@ -5015,27 +5224,83 @@ function buildSpool(t) {
     if (linked.has(i + ',' + j)) continue; linked.add(i + ',' + j);
     const ux = (dB.cx - dA.cx) / D, uz = (dB.cz - dA.cz) / D;
     const ax = dA.cx + ux * (dA.rout - 0.4), az = dA.cz + uz * (dA.rout - 0.4), bx = dB.cx - ux * (dB.rout - 0.4), bz = dB.cz - uz * (dB.rout - 0.4);
-    skyBridge(S, ax, az, dA.y, bx, bz, dB.y, 2.2, rng);
+    skyBridge(S, ax, az, dA.y, bx, bz, dB.y, 2.2, rng); bridges.push([ax, az, bx, bz, 1.1]); WRAPS.links.push([ax, az, dA.y, bx, bz, dB.y, dA.cx, dA.cz, dB.cx, dB.cz]);
     dA.gaps = (dA.gaps || []).concat([[Math.atan2(uz, ux), 1.3]]); dB.gaps = (dB.gaps || []).concat([[Math.atan2(-uz, -ux), 1.3]]);
   }
-  // railings with gaps (bridges + stair landings), and stairs from the ground
+  // the big bridge over the river and its stairs, which the balcony stairs keep clear of
+  { const q0 = riverQuery(t.x, t.z), RP = World.river.pts; const p0 = RP[q0.i], p1 = RP[Math.min(q0.i + 2, RP.length - 1)];
+    let ux = p1.x - p0.x, uz = p1.z - p0.z; const l = Math.hypot(ux, uz); ux /= l; uz /= l; const sp = q0.hw + 9 + 11;
+    bridges.push([p0.x - uz * sp, p0.z + ux * sp, p0.x + uz * sp, p0.z - ux * sp, 1.8]); }
+  const segD = (x, z, sgm) => { const [ax, az, bx, bz] = sgm; const vx = bx - ax, vz = bz - az; const u = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1); return Math.hypot(x - ax - vx * u, z - az - vz * u); };
+  // railings with gaps (bridges + stair landings), and a stair down from each balcony, wound round the drum
   for (const T of towers) {
     const d = T.decks[0]; if (!d) continue;
-    const sa = T.doorAng + 0.9; const tx = -Math.sin(sa), tz = Math.cos(sa);
-    const topX = d.cx + Math.cos(sa) * (d.rout + 0.65), topZ = d.cz + Math.sin(sa) * (d.rout + 0.65);
-    const rise = d.y - heightAt(topX, topZ); const run = rise * 1.45;
-    const botX = topX + tx * run, botZ = topZ + tz * run;
-    stairFlight(b, botX, botZ, heightAt(botX, botZ), topX, topZ, d.y, 1.15, { oneSide: true });
-    T.stairFoot = [botX + tx * 1.2, botZ + tz * 1.2];
-    // small landing joining the stair to the deck
-    b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(d.cx + Math.cos(sa) * (d.rout + 0.3), d.y - 0.22, d.cz + Math.sin(sa) * (d.rout + 0.3), 1.3, 0.22, 1.3);
-    colBox(d.cx + Math.cos(sa) * (d.rout + 0.3), d.cz + Math.sin(sa) * (d.rout + 0.3), 1.6, 1.6, 0, d.y - 0.5, d.y, true, false);
+    const da = T.doorAng, P = (a, r) => [d.cx + Math.cos(a) * r, d.cz + Math.sin(a) * r];
+    const dg = heightAt(T.x + Math.cos(da) * (T.r0 + 1.6), T.z + Math.sin(da) * (T.r0 + 1.6));
+    const doorRun = T.r0 + 2 + Math.max(0, T.base - dg) * 1.8;
+    const doorSeg = [T.x + Math.cos(da) * T.r0, T.z + Math.sin(da) * T.r0, T.x + Math.cos(da) * doorRun, T.z + Math.sin(da) * doorRun];
+    const blocked = (x, z) => {
+      if (Math.hypot(x - T.x, z - T.z) < T.r0 + 0.85 || segD(x, z, doorSeg) < 1.9) return true;
+      if (T.barrel && Math.hypot(x - T.barrel[0], z - T.barrel[1]) < 1.0) return true;
+      for (const U of towers) if (U !== T) {
+        if (Math.hypot(x - U.x, z - U.z) < U.r0 + 1.6) return true;
+        const e = U.decks[0]; if (e && Math.hypot(x - e.cx, z - e.cz) < e.rout + 1.6) return true;
+        if (U.stairPts && U.stairPts.some(([px, pz]) => Math.hypot(x - px, z - pz) < 1.8)) return true;
+      }
+      for (const sgm of bridges) if (segD(x, z, sgm) < sgm[4] + 0.7) return true;
+      const rq = riverQuery(x, z); return rq.d < rq.hw + 5.5;
+    };
+    const rI = d.rout + 0.06, rO = d.rout + 1.3, rr = d.rout - 0.08, hg = 1.0 / rr;
+    let W = null, sa = da + 0.9;
+    for (const off of [0.9, -0.9, 1.6, -1.6, 2.4, -2.4, Math.PI]) {
+      const a = da + off;
+      if ((d.gaps || []).some(([q]) => Math.abs(wrapAngle(q - a)) < hg + 1.3 / rr + 0.12)) continue;
+      if ([P(a - hg, rO), P(a, rO), P(a + hg, rO)].some(([x, z]) => blocked(x, z))) continue;
+      for (const dir of off > 0 ? [1, -1] : [-1, 1]) { W = wrapPlan(d.cx, d.cz, rI, rO, a + hg * dir, d.y, dir, blocked); if (W) break; }
+      if (W) { sa = a; break; }
+    }
+    if (W) {
+      const dir = Math.sign(W.dA);
+      wrapDraw(b, W, d.y - 1.2, { x: T.x, z: T.z, r: T.r0, base: T.base });
+      // the landing it leaves from, out through the gap in the balcony railing
+      const arc = (r, a0, a1) => Array.from({ length: 7 }, (_, k) => P(lerp(a0, a1, k / 6), r));
+      b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V);
+      b.prism([...arc(rO, sa - hg, sa + hg), ...arc(d.rout - 0.1, sa + hg, sa - hg)], d.y - 0.22, d.y);
+      { const A = P(sa - hg, (d.rout - 0.1 + rO) / 2), B = P(sa + hg, (d.rout - 0.1 + rO) / 2); colRamp(A[0], A[1], d.y, B[0], B[1], d.y, rO - d.rout + 0.1); colSurf('wood'); }
+      const back = sa - hg * dir, edge = arc(rO - 0.05, back, sa + hg * dir);
+      b.part(cc('woodDark'), CLS.WOOD, 0);
+      b.railing([P(back, rr), ...edge].map(([x, z]) => [x, d.y, z]), 0.95, 1.1);
+      for (const s2 of [-0.7, 0.7]) {
+        // held off the drum on a joist and a brace where it is high, on a post where it is not
+        const a = sa + hg * s2, O = P(a, rO - 0.12), M = P(a, rO - 0.4), I = P(a, d.rout - 0.3), gy = heightAt(O[0], O[1]);
+        const ux = I[0] - T.x, uz = I[1] - T.z, ul = Math.hypot(ux, uz), Wx = T.x + (ux / ul) * (T.r0 + 0.02), Wz = T.z + (uz / ul) * (T.r0 + 0.02);
+        if (d.y - gy > 3.4 && Math.hypot(O[0] - Wx, O[1] - Wz) < 4.6) { b.beam(Wx, d.y - 0.3, Wz, O[0], d.y - 0.3, O[1], 0.13); b.beam(Wx, d.y - 1.8, Wz, M[0], d.y - 0.34, M[1], 0.12); }
+        else b.beam(O[0], gy - 0.3, O[1], O[0], d.y - 0.22, O[1], 0.12);
+      }
+      { const e2 = arc(rO + 0.02, back, sa + hg * dir); for (let k = 0; k < e2.length - 1; k++) colSeg(e2[k][0], e2[k][1], e2[k + 1][0], e2[k + 1][1], d.y - 0.3, d.y + 1.0);
+        const [b0x, b0z] = P(back, rr), [b1x, b1z] = P(back, rO + 0.02); colSeg(b0x, b0z, b1x, b1z, d.y - 0.3, d.y + 1.0); }
+      T.stairFoot = W.foot;
+      T.stairPts = [P(sa, (rI + rO) / 2), ...W.steps.filter((_, k) => k % 2 === 0).map((st) => P((st.a0 + st.a1) / 2, W.rm)), W.foot];
+      for (const [k, q] of T.stairPts.entries()) if (k % 2 === 0) TREE_BLOCK.push([q[0], q[1], 1.4]);
+      WRAPS.push({ x: d.cx, z: d.cz, rm: W.rm, a0: W.a0, dA: W.dA, n: W.steps.length, y0: d.y, sa, hg, foot: W.foot });
+    } else {
+      sa = da + 0.9;
+      const tx = -Math.sin(sa), tz = Math.cos(sa);
+      const topX = d.cx + Math.cos(sa) * (d.rout + 0.65), topZ = d.cz + Math.sin(sa) * (d.rout + 0.65);
+      const rise = d.y - heightAt(topX, topZ); const run = rise * 1.45;
+      const botX = topX + tx * run, botZ = topZ + tz * run;
+      stairFlight(b, botX, botZ, heightAt(botX, botZ), topX, topZ, d.y, 1.15, { oneSide: true });
+      T.stairFoot = [botX + tx * 1.2, botZ + tz * 1.2];
+      T.stairPts = Array.from({ length: 6 }, (_, k) => [lerp(topX, botX, k / 5), lerp(topZ, botZ, k / 5)]);
+      // small landing joining the stair to the deck
+      b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(d.cx + Math.cos(sa) * (d.rout + 0.3), d.y - 0.22, d.cz + Math.sin(sa) * (d.rout + 0.3), 1.3, 0.22, 1.3);
+      colBox(d.cx + Math.cos(sa) * (d.rout + 0.3), d.cz + Math.sin(sa) * (d.rout + 0.3), 1.6, 1.6, 0, d.y - 0.5, d.y, true, false);
+    }
     const gaps = (d.gaps || []).concat([[sa, 1.0]]);
     b.part(cc('woodDark'), CLS.WOOD, 0);
-    const rr = d.rout - 0.08;
     const gs = gaps.map(([a, w]) => [wrapAngle(a), w / rr]).sort((p, q) => p[0] - q[0]);
     for (let i = 0; i < gs.length; i++) { const [a, hw] = gs[i]; const [na, nhw] = gs[(i + 1) % gs.length]; let s0 = a + hw, s1 = na - nhw; if (i === gs.length - 1) s1 += TAU; if (s1 > s0 + 0.05) railArc(b, d.cx, d.cz, d.y, rr, s0, s1); }
-    TREE_BLOCK.push([botX, botZ, 2]);
+    TREE_BLOCK.push([T.stairFoot[0], T.stairFoot[1], 2]);
   }
   // main covered bridge across the river near the centre
   const q = riverQuery(t.x, t.z); const rp = World.river.pts[q.i], rn = World.river.pts[Math.min(q.i + 2, World.river.pts.length - 1)];
@@ -5060,18 +5325,40 @@ function buildSpool(t) {
     const px = rp.x + tx * 40 + (-tz) * k * (q.hw / 3.5), pz = rp.z + tz * 40 + tx * k * (q.hw / 3.5);
     const wy = riverWaterAt(q.s + 40); b.cyl(px, wy - 2.5, pz, 0.75, 2.85, 8); colCyl(px, pz, 0.75, wy - 3, wy + 0.35, true, false);
   }
-  // mill with a waterwheel on the bank
-  const mq = riverQuery(t.x + tz * 0, t.z); void mq;
-  const mx = rp.x - tx * 34 - tz * (q.hw + 4.5), mz = rp.z - tz * 34 + tx * (q.hw + 4.5);
-  const mill = house(S, mx - tz * 4.5, mz + tx * 4.5, 6, 5, Math.atan2(tx, tz), rng, { color: 'cream', roof: 'roofRed', storeys: 1.4 });
-  const wb = new GeoBuilder(); wb.part(cc('woodDark'), CLS.WOOD, 0);
-  const WR = 3.2; for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU; wb.beam(0, 0, 0, Math.cos(a) * WR, Math.sin(a) * WR, 0, 0.12); wb.push(new THREE.Matrix4().makeRotationZ(a).setPosition(Math.cos(a) * WR, Math.sin(a) * WR, 0)); wb.part(cc('wood'), CLS.WOOD, 0); wb.boxY(0, -0.05, 0, 0.12, 0.9, 1.4); wb.pop(); wb.part(cc('woodDark'), CLS.WOOD, 0); }
-  wb.part(cc('woodDark'), CLS.WOOD, 0);
-  for (const zz of [-0.7, 0.7]) { wb.push(new THREE.Matrix4().makeTranslation(0, 0, zz).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2))); wb.cyl(0, -0.08, 0, WR, 0.16, 20, { top: false, inner: true }); wb.pop(); }
-  const wwx = mx, wwz = mz; const wwy = riverWaterAt(q.s - 34) + WR - 0.8;
-  BUILT.rotors.push({ geo: wb.build(), x: wwx, y: wwy, z: wwz, yaw: Math.atan2(tx, tz) + Math.PI / 2, speed: -0.5 });
-  void mill;
-  pencil(wwx, wwy + WR + 0.6, wwz, 'mill wheel on the race', 130, 8);
+  // the rope across the ford, on posts on either bank, sagging alongside the stepping stones
+  { const sx = rp.x + tx * 40.9, sz = rp.z + tz * 40.9; const wy = riverWaterAt(q.s + 40); const L = q.hw + 2.2;
+    const ends = [-1, 1].map((sg) => [sx - tz * sg * L, sz + tx * sg * L]);
+    b.part(cc('woodDark'), CLS.WOOD, 0);
+    for (const [px, pz] of ends) { const gy2 = heightAt(px, pz); b.rod(px, gy2 - 0.5, pz, px, gy2 + 1.45, pz, 0.09, 6); colCyl(px, pz, 0.12, gy2 - 1, gy2 + 1.45, false); }
+    const y0 = heightAt(ends[0][0], ends[0][1]) + 1.3, y1 = heightAt(ends[1][0], ends[1][1]) + 1.3; const pts = [];
+    for (let k = 0; k <= 18; k++) { const f = k / 18; pts.push([lerp(ends[0][0], ends[1][0], f), Math.max(lerp(y0, y1, f) - Math.sin(f * Math.PI) * 0.4, wy + 1.2), lerp(ends[0][1], ends[1][1], f)]); }
+    b.part(hex('#c9b48c'), CLS.WOOD, 0); for (let k = 0; k < 18; k++) b.rod(pts[k][0], pts[k][1], pts[k][2], pts[k + 1][0], pts[k + 1][1], pts[k + 1][2], 0.028, 4); }
+  // the mill: its wheel turning in the river against the bank, the axle running in through the back wall to the gears
+  // and the stones, a stone pier carrying its outer end
+  const mill = (() => {
+    const c0x = rp.x - tx * 34, c0z = rp.z - tz * 34; const mq = riverQuery(c0x, c0z); const RP = World.river.pts;
+    const P = RP[mq.i], Pn = RP[Math.min(mq.i + 1, RP.length - 1)]; let ux = Pn.x - P.x, uz = Pn.z - P.z; const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+    const t0 = (c0x - P.x) * ux + (c0z - P.z) * uz; const Cx = P.x + ux * t0, Cz = P.z + uz * t0;
+    let nx = -uz, nz = ux; if (nx * -tz + nz * tx < 0) { nx = -nx; nz = -nz; }
+    const hwL = mq.hw, wlv = riverWaterAt(mq.s), WR = 3.2, d = 5;
+    const wcx = Cx + nx * (hwL - 1.8), wcz = Cz + nz * (hwL - 1.8); const wwy = wlv + WR - 1.0;
+    const hd = hwL + 0.9 + d / 2; const H = house(S, Cx + nx * hd, Cz + nz * hd, 6, d, Math.atan2(nx, nz), rng, { color: 'cream', roof: 'roofRed', storeys: 1.4, kind: 'mill', millAxle: wwy });
+    const wb = new GeoBuilder(); wb.part(cc('woodDark'), CLS.WOOD, 0);
+    for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU; wb.beam(0, 0, 0, Math.cos(a) * WR, Math.sin(a) * WR, 0, 0.12); wb.push(new THREE.Matrix4().makeRotationZ(a).setPosition(Math.cos(a) * WR, Math.sin(a) * WR, 0)); wb.part(cc('wood'), CLS.WOOD, 0); wb.boxY(0, -0.05, 0, 0.12, 0.9, 1.4); wb.pop(); wb.part(cc('woodDark'), CLS.WOOD, 0); }
+    for (const zz of [-0.7, 0.7]) { wb.push(new THREE.Matrix4().makeTranslation(0, 0, zz).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2))); wb.cyl(0, -0.08, 0, WR, 0.16, 20, { top: false, inner: true }); wb.pop(); }
+    // the axle: out to the pier on the river side, in through the wall on the other
+    const toWall = (hwL + 0.9) - (hwL - 1.8);
+    wb.push(new THREE.Matrix4().makeRotationX(Math.PI / 2)); wb.cyl(0, -toWall - 0.4, 0, 0.16, toWall + 1.6, 10, { bottom: true }); wb.pop();
+    BUILT.rotors.push({ geo: wb.build(), x: wcx, y: wwy, z: wcz, yaw: Math.atan2(nx, nz), speed: -0.5 });
+    // the pier
+    b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.pushTR(wcx - nx * 1.25, 0, wcz - nz * 1.25, Math.atan2(-nz, nx));
+    b.boxY(0, wlv - 2.5, 0, 0.7, wwy - wlv + 2.5 - 0.1, 1.1); b.pop();
+    colBox(wcx - nx * 1.25, wcz - nz * 1.25, 0.7, 1.1, Math.atan2(-nz, nx), wlv - 3, wwy, false);
+    colBox(wcx, wcz, 2 * WR, 1.6, Math.atan2(-uz, ux), wlv - 1, wwy + WR, false);
+    pencil(wcx, wwy + WR + 0.6, wcz, 'mill wheel in the river', 130, 8);
+    H.rot = Math.atan2(nx, nz); H.w = 6; H.d = d;
+    return H;
+  })();
   // people on the decks, the bridge and the boardwalk
   towers.forEach((T, i) => { const d = T.decks[0]; if (!d || i % 2) return; const a = T.doorAng + 2.2 + i; fig(0, d.cx + Math.cos(a) * (d.rin + 0.9), d.y, d.cz + Math.sin(a) * (d.rin + 0.9), Math.atan2(Math.cos(a), Math.sin(a))); });
   fig(1, (ax + bx) / 2 + (bx - ax) * 0.12, by, (az + bz) / 2 + (bz - az) * 0.12, Math.atan2(bx - ax, bz - az));
@@ -5101,9 +5388,20 @@ function buildSpool(t) {
     }
     fig(1, footA[0] + 1.5, null, footA[1] - 1.2, ma); fig(0, footA[0] - 2.2, null, footA[1] + 0.8, ma + 2.4);
     pencil(footA[0], heightAt(footA[0], footA[1]) + 4.2, footA[1], 'market at the bridge foot', 140, 8);
-    const wt = World.towns.find((q) => q.id === t.id); if (wt) { wt.market = footA; wt.bridgeDir = ma; wt.towers = towers.map((T) => [T.x, T.z, T.r0, T.top.y1, T.doorAng]); }
+    const wt = World.towns.find((q) => q.id === t.id); if (wt) { wt.market = footA; wt.bridgeDir = ma; wt.towers = towers.map((T) => [T.x, T.z, T.r0, T.top.y1, T.doorAng]); wt.mill = [mill.x, mill.z]; }
   }
   vergePlant(t.x, t.z, t.r, 1400, rng);
+  // a house's footprint (w by d, turned by rot) must keep off the drums, their balconies and stairs and the bridges
+  const clearOfTowers = (x, z, w, d, rot) => {
+    const c = Math.cos(rot), s = Math.sin(rot);
+    const rd = (px, pz) => { const dx = px - x, dz = pz - z; const lx = c * dx - s * dz, lz = s * dx + c * dz; return Math.hypot(Math.max(Math.abs(lx) - w / 2, 0), Math.max(Math.abs(lz) - d / 2, 0)); };
+    for (const T of towers) {
+      if (rd(T.x, T.z) < T.r0 + 2.4) return false;
+      const e = T.decks[0]; if (e && rd(e.cx, e.cz) < e.rout + 0.8) return false;
+      if (T.stairPts && T.stairPts.some(([px, pz]) => rd(px, pz) < 1.6)) return false;
+    }
+    return !bridges.some((sgm) => segD(x, z, sgm) < Math.hypot(w, d) / 2 + sgm[4] + 0.5);
+  };
   // small houses, planters, lamps, laundry between towers
   for (let k = 0; k < 420; k++) {
     const a = rng.range(0, TAU), d = Math.sqrt(rng.next()) * (t.r - 10);
@@ -5113,6 +5411,7 @@ function buildSpool(t) {
     const roll = rng.next();
     if (roll < 0.05) {
       const hw = rng.range(4, 6), hd = rng.range(3.5, 5), hr = rng.range(0, TAU), st = rng.chance(0.3) ? 1.2 : 0;
+      if (!clearOfTowers(x, z, hw + 1.2, hd + 2.6, hr)) continue;
       house(S, x, z, hw, hd, hr, rng, { stilts: st });
       const [fx, fz] = toWorld(x, z, hr, 0.1 * hw, hd / 2 + 3.2); yard(fx, fz, 1.6);
       if (rng.chance(0.55)) { const sg = rng.chance(0.5) ? 1 : -1; const [gx, gz] = toWorld(x, z, hr, sg * (hw / 2 + 3.0), 0); if (clearSpot(gx, gz, 3, 1) && pathAt(gx, gz) < 0.3 && riverQuery(gx, gz).d > riverQuery(gx, gz).hw + 6) kitchenGarden(S, gx, gz, 3.6, Math.max(3.4, hd), hr, rng); }
@@ -5132,16 +5431,35 @@ function buildSpool(t) {
     const ux = B.cx - A.cx, uz = B.cz - A.cz, L = Math.hypot(ux, uz);
     laundry(b, A.cx + (ux / L) * A.rout, A.cz + (uz / L) * A.rout + 1.5, A.y + 2.4, B.cx - (ux / L) * B.rout, B.cz - (uz / L) * B.rout + 1.5, B.y + 2.6);
   }
-  // riverside boardwalk on both banks
+  // riverside boardwalk on both banks, in runs that stop short of anything standing on the bank (the mill, a drum
+  // and its stair); where a run ends above the bank, steps take it down on the land side
+  const onBank = (x, z) => {
+    for (const T of towers) { if (Math.hypot(x - T.x, z - T.z) < T.r0 + 1.4) return true; if (T.stairPts && T.stairPts.some(([px, pz]) => Math.hypot(x - px, z - pz) < 1.8)) return true; }
+    const c = Math.cos(mill.rot), s = Math.sin(mill.rot), dx = x - mill.x, dz = z - mill.z, lx = c * dx - s * dz, lz = s * dx + c * dz;
+    return Math.hypot(Math.max(Math.abs(lx) - mill.w / 2, 0), Math.max(Math.abs(lz) - mill.d / 2, 0)) < 1.6;
+  };
   for (const side of [-1, 1]) {
-    const pts = [];
+    const pts = [], land = [];
     for (let k = -60; k <= 60; k += 6) {
       const qq = riverQuery(t.x, t.z); const i = clamp(qq.i + Math.round(k / 4), 0, World.river.pts.length - 2);
       const p = World.river.pts[i], n = World.river.pts[i + 1]; let ux = n.x - p.x, uz = n.z - p.z; const l = Math.hypot(ux, uz); ux /= l; uz /= l;
       const off = World.river.HW[i] + 3.2;
-      pts.push([p.x - uz * off * side, riverWaterAt(World.river.S[i]) + 1.0, p.z + ux * off * side]);
+      pts.push([p.x - uz * off * side, riverWaterAt(World.river.S[i]) + 1.0, p.z + ux * off * side]); land.push([-uz * side, ux * side]);
     }
+    const ok = [];
     for (let k = 0; k < pts.length - 1; k++) {
+      const [x0, , z0] = pts[k], [x1, , z1] = pts[k + 1]; const L = Math.hypot(x1 - x0, z1 - z0), nx = -(z1 - z0) / L, nz = (x1 - x0) / L;
+      let clear = true; for (const f of [0, 0.5, 1]) for (const o of [-1.1, 0, 1.1]) if (onBank(lerp(x0, x1, f) + nx * o, lerp(z0, z1, f) + nz * o)) clear = false;
+      ok.push(clear);
+    }
+    const stepsDown = (k) => {
+      const [x, y, z] = pts[k], [lx, lz] = land[k]; const ex = x + lx * 1.1, ez = z + lz * 1.1; const drop = y - heightAt(ex + lx * 0.6, ez + lz * 0.6);
+      if (drop < 0.35) return;
+      const run = drop * 1.7 + 0.3, fx = ex + lx * run, fz = ez + lz * run;
+      stairFlight(b, fx, fz, heightAt(fx, fz), ex, ez, y, 1.6, { rail: false });
+    };
+    for (let k = 0; k < pts.length - 1; k++) {
+      if (!ok[k]) continue;
       const [x0, y0, z0] = pts[k], [x1, y1, z1] = pts[k + 1];
       const L = Math.hypot(x1 - x0, z1 - z0); const rot = Math.atan2(-(z1 - z0), x1 - x0);
       b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V);
@@ -5149,6 +5467,8 @@ function buildSpool(t) {
       b.part(cc('woodDark'), CLS.WOOD, 0); b.beam(x0, y0 - 2.5, z0, x0, y0, z0, 0.18);
       colRamp(x0, z0, y0, x1, z1, y1, 2.2);
       if (k === 4 + side * 3) fig(side > 0 ? 0 : 1, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, side > 0 ? Math.atan2(-(z1 - z0), x1 - x0) + Math.PI / 2 : Math.atan2(x1 - x0, z1 - z0));
+      if (k === 0 || !ok[k - 1]) stepsDown(k);
+      if (k === pts.length - 2 || !ok[k + 1]) { b.part(cc('woodDark'), CLS.WOOD, 0); b.beam(x1, y1 - 2.5, z1, x1, y1, z1, 0.18); stepsDown(k + 1); }
     }
   }
   S.done();
@@ -5158,12 +5478,22 @@ function buildSpool(t) {
 function buildFerrow(t) {
   const S = new Site('ferrow'); const b = S.b; const rng = new RNG(303);
   const sil = [[0, 0, 4.2, 19], [10, -4, 3.6, 15], [4, 11, 3.8, 17], [-9, 7, 3.2, 13]];
+  // the big silo's door faces the widest gap between the others; theirs face out, away from it
+  const outA = sil.slice(1).map(([ox, oz]) => Math.atan2(oz, ox)).sort((p, q) => p - q);
+  let midDoor = 0, widest = -1;
+  outA.forEach((a0, i) => { const a1 = i + 1 < outA.length ? outA[i + 1] : outA[0] + TAU; if (a1 - a0 > widest) { widest = a1 - a0; midDoor = (a0 + a1) / 2; } });
   for (const [ox, oz, r, H] of sil) {
     const x = t.x + ox, z = t.z + oz; const g = groundStats(x, z, r + 1); const gy = g.max + 0.2;
     b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.cyl(x, g.min - 1.5, z, r + 0.5, gy - g.min + 1.5, 24);
-    b.part(cc('white'), CLS.BUILD, PAT.PANEL); b.cyl(x, gy, z, r, H, 28, { top: false });
+    colCyl(x, z, r + 0.5, g.min - 2, gy, true); colSurf('wood');
+    // a room at the foot of the silo; the old silo goes on up over it
+    const sda = ox === 0 && oz === 0 ? midDoor : Math.atan2(oz, ox); const rh = 3.6;
+    drumRoom(b, x, z, gy, r, rh, sda, 'white', PAT.PANEL, { kind: 'home' });
+    b.part(cc('white'), CLS.BUILD, PAT.PANEL); b.cyl(x, gy + rh, z, r, H - rh, 28, { top: false });
+    b.part(cc('cream'), CLS.BUILD, 0); b.cyl(x, gy + rh - 0.02, z, r - 0.02, 0.04, 28, { lines: false });
     b.part(cc('red'), CLS.BUILD, PAT.CORR); b.cyl(x, gy + H, z, r + 0.25, H * 0.15, 28, { top: false }); b.cyl(x, gy + H * 1.15, z, r + 0.25, r * 0.5, 24, { rTop: 0.3, bottom: true });
-    colCyl(x, z, r, gy - 1, gy + H * 1.15, false);
+    colCyl(x, z, r, gy + rh, gy + H * 1.15, false);
+    entrySteps(b, x, z, Math.atan2(Math.cos(sda), Math.sin(sda)), 0, r + 0.5, gy, 1.3);
     // spiral-ish external stairs: two straight flights up the side to a cabin platform
     const a = Math.atan2(t.z - z, t.x - x) + 1.2; const tx = -Math.sin(a), tz = Math.cos(a);
     const half = H * 0.48;
@@ -5232,38 +5562,85 @@ function buildFerrow(t) {
 function buildGlasshouse(t) {
   const S = new Site('glasshouse'); const b = S.b; const rng = new RNG(404);
   const domes = [[0, 0, 11], [22, -14, 8], [-16, 18, 9], [26, 16, 7], [-6, -26, 7.5], [40, 0, 6]];
-  for (const [ox, oz, r] of domes) {
-    const x = t.x + ox, z = t.z + oz;
-    if (lakeE(x, z) < 0.97) { // over the water: dome on a deck with stilts
-      const deckY = LAKE.level + 1.4;
-      b.part(cc('woodDark'), CLS.WOOD, 0);
-      for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU; const px = x + Math.cos(a) * (r + 1.5), pz = z + Math.sin(a) * (r + 1.5); b.beam(px, heightAt(px, pz) - 1, pz, px, deckY, pz, 0.3); }
-      deckRing(b, x, z, deckY, 0, r + 2.6, [[Math.atan2(t.z - z, t.x - x), 1.2]]);
-      geodesicGreenhouse(S, x, z, r, rng, { base: deckY, doorAng: Math.atan2(t.z - z, t.x - x) });
-    } else {
-      const gh = geodesicGreenhouse(S, x, z, r, rng, { doorAng: Math.atan2(t.z - z, t.x - x) });
-      deckRing(b, x, z, gh.base, r + 0.3, r + 2.2, [[gh.a, 1.4], [gh.a + Math.PI, 1.4]]);
+  const rh = [[-30, -6, 5.5], [-22, -24, 4.8], [14, 30, 5], [-34, 16, 4.5]].filter(([ox, oz]) => lakeE(t.x + ox, t.z + oz) >= 1.0);
+  // the ground each dome and round house takes up with its deck, and how far a point is from the nearest of them
+  const foot = [...domes.map(([ox, oz, r]) => [t.x + ox, t.z + oz, r + 2.6]), ...rh.map(([ox, oz, r]) => [t.x + ox, t.z + oz, r + 1.9])];
+  const room = (x, z, self) => { let m = 1e9; foot.forEach(([fx, fz, fr], i) => { if (i !== self) m = Math.min(m, dist2(x, z, fx, fz) - fr); }); return m; };
+  const gn = [];
+  domes.forEach(([ox, oz, r], i) => {
+    const x = t.x + ox, z = t.z + oz, wet = lakeE(x, z) < 0.97, toC = ox || oz ? Math.atan2(t.z - z, t.x - x) : 0;
+    const base = wet ? LAKE.level + 1.4 : groundMax(x, z, r) + 0.4;
+    // its door: on the water, toward the nearest shore that a boardwalk can reach past the others; on land, toward
+    // open ground that isn't the lake, where the ground comes nearest its floor
+    let door = toC, bs = -1e9, ashore = 0;
+    for (let k = 0; k < 32; k++) {
+      const a = (k / 32) * TAU, ca = Math.cos(a), sa = Math.sin(a); let sc;
+      if (wet) {
+        let L = -1; for (let d = r + 2.6; d < r + 40; d += 1) { const px = x + ca * d, pz = z + sa * d; if (room(px, pz, i) < 1.2) break; if (lakeE(px, pz) > 1.02 && heightAt(px, pz) > LAKE.level + 0.25) { L = d; break; } }
+        if (L < 0) continue; sc = -L + 0.5 * Math.cos(a - toC);
+        if (sc > bs) { bs = sc; door = a; ashore = L; }
+        continue;
+      }
+      const p1x = x + ca * (r + 3.6), p1z = z + sa * (r + 3.6), ex = x + ca * (r + 6), ez = z + sa * (r + 6);
+      const c = Math.min(room(p1x, p1z, i), room(ex, ez, i)); if (c < 1.2) continue;
+      if (lakeE(ex, ez) < 1.04 || heightAt(ex, ez) < LAKE.level + 0.4) continue;
+      sc = Math.min(c, 5) - 0.8 * Math.abs(base - heightAt(p1x, p1z)) + 1.2 * Math.cos(a - toC);
+      if (sc > bs) { bs = sc; door = a; }
     }
-  }
+    const ca = Math.cos(door), sa = Math.sin(door);
+    if (wet) { // over the water: a dome on a deck on stilts, with a boardwalk ashore from its door
+      b.part(cc('woodDark'), CLS.WOOD, 0);
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU; const px = x + Math.cos(a) * (r + 1.5), pz = z + Math.sin(a) * (r + 1.5); b.beam(px, heightAt(px, pz) - 1, pz, px, base, pz, 0.3); }
+      deckRing(b, x, z, base, 0, r + 2.6, [[door, 1.2]]);
+      geodesicGreenhouse(S, x, z, r, rng, { base, doorAng: door, water: true });
+      if (ashore > 0) {
+        // level with the deck until the ground comes up to meet it, or steps down at the end
+        const d0 = r + 2.45; let d1 = ashore + 0.5; while (d1 < ashore + 14 && heightAt(x + ca * (d1 + 0.6), z + sa * (d1 + 0.6)) < base - 0.3) d1 += 0.5;
+        const a0x = x + ca * d0, a0z = z + sa * d0, a1x = x + ca * d1, a1z = z + sa * d1;
+        b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.push(new THREE.Matrix4().makeRotationY(Math.atan2(-sa, ca)).setPosition((a0x + a1x) / 2, base, (a0z + a1z) / 2)); b.boxY(0, -0.2, 0, d1 - d0, 0.2, 1.8); b.pop();
+        colRamp(a0x, a0z, base, a1x, a1z, base, 1.8); colSurf('wood');
+        b.part(cc('woodDark'), CLS.WOOD, 0);
+        for (let d = d0 + 1.2; d < d1; d += 2.4) for (const s2 of [-0.8, 0.8]) { const qx = x + ca * d - sa * s2, qz = z + sa * d + ca * s2; b.beam(qx, heightAt(qx, qz) - 1, qz, qx, base - 0.2, qz, 0.14); }
+        for (const s2 of [-0.95, 0.95]) { const rail = [[a0x - sa * s2, base, a0z + ca * s2], [x + ca * ashore - sa * s2, base, z + sa * ashore + ca * s2]]; railPath(b, rail); }
+        const drop = base - heightAt(x + ca * (d1 + 0.6), z + sa * (d1 + 0.6));
+        let fx = a1x, fz = a1z;
+        if (drop > 0.35) { const run = drop * 1.7 + 0.3; fx = a1x + ca * run; fz = a1z + sa * run; stairFlight(b, fx, fz, heightAt(fx, fz), a1x, a1z, base, 1.6, { rail: false }); }
+        gn.push([fx + ca * 1.5, fz + sa * 1.5]);
+      }
+    } else {
+      const gh = geodesicGreenhouse(S, x, z, r, rng, { base, doorAng: door });
+      // a deck round it at floor level, open at the door, and at the back too where the ground is up to meet it
+      const bx2 = x - ca * (r + 2.6), bz2 = z - sa * (r + 2.6); const backOpen = Math.abs(heightAt(bx2, bz2) - gh.base) < 0.45 && room(bx2, bz2, i) > 1;
+      deckRing(b, x, z, gh.base, r + 0.3, r + 2.2, backOpen ? [[gh.a, 1.4], [gh.a + Math.PI, 1.4]] : [[gh.a, 1.4]]);
+      gn.push([x + ca * (r + 3.4), z + sa * (r + 3.4)]);
+    }
+  });
   // round houses
-  const rh = [[-30, -6, 5.5], [-22, -24, 4.8], [14, 30, 5], [-34, 16, 4.5]];
   for (const [ox, oz, r] of rh) {
-    const x = t.x + ox, z = t.z + oz; if (lakeE(x, z) < 1.0) continue;
+    const x = t.x + ox, z = t.z + oz;
     const H = roundHouse(S, x, z, r, rng, { doorAng: Math.atan2(t.z - z, t.x - x), color: rng.pick(['cream', 'white', 'sand']) });
     deckRing(b, x, z, H.base, r, r + 1.8, [[Math.atan2(t.z - z, t.x - x), 1.3]]);
+    const a = Math.atan2(t.z - z, t.x - x); gn.push([x + Math.cos(a) * (r + 2.6), z + Math.sin(a) * (r + 2.6)]);
   }
-  {
-    const gn = [[t.x, t.z]];
-    for (const [ox, oz, r] of rh) { const x = t.x + ox, z = t.z + oz; if (lakeE(x, z) < 1.0) continue; const a = Math.atan2(t.z - z, t.x - x); gn.push([x + Math.cos(a) * (r + 2.6), z + Math.sin(a) * (r + 2.6)]); }
-    for (const [ox, oz, r] of domes) { const x = t.x + ox, z = t.z + oz; if (lakeE(x, z) < 1.02) continue; const a = Math.atan2(t.z - z, t.x - x); gn.push([x + Math.cos(a) * (r + 3.2), z + Math.sin(a) * (r + 3.2)]); }
-    laneNet(gn, 55, 1.15, 53, (a, c) => lakeE((a[0] + c[0]) / 2, (a[1] + c[1]) / 2) > 1.02);
-    vergePlant(t.x, t.z, 60, 700, rng);
+  // pier into the lake: the nearest bit of shore to the domes, with nothing built on it, where a straight run out
+  // from it stays over open water
+  const ang0 = Math.atan2(LAKE.z - t.z, LAKE.x - t.x); let pier = null; const pl = 48; let bestD = 1e9;
+  for (let k = -15; k <= 15; k++) {
+    const ux = Math.cos(ang0 + k * 0.1), uz = Math.sin(ang0 + k * 0.1);
+    for (let d = 8; d < 90 && d < bestD; d += 1) {
+      const px = t.x + ux * d, pz = t.z + uz * d, g0 = heightAt(px, pz);
+      if (room(px, pz, -1) < 1.5 || g0 < LAKE.level + 0.1 || g0 > LAKE.level + 1.3) continue;
+      if (heightAt(px + ux * 4, pz + uz * 4) > LAKE.level - 0.1) continue;
+      let ok = room(px - ux * 4, pz - uz * 4, -1) > 1;
+      for (let q = 5; q <= pl + 6 && ok; q += 2) { const qx = px + ux * q, qz = pz + uz * q; if (heightAt(qx, qz) > LAKE.level - 0.4 || room(qx, qz, -1) < 1.8) ok = false; }
+      if (ok) { pier = { px, pz, ux, uz }; bestD = d; }
+      break;
+    }
   }
-  // pier into the lake
-  const ang = Math.atan2(LAKE.z - t.z, LAKE.x - t.x); const ux = Math.cos(ang), uz = Math.sin(ang);
-  let px = t.x + ux * 10, pz = t.z + uz * 10; for (let k = 0; k < 40 && lakeE(px, pz) > 1.0; k++) { px += ux * 2; pz += uz * 2; }
-  const py = LAKE.level + 0.9; const pl = 48;
-  yard(px - ux * 4, pz - uz * 4, 3.5); lane(t.x, t.z, px - ux * 4, pz - uz * 4, 1.3, 2, 13);
+  if (!pier) { const ux = Math.cos(ang0), uz = Math.sin(ang0); let px = t.x + ux * 10, pz = t.z + uz * 10; for (let k = 0; k < 40 && lakeE(px, pz) > 1.0; k++) { px += ux * 2; pz += uz * 2; } pier = { px, pz, ux, uz }; }
+  const { px, pz, ux, uz } = pier;
+  const py = LAKE.level + 0.9;
+  yard(px - ux * 4, pz - uz * 4, 3.5);
   const ex = px + ux * pl, ez = pz + uz * pl;
   { const wt = World.towns.find((q) => q.id === t.id); if (wt) wt.pier = { px, pz, ex, ez, py, ux, uz }; }
   b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.push(new THREE.Matrix4().makeRotationY(Math.atan2(-uz, ux)).setPosition((px + ex) / 2, py, (pz + ez) / 2)); b.boxY(0, -0.25, 0, pl, 0.25, 2.4); b.pop();
@@ -5272,17 +5649,10 @@ function buildGlasshouse(t) {
   // small boathouse at the pier end
   b.part(cc('ochre'), CLS.BUILD, PAT.PLANK_V); b.pushTR(ex + ux * 2, py, ez + uz * 2, Math.atan2(-uz, ux)); b.boxY(0, 0, 0, 4, 2.6, 5); b.part(cc('roofRed'), CLS.BUILD, PAT.CORR); b.gable(0, 2.6, 0, 4.6, 5.6, 1.4); b.pop();
   b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(ex + ux * 2, py - 0.25, ez + uz * 2, 6, 0.25, 6); colBox(ex + ux * 2, ez + uz * 2, 6, 6, 0, py - 0.6, py, true, false);
-  // boardwalks between the domes
-  for (let i = 0; i < domes.length - 1; i++) {
-    const [ax, az] = domes[i], [bx, bz] = domes[i + 1];
-    const x0 = t.x + ax, z0 = t.z + az, x1 = t.x + bx, z1 = t.z + bz; const L = dist2(x0, z0, x1, z1); const n = Math.ceil(L / 5);
-    for (let k = 0; k < n; k++) {
-      const s0 = k / n, s1 = (k + 1) / n; const qx0 = lerp(x0, x1, s0), qz0 = lerp(z0, z1, s0), qx1 = lerp(x0, x1, s1), qz1 = lerp(z0, z1, s1);
-      const y0 = Math.max(heightAt(qx0, qz0), LAKE.level + 0.5) + 0.35, y1 = Math.max(heightAt(qx1, qz1), LAKE.level + 0.5) + 0.35;
-      b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.push(new THREE.Matrix4().makeRotationY(Math.atan2(-(qz1 - qz0), qx1 - qx0)).setPosition((qx0 + qx1) / 2, (y0 + y1) / 2, (qz0 + qz1) / 2)); b.boxY(0, -0.18, 0, L / n + 0.05, 0.18, 1.6); b.pop();
-      colRamp(qx0, qz0, y0, qx1, qz1, y1, 1.6);
-    }
-  }
+  // lanes joining every door and the pier's foot
+  gn.unshift([px - ux * 4, pz - uz * 4]);
+  laneNet(gn, 60, 1.15, 53, (a, c) => lakeE((a[0] + c[0]) / 2, (a[1] + c[1]) / 2) > 1.02 && room((a[0] + c[0]) / 2, (a[1] + c[1]) / 2, -1) > 0);
+  vergePlant(t.x, t.z, 60, 700, rng);
   solarArray(b, t.x - 12, t.z + 34, heightAt(t.x - 12, t.z + 34), 0.4, 5, 2, 0.55);
   pencil(t.x, Math.max(heightAt(t.x, t.z), LAKE.level + 1.4) + 12, t.z, 'geodesic greenhouse, 22 m across', 220, 12);
   pencil(ex + ux * 2, py + 4.4, ez + uz * 2, 'boathouse at the end of the pier', 160, 8);
@@ -5322,10 +5692,37 @@ function buildVane(t) {
   { const [gx, gz] = toWorld(x0 - 5, z0 - 2, 0.35, -8.0, -1.0); if (clearSpot(gx, gz, 2)) kitchenGarden(S, gx, gz, 4.4, 4.0, 0.35, rng); }
   // battery hall (concrete) with a planted roof
   const bx = x0 + 4, bz = z0 + 26; const g = groundStats(bx, bz, 8);
-  b.part(cc('concrete'), CLS.CONCRETE, PAT.BOARD); b.pushTR(bx, 0, bz, -0.2); b.boxY(0, g.min - 1, 0, 16, g.max - g.min + 4.6, 8); b.part(cc('leaf'), CLS.FOLIAGE, 0, 0.05); b.boxY(0, g.max + 3.6, 0, 15.6, 0.35, 7.6); b.pop();
-  colBox(bx, bz, 16, 8, -0.2, g.min - 1, g.max + 3.95, true);
-  { const wt = World.towns.find((q) => q.id === t.id); if (wt) { wt.hall = { x: bx, z: bz, rot: -0.2, w: 16, d: 8, floor: g.max, top: g.max + 3.95 }; wt.dish = { x: x0 + 17, z: z0 + 4 }; wt.stilt = { x: x0 - 5, z: z0 - 2, rot: 0.35 }; } }
-  for (let k = 0; k < 5; k++) PLANT.push(['shrub', bx - 6 + k * 3, bz + rng.range(-2, 2), rng.range(0.8, 1.5), rng.pick(PALETTE.shrub), g.max + 3.95]);
+  // the hall: its door on the side toward the hamlet, and inside, the batteries in their cabinets, row on row
+  const hside = Math.sin(-0.2) * (t.x - bx) + Math.cos(-0.2) * (t.z - bz) > 0 ? 1 : -1; const hrot = hside > 0 ? -0.2 : -0.2 + Math.PI;
+  const hall = { w: 16, d: 8, h: 3.6, base: g.max, t: 0.3, door: { x: hside > 0 ? -2.5 : 2.5, w: 1.6, h: 2.3 }, outColor: cc('concrete'), outCls: CLS.CONCRETE, outPat: PAT.BOARD, inColor: hex('#d9d5cb'), inPat: PAT.BOARD, floor: hex('#b9b3a6'), ceilColor: hex('#cfcabe'), v0: 0 };
+  b.pushTR(bx, 0, bz, hrot);
+  b.part(cc('concrete'), CLS.CONCRETE, PAT.BOARD); b.boxY(0, g.min - 1, 0, 16, g.max - g.min + 1, 8);
+  const hs2 = rectShell(b, hall);
+  b.part(cc('concrete'), CLS.CONCRETE, PAT.BOARD); b.boxY(0, g.max + 3.6, 0, 16.3, 0.3, 8.3);
+  b.part(cc('leaf'), CLS.FOLIAGE, 0, 0.05); b.boxY(0, g.max + 3.9, 0, 15.6, 0.35, 7.6);
+  { const hrng = new RNG(5151); const F = { fy: g.max, ceil: g.max + 3.38, cols: [] };
+    for (let row = 0; row < 2; row++) for (let k = 0; k < 6; k++) {
+      const cx = -6.2 + k * 2.1, cz = row ? -2.6 : -0.4; if (row === 0 && k > 3) continue;
+      fPlace(b, F, cx, cz, row ? 0 : Math.PI, () => {
+        rp(b, '#7f8b86', CLS.BUILD, PAT.PANEL); b.boxY(0, 0, 0, 1.7, 2.2, 0.8);
+        rp(b, '#3d443b', CLS.BUILD, 0); b.boxY(0, 2.2, 0, 1.76, 0.06, 0.86);
+        for (let i = 0; i < 4; i++) { rp(b, hrng.pick(['#9fd17a', '#9fd17a', '#f0b04a']), CLS.BUILD, 19); b.noLines(); b.box(-0.6 + i * 0.4, 1.85, 0.41, 0.06, 0.06, 0.01); }
+        rp(b, '#2b2a28', CLS.BUILD, 0); b.rod(0.6, 2.26, 0, 0.6, 3.38, 0, 0.04, 5);
+      });
+      F.cols.push([cx, cz, 1.7, 0.8, 0, g.max + 2.3]);
+    }
+    // a desk with its gauges by the door, a lamp over it
+    { const dxs = hall.door.x > 0 ? hall.door.x - 2.4 : hall.door.x + 2.4; fDesk(b, F, dxs, hs2.id - 0.5, Math.PI, hrng); fChair(b, F, dxs, hs2.id - 1.1, 0, '#8c6440'); }
+    for (let k = 0; k < 3; k++) fLamp(b, F, -4 + k * 4, -1.5, 0.7);
+    roomColliders(F, (lx, lz) => [...toWorld(bx, bz, hrot, lx, lz), hrot]);
+    openLeaf(b, hall.door.x - 0.8 + 0.03, hs2.id - 0.03, g.max, 1.72, 1.6, 2.3, '#6f7a74'); }
+  b.pop();
+  rectShellCols(bx, bz, hrot, hall); colBox(bx, bz, 16, 8, hrot, g.min - 1, g.max, true, true); colSurf('stone');
+  colBox(bx, bz, 16.3, 8.3, hrot, g.max + 3.6, g.max + 4.25, true, false);
+  ROOMS.push({ kind: 'hall', x: bx, z: bz, fy: g.max, out: toWorld(bx, bz, hrot, hall.door.x, 4 + 1.6), inYaw: hrot });
+  entrySteps(b, bx, bz, hrot, hall.door.x, 4.0, g.max, 1.8);
+  { const wt = World.towns.find((q) => q.id === t.id); if (wt) { wt.hall = { x: bx, z: bz, rot: -0.2, w: 16, d: 8, floor: g.max, top: g.max + 4.25 }; wt.dish = { x: x0 + 17, z: z0 + 4 }; wt.stilt = { x: x0 - 5, z: z0 - 2, rot: 0.35 }; } }
+  for (let k = 0; k < 5; k++) PLANT.push(['shrub', bx - 6 + k * 3, bz + rng.range(-2, 2), rng.range(0.8, 1.5), rng.pick(PALETTE.shrub), g.max + 4.25]);
   solarArray(b, x0 - 4, z0 + 40, heightAt(x0 - 4, z0 + 40), -0.2, 6, 2, 0.6);
   solarArray(b, x0 + 18, z0 + 42, heightAt(x0 + 18, z0 + 42), -0.2, 6, 2, 0.6);
   // a small yellow van
@@ -5537,6 +5934,465 @@ function addBuiltMeshes() {
 }
 function flushPlantings() { for (const p of PLANT) plantTree(...p); PLANT.length = 0; }
 function animateBuilt(dt) { if (!BUILT.rotorObjs) return; for (const r of BUILT.rotorObjs) r.m.rotation.z += r.speed * dt; }
+
+// ==== 07b_rooms.js ====
+// ---------------------------------------------------------------------------
+// 07b - rooms: going inside. walls with real doorways cut through them, a floor and a ceiling, windows that show
+// the day, the soft light that comes in by them, and the furniture of whoever lives there
+// ---------------------------------------------------------------------------
+const ROOMS = []; const STAIRS = []; // every room you can walk into: { kind, x, z, fy, out: [x, z] a step outside its door, inYaw: facing in }
+const ROOM_L = -0.43; // a part's wind weight below zero marks it as indoors: OBJ_FRAG gives it this much light
+const PLASTER = ['#efe6d2', '#ebe0c8', '#f1ebdd', '#e6dcc6', '#e9e1cf', '#e3e6d6', '#ece2d4'];
+const ROOM_WOOD = ['#a8794c', '#9a6d45', '#b4875a', '#8c6440', '#a5835e'];
+const FLOOR_WOOD = ['#b08458', '#a37a50', '#bc9466', '#9c7550'];
+const CLOTH = ['#b85c3c', '#4f76ae', '#d6a548', '#86a06c', '#9c5d43', '#6f9e98', '#c9b9a0', '#a9472f', '#7a6aa0', '#d9798a'];
+const SPINES = ['#9c3f2e', '#2f5470', '#c2913a', '#55704a', '#6b4b6e', '#d8cfb4', '#8a5a3a', '#3e3a36', '#b46c4c'];
+// a part indoors
+function rp(b, c, cls = CLS.WOOD, pat = 0) { return b.part(typeof c === 'string' ? hex(c) : c, cls, pat, ROOM_L); }
+
+// a flat vertical face from (ax, az) to (bx, bz), between y0 and y1, its normal (nx, nz), with rectangular holes
+// [s0, h0, s1, h1] (metres along it from a, and up it from y0) left open. uv(x, y, z) gives the painted pattern's
+// coordinates at a point, so the inside of a wall can carry the same windows as the outside
+function wallFace(b, ax, az, bx, bz, y0, y1, nx, nz, holes = [], uv = null, ink = true) {
+  const L = Math.hypot(bx - ax, bz - az); if (L < 1e-3) return;
+  const ux = (bx - ax) / L, uz = (bz - az) / L, H = y1 - y0;
+  const cut = (arr) => [...new Set(arr.map((v) => Math.round(v * 1e4) / 1e4))].sort((p, q) => p - q);
+  const S = cut([0, L, ...holes.flatMap(([s0, , s1]) => [clamp(s0, 0, L), clamp(s1, 0, L)])]);
+  const Hs = cut([0, H, ...holes.flatMap(([, h0, , h1]) => [clamp(h0, 0, H), clamp(h1, 0, H)])]);
+  const pt = (s, h) => [ax + ux * s, y0 + h, az + uz * s];
+  const id = (p, s, h) => { const q = uv ? uv(p[0], p[1], p[2]) : [s, y0 + h]; return b.v(p[0], p[1], p[2], nx, 0, nz, q[0], q[1]); };
+  for (let i = 0; i < S.length - 1; i++) for (let j = 0; j < Hs.length - 1; j++) {
+    const sm = (S[i] + S[i + 1]) / 2, hm = (Hs[j] + Hs[j + 1]) / 2;
+    if (holes.some(([s0, h0, s1, h1]) => sm > s0 && sm < s1 && hm > h0 && hm < h1)) continue;
+    const c = [[S[i], Hs[j]], [S[i + 1], Hs[j]], [S[i + 1], Hs[j + 1]], [S[i], Hs[j + 1]]];
+    const v = c.map(([s, h]) => id(pt(s, h), s, h)); b.quad(v[0], v[1], v[2], v[3]);
+  }
+  if (ink && b.cur.lines) {
+    b.polyLine([pt(0, 0), pt(L, 0), pt(L, H), pt(0, H)].map((p) => p), true);
+    for (const [s0, h0, s1, h1] of holes) b.polyLine([pt(s0, h0), pt(s1, h0), pt(s1, h1), pt(s0, h1)], true);
+  }
+}
+// a flat horizontal rectangle at height y, facing up (ny = 1) or down (ny = -1)
+function flatQuad(b, x0, z0, x1, z1, y, ny = 1) {
+  const p = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => b.v(x, y, z, 0, ny, 0, x, z));
+  b.quad(p[0], p[1], p[2], p[3]);
+}
+
+// ---- furniture. each piece is built in its own frame: its back to -z (against a wall), its front to +z ----------
+// F: { fy: floor height, ceil: ceiling height, cols: colliders in the room's frame [x, z, sx, sz, ry, y1] }
+function fPlace(b, F, x, z, ry, fn) { b.pushTR(x, F.fy, z, ry); fn(); b.pop(); }
+function fBlock(F, x, z, sx, sz, ry, h) { F.cols.push([x, z, sx, sz, ry, F.fy + h]); }
+function fTable(b, F, x, z, ry, w = 1.3, d = 0.8, wood = '#a8794c') {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, PAT.PLANK_H); b.boxY(0, 0.72, 0, w, 0.05, d);
+    rp(b, wood, CLS.WOOD, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * (w / 2 - 0.07), 0, sz * (d / 2 - 0.07), 0.06, 0.72, 0.06);
+    b.boxY(0, 0.6, 0, w - 0.2, 0.08, 0.03);
+  });
+  fBlock(F, x, z, w, d, ry, 0.77);
+}
+function fChair(b, F, x, z, ry, wood = '#9a6d45') {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, 0); b.boxY(0, 0.43, 0, 0.42, 0.04, 0.42);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * 0.18, 0, sz * 0.18, 0.04, 0.43, 0.04);
+    for (const sx of [-1, 1]) b.boxY(sx * 0.18, 0.47, -0.19, 0.04, 0.48, 0.04);
+    b.boxY(0, 0.72, -0.19, 0.4, 0.16, 0.025);
+  });
+}
+function fBed(b, F, x, z, ry, wood, cloth) {
+  // the bed runs along local x (2.0 long, 0.95 wide), its head at -x
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, 0); b.boxY(0, 0.12, 0, 2.0, 0.24, 0.95);
+    b.boxY(-1.0, 0, 0, 0.07, 0.95, 1.0); b.boxY(1.0, 0, 0, 0.07, 0.55, 1.0);
+    rp(b, '#e8e1d0', CLS.BUILD, 0); b.boxY(0.02, 0.36, 0, 1.9, 0.14, 0.88);
+    rp(b, cloth, CLS.BUILD, PAT.PLANK_H); b.boxY(0.32, 0.5, 0, 1.28, 0.07, 0.92); b.boxY(0.32, 0.22, 0.47, 1.28, 0.35, 0.03);
+    rp(b, '#efe8da', CLS.BUILD, 0); b.blob(-0.72, 0.56, 0, 0.2, 0.08, 0.3, 1, 0.1, 3);
+  });
+  fBlock(F, x, z, 2.05, 1.0, ry, 0.6);
+}
+function fStove(b, F, x, z, ry) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, '#3e3a36', CLS.BUILD, 0); b.boxY(0, 0.12, 0, 0.62, 0.62, 0.52);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * 0.27, 0, sz * 0.22, 0.05, 0.13, 0.05);
+    b.boxY(0, 0.74, 0, 0.68, 0.04, 0.58);
+    rp(b, '#2a2725', CLS.BUILD, 0); b.boxY(-0.08, 0.24, 0.265, 0.3, 0.26, 0.02);
+    rp(b, '#c9783c', CLS.BUILD, 19); b.box(-0.08, 0.37, 0.276, 0.22, 0.03, 0.005);
+    rp(b, '#3e3a36', CLS.BUILD, 0); b.cyl(0.14, 0.78, -0.1, 0.07, Math.max(0.5, F.ceil - F.fy - 0.78), 8, { top: false });
+    rp(b, '#8a6a3c', CLS.BUILD, 0); b.cyl(-0.12, 0.78, 0.08, 0.11, 0.16, 10, { rTop: 0.09 });
+  });
+  fBlock(F, x, z, 0.7, 0.6, ry, 0.8);
+}
+function fShelf(b, F, x, z, ry, rng, w = 1.2, h = 1.9, wood = '#8c6440') {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, 0); for (const sx of [-1, 1]) b.boxY(sx * (w / 2 - 0.02), 0, 0, 0.04, h, 0.34);
+    b.boxY(0, 0, -0.165, w, h, 0.02);
+    const n = Math.max(3, Math.round(h / 0.42)); for (let k = 0; k <= n; k++) b.boxY(0, (k / n) * (h - 0.04), 0, w - 0.04, 0.03, 0.33);
+    for (let k = 0; k < n; k++) {
+      let px = -w / 2 + 0.06; const y = (k / n) * (h - 0.04) + 0.03; const top = (h - 0.04) / n - 0.06;
+      while (px < w / 2 - 0.1) {
+        if (rng.chance(0.12)) { px += rng.range(0.1, 0.3); continue; }
+        const bw = rng.range(0.03, 0.07), bh = top * rng.range(0.62, 0.95);
+        rp(b, rng.pick(SPINES), CLS.BUILD, 0); b.noLines(); b.boxY(px + bw / 2, y, 0.02, bw, bh, rng.range(0.2, 0.26)); px += bw + 0.004;
+      }
+    }
+  });
+  fBlock(F, x, z, w, 0.36, ry, h);
+}
+function fDresser(b, F, x, z, ry, rng, wood = '#9a6d45') {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, 0); b.boxY(0, 0.06, 0, 1.0, 0.8, 0.46); b.boxY(0, 0.86, 0, 1.06, 0.04, 0.5);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * 0.46, 0, sz * 0.19, 0.05, 0.08, 0.05);
+    rp(b, '#5e4630', CLS.WOOD, 0); b.noLines(); for (let k = 0; k < 3; k++) { b.box(0, 0.2 + k * 0.25, 0.232, 0.9, 0.01, 0.005); b.box(0, 0.33 + k * 0.25 - 0.13, 0.236, 0.1, 0.025, 0.01); }
+    rp(b, rng.pick(['#e9e1cf', '#5b7fa3', '#b85c3c', '#d6a548']), CLS.BUILD, 0); b.cyl(0.28, 0.9, 0, 0.08, 0.22, 10, { rTop: 0.06 });
+    rp(b, '#efe8da', CLS.BUILD, 0); b.cyl(-0.25, 0.9, 0.05, 0.12, 0.03, 12);
+  });
+  fBlock(F, x, z, 1.06, 0.5, ry, 0.9);
+}
+function fCupboard(b, F, x, z, ry, rng, wood = '#a5835e') {
+  // a kitchen dresser: a cupboard below, open shelves of plates and jars above
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, wood, CLS.WOOD, 0); b.boxY(0, 0, 0, 1.3, 0.9, 0.5); b.boxY(0, 0.9, 0, 1.36, 0.04, 0.54);
+    b.boxY(0, 0.94, -0.2, 1.3, 1.1, 0.04); for (const sx of [-1, 1]) b.boxY(sx * 0.63, 0.94, -0.08, 0.04, 1.1, 0.28);
+    for (const yy of [1.36, 1.74]) b.boxY(0, 0.94 + yy - 0.94, -0.08, 1.26, 0.03, 0.26); b.boxY(0, 2.04, -0.08, 1.34, 0.04, 0.3);
+    rp(b, '#5e4630', CLS.WOOD, 0); b.noLines(); b.box(0, 0.45, 0.252, 0.01, 0.8, 0.005);
+    for (let k = 0; k < 4; k++) { rp(b, rng.pick(['#efe8da', '#e9e1cf', '#7c9cb8', '#d6b98a']), CLS.BUILD, 0); b.noLines(); b.push(new THREE.Matrix4().makeTranslation(-0.45 + k * 0.3, 1.52, -0.12).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2 - 0.12))); b.cyl(0, -0.01, 0, 0.12, 0.02, 12, { bottom: true }); b.pop(); }
+    for (let k = 0; k < 5; k++) { rp(b, rng.pick(['#b85c3c', '#d6a548', '#86a06c', '#e9e1cf', '#9c5d43']), CLS.BUILD, 0); b.noLines(); b.cyl(-0.5 + k * 0.25, 1.0, -0.08, 0.055, rng.range(0.14, 0.24), 8); }
+  });
+  fBlock(F, x, z, 1.36, 0.54, ry, 2.06);
+}
+function fRug(b, F, x, z, ry, w, d, cloth, edge) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, edge, CLS.BUILD, 0); b.noLines(); b.boxY(0, 0.004, 0, w, 0.008, d);
+    rp(b, cloth, CLS.BUILD, PAT.PLANK_H); b.noLines(); b.boxY(0, 0.008, 0, w - 0.22, 0.008, d - 0.22);
+  });
+}
+function fLamp(b, F, x, z, low = 1.0) {
+  // a pendant on its flex: a paper shade, lit at dusk
+  const y1 = F.ceil - 0.02, y0 = Math.max(F.fy + 1.9, F.ceil - low);
+  rp(b, '#2b2a28', CLS.WOOD, 0); b.rod(x, y0 + 0.2, z, x, y1, z, 0.008, 3);
+  rp(b, '#efe2c2', CLS.BUILD, 10); b.cyl(x, y0, z, 0.24, 0.22, 12, { rTop: 0.1, top: false, inner: true });
+}
+function fArmchair(b, F, x, z, ry, cloth) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, cloth, CLS.BUILD, 0); b.boxY(0, 0.1, 0.02, 0.74, 0.32, 0.72); b.boxY(0, 0.42, -0.28, 0.74, 0.5, 0.16);
+    for (const sx of [-1, 1]) b.boxY(sx * 0.33, 0.42, 0.02, 0.1, 0.2, 0.72);
+    rp(b, '#5e4630', CLS.WOOD, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * 0.3, 0, sz * 0.28, 0.05, 0.1, 0.05);
+  });
+  fBlock(F, x, z, 0.76, 0.76, ry, 0.9);
+}
+function fCrates(b, F, x, z, ry, rng) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, '#bca98c', CLS.WOOD, PAT.PLANK_H); b.boxY(-0.3, 0, 0, 0.55, 0.45, 0.45); b.boxY(0.32, 0, 0.02, 0.5, 0.4, 0.42); b.boxY(-0.25, 0.45, -0.02, 0.48, 0.38, 0.4);
+    rp(b, rng.pick(['#c8553d', '#e0a43c', '#86a06c']), CLS.BUILD, 0); b.noLines(); for (let k = 0; k < 5; k++) b.blob(0.22 + (k % 3) * 0.12 - 0.12, 0.43, -0.08 + Math.floor(k / 3) * 0.14, 0.06, 0.05, 0.06, 0, 0.1, k);
+  });
+  fBlock(F, x, z, 1.2, 0.5, ry, 0.85);
+}
+function fWorkbench(b, F, x, z, ry, rng) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, '#9a6d45', CLS.WOOD, PAT.PLANK_H); b.boxY(0, 0.84, 0, 1.8, 0.07, 0.7);
+    rp(b, '#8c6440', CLS.WOOD, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.boxY(sx * 0.82, 0, sz * 0.28, 0.08, 0.84, 0.08); b.boxY(0, 0.2, 0, 1.6, 0.03, 0.6);
+    b.boxY(0, 0.91, -0.33, 1.8, 0.6, 0.03);
+    rp(b, '#3e3a36', CLS.BUILD, 0); for (let k = 0; k < 6; k++) b.boxY(-0.7 + k * 0.28, 1.1, -0.3, 0.03, rng.range(0.18, 0.32), 0.02);
+    rp(b, '#7e8b8f', CLS.BUILD, 0); b.boxY(0.5, 0.91, 0.05, 0.3, 0.12, 0.16);
+    rp(b, '#efe6d2', CLS.BUILD, 0); b.noLines(); b.boxY(-0.35, 0.91, 0.1, 0.32, 0.005, 0.24);
+  });
+  fBlock(F, x, z, 1.85, 0.75, ry, 0.95);
+}
+function fSacks(b, F, x, z, ry, rng) {
+  fPlace(b, F, x, z, ry, () => {
+    for (let k = 0; k < 4; k++) { rp(b, rng.pick(['#d8c9a3', '#cdbb92', '#e2d6b6']), CLS.BUILD, 0); b.blob(-0.45 + (k % 3) * 0.45, 0.28 + Math.floor(k / 3) * 0.45, (k % 2) * 0.1, 0.24, 0.28, 0.2, 1, 0.12, k + 2); }
+  });
+  fBlock(F, x, z, 1.4, 0.55, ry, 0.9);
+}
+function fBarrel(b, F, x, z) { rp(b, '#8c6440', CLS.WOOD, PAT.PLANK_V); b.cyl(x, F.fy, z, 0.3, 0.8, 10, { rTop: 0.27 }); F.cols.push([x, z, 0.6, 0.6, 0, F.fy + 0.8]); }
+function fDesk(b, F, x, z, ry, rng) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, '#8c6440', CLS.WOOD, PAT.PLANK_H); b.boxY(0, 0.72, 0, 1.2, 0.04, 0.6);
+    rp(b, '#8c6440', CLS.WOOD, 0); for (const sx of [-1, 1]) b.boxY(sx * 0.55, 0, 0, 0.06, 0.72, 0.56);
+    rp(b, '#efe6d2', CLS.BUILD, 0); b.noLines(); b.boxY(-0.2, 0.76, 0.05, 0.3, 0.004, 0.22); b.boxY(0.15, 0.76, -0.02, 0.22, 0.004, 0.3);
+    rp(b, rng.pick(SPINES), CLS.BUILD, 0); b.noLines(); b.boxY(0.42, 0.76, -0.12, 0.16, 0.12, 0.22);
+    rp(b, '#2b2a28', CLS.BUILD, 0); b.cyl(-0.45, 0.76, -0.15, 0.05, 0.12, 8);
+  });
+  fBlock(F, x, z, 1.2, 0.6, ry, 0.8);
+}
+
+// ---- layouts --------------------------------------------------------------------------------------------------------
+// a rectangular room in its own frame: inside it runs -ih..ih across and -id..id deep, the door is in the +z wall at
+// x = dx. kind: 'home' (a bed, a stove, a table), 'work' (benches, sacks), 'school' (desks)
+function furnishRect(b, F, rng, ih, id, dx, kind = 'home', opts = {}) {
+  const far = dx > 0 ? -1 : 1; const W = ih * 2, D = id * 2;
+  const wood = rng.pick(ROOM_WOOD), cloth = rng.pick(CLOTH);
+  if (kind === 'mill') {
+    // the river side is the back wall (-z). the wheel's axle comes in through it to the pit wheel, a big gear that
+    // turns a pinion on the upright shaft; the shaft drives the upper stone; grain comes down from the hopper
+    const gy = clamp((opts.axleY !== undefined ? opts.axleY : F.fy + 1.2) - F.fy, 0.95, 1.5), gz = -id + 0.32, GR = 0.85;
+    rp(b, '#5e4630', CLS.WOOD, 0); b.push(new THREE.Matrix4().makeTranslation(0, F.fy + gy, gz).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)));
+    b.cyl(0, -0.07, 0, GR, 0.14, 24, { bottom: true }); b.cyl(0, -0.4, 0, 0.16, 0.5, 10, { bottom: true });
+    for (let k = 0; k < 18; k++) { const a = (k / 18) * TAU; b.push(new THREE.Matrix4().makeRotationY(a).setPosition(Math.cos(a) * (GR + 0.07), 0, -Math.sin(a) * (GR + 0.07))); b.box(0, 0, 0, 0.14, 0.1, 0.09); b.pop(); }
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * TAU; b.beam(0, 0, 0, Math.cos(a) * GR * 0.92, 0, -Math.sin(a) * GR * 0.92, 0.07); }
+    b.pop();
+    const sx = 0, sz = gz + 1.05; // the upright shaft, and the stones round it on their hurst
+    rp(b, '#6b4d33', CLS.WOOD, 0); b.cyl(sx, F.fy, sz, 0.1, F.ceil - F.fy, 8, { top: false });
+    rp(b, '#5e4630', CLS.WOOD, 0); b.cyl(sx, F.fy + gy + GR + 0.02, sz, 0.36, 0.12, 12);
+    rp(b, '#8c6440', CLS.WOOD, PAT.PLANK_V); b.boxY(sx, F.fy, sz + 0.25, 2.0, 0.92, 1.4);
+    rp(b, '#b6ada0', CLS.BUILD, 0); b.cyl(sx, F.fy + 0.92, sz + 0.25, 0.62, 0.16, 18); b.cyl(sx, F.fy + 1.08, sz + 0.25, 0.6, 0.16, 18);
+    rp(b, '#9a6d45', CLS.WOOD, PAT.PLANK_V); b.cyl(sx, F.fy + 0.92, sz + 0.25, 0.7, 0.38, 18, { top: false, inner: true });
+    rp(b, '#9a6d45', CLS.WOOD, 0); b.cyl(sx + 0.05, F.fy + 1.55, sz + 0.25, 0.1, 0.5, 4, { rTop: 0.42, top: false, inner: true });
+    for (const s2 of [-1, 1]) b.boxY(sx + s2 * 0.5, F.fy + 0.92, sz + 0.25, 0.08, 1.15, 0.08);
+    rp(b, '#c9b48c', CLS.BUILD, 0); b.boxY(sx + 0.55, F.fy + 0.92, sz + 0.95, 0.22, 0.32, 0.12); // the spout
+    F.cols.push([sx, sz + 0.25, 2.0, 1.4, 0, F.fy + 1.6]); F.cols.push([0, gz, 2 * GR + 0.2, 0.5, 0, F.fy + gy + GR]);
+    // sacks of flour by the spout, more along the side wall, a scale, the hoist rope
+    fSacks(b, F, sx + 1.35, sz + 1.1, Math.PI, rng); fSacks(b, F, far * (ih - 0.35), id - 1.4, far > 0 ? -Math.PI / 2 : Math.PI / 2, rng);
+    fPlace(b, F, -far * (ih - 0.5), -id + 1.0, 0, () => { rp(b, '#3e3a36', CLS.BUILD, 0); b.boxY(0, 0, 0, 0.5, 0.1, 0.5); b.boxY(0, 0.1, -0.2, 0.06, 1.0, 0.06); b.boxY(0, 1.1, -0.05, 0.4, 0.04, 0.3); rp(b, '#8a6a3c', CLS.BUILD, 0); b.cyl(0, 0.1, 0.05, 0.18, 0.06, 12); });
+    rp(b, '#c9b48c', CLS.WOOD, 0); b.rod(far * 0.8, F.fy + 0.6, 0.4, far * 0.8, F.ceil, 0.4, 0.015, 4); b.blob(far * 0.8, F.fy + 0.45, 0.4, 0.22, 0.3, 0.2, 1, 0.12, 9);
+    fLamp(b, F, far * 0.5, -0.2, 0.9);
+    return;
+  }
+  if (kind === 'work') {
+    fWorkbench(b, F, far * (ih - 1.0) * 0.4, -id + 0.4, 0, rng);
+    fSacks(b, F, -far * (ih - 0.8), -id + 0.35, 0, rng);
+    if (W > 4) fCrates(b, F, far * (ih - 0.3), id - 1.4, far > 0 ? -Math.PI / 2 : Math.PI / 2, rng);
+    fBarrel(b, F, -far * (ih - 0.4), 0.3);
+    fLamp(b, F, 0, 0, 0.8);
+    return;
+  }
+  if (kind === 'school') {
+    const rows = Math.max(1, Math.floor((D - 2.4) / 1.1)), cols = Math.max(1, Math.floor((W - 1.0) / 1.3));
+    const step = cols > 1 ? (W - 1.8) / (cols - 1) : 0;
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const x = cols > 1 ? -ih + 0.9 + i * step : 0, z = id - 1.9 - j * 1.1; if (Math.abs(x - dx) < 0.9 && z > id - 2.2) continue; fDesk(b, F, x, z, 0, rng); fChair(b, F, x, z + 0.55, Math.PI, wood); }
+    fTable(b, F, 0, -id + 0.9, 0, 1.4, 0.7, wood); fChair(b, F, 0.1, -id + 0.35, 0, wood);
+    fShelf(b, F, far * (ih - 0.2), -id + 1.6, far > 0 ? -Math.PI / 2 : Math.PI / 2, rng, 1.2, 1.8, wood);
+    fStove(b, F, -far * (ih - 0.42), -id + 0.42, 0);
+    fLamp(b, F, 0, 0); return;
+  }
+  // a home: the bed in the far back corner, the stove in the near back corner, a table in the middle with its chairs
+  const narrow = W < 3.4;
+  if (narrow) fBed(b, F, far * (ih - 0.5), -id + 1.05, far > 0 ? -Math.PI / 2 : Math.PI / 2, wood, cloth);
+  else fBed(b, F, far * (ih - 1.05), -id + 0.5, 0, wood, cloth);
+  fStove(b, F, -far * (ih - 0.42), -id + 0.42, 0);
+  const tx = narrow ? -far * 0.15 : far * Math.min(ih - 1.6, ih * 0.25), tz = narrow ? 0.4 : 0.15 + (D > 4.2 ? 0.2 : 0);
+  fRug(b, F, tx, tz, 0, Math.min(2.4, W - 1.2), Math.min(1.7, D - 1.8), rng.pick(CLOTH), rng.pick(CLOTH));
+  fTable(b, F, tx, tz, 0, narrow ? 0.9 : 1.2, 0.75, wood);
+  fChair(b, F, tx - (narrow ? 0.2 : 0.3), tz - 0.62, 0, wood); fChair(b, F, tx + (narrow ? 0.2 : 0.3), tz + 0.62, Math.PI, wood);
+  if (!narrow) fChair(b, F, tx + far * 0.85, tz, far > 0 ? -Math.PI / 2 : Math.PI / 2, wood);
+  // along the far side wall, near the front: a dresser, or a dresser of plates in a bigger room
+  if (D > 3.3) { const z = id - 1.0; if (W > 4.2 && D > 3.9) fCupboard(b, F, far * (ih - 0.27), z - 0.3, far > 0 ? -Math.PI / 2 : Math.PI / 2, rng); else fDresser(b, F, far * (ih - 0.25), z, far > 0 ? -Math.PI / 2 : Math.PI / 2, rng, wood); }
+  if (W > 4.6 && D > 3.8) fShelf(b, F, -far * (ih - 0.2), 0.2, far > 0 ? Math.PI / 2 : -Math.PI / 2, rng, 1.0, 1.7, wood);
+  fLamp(b, F, tx, tz);
+}
+// a kitchen counter along a wall: cupboards under a worktop, a sink, a shelf of jars over it
+function fCounter(b, F, x, z, ry, rng, w = 2.2) {
+  fPlace(b, F, x, z, ry, () => {
+    rp(b, rng.pick(['#a5835e', '#8c6440', '#b8936a', '#7c9cb8', '#86a06c']), CLS.WOOD, 0); b.boxY(0, 0.08, 0, w, 0.8, 0.56);
+    rp(b, '#5e4630', CLS.WOOD, 0); b.boxY(0, 0, 0.02, w - 0.04, 0.08, 0.5); b.noLines(); for (let k = 1; k < Math.round(w / 0.55); k++) b.box(-w / 2 + k * (w / Math.round(w / 0.55)), 0.48, 0.282, 0.01, 0.74, 0.005);
+    rp(b, '#d9cfb8', CLS.BUILD, 0); b.boxY(0, 0.88, 0, w + 0.04, 0.05, 0.6);
+    rp(b, '#9aa3a0', CLS.BUILD, 0); b.boxY(w * 0.25, 0.86, 0.02, 0.5, 0.06, 0.38); rp(b, '#3e3a36', CLS.BUILD, 0); b.rod(w * 0.25, 0.93, -0.22, w * 0.25, 1.15, -0.22, 0.015, 5); b.rod(w * 0.25, 1.15, -0.22, w * 0.25, 1.15, -0.08, 0.012, 4);
+    rp(b, '#8c6440', CLS.WOOD, 0); b.boxY(0, 1.55, -0.2, w * 0.9, 0.035, 0.22);
+    for (let k = 0; k < 6; k++) { rp(b, rng.pick(['#b85c3c', '#d6a548', '#86a06c', '#e9e1cf', '#9c5d43', '#7c9cb8']), CLS.BUILD, 0); b.noLines(); b.cyl(-w * 0.4 + k * w * 0.16, 1.585, -0.2, 0.05, rng.range(0.12, 0.2), 8); }
+    rp(b, '#3e3a36', CLS.BUILD, 0); b.cyl(-w * 0.25, 0.93, 0.05, 0.13, 0.12, 10); b.cyl(-w * 0.05, 0.93, 0.08, 0.1, 0.16, 10, { rTop: 0.08 });
+  });
+  fBlock(F, x, z, w + 0.04, 0.6, ry, 0.95);
+}
+function fPlant(b, F, x, z, rng) {
+  rp(b, rng.pick(['#b8654a', '#c27a55', '#a9583e']), CLS.BUILD, 0); b.cyl(x, F.fy, z, 0.2, 0.36, 10, { rTop: 0.25 });
+  rp(b, rng.pick(['#6f8c45', '#7d9a4c', '#5f7d43']), CLS.BUILD, 0); b.noLines(); b.blob(x, F.fy + 0.72, z, 0.38, 0.42, 0.38, 1, 0.35, Math.floor(x * 7 + z * 3) & 63);
+  F.cols.push([x, z, 0.5, 0.5, 0, F.fy + 1.0]);
+}
+// a round room centred at (cx, cz) with inner radius ri and its door at angle da: pieces stand against the wall,
+// a table on a rug in the middle (or beside the stairwell, opts.hole). a piece w wide against the curve stands in
+// from the wall so its corners clear it
+function furnishRound(b, F, rng, cx, cz, ri, da, kind = 'home', opts = {}) {
+  const wood = rng.pick(ROOM_WOOD), cloth = rng.pick(CLOTH); const taken = [[da, 0.62 / ri + 0.35]];
+  const hole = opts.hole;
+  const free = (a, hw) => taken.every(([q, w]) => Math.abs(wrapAngle(a - q)) > w + hw);
+  const against = (a0, w, depth, fn) => {
+    const hw = Math.asin(Math.min(0.95, (w / 2 + 0.1) / ri));
+    for (let k = 0; k < 11; k++) { const a = a0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.16; if (!free(a, hw)) continue;
+      const back = Math.sqrt(Math.max(0, ri * ri - (w / 2) ** 2)) - 0.04; const r = back - depth / 2;
+      if (hole && Math.hypot(cx + Math.cos(a) * r - hole.x, cz + Math.sin(a) * r - hole.z) < hole.r + depth / 2 + w / 2 * 0.7 + 0.5) continue;
+      taken.push([a, hw]); fn(cx + Math.cos(a) * r, cz + Math.sin(a) * r, Math.atan2(-Math.cos(a), -Math.sin(a))); return true; }
+    return false;
+  };
+  if (kind === 'work') {
+    against(da + Math.PI, 1.8, 0.7, (x, z, ry) => fWorkbench(b, F, x, z, ry, rng));
+    against(da + 1.7, 1.4, 0.55, (x, z, ry) => fSacks(b, F, x, z, ry, rng));
+    against(da - 1.7, 1.2, 0.5, (x, z, ry) => fCrates(b, F, x, z, ry, rng));
+    fLamp(b, F, cx, cz, 0.9); return;
+  }
+  if (kind === 'upper') {
+    // up the stair: where they sleep and read
+    against(da + Math.PI + 0.4, 2.0, 1.0, (x, z, ry) => fBed(b, F, x, z, ry, wood, cloth));
+    if (ri > 4.4) against(da + Math.PI - 1.3, 2.0, 1.0, (x, z, ry) => fBed(b, F, x, z, ry, wood, rng.pick(CLOTH)));
+    against(da + 1.6, 1.2, 0.6, (x, z, ry) => { fDesk(b, F, x, z, ry, rng); fChair(b, F, x + Math.sin(ry) * 0.55, z + Math.cos(ry) * 0.55, ry + Math.PI, wood); });
+    against(da - 1.4, 1.2, 0.36, (x, z, ry) => fShelf(b, F, x, z, ry, rng, 1.2, Math.min(1.9, F.ceil - F.fy - 0.4), wood));
+    against(da - 2.3, 1.06, 0.5, (x, z, ry) => fDresser(b, F, x, z, ry, rng, wood));
+    if (ri > 3.9) against(da + 2.5, 0.76, 0.76, (x, z, ry) => fArmchair(b, F, x, z, ry, rng.pick(CLOTH)));
+    against(da - 0.75, 0.5, 0.5, (x, z) => fPlant(b, F, x, z, rng));
+    if (!hole) { fRug(b, F, cx, cz, rng.range(0, TAU), Math.min(2.4, ri * 0.7), Math.min(1.7, ri * 0.5), rng.pick(CLOTH), rng.pick(CLOTH)); fLamp(b, F, cx, cz); }
+    else { const a = da + Math.PI - 0.4, rr = (hole.r + ri) / 2; fLamp(b, F, cx + Math.cos(a) * rr, cz + Math.sin(a) * rr); }
+    return;
+  }
+  // a home: the kitchen along one side, the bed across from the door, books, a table
+  against(da + 1.8, 0.7, 0.6, (x, z, ry) => fStove(b, F, x, z, ry));
+  against(da + 2.45, 2.2, 0.6, (x, z, ry) => fCounter(b, F, x, z, ry, rng, ri > 4.5 ? 2.2 : 1.6));
+  against(da + Math.PI + 0.5, 2.0, 1.0, (x, z, ry) => fBed(b, F, x, z, ry, wood, cloth));
+  against(da - 1.7, 1.2, 0.36, (x, z, ry) => fShelf(b, F, x, z, ry, rng, 1.2, Math.min(1.9, F.ceil - F.fy - 0.4), wood));
+  if (ri > 3.6) against(da + Math.PI - 0.95, 1.36, 0.54, (x, z, ry) => fCupboard(b, F, x, z, ry, rng));
+  if (ri > 4.4) against(da - 2.6, 1.06, 0.5, (x, z, ry) => fDresser(b, F, x, z, ry, rng, wood));
+  if (ri > 4.8) against(da - 0.95, 0.76, 0.76, (x, z, ry) => fArmchair(b, F, x, z, ry, rng.pick(CLOTH)));
+  against(da + 0.85, 0.5, 0.5, (x, z) => fPlant(b, F, x, z, rng));
+  if (ri < 2.8) { fLamp(b, F, cx, cz); return; } // a small room: no space for a table in the middle
+  // the table: in the middle, or out beside the stairwell where the floor is clear
+  let tx = cx - Math.cos(da) * ri * 0.12, tz = cz - Math.sin(da) * ri * 0.12;
+  if (hole) {
+    let best = null;
+    for (let k = 0; k < 24; k++) { const a = (k / 24) * TAU; const rr = (hole.r + 1.2 + ri - 1.4) / 2; const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
+      const dh = Math.hypot(px - hole.x, pz - hole.z) - hole.r, dw = ri - Math.hypot(px - cx, pz - cz); const dd = Math.abs(wrapAngle(a - da));
+      const sc = Math.min(dh - 1.3, dw - 1.3) + (dd > 0.9 ? 0.3 : -1); if (!best || sc > best.sc) best = { px, pz, sc }; }
+    if (!best || best.sc < 0) { fLamp(b, F, cx - Math.cos(da) * ri * 0.5, cz - Math.sin(da) * ri * 0.5); return; }
+    tx = best.px; tz = best.pz;
+  }
+  const ry = Math.atan2(tx - cx, tz - cz);
+  fRug(b, F, tx, tz, ry, Math.min(2.6, ri * 0.75), Math.min(1.9, ri * 0.55), rng.pick(CLOTH), rng.pick(CLOTH));
+  fTable(b, F, tx, tz, ry, 1.2, 0.75, wood);
+  for (const s of [-1, 1]) { const qx = tx + Math.sin(ry) * s * 0.62, qz = tz + Math.cos(ry) * s * 0.62; fChair(b, F, qx, qz, s > 0 ? ry + Math.PI : ry, wood); }
+  fLamp(b, F, tx, tz);
+}
+// the room's furniture, as solid colliders in the world (fr maps the room's frame to the world: [x, z, ry])
+function roomColliders(F, fr = (x, z) => [x, z, 0]) {
+  for (const [x, z, sx, sz, ry, y1] of F.cols) { const [wx, wz, wr] = fr(x, z); colBox(wx, wz, sx, sz, ry + wr, F.fy - 0.1, y1, false); }
+}
+
+// an open door: a leaf hinged at (hx, hz) in the room's frame, swung in against the room's side at angle ry
+function openLeaf(b, hx, hz, fy, ry, w = 1.0, h = 2.05, color = '#7a5a3c') {
+  b.pushTR(hx, fy, hz, ry); rp(b, color, CLS.WOOD, PAT.PLANK_V); b.boxY(w / 2, 0.01, 0, w - 0.04, h - 0.03, 0.05);
+  rp(b, '#2b2a28', CLS.BUILD, 0); b.boxY(w - 0.12, 1.0, 0.04, 0.05, 0.04, 0.05); b.pop();
+}
+// steps from the ground up to a door or a porch at height y: from local (lx, lz) outward along +z of the frame
+function entrySteps(b, fx, fz, frot, lx, lz, y, w = 1.3) {
+  const [tx, tz] = toWorld(fx, fz, frot, lx, lz); let [ox, oz] = toWorld(fx, fz, frot, lx, lz + 1);
+  const g = heightAt(ox, oz); const rise = y - g; if (rise < 0.18) return;
+  const n = Math.ceil(rise / 0.17), run = n * 0.3; [ox, oz] = toWorld(fx, fz, frot, lx, lz + run);
+  stairFlight(b, ox, oz, Math.min(heightAt(ox, oz), y - 0.05), tx, tz, y, w, { solid: true, color: 'stone', rail: false, base: 1, cheeks: rise > 1.1 });
+}
+
+// a floor of a drum: a thick round wall with a doorway cut through it at angle da, plastered inside with the same
+// windows as out, boards underfoot, a ceiling, the open door, and a home (or a workshop) in it. opts.hole: the stairwell
+// of a spiral stair (in this floor's ceiling, or, with opts.arrive, in its floor, railed round)
+function spiralTurn(rise) { return rise * 1.71; }
+function drumRoom(b, cx, cz, y, r, h, da, color, pat, opts = {}) {
+  const kind = opts.kind || 'home', hole = opts.hole;
+  const frng = new RNG(hashStr('drum' + cx.toFixed(1) + ',' + cz.toFixed(1) + ',' + y.toFixed(1)));
+  const t = 0.3, ri = r - t, dh = 2.2; const go = 0.6 / r, gi = 0.6 / ri;
+  const P = (a, rr, yy) => [cx + Math.cos(a) * rr, yy, cz + Math.sin(a) * rr];
+  b.part(cc(color), CLS.BUILD, pat); b.cyl(cx, y, cz, r, h, 32, { top: false, a0: da + go, arc: TAU - 2 * go, v0: 0.3 });
+  b.part(cc(color), CLS.BUILD, 0); b.cyl(cx, y + dh, cz, r, h - dh, 3, { top: false, a0: da - go, arc: 2 * go, lines: false });
+  const win = pat === PAT.WINDOWS; const inC = win ? frng.pick(PLASTER) : frng.pick(['#c4a07a', '#cfae86', '#d8c3a0']);
+  rp(b, inC, CLS.BUILD, win ? 21 : (pat === PAT.PLANK_V ? PAT.PLANK_V : 0));
+  b.cyl(cx, y, cz, ri, h, 32, { top: false, inner: true, a0: da + gi, arc: TAU - 2 * gi, uR: r, v0: 0.3, lines: false });
+  rp(b, inC, CLS.BUILD, 0); b.cyl(cx, y + dh, cz, ri, h - dh, 3, { top: false, inner: true, a0: da - gi, arc: 2 * gi, lines: false });
+  // the reveals of the doorway and its head
+  for (const s of [-1, 1]) { const o = P(da + s * go, r, y), i2 = P(da + s * gi, ri, y);
+    const nx = -Math.cos(da + s * Math.PI / 2), nz = -Math.sin(da + s * Math.PI / 2);
+    const v = [b.v(o[0], y, o[2], nx, 0, nz, 0, y), b.v(i2[0], y, i2[2], nx, 0, nz, t, y), b.v(i2[0], y + dh, i2[2], nx, 0, nz, t, y + dh), b.v(o[0], y + dh, o[2], nx, 0, nz, 0, y + dh)]; b.quad(v[0], v[1], v[2], v[3]); }
+  { const q = [P(da - go, r, y + dh), P(da + go, r, y + dh), P(da + gi, ri, y + dh), P(da - gi, ri, y + dh)].map((p) => b.v(p[0], p[1], p[2], 0, -1, 0, p[0], p[2])); b.quad(q[0], q[1], q[2], q[3]); }
+  // a frame round the doorway outside
+  b.part(cc('woodDark'), CLS.WOOD, 0);
+  b.pushTR(cx + Math.cos(da) * (r + 0.02), y, cz + Math.sin(da) * (r + 0.02), Math.atan2(Math.cos(da), Math.sin(da)));
+  b.boxY(0, dh, 0, 1.44, 0.13, 0.07); for (const s of [-1, 1]) b.boxY(s * 0.66, 0, 0, 0.12, dh, 0.07);
+  b.pop();
+  // floor (round the stairwell, if it comes up through this one), ceiling (with the stairwell through it), skirting
+  rp(b, frng.pick(FLOOR_WOOD), CLS.WOOD, PAT.PLANK_V);
+  if (hole && opts.arrive) b.ring(cx, y + 0.008, cz, hole.r, ri, 0.008, 32); else b.cyl(cx, y, cz, ri, 0.008, 32, { lines: false });
+  rp(b, frng.pick(['#e7dcc4', '#ddd0b4', '#d8c7a6']), CLS.BUILD, 0);
+  if (hole && !opts.arrive) {
+    b.push(new THREE.Matrix4().makeTranslation(cx, y + h - 0.035, cz).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)));
+    const pts = []; for (let k = 0; k < 36; k++) { const a = (k / 36) * TAU; pts.push([Math.cos(a) * ri, -Math.sin(a) * ri]); }
+    b.noLines(); b.slab(pts.reverse(), 0.01, [[hole.x - cx, -(hole.z - cz), hole.r]]); b.pop();
+    rp(b, '#d8c7a6', CLS.BUILD, 0); b.cyl(hole.x, y + h - 0.04, hole.z, hole.r, 0.36, 24, { top: false, inner: true, lines: false });
+  } else b.cyl(cx, y + h - 0.04, cz, ri, 0.01, 32, { top: false, bottom: true, lines: false });
+  rp(b, frng.pick(['#7a5a3c', '#6b4d33']), CLS.WOOD, 0); b.cyl(cx, y, cz, ri - 0.012, 0.11, 32, { top: false, inner: true, a0: da + gi + 0.02, arc: TAU - 2 * gi - 0.04, lines: false });
+  // the door, swung in against the wall
+  { const hp = P(da + gi, ri, y); const ta = da + gi + 1.95; openLeaf(b, hp[0] - Math.cos(da) * 0.03, hp[2] - Math.sin(da) * 0.03, y, Math.atan2(-Math.sin(ta), Math.cos(ta)), 1.1, dh, frng.pick(['#7a5a3c', '#5e6f73', '#8a4b33'])); }
+  // the stairwell's rail, open where the stair comes up
+  if (hole && opts.arrive) {
+    const aIn = opts.arriveAng; const rr = hole.r + 0.06; const pts = [];
+    rp(b, '#5e4630', CLS.WOOD, 0);
+    const n = 28; for (let k = 0; k <= n; k++) { const a = aIn + 0.62 + (k / n) * (TAU - 1.24); pts.push([hole.x + Math.cos(a) * rr, y, hole.z + Math.sin(a) * rr]); }
+    b.railing(pts, 0.95, 0.9, false); colPoly(pts, y, y + 1.05);
+  }
+  const F = { fy: y, ceil: y + h - 0.04, cols: [] };
+  furnishRound(b, F, frng, cx, cz, ri, da, kind, { hole });
+  roomColliders(F);
+  // the wall, as short straight pieces, open at the door
+  { const n = 36; for (let k = 0; k < n; k++) { const a0 = (k / n) * TAU, a1 = ((k + 1) / n) * TAU; if (Math.abs(wrapAngle((a0 + a1) / 2 - da)) < go + TAU / n * 0.5) continue; const rc = r - t / 2; colSeg(cx + Math.cos(a0) * rc, cz + Math.sin(a0) * rc, cx + Math.cos(a1) * rc, cz + Math.sin(a1) * rc, y - 0.2, y + h + 0.3); } }
+  ROOMS.push({ kind: opts.arrive ? 'drum-upper' : 'drum', x: cx, z: cz, fy: y, out: [cx + Math.cos(da) * (r + 1.3), cz + Math.sin(da) * (r + 1.3)], inYaw: Math.atan2(Math.cos(da), Math.sin(da)), r });
+}
+// a spiral stair round a newel at (sx, sz), from y0 up to y1, its first step at angle a0, turning anticlockwise
+function spiralStair(b, sx, sz, y0, y1, a0, rOut = 1.15, wood = '#9a6d45') {
+  STAIRS.push({ x: sx, z: sz, y0, y1, a0, turn: spiralTurn(y1 - y0) });
+  const rise = y1 - y0, turn = spiralTurn(rise), n = Math.max(8, Math.ceil(rise / 0.2)); const dA = turn / n, dH = rise / n, rIn = 0.14;
+  const P = (a, r) => [sx + Math.cos(a) * r, sz + Math.sin(a) * r];
+  rp(b, '#7a5a3c', CLS.WOOD, 0); b.cyl(sx, y0, sz, rIn, rise + 1.0, 10, { lines: false });
+  for (let k = 0; k < n; k++) {
+    const a = a0 + k * dA, top = y0 + (k + 1) * dH;
+    rp(b, wood, CLS.WOOD, PAT.PLANK_H); b.prism([P(a, rIn), P(a, rOut), P(a + dA * 1.04, rOut), P(a + dA * 1.04, rIn)], top - 0.07, top);
+    // the walking line, as ramps riding the nosings (overlapping a little, so no seam opens between them)
+    const rm = 0.66, ex = 0.12, ax = P(a - ex, rm), bx = P(a + dA + ex, rm); colRamp(ax[0], ax[1], top - dH - ex * dH / dA, bx[0], bx[1], top + ex * dH / dA, 1.02); colSurf('wood');
+    if (k >= 2) { const s0 = P(a, rOut + 0.02), s1 = P(a + dA, rOut + 0.02); colSeg(s0[0], s0[1], s1[0], s1[1], top - 0.35, top + 1.0); }
+  }
+  // the handrail on its balusters, all the way up the outside
+  rp(b, '#5e4630', CLS.WOOD, 0); let prev = null;
+  for (let k = 1; k <= n; k++) {
+    const a = a0 + (k - 0.5) * dA, top = y0 + k * dH; const q = P(a, rOut - 0.05);
+    if (k % 2 === 0) b.rod(q[0], top, q[1], q[0], top + 0.9, q[1], 0.015, 4);
+    if (prev) b.rod(prev[0], prev[1] + 0.9, prev[2], q[0], top + 0.9, q[1], 0.025, 5);
+    prev = [q[0], top, q[1]];
+  }
+  colCyl(sx, sz, rIn + 0.08, y0, y1 + 1.0, false);
+  return a0 + turn;
+}
+
+
+// the walls of a rectangular room in the current frame: w across (x), d deep (z) about z = zc, h high from y = base,
+// the doorway in the +z wall at x = door.x; holes: more openings [face, s0, y0, s1, y1] ('front' faces +z, s along x).
+// outside painted as before, inside plastered (or boarded), a floor, a ceiling, skirting. returns the inner half-sizes
+function rectShell(b, o) {
+  const { w, d, h, base } = o; const zc = o.zc || 0, t = o.t || 0.18, hw = w / 2, hd = d / 2, ih = hw - t, id = hd - t;
+  const dr = o.door || { x: 0, w: 1.0, h: 2.05 }; const v0 = o.v0 !== undefined ? o.v0 : 0.3;
+  const uvF = (X, Y) => [X + hw, v0 + Y - base], uvB = (X, Y) => [hw - X, v0 + Y - base], uvR = (Z, Y) => [hd - (Z - zc), v0 + Y - base], uvL = (Z, Y) => [(Z - zc) + hd, v0 + Y - base];
+  const extra = (face, s0) => (o.holes || []).filter((q) => q[0] === face).map(([, a0, y0, a1, y1]) => [a0 + s0, y0 - base, a1 + s0, y1 - base]);
+  const fh = [[dr.x - dr.w / 2 + hw, 0, dr.x + dr.w / 2 + hw, dr.h], ...extra('front', hw)];
+  b.part(o.outColor, o.outCls || CLS.BUILD, o.outPat || 0);
+  wallFace(b, -hw, zc + hd, hw, zc + hd, base, base + h, 0, 1, fh, (X, Y) => uvF(X, Y));
+  wallFace(b, hw, zc - hd, -hw, zc - hd, base, base + h, 0, -1, extra('back', 0).map(([a, y0, c, y1]) => [hw - c, y0, hw - a, y1]), (X, Y) => uvB(X, Y));
+  wallFace(b, hw, zc + hd, hw, zc - hd, base, base + h, 1, 0, [], (X, Y, Z) => uvR(Z, Y));
+  wallFace(b, -hw, zc - hd, -hw, zc + hd, base, base + h, -1, 0, [], (X, Y, Z) => uvL(Z, Y));
+  const inC = o.inColor || hex(PLASTER[0]);
+  rp(b, inC, CLS.BUILD, o.inPat || 0);
+  const ifh = [[dr.x - dr.w / 2 + ih, 0, dr.x + dr.w / 2 + ih, dr.h], ...extra('front', ih)];
+  wallFace(b, -ih, zc + id, ih, zc + id, base, base + h, 0, -1, ifh, (X, Y) => uvF(X, Y), false);
+  wallFace(b, ih, zc - id, -ih, zc - id, base, base + h, 0, 1, extra('back', 0).map(([a, y0, c, y1]) => [ih - c + (hw - ih), y0, ih - a + (hw - ih), y1]), (X, Y) => uvB(X, Y), false);
+  wallFace(b, ih, zc + id, ih, zc - id, base, base + h, -1, 0, [], (X, Y, Z) => uvR(Z, Y), false);
+  wallFace(b, -ih, zc - id, -ih, zc + id, base, base + h, 1, 0, [], (X, Y, Z) => uvL(Z, Y), false);
+  // reveals round every opening in the front wall
+  rp(b, inC, CLS.BUILD, 0);
+  for (const [s0, y0, s1, y1] of fh) { const x0 = s0 - hw, x1 = s1 - hw;
+    for (const xx of [x0, x1]) wallFace(b, xx, zc + id, xx, zc + hd, base + y0, base + y1, xx === x0 ? 1 : -1, 0, [], null, false);
+    flatQuad(b, x0, zc + id, x1, zc + hd, base + y1, -1); if (y0 > 0.01) flatQuad(b, x0, zc + id, x1, zc + hd, base + y0, 1); }
+  rp(b, o.floor || hex(FLOOR_WOOD[0]), CLS.WOOD, PAT.PLANK_V); flatQuad(b, -ih, zc - id, ih, zc + id, base + 0.006, 1);
+  if (o.ceil !== false) { rp(b, o.ceilColor || hex('#ddd0b4'), CLS.BUILD, PAT.PLANK_V); flatQuad(b, -ih, zc - id, ih, zc + id, base + h - 0.22, -1); }
+  rp(b, hex('#6b4d33'), CLS.WOOD, 0);
+  b.boxY(0, base, zc - id + 0.012, 2 * ih, 0.11, 0.024); for (const sx of [-1, 1]) b.boxY(sx * (ih - 0.012), base, zc, 0.024, 0.11, 2 * id);
+  { const l1 = dr.x - dr.w / 2, r0 = dr.x + dr.w / 2; b.boxY((-ih + l1) / 2, base, zc + id - 0.012, l1 + ih, 0.11, 0.024); b.boxY((r0 + ih) / 2, base, zc + id - 0.012, ih - r0, 0.11, 0.024); }
+  return { ih, id, t };
+}
+// the walls of such a room as colliders, in the world: the frame is at (x, z) turned by rot
+function rectShellCols(x, z, rot, o) {
+  const { w, d, h, base } = o; const zc = o.zc || 0, t = o.t || 0.18, hw = w / 2, hd = d / 2; const dr = o.door || { x: 0, w: 1.0 };
+  const wall = (lx, lz, sx, sz) => { const [cx, cz] = toWorld(x, z, rot, lx, lz); colBox(cx, cz, sx, sz, rot, base - 0.1, base + h + 0.6, false); };
+  wall(0, zc - hd + t / 2, w, t); wall(-hw + t / 2, zc, t, d); wall(hw - t / 2, zc, t, d);
+  const l1 = dr.x - dr.w / 2, r0 = dr.x + dr.w / 2; wall((-hw + l1) / 2, zc + hd - t / 2, l1 + hw, t); wall((r0 + hw) / 2, zc + hd - t / 2, hw - r0, t);
+}
 
 // ==== 08_monuments.js ====
 // ---------------------------------------------------------------------------
@@ -6791,7 +7647,7 @@ function bindInput() {
 // ---------------------------------------------------------------------------
 // 11 - procedural sound: wind, water, birds, chimes, turbines, footsteps
 // ---------------------------------------------------------------------------
-const AUDIO = { ctx: null, on: false, vol: 0.8, nextBird: 0, nextChime: 0, nextCricket: 0, beds: {} };
+const AUDIO = { ctx: null, on: false, vol: 0.8, nextBird: 0, nextChime: 0, nextCricket: 0, nextLap: 0, beds: {} };
 function noiseBuffer(ctx, seconds, kind = 'pink') {
   const n = Math.floor(ctx.sampleRate * seconds); const buf = ctx.createBuffer(1, n, ctx.sampleRate); const d = buf.getChannelData(0);
   let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, br = 0;
@@ -6818,12 +7674,14 @@ function audioInit() {
   };
   AUDIO.beds.wind = bed(AUDIO.brown, 'lowpass', 380, 0.6, 0.0);
   AUDIO.beds.leaves = bed(AUDIO.pink, 'bandpass', 2400, 0.5, 0.0);
-  AUDIO.beds.water = bed(AUDIO.pink, 'bandpass', 900, 0.4, 0.0);
+  AUDIO.beds.water = bed(AUDIO.pink, 'bandpass', 900, 0.4, 0.0); // the river, running
+  AUDIO.beds.lake = bed(AUDIO.pink, 'lowpass', 420, 0.5, 0.0); // the lake: a faint hush under its laps
   AUDIO.beds.hum = bed(AUDIO.brown, 'bandpass', 140, 2.5, 0.0);
   AUDIO.on = true;
   stepsInit(ctx);
   musicInit();
 }
+const LAKE_HUSH = 0.012;
 function audioVolume(v) { AUDIO.vol = v; if (AUDIO.master) AUDIO.master.gain.setTargetAtTime(v, AUDIO.ctx.currentTime, 0.1); }
 function env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
 function chirp(pan, vol, kind) {
@@ -6851,6 +7709,31 @@ function chime(pan, vol) {
       env(g, st, 0.004, vol * amp, 2.6 / mult); o.connect(g); g.connect(p || AUDIO.master); o.start(st); o.stop(st + 3);
     }
   }
+}
+// a wavelet coming up the lake shore and drawing back: a soft swash that ends in a small slap, then a quieter
+// backwash with a few drips in it. the lake doesn't run like the river, so this is all it does
+function lap(vol, ctx = AUDIO.ctx, dest = AUDIO.master, buf = AUDIO.pink, t0) {
+  const t = t0 !== undefined ? t0 : ctx.currentTime + 0.03;
+  const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (p) { p.pan.value = Math.random() * 1.2 - 0.6; p.connect(dest); }
+  const out = p || dest;
+  const noise = (st, type, f0, f1, f2, q, rise, fall, peak) => {
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const flt = ctx.createBiquadFilter(); flt.type = type; flt.Q.value = q;
+    flt.frequency.setValueAtTime(f0, st); flt.frequency.linearRampToValueAtTime(f1, st + rise); flt.frequency.linearRampToValueAtTime(f2, st + rise + fall);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(peak, st + rise); g.gain.exponentialRampToValueAtTime(0.0001, st + rise + fall);
+    src.connect(flt); flt.connect(g); g.connect(out); src.start(st, Math.random() * 3); src.stop(st + rise + fall + 0.1);
+  };
+  const drip = (st, f0, a) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f0, st); o.frequency.exponentialRampToValueAtTime(f0 * 1.8, st + 0.03);
+    g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(a, st + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.04);
+    o.connect(g); g.connect(out); o.start(st); o.stop(st + 0.07);
+  };
+  const k = vol * (0.6 + Math.random() * 0.8), rise = 0.28 + Math.random() * 0.22, f = 520 + Math.random() * 200;
+  noise(t, 'lowpass', f * 0.55, f, f * 0.5, 0.6, rise, 0.55 + Math.random() * 0.35, 0.09 * k);
+  noise(t + rise * 0.92, 'bandpass', 1300 + Math.random() * 600, 1100, 700, 1.1, 0.012, 0.11, 0.034 * k);
+  const back = t + rise + 0.35 + Math.random() * 0.25;
+  noise(back, 'lowpass', 300, 380, 220, 0.6, 0.3, 0.8, 0.03 * k);
+  for (let i = 0, nd = Math.floor(Math.random() * 4); i < nd; i++) drip(back + 0.1 + Math.random() * 0.7, 700 + Math.random() * 700, 0.006 * k * (0.5 + Math.random()));
 }
 function cricket(pan, vol) {
   const ctx = AUDIO.ctx; const t = ctx.currentTime + 0.02;
@@ -7006,10 +7889,13 @@ function audioUpdate(dt, pos, tod) {
   AUDIO.beds.wind.g.gain.setTargetAtTime((0.05 + 0.16 * exposure) * gust, now, 0.5);
   AUDIO.beds.wind.flt.frequency.setTargetAtTime(260 + 260 * gust + 200 * exposure, now, 0.5);
   AUDIO.beds.leaves.g.gain.setTargetAtTime(0.018 + 0.05 * forest * gust, now, 0.6);
-  // water: distance to river or lake shore
-  const q = riverQuery(pos.x, pos.z); let wd = Math.max(0, q.d - q.hw);
-  const le = lakeE(pos.x, pos.z); if (le < 1.6) wd = Math.min(wd, Math.max(0, (le - 1) * 400));
-  AUDIO.beds.water.g.gain.setTargetAtTime(0.16 * Math.exp(-wd / 28) + (PLAYER.wading ? 0.05 : 0), now, 0.4);
+  // water: the river runs, and is heard well back from its banks; the lake only laps at its shore
+  const q = riverQuery(pos.x, pos.z); const rd = Math.max(0, q.d - q.hw);
+  const le = lakeE(pos.x, pos.z); const ld = le < 1.6 ? Math.max(0, (le - 1) * 400) : 1e9; const inLake = PLAYER.wading && ld < rd;
+  AUDIO.beds.water.g.gain.setTargetAtTime(0.16 * Math.exp(-rd / 28) + (PLAYER.wading && !inLake ? 0.05 : 0), now, 0.4);
+  const shore = Math.exp(-ld / 15);
+  AUDIO.beds.lake.g.gain.setTargetAtTime(LAKE_HUSH * shore + (inLake ? LAKE_HUSH * 0.6 : 0), now, 0.8);
+  if (shore > 0.04 && now > AUDIO.nextLap) { AUDIO.nextLap = now + 1.7 + Math.random() * 2.4; lap(shore); }
   // turbine hum near Vane / Ferrow
   let hum = 0; if (BUILT.rotors) for (const r of BUILT.rotors) { const d = dist2(pos.x, pos.z, r.x, r.z); if (d < 160) hum = Math.max(hum, 1 - d / 160); }
   AUDIO.beds.hum.g.gain.setTargetAtTime(0.09 * hum * (0.7 + 0.3 * Math.sin(now * 5.2)), now, 0.2);
@@ -8620,14 +9506,27 @@ function storySpool() {
   const ry = Math.atan2(mx - sp.x, mz - sp.z); const W = 7, D = 5; const g = groundStats(sp.x, sp.z, 5); const base = g.max + 0.35;
   b.pushTR(sp.x, 0, sp.z, ry);
   b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.boxY(0, g.min - 1.2, 0.9, W + 0.3, base - g.min + 1.2, D + 2.2);
-  b.part(cc('cream'), CLS.BUILD, PAT.PLANK_H); b.boxY(0, base, -0.2, W, 3.1, D - 0.4, { noBottom: true });
+  // the schoolroom: walls you can come in through, desks in rows, the teacher's table at the back
+  const shell = { w: W, d: D - 0.4, zc: -0.2, h: 3.1, base, door: { x: 0.6, w: 1.0, h: 2.15 }, holes: [['front', 1.8, base + 1.0, 3.0, base + 2.2]],
+    outColor: cc('cream'), outPat: PAT.PLANK_H, inColor: hex('#ece4d2'), floor: hex('#a37a50'), ceilColor: hex('#d9c9a6') };
+  const sh = rectShell(b, shell);
+  { const srng = new RNG(4711); const F = { fy: base, ceil: base + 3.1 - 0.22, cols: [] };
+    b.push(new THREE.Matrix4().makeTranslation(0, 0, shell.zc)); furnishRect(b, F, srng, sh.ih, sh.id, 0.6, 'school'); b.pop();
+    roomColliders(F, (lx, lz) => [...toWorld(sp.x, sp.z, ry, lx, lz + shell.zc), ry]);
+    openLeaf(b, 0.6 - 0.5 + 0.03, shell.zc + sh.id - 0.03, base, 1.72, 1.0, 2.15, '#6f9e98');
+    // a map of the valley on the back wall, and the alphabet over the teacher's table
+    b.part(hex('#5e4630'), CLS.WOOD, 0); b.boxY(-1.6, base + 1.0, shell.zc - sh.id + 0.02, 1.5, 1.1, 0.03);
+    b.part(hex('#e6dcc2'), CLS.BUILD, 0); b.noLines(); b.boxY(-1.6, base + 1.05, shell.zc - sh.id + 0.04, 1.4, 1.0, 0.01);
+    b.part(hex('#9fb58e'), CLS.BUILD, 0); b.noLines(); b.blob(-1.7, base + 1.55, shell.zc - sh.id + 0.05, 0.45, 0.3, 0.004, 0, 0.3, 3);
+    b.part(hex('#7c9cb8'), CLS.BUILD, 0); b.noLines(); b.boxY(-1.45, base + 1.15, shell.zc - sh.id + 0.052, 0.06, 0.8, 0.004);
+    b.part(hex('#3a3128'), CLS.BUILD, 0); b.noLines(); for (let k = 0; k < 9; k++) b.box(-0.2 + k * 0.32, base + 2.6, shell.zc - sh.id + 0.03, 0.2, 0.2, 0.01); }
   b.part(cc('roofRed'), CLS.BUILD, PAT.CORR); b.push(new THREE.Matrix4().makeRotationY(Math.PI / 2)); b.gable(-0.6, base + 3.1, 0, D + 2.6, W + 0.8, 1.9, { ends: true }); b.pop();
   // porch posts and boards
   b.part(cc('wood'), CLS.WOOD, PAT.PLANK_V); b.boxY(0, base - 0.12, D / 2 + 0.75, W, 0.12, 1.9);
   b.part(cc('woodDark'), CLS.WOOD, 0); for (const sx of [-W / 2 + 0.2, -1.3, 1.3, W / 2 - 0.2]) b.boxY(sx, base, D / 2 + 1.55, 0.15, 3.1, 0.15);
   // door, windows
-  b.part(cc('teal'), CLS.BUILD, PAT.PLANK_V); b.boxY(0.6, base, D / 2 - 0.39, 1.0, 2.15, 0.06);
-  b.part(cc('glass'), CLS.BUILD, PAT.GLAZE); b.boxY(2.4, base + 1.0, D / 2 - 0.39, 1.2, 1.2, 0.05);
+  b.part(hex('#dfe9ea'), CLS.BUILD, 19); b.boxY(2.4, base + 1.0, D / 2 - 0.42, 1.2, 1.2, 0.04);
+  b.part(cc('woodDark'), CLS.WOOD, 0); b.boxY(2.4, base + 1.58, D / 2 - 0.39, 1.2, 0.05, 0.06); b.boxY(2.4, base + 1.0, D / 2 - 0.39, 0.05, 1.2, 0.06);
   // chalkboard on the front wall, left of the door
   b.part(cc('woodDark'), CLS.WOOD, 0); b.boxY(-1.75, base + 0.95, D / 2 - 0.37, 1.9, 1.2, 0.05);
   b.part(SLATE, CLS.BUILD, 0); b.noLines(); b.boxY(-1.75, base + 1.0, D / 2 - 0.34, 1.78, 1.08, 0.02);
@@ -8647,8 +9546,13 @@ function storySpool() {
     pb.part(hex('#d8cdb2'), CLS.WOOD, 0); pb.rod(0, -0.35, 0.02, 0.05, -2.6, 0.12, 0.012, 3);
   }, { pos: [bwx, base + 3.32, bwz], ry });
   colCyl(bwx, bwz, 0.55, base - 1, base + 3.5, false);
-  colBox(sp.x, sp.z, W, D, ry, base - 1, base + 3.3, false);
+  rectShellCols(sp.x, sp.z, ry, shell);
+  { const [qx, qz] = toWorld(sp.x, sp.z, ry, 0, shell.zc); colBox(qx, qz, W, D - 0.4, ry, base - 0.6, base, true, false); colSurf('wood'); }
+  ROOMS.push({ kind: 'school', x: sp.x, z: sp.z, fy: base, out: toWorld(sp.x, sp.z, ry, 0.6, D / 2 + 2.2), inYaw: ry });
   { const [qx, qz] = toWorld(sp.x, sp.z, ry, 0, D / 2 + 0.75); colBox(qx, qz, W, 1.9, ry, base - 0.6, base, true, false); }
+  // the stone base it stands on is solid, with steps up to the porch where the ground falls away in front
+  { const [qx, qz] = toWorld(sp.x, sp.z, ry, 0, 0.9); colBox(qx, qz, W + 0.3, D + 2.2, ry, g.min - 1.2, base, true, true); }
+  entrySteps(b, sp.x, sp.z, ry, 0.6, D / 2 + 2.0, base, 1.6);
   for (const sx of [-W / 2 + 0.2, -1.3, 1.3, W / 2 - 0.2]) { const [qx, qz] = toWorld(sp.x, sp.z, ry, sx, D / 2 + 1.55); colCyl(qx, qz, 0.12, base - 1, base + 3.1, false); }
   TREE_BLOCK.push([sp.x, sp.z, 7.5]); yard(...toWorld(sp.x, sp.z, ry, 0, D / 2 + 3.4), 2.4); lane(...toWorld(sp.x, sp.z, ry, 0, D / 2 + 3.4), mx, mz, 1.1, 1.5, 77);
   const at = (lx, ly, lz) => { const [wx, wz] = toWorld(sp.x, sp.z, ry, lx, lz); return { x: wx, y: base + ly, z: wz }; };
@@ -8881,7 +9785,6 @@ function storyVane() {
   const side = Math.sin(H.rot) * (T.x - H.x) + Math.cos(H.rot) * (T.z - H.z) > 0 ? 1 : -1;
   const fz = side * (H.d / 2 + 0.02); const fy = H.floor;
   b.pushTR(H.x, 0, H.z, H.rot);
-  b.part(hex('#6f7a74'), CLS.BUILD, PAT.PANEL); b.boxY(-2.5, fy, fz, 1.6, 2.3, 0.08);
   b.part(cc('woodDark'), CLS.WOOD, 0); b.boxY(0.6, fy, fz + side * 0.32, 2.2, 0.06, 0.55);
   for (const sx of [-0.45, 1.65]) b.boxY(sx, fy, fz + side * 0.32, 0.06, 1.65, 0.55);
   for (const yy of [0.6, 1.2]) b.boxY(0.6, fy + yy, fz + side * 0.32, 2.2, 0.05, 0.55);
@@ -8908,7 +9811,7 @@ function storyFerrow() {
   const T = TOWN('ferrow'); const b = SB.b;
   let sp = null; for (let k = 0; k < 24 && !sp; k++) {
     const a = (k / 24) * TAU + 0.4; const x = T.x + Math.cos(a) * 6.6, z = T.z + Math.sin(a) * 6.6;
-    let ok = true; const L = nearColliders(x, z); if (L) for (const c of L) { if (c.type === 'cyl' && dist2(x, z, c.x, c.z) < c.r + 1.8) ok = false; if (c.type === 'box' && dist2(x, z, c.x, c.z) < Math.hypot(c.hx, c.hz) + 1.5) ok = false; }
+    let ok = true; const L = nearColliders(x, z); if (L) for (const c of L) { if (c.type === 'cyl' && dist2(x, z, c.x, c.z) < c.r + 1.8) ok = false; if ((c.type === 'box' || c.type === 'ramp') && dist2(x, z, c.x, c.z) < Math.hypot(c.hx, c.hz) + 1.5) ok = false; }
     if (ok && riverQuery(x, z).d > 20) sp = { x, z, a };
   }
   if (!sp) sp = { x: T.x + 6.6, z: T.z, a: 0 };
@@ -9789,6 +10692,44 @@ window.__U = {
     placeCamera(best.cx, best.cz, Math.atan2(-(fx - best.cx), -(fz - best.cz)), Math.atan2(fy - best.cy, best.d) - 0.04, 0, best.cy); R.snapFog = true;
     return [Math.round(best.d), +best.over.toFixed(1), Math.round(fy - best.cy)];
   },
+  // walk through waypoints [[x, z], ...] from where the player stands, steering at each; where it went, every half second
+  walkTo(pts, maxSec = 60) {
+    INPUT.keys.clear(); INPUT.keys.add('KeyW'); const out = []; const dt = 1 / 30; let i = 0, n = 0;
+    for (; n * dt < maxSec && i < pts.length; n++) {
+      const [tx, tz] = pts[i]; const dx = tx - PLAYER.pos.x, dz = tz - PLAYER.pos.z;
+      if (Math.hypot(dx, dz) < 0.3) { i++; continue; }
+      PLAYER.yaw = Math.atan2(-dx, -dz); stepPlayer(dt);
+      if (n % 15 === 14) out.push([+PLAYER.pos.x.toFixed(1), +PLAYER.pos.y.toFixed(2), +PLAYER.pos.z.toFixed(1), PLAYER.surf, i]);
+    }
+    INPUT.keys.clear(); cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true);
+    return { reached: i, of: pts.length, t: +(n * dt).toFixed(1), at: [+PLAYER.pos.x.toFixed(1), +PLAYER.pos.y.toFixed(2), +PLAYER.pos.z.toFixed(1)], trace: out };
+  },
+  stairs() { return JSON.stringify(STAIRS); },
+  wraps() { return JSON.stringify({ w: WRAPS, links: WRAPS.links }); },
+  // loudness of the river at its bank and of the lake at its shore, rendered offline: [rms dB, loudest 100 ms dB, peak dB]
+  async waterLevels(secs = 12) {
+    const sr = 44100, n = sr * secs, out = {};
+    const meas = (buf) => { const d = buf.getChannelData(0), w = sr / 10; let e = 0, pk = 0, mx = 0, we = 0; for (let i = 0; i < d.length; i++) { const v = d[i] * d[i]; e += v; we += v; pk = Math.max(pk, Math.abs(d[i])); if ((i + 1) % w === 0) { mx = Math.max(mx, we / w); we = 0; } } const db = (v) => +(10 * Math.log10(v + 1e-12)).toFixed(1); return [db(e / d.length), db(mx), +(20 * Math.log10(pk + 1e-12)).toFixed(1)]; };
+    const run = async (hush, laps, river) => {
+      const c = new OfflineAudioContext(1, n, sr); const pink = noiseBuffer(c, 4, 'pink'), brown = noiseBuffer(c, 4, 'brown');
+      const loop = (buf, type, f, q, gain) => { const s = c.createBufferSource(); s.buffer = buf; s.loop = true; const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = c.createGain(); g.gain.value = gain; s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(0); };
+      if (river) loop(pink, 'bandpass', 900, 0.4, 0.16);
+      if (hush) loop(pink, 'lowpass', 420, 0.5, LAKE_HUSH); void brown;
+      if (laps) for (let t = 0.2; t < secs - 3; t += 2.9) lap(1, c, c.destination, pink, t);
+      return meas(await c.startRendering());
+    };
+    { const c = new OfflineAudioContext(1, n, sr); const brown = noiseBuffer(c, 4, 'brown'); const s2 = c.createBufferSource(); s2.buffer = brown; s2.loop = true; const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 520; fl.Q.value = 0.6; const g = c.createGain(); g.gain.value = 0.065; s2.connect(fl); fl.connect(g); g.connect(c.destination); s2.start(0); out.wind = meas(await c.startRendering()); }
+    out.river = await run(false, false, true); out.lake = await run(true, true, false); out.hush = await run(true, false, false); out.laps = await run(false, true, false);
+    return JSON.stringify(out);
+  },
+  roomInfo(i) { const r = ROOMS[i]; return r ? JSON.stringify(r) : 'none'; },
+  // every room you can walk into
+  rooms() { return ROOMS.map((r, i) => [i, r.kind, Math.round(r.x), Math.round(r.z)]); },
+  // stand in room i's doorway looking in (back: metres back from the door; inside: metres in past it)
+  room(i, back = 0, inside = 0, pitch = -0.08, turn = 0) {
+    const r = ROOMS[i]; if (!r) return 'none'; const fx = -Math.sin(r.inYaw), fz = -Math.cos(r.inYaw); const x = r.out[0] + fx * (inside - back), z = r.out[1] + fz * (inside - back);
+    return this.stand(x, z, r.inYaw + turn, pitch, r.fy + 0.6);
+  },
   // the nearest tree of a type (index into TREE_TYPES) to (x, z), at least dMin away: [x, base y, z, height, width]
   nearTree(t = 1, x = 0, z = 0, dMin = 0) {
     let best = null, bd = 1e9;
@@ -9801,6 +10742,12 @@ window.__U = {
     const out = [];
     for (const ch of FOREST.chunks) { if (Math.hypot(ch.x - o.x, ch.z - o.z) > 1800) continue; for (let t = 0; t < TREE_TYPES.length; t++) { const D = ch.types[t]; for (let k = 0; k < D.n; k++) { const q = k * 16; const ht = Math.hypot(D.mats[q + 4], D.mats[q + 5], D.mats[q + 6]); const c = new THREE.Vector3(D.mats[q + 12], D.mats[q + 13] + ht * 0.75, D.mats[q + 14]); const v = c.clone().sub(o); const s = v.dot(d); if (s < 0) continue; const m = v.sub(d.clone().multiplyScalar(s)).length(); if (m < miss) out.push([TREE_TYPES[t], Math.round(c.x), Math.round(c.y), Math.round(c.z), +ht.toFixed(1), Math.round(s), +m.toFixed(1)]); } } }
     return out.sort((a, b) => a[5] - b[5]).slice(0, 12);
+  },
+  // trees standing in the river or the lake near (x, z): [type, x, z, ground, water, river distance - half width]
+  wetTrees(x, z, R = 200) {
+    const out = [];
+    for (const ch of FOREST.chunks) { if (Math.abs(ch.x - x) > R + 200 || Math.abs(ch.z - z) > R + 200) continue; for (let t = 0; t < TREE_TYPES.length; t++) { const D = ch.types[t]; for (let k = 0; k < D.n; k++) { const o = k * 16; const tx = D.mats[o + 12], tz = D.mats[o + 14]; if (Math.hypot(tx - x, tz - z) > R) continue; const g = heightAt(tx, tz), w = waterQuick(tx, tz), q = riverQuery(tx, tz), by = D.mats[o + 13]; if ((w > g - 0.1 || q.d < q.hw + 1.5) && by < w + 0.1) out.push([TREE_TYPES[t], Math.round(tx), Math.round(tz), +g.toFixed(2), +w.toFixed(2), +(q.d - q.hw).toFixed(1), +by.toFixed(2)]); } } }
+    return out;
   },
   // trees standing well above (or below) the ground under them: [type, x, base above ground, z, height]
   treesOff(dy = 3) {
