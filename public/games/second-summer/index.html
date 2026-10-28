@@ -150,7 +150,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .plan > section:empty { display: none; }
 .plan > .goals { flex: 0 1 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
 /* when the column is crowded the happenings and the notes give way before the goals do */
-.plan > .happen { flex: 0 3 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
+.plan > .happen { flex: 0 1 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
+.plan > .sky { flex: 0 2 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
 .plan > .notes { flex: 0 5 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
 /* the quick tour: the one pine sign in the light column, hanging from the band like a tab */
 .plan > .tour { background: var(--band); color: var(--band-ink); border-top: none; padding: 13px 16px 13px; }
@@ -279,6 +280,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .happen .gift { margin-top: 7px; font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
 .happen .gift b { color: var(--ink); font-weight: 500; }
 .happen .btns { margin-top: 8px; }
+/* a letter's answer stays in view at the foot of its panel: when the column is short, only the letter above it scrolls */
+.plan > .happen.letter { display: flex; flex-direction: column; overflow: hidden; min-height: 96px; }
+.happen.letter .hscroll { flex: 0 1 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
+.happen.letter .btns { flex: none; }
 .happen.festive { background: #f3e2b8; }
 .happen.post { background: #efe6d2; }
 .notes { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px !important; background: var(--card-2); }
@@ -10059,7 +10064,11 @@ UI.init = function () {
   $('skyw').addEventListener('click', UI.onSkyClick);
   $('happen').addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-a]'); if (!b) return;
-    if (b.dataset.a === 'letterYes') { if (answerLetter(true)) { AUDIO.sfx('grow'); } else AUDIO.sfx('deny'); }
+    if (b.dataset.a === 'letterYes') {
+      const L = S.flags.letter;
+      if (answerLetter(true)) AUDIO.sfx('grow');
+      else { AUDIO.sfx('deny'); if (L) { toast(`Only ${fmt(Math.floor(S.stores[L.item] || 0))} ${ITEM_UNIT[L.item] || ITEMS[L.item].name.toLowerCase()} in store.`, 'warn'); UI.flashChips([L.item]); } }
+    }
     if (b.dataset.a === 'letterNo') { answerLetter(false); AUDIO.sfx('tick'); }
     if (b.dataset.a === 'find') { if (!chooseFind(b.dataset.v)) AUDIO.sfx('deny'); }
     UI.happenSig = ''; UI.renderHappen();
@@ -10069,7 +10078,10 @@ UI.init = function () {
   $('alerts').addEventListener('click', (ev) => { const a = ev.target.closest('.note'); if (a) UI.alertClick(a.dataset.k, a.dataset.item, +a.dataset.tier); });
   const ins = $('inspect');
   ins.addEventListener('pointerdown', () => { UI.pressInInspect = true; });
-  window.addEventListener('pointerup', () => { setTimeout(() => { UI.pressInInspect = false; }, 0); });
+  // while a finger or button is down on the plan or the card, their panels are not redrawn under it, or the click would be lost
+  $('leftcol').addEventListener('pointerdown', () => { UI.pressInPlan = true; });
+  const release = () => { setTimeout(() => { UI.pressInInspect = false; UI.pressInPlan = false; }, 0); };
+  window.addEventListener('pointerup', release); window.addEventListener('pointercancel', release); window.addEventListener('blur', release);
   ins.addEventListener('click', UI.onInspectClick);
   $('goals').addEventListener('click', (ev) => {
     if (ev.target.closest('.collapse')) { $('leftcol').classList.toggle('mini'); UI.renderGoals(true); UI.layout(); return; }
@@ -10294,11 +10306,11 @@ UI.update = function () {
   if ($('crestDate').textContent !== dl) $('crestDate').textContent = dl;
   drawClock();
   if ($('townName').textContent !== S.name) $('townName').textContent = S.name;
-  UI.renderStudy(); UI.renderSky(); UI.renderHappen(); UI.renderAlerts();
-  UI.renderGoals(); UI.refreshPalette();
+  if (!UI.pressInPlan) { UI.renderStudy(); UI.renderSky(); UI.renderHappen(); UI.renderAlerts(); UI.renderGoals(); }
+  UI.refreshPalette();
   UI.layout();
   // the column may have filled up since the goals were drawn: fold the finished ones away if they no longer fit
-  { const gb = $('goals'); if (gb && !UI.doneFold && !UI.doneOpen && gb.scrollHeight > gb.clientHeight + 2 && (S.goalsDone[S.chapter] || []).some(Boolean)) UI.renderGoals(true); }
+  { const gb = $('goals'); if (gb && !UI.pressInPlan && !UI.doneFold && !UI.doneOpen && gb.scrollHeight > gb.clientHeight + 2 && (S.goalsDone[S.chapter] || []).some(Boolean)) UI.renderGoals(true); }
   if (INPUT.selected || INPUT.selTile >= 0) UI.renderInspect(true);
   if (UI.tipSource) {
     if (UI.tipSource.startsWith('chip:')) UI.chipTip(UI.tipSource.slice(5));
@@ -10450,13 +10462,13 @@ UI.renderHappen = function () {
     h = `<div class="r1">${iconImg('b_skyship')}<span class="nm">The Sky Ship is back from ${VOYAGES[sv.place].place}</span></div><p class="hp">Choose one thing to keep.</p><div class="finds">${(sv.offer || []).map((id) => `<button data-a="find" data-v="${id}"><b>${FINDS[id].name}</b><span>${FINDS[id].desc}</span></button>`).join('')}</div>`;
     cls = 'post';
   } else if (L) {
-    const T = LETTERS[L.i], unit = ITEM_UNIT[L.item] || ITEMS[L.item].name.toLowerCase(); const can = (S.stores[L.item] || 0) >= L.n;
-    const sig = 'L' + L.i + L.item + L.n + can; if (sig === UI.happenSig) return; UI.happenSig = sig;
+    const T = LETTERS[L.i], unit = ITEM_UNIT[L.item] || ITEMS[L.item].name.toLowerCase();
+    const sig = 'L' + L.i + L.item + L.n; if (sig === UI.happenSig) return; UI.happenSig = sig;
     const gift = L.gift ? KEEPSAKES[L.gift] : null;
-    h = `<div class="r1">${iconImg('paper')}<span class="nm">A letter from ${T.from}</span></div><div class="letter">${escapeHtml(letterText(L))}</div>`;
+    h = `<div class="hscroll"><div class="r1">${iconImg('paper')}<span class="nm">A letter from ${T.from}</span></div><div class="letter">${escapeHtml(letterText(L))}</div>`;
     if (gift) h += `<div class="gift">In return, <b>${lower(gift.name)}</b>. ${gift.desc}</div>`;
-    h += `<div class="btns"><button class="btn primary" data-a="letterYes" ${can ? '' : 'disabled'}>Send ${L.n} ${unit}</button><button class="btn" data-a="letterNo">Not this time</button></div>`;
-    cls = 'post';
+    h += `</div><div class="btns"><button class="btn primary" data-a="letterYes">Send ${L.n} ${unit}</button><button class="btn" data-a="letterNo">Not this time</button></div>`;
+    cls = 'post letter';
   } else if (S.season <= 1 && !SETTINGS.golden && S.flags.fairDay !== S.day && fairsOpen()) {
     const st = fairState(); const b = st.basket;
     const sig = 'F' + S.season + Object.keys(b).map((k) => k + b[k] + ((S.stores[k] || 0) >= b[k] ? 'y' : 'n')).join(); if (sig === UI.happenSig) return; UI.happenSig = sig;
