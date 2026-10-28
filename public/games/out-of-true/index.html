@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Out of True</title>
 <meta name="description" content="Walk a watercolor valley of brutalist monuments and solarpunk towns, and work out what happened on Survey Night.">
 <meta name="theme-color" content="#f2ecdd">
@@ -29,18 +29,18 @@
 /* layout: a full-bleed ink-and-wash view with paper sheets laid over it (title block, map, sketchbook) */
 :root {
   --paper: #f2ecdd; --paper-deep: #e8dfca; --paper-edge: #d9ccb0;
-  --ink: #2a241c; --sepia: #6c5a45; --faint: #9a8a72;
+  --ink: #2a241c; --sepia: #6c5a45; --faint: #6a5f4f;
   --pencil: #a9472f; --wash-green: #8a9c60; --wash-blue: #7b9eb5;
   --hand: 'Architects Daughter', 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
   --text: 'Spectral', Georgia, 'Times New Roman', serif;
   --data: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
-  --s1: 12px; --s2: 14px; --s3: 16px; --s4: 20px; --s5: 28px; --s6: 44px; --s7: 64px;
+  --ts: 1; --s0: calc(10px * var(--ts)); --s01: calc(11px * var(--ts)); --s1: calc(12px * var(--ts)); --s15: calc(13px * var(--ts)); --s2: calc(14px * var(--ts)); --s25: calc(15px * var(--ts)); --s3: calc(16px * var(--ts)); --s4: calc(20px * var(--ts)); --s5: calc(28px * var(--ts)); --s6: calc(44px * var(--ts)); --s7: 64px;
   color-scheme: light;
 }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; background: var(--paper); color: var(--ink); overflow: hidden; overscroll-behavior: none; }
-body { font: var(--s3)/1.5 var(--text); -webkit-font-smoothing: antialiased; touch-action: none; user-select: none; -webkit-user-select: none; }
-#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--paper); cursor: crosshair; }
+body { font: var(--s3)/1.5 var(--text); -webkit-font-smoothing: antialiased; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--paper); cursor: crosshair; touch-action: none; }
 #notes { position: fixed; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px dashed var(--pencil); outline-offset: 3px; }
@@ -74,10 +74,10 @@ button { font: inherit; color: inherit; }
 #title .lede { margin: 10px 0 0; font: italic var(--s4)/1.35 var(--text); color: var(--sepia); max-width: 34ch; }
 #title .cell { padding: 10px 14px; border-bottom: 1px solid var(--sepia); min-width: 0; }
 #title .cell + .cell { border-left: 1px solid var(--sepia); }
-#title .lab { display: block; font: 500 10px/1.2 var(--data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+#title .lab { display: block; font: 500 var(--s0)/1.2 var(--data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
 #title .actions { grid-column: 1 / -1; padding: 14px 24px 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 #title .keys { grid-column: 1 / -1; padding: 0 24px 18px; color: var(--sepia); font-size: var(--s2); }
-kbd { font: 500 11px var(--data); border: 1px solid var(--sepia); border-bottom-width: 2px; padding: 0 5px; margin: 0 2px; background: var(--paper); }
+kbd { font: 500 var(--s01) var(--data); border: 1px solid var(--sepia); border-bottom-width: 2px; padding: 0 5px; margin: 0 2px; background: var(--paper); }
 
 /* hud */
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
@@ -101,13 +101,13 @@ kbd { font: 500 11px var(--data); border: 1px solid var(--sepia); border-bottom-
 /* the mystery: prompts, satchel, radio, sight, reader, lock, ending */
 #prompt { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); font: var(--s3) var(--hand); color: var(--ink); background: rgba(242, 236, 221, 0.86); padding: 3px 12px; border-bottom: 1.5px solid var(--ink); opacity: 0; transition: opacity 0.2s; white-space: nowrap; letter-spacing: 0.03em; }
 #prompt.show { opacity: 1; }
-#prompt b { font: 500 11px var(--data); border: 1px solid var(--sepia); border-bottom-width: 2px; padding: 0 5px; margin-right: 8px; position: relative; top: -2px; }
+#prompt b { font: 500 var(--s01) var(--data); border: 1px solid var(--sepia); border-bottom-width: 2px; padding: 0 5px; margin-right: 8px; position: relative; top: -2px; }
 #satchel { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(58px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; justify-items: end; }
 #satchel .it { font: var(--s2) var(--hand); background: rgba(242, 236, 221, 0.84); border-right: 2px solid var(--pencil); padding: 2px 10px; }
-#satchel .lab { font: 500 10px var(--data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+#satchel .lab { font: 500 var(--s0) var(--data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
 #radio { position: absolute; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(8px); width: min(660px, calc(100% - 40px)); opacity: 0; transition: opacity 0.35s, transform 0.35s; pointer-events: none; }
 #radio.show { opacity: 1; transform: translateX(-50%); }
-#radio .lab { display: flex; gap: 10px; align-items: baseline; font: 500 11px var(--data); letter-spacing: 0.16em; text-transform: uppercase; color: var(--pencil); margin-bottom: 3px; }
+#radio .lab { display: flex; gap: 10px; align-items: baseline; font: 500 var(--s01) var(--data); letter-spacing: 0.16em; text-transform: uppercase; color: var(--pencil); margin-bottom: 3px; }
 #radio .lab .hiss { color: var(--faint); letter-spacing: 0.05em; text-transform: none; }
 #radio .line { font: italic var(--s4)/1.4 var(--text); color: var(--ink); background: rgba(242, 236, 221, 0.9); padding: 8px 14px 10px; border-left: 2px solid var(--pencil); text-wrap: pretty; }
 #radio.nell .lab { color: var(--sepia); } #radio.nell .line { border-left-color: var(--sepia); font-style: normal; font-family: var(--hand); font-size: var(--s3); }
@@ -116,23 +116,23 @@ kbd { font: 500 11px var(--data); border: 1px solid var(--sepia); border-bottom-
 #radio .choices { display: grid; gap: 5px; margin-top: 8px; pointer-events: auto; }
 #radio .choices button { text-align: left; font: var(--s3) var(--hand); background: rgba(242, 236, 221, 0.92); border: 1px solid var(--sepia); padding: 5px 12px; cursor: pointer; color: var(--ink); }
 #radio .choices button:hover, #radio .choices button:focus-visible { background: var(--ink); color: var(--paper); }
-#radio .choices button b { font: 500 11px var(--data); margin-right: 9px; color: var(--pencil); }
+#radio .choices button b { font: 500 var(--s01) var(--data); margin-right: 9px; color: var(--pencil); }
 #radio .choices button:hover b { color: var(--paper); }
 #radio .choices .t { display: block; height: 2px; background: var(--sepia); transform-origin: left; opacity: 0.5; }
 #sight { position: fixed; inset: 0; z-index: 14; pointer-events: none; color: var(--ink); }
 #sight .mask { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 0, transparent min(34vh, 34vw), rgba(42, 36, 28, 0.88) calc(min(34vh, 34vw) + 2px), #1d1914 100%); }
 #sight .reticle { position: absolute; left: 50%; top: 50%; width: min(68vh, 68vw); height: min(68vh, 68vw); transform: translate(-50%, -50%); opacity: 0.85; transition: color 0.25s; }
 #sight.on .reticle { color: var(--pencil); }
-#sight .brg { position: absolute; left: 50%; top: calc(50% + min(34vh, 34vw) + 14px); transform: translateX(-50%); color: var(--paper); font-size: 13px; letter-spacing: 0.12em; }
+#sight .brg { position: absolute; left: 50%; top: calc(50% + min(34vh, 34vw) + 14px); transform: translateX(-50%); color: var(--paper); font-size: var(--s15); letter-spacing: 0.12em; }
 #sight .what { position: absolute; left: 50%; top: calc(50% - min(34vh, 34vw) - 40px); transform: translateX(-50%); color: var(--paper); font-size: var(--s4); white-space: nowrap; }
 #sight .keys { position: absolute; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); color: var(--paper-deep); font-size: var(--s3); white-space: nowrap; }
 #reader .paper { width: min(600px, 100%); max-height: 100%; overflow: auto; background: #f6f1e4; border: 1px solid var(--paper-edge); box-shadow: 0 2px 0 var(--paper-edge), 0 24px 50px -24px rgba(42, 36, 28, 0.6); padding: 26px 30px 18px; position: relative; transform: rotate(-0.6deg); }
-#reader .kind { color: var(--pencil); letter-spacing: 0.14em; text-transform: uppercase; font-size: 11px; }
+#reader .kind { color: var(--pencil); letter-spacing: 0.14em; text-transform: uppercase; font-size: var(--s01); }
 #reader h3 { margin: 4px 0 12px; font: 400 var(--s5)/1.15 var(--hand); }
 #reader .body { font: var(--s3)/1.6 var(--text); white-space: pre-wrap; color: var(--ink); }
 #reader.hand .body { font: var(--s4)/1.5 var(--hand); letter-spacing: 0.02em; }
-#reader.typed .body { font: 14px/1.6 var(--data); }
-#reader.plate .paper { background: #e7e3da; } #reader.plate .body { font: 500 15px/1.9 var(--data); letter-spacing: 0.18em; text-transform: uppercase; text-align: center; }
+#reader.typed .body { font: var(--s2)/1.6 var(--data); }
+#reader.plate .paper { background: #e7e3da; } #reader.plate .body { font: 500 var(--s25)/1.9 var(--data); letter-spacing: 0.18em; text-transform: uppercase; text-align: center; }
 #reader .by { font: italic var(--s3) var(--text); color: var(--sepia); margin-top: 10px; text-align: right; }
 #reader .foot { margin-top: 16px; color: var(--faint); font-size: var(--s2); display: flex; gap: 12px; align-items: center; }
 #reader .foot .btn { font-size: var(--s2); padding: 5px 12px; }
@@ -170,10 +170,15 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
 .set input[type=range] { width: 150px; accent-color: var(--ink); }
 .set input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--ink); }
 .set select { font: var(--s2) var(--text); background: var(--paper); border: 1px solid var(--sepia); padding: 3px 6px; color: var(--ink); }
-.sec { font: 500 10px var(--data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); border-bottom: 1px solid var(--paper-edge); padding-bottom: 4px; }
+.sec { font: 500 var(--s0) var(--data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); border-bottom: 1px solid var(--paper-edge); padding-bottom: 4px; }
 .tally { font: var(--s2) var(--data); color: var(--sepia); }
+.tally.warn { color: var(--pencil); }
+#pause .log { max-height: calc(170px * var(--ts)); overflow: auto; border: 1px solid var(--paper-edge); background: #f6f1e4; padding: 8px 12px; font-size: var(--s2); user-select: text; -webkit-user-select: text; }
+#pause .log p { margin: 0 0 5px; line-height: 1.4; } #pause .log p b { font: 500 var(--s01) var(--data); color: var(--pencil); letter-spacing: 0.06em; margin-right: 8px; text-transform: uppercase; }
+#pause .log p.none { color: var(--faint); font-style: italic; }
+#loading .fail { display: grid; gap: 10px; justify-items: start; } #loading .fail p { margin: 0; font-size: var(--s2); color: var(--sepia); }
 
-#map .sheet { width: min(100%, calc((100dvh - 32px) * 1.25), 1180px); max-height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 230px; }
+#map .sheet { width: min(100%, calc((100dvh - 32px) * 1.25), 1180px); max-height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) calc(230px * var(--ts)); }
 #map .frame { position: relative; aspect-ratio: 1 / 1; max-width: 100%; border-right: 1px solid var(--sepia); overflow: hidden; cursor: grab; touch-action: none; }
 #map .frame:active { cursor: grabbing; }
 #map canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0; }
@@ -185,13 +190,16 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
 #map .scale { display: flex; align-items: flex-end; gap: 0; height: 18px; }
 #map .scale i { display: block; height: 6px; border: 1px solid var(--ink); border-top: 0; flex: 1; }
 #map .scale i:nth-child(odd) { background: var(--ink); }
+#map .zoom { position: absolute; left: 10px; top: 10px; display: grid; gap: 6px; z-index: 2; }
+#map .zoom button { width: 38px; height: 38px; border: 1.5px solid var(--ink); background: rgba(242, 236, 221, 0.92); font: 400 22px/1 var(--data); cursor: pointer; color: var(--ink); }
+#map .zoom button:hover { background: var(--paper-deep); }
 
-#book .sheet { width: min(1080px, 100%); height: min(680px, 100%); display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+#book .sheet { width: min(1080px, 100%); height: min(680px, 100%); display: grid; grid-template-columns: calc(280px * var(--ts)) minmax(0, 1fr); }
 #book .list { border-right: 1px solid var(--sepia); overflow: auto; padding: 18px 0; min-width: 0; }
 #book .list h2 { padding: 0 18px 12px; }
 #book .entry { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 0 8px; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px dotted var(--paper-edge); padding: 7px 18px; cursor: pointer; font-size: var(--s2); }
 #book .entry[aria-current="true"] { background: var(--paper-deep); }
-#book .entry .n { font: 500 11px var(--data); color: var(--pencil); padding-top: 3px; }
+#book .entry .n { font: 500 var(--s01) var(--data); color: var(--pencil); padding-top: 3px; }
 #book .entry .t { font-family: var(--hand); font-size: var(--s3); }
 #book .entry.unknown .t { color: var(--faint); }
 #book .page { padding: 24px 28px; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; min-width: 0; min-height: 0; }
@@ -205,6 +213,9 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
 
 /* touch */
 #touch { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+#touch button, #stick { touch-action: none; }
+/* while a choice is up, the walking controls step aside so they can't sit over it */
+body.choosing #stick, body.choosing #tbtns { visibility: hidden; }
 #stick { position: absolute; left: max(24px, env(safe-area-inset-left, 0px)); bottom: calc(30px + env(safe-area-inset-bottom, 0px)); width: 130px; height: 130px; border: 1.5px dashed var(--ink); border-radius: 50%; pointer-events: auto; opacity: 0.6; }
 #stick i { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border-radius: 50%; background: rgba(42, 36, 28, 0.35); }
 #tbtns { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(2, 58px); gap: 10px; pointer-events: auto; }
@@ -219,15 +230,17 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
   #book .list { border-right: 0; border-bottom: 1px solid var(--sepia); }
   #title .keys { display: none; }
 }
-@media (max-width: 720px) { #radio { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); } #satchel { top: calc(64px + env(safe-area-inset-top, 0px)); } #prompt { top: calc(50% + 20px); } #note { max-width: calc(100% - 200px); } }
+@media (max-width: 720px) { #radio { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); } body.touchui #radio { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); } #satchel { top: calc(64px + env(safe-area-inset-top, 0px)); } #prompt { top: calc(50% + 20px); } #note { max-width: calc(100% - 200px); } }
 @media (max-height: 520px) {
   #radio { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(600px, calc(100% - 200px)); }
-  #radio .line { font-size: 15px; padding: 5px 10px 6px; }
-  #radio .choices { gap: 3px; margin-top: 5px; } #radio .choices button { padding: 3px 10px; font-size: 14px; }
-  #note .ttl { font-size: 20px; } #note .txt { font-size: 14px; } #note .sub { display: none; } #note .inner { padding: 7px 10px 8px; }
+  /* on a phone held sideways the line sits between the stick and the buttons */
+  body.touchui:not([data-state="sight"]) #radio { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(600px, calc(100% - 2 * (max(24px, env(safe-area-inset-left, 0px)) + 146px))); }
+  #radio .line { font-size: var(--s25); padding: 5px 10px 6px; }
+  #radio .choices { gap: 3px; margin-top: 5px; } #radio .choices button { padding: 3px 10px; font-size: var(--s2); }
+  #note .ttl { font-size: var(--s4); } #note .txt { font-size: var(--s2); } #note .sub { display: none; } #note .inner { padding: 7px 10px 8px; }
   #note { top: calc(44px + env(safe-area-inset-top, 0px)); max-width: min(320px, calc(50% - 30px)); } #satchel { top: calc(44px + env(safe-area-inset-top, 0px)); }
 }
-@media (prefers-reduced-motion: reduce) { #note, #hint, #toast, #load-fill, #radio, #prompt { transition: none; } }
+@media (prefers-reduced-motion: reduce) { #note, #hint, #toast, #load-fill, #radio, #prompt, #fade { transition: none; } }
 </style>
 
 </head>
@@ -257,7 +270,7 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
       <button class="btn primary" id="b-begin">Begin walking</button>
       <button class="btn" id="b-title-settings">Settings</button>
     </div>
-    <div class="keys" id="t-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> hop &middot; <kbd>M</kbd> map &middot; <kbd>J</kbd> sketchbook &middot; <kbd>E</kbd> use &middot; <kbd>R</kbd> key a set &middot; <kbd>F</kbd> sketch &middot; <kbd>T</kbd> wait &middot; <kbd>Esc</kbd> pause</div>
+    <div class="keys" id="t-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn &middot; <kbd>PgUp</kbd><kbd>PgDn</kbd> look up and down &middot; <kbd>Shift</kbd> run &middot; <kbd>Space</kbd> hop &middot; <kbd>M</kbd> map &middot; <kbd>J</kbd> sketchbook &middot; <kbd>E</kbd> use &middot; <kbd>R</kbd> key a set &middot; <kbd>F</kbd> sketch &middot; <kbd>T</kbd> wait &middot; <kbd>Esc</kbd> pause</div>
   </div>
 </div>
 
@@ -335,15 +348,20 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
       <label for="s-bob">Head bob</label><input id="s-bob" type="checkbox" checked>
       <label for="s-compass">Compass</label><input id="s-compass" type="checkbox" checked>
       <label for="s-notes">Pencil notes</label><input id="s-notes" type="checkbox" checked>
+      <label for="s-text">Text size</label><select id="s-text"><option value="1">Normal</option><option value="1.2">Larger</option><option value="1.4">Largest</option></select>
+      <label for="s-wait">Choices wait for me</label><input id="s-wait" type="checkbox">
     </div>
+    <div class="sec">The radio, written down</div>
+    <div class="log" id="p-log" tabindex="0" aria-label="Everything said on the radio this session"></div>
     <div class="row"><button class="btn" id="b-home">Return to Kettle Hill</button><button class="btn" id="b-reset">Clear the sketchbook</button><button class="btn" id="b-restart">Start the story over</button></div>
     <div class="tally" id="p-confirm" hidden></div>
+    <div class="tally warn" id="p-save" hidden></div>
   </div>
 </div>
 
 <div id="map" class="overlay" hidden>
   <div class="sheet" role="dialog" aria-label="Survey map">
-    <div class="frame" id="map-frame"><canvas id="map-base"></canvas><canvas id="map-over"></canvas></div>
+    <div class="frame" id="map-frame"><canvas id="map-base"></canvas><canvas id="map-over"></canvas><div class="zoom"><button id="m-zin" aria-label="Zoom in">+</button><button id="m-zout" aria-label="Zoom out">&minus;</button></div></div>
     <div class="side">
       <h2>Survey of the Upper Vale</h2>
       <div class="legend">
@@ -353,7 +371,7 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
         <div><span style="background:#e2c48c"></span>Settlement</div>
         <div><span style="background:#2a241c;width:10px"></span>Monument</div>
       </div>
-      <div class="data" style="color:var(--sepia)">Contours every 10 m. Drag to move, scroll to zoom.</div>
+      <div class="data" style="color:var(--sepia)">Contours every 10 m. Drag to move; scroll, pinch or use + and &minus; to zoom.</div>
       <div class="where">
         <div class="scale"><i></i><i></i><i></i><i></i></div>
         <div class="data" id="m-scale">0 &middot; 250 &middot; 500 m</div>
@@ -382,12 +400,25 @@ body.quiet #note, body.quiet #satchel, body.quiet #compass, body.quiet #toast, b
   <button id="tmenu">Menu</button>
 </div>
 
+<script>
+// if the game's code never starts (its files didn't arrive), say so rather than leave the loading bar sitting there
+setTimeout(function () {
+  if (window.__ootStarted) return;
+  var m = document.getElementById('load-msg'); if (!m) return;
+  m.textContent = "The game's files didn't load. Check the connection, then reload the page.";
+  var b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Reload'; b.onclick = function () { location.reload(); };
+  var d = document.createElement('div'); d.className = 'fail'; d.appendChild(b); m.parentNode.appendChild(d);
+  var t = document.getElementById('load-track'); if (t) t.hidden = true;
+}, 25000);
+</script>
+
 <script type="module">
 import * as THREE from './three.module.min.js';
 // ==== 01_util.js ====
 // ---------------------------------------------------------------------------
 // 01 - utilities: math, seeded randomness, noise
 // ---------------------------------------------------------------------------
+window.__ootStarted = true; // the page's loading watchdog looks for this
 const TAU = Math.PI * 2;
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -6824,11 +6855,12 @@ const PHYS = { cell: 8, grid: new Map(), list: [] };
 function cellKey(i, j) { return (i + 4096) * 10007 + (j + 4096); }
 function addCollider(c) {
   PHYS.list.push(c);
-  let x0, x1, z0, z1;
+  let x0, x1, z0, z1; const M = 0.6; // more than a body's radius: a collider is filed in every cell a body touching it could stand in
   if (c.type === 'cyl') { x0 = c.x - c.r; x1 = c.x + c.r; z0 = c.z - c.r; z1 = c.z + c.r; }
   else if (c.type === 'ring') { x0 = c.x - c.rout; x1 = c.x + c.rout; z0 = c.z - c.rout; z1 = c.z + c.rout; }
   else if (c.type === 'seg') { x0 = Math.min(c.ax, c.bx) - 0.6; x1 = Math.max(c.ax, c.bx) + 0.6; z0 = Math.min(c.az, c.bz) - 0.6; z1 = Math.max(c.az, c.bz) + 0.6; }
   else { const r = Math.hypot(c.hx, c.hz); x0 = c.x - r; x1 = c.x + r; z0 = c.z - r; z1 = c.z + r; c.cr = Math.cos(c.rot); c.sr = Math.sin(c.rot); }
+  x0 -= M; x1 += M; z0 -= M; z1 += M;
   if (c.type === 'ring' && c.rout - c.rin > 30) {
     // big rings: only register along the band
     const C = PHYS.cell;
@@ -6924,8 +6956,8 @@ function stepPlayer(dt) {
   const K = INPUT.keys;
   if (K.has('KeyW') || K.has('ArrowUp')) f += 1;
   if (K.has('KeyS') || K.has('ArrowDown')) f -= 1;
-  if (K.has('KeyD') || K.has('ArrowRight')) s += 1;
-  if (K.has('KeyA') || K.has('ArrowLeft')) s -= 1;
+  if (K.has('KeyD')) s += 1;
+  if (K.has('KeyA')) s -= 1;
   f += -INPUT.stick.y; s += INPUT.stick.x;
   const mag = Math.hypot(f, s); if (mag > 1) { f /= mag; s /= mag; }
   const running = K.has('ShiftLeft') || K.has('ShiftRight') || INPUT.stick.run;
@@ -6957,8 +6989,9 @@ function stepPlayer(dt) {
   if (INPUT.jump && P.onGround && !P.wading) { P.vel.y = P.jumpV; P.onGround = false; }
   INPUT.jump = false;
   P.vel.y -= P.g * dt;
-  P.pos.y += P.vel.y * dt;
-  const sup = supportHeight(P.pos.x, P.pos.z, P.pos.y, P.stepUp, _sup);
+  const yWas = P.pos.y; P.pos.y += P.vel.y * dt;
+  // falling, anything walkable between where the feet were and where they are now catches you, however fast the fall
+  const sup = supportHeight(P.pos.x, P.pos.z, P.vel.y < 0 ? Math.max(yWas, P.pos.y) : P.pos.y, P.stepUp, _sup);
   P.wading = _sup.surf === 'water';
   if (P.pos.y <= sup) { const wasAir = !P.onGround && P.vel.y < -4; P.pos.y = sup; P.vel.y = 0; P.onGround = true; P.surf = _sup.surf; if (wasAir) footstep(P.surf === 'ground' ? groundSurface(P.pos.x, P.pos.z) : P.surf, 1, true); }
   else if (P.onGround && P.vel.y <= 0 && P.pos.y - sup < 0.65) { P.pos.y = sup; P.vel.y = 0; P.surf = _sup.surf; }
@@ -6993,9 +7026,12 @@ function edgeTick(dt) {
   if (EDGE.t > 4.2) EDGE.t = -1;
 }
 function groundSurface(x, z) { if (pathAt(x, z) > 0.45) return 'gravel'; if (maskAt(x, z, 0) > 0.5) return 'forest'; return 'grass'; }
-function applyLook() {
-  const P = PLAYER; const k = 0.0022 * INPUT.sens;
+function applyLook(dt = 0) {
+  const P = PLAYER; const k = 0.0022 * INPUT.sens; const K = INPUT.keys;
   P.yaw -= INPUT.look.dx * k; P.pitch -= INPUT.look.dy * k * (INPUT.invert ? -1 : 1);
+  // the arrow keys turn and Page Up and Page Down look up and down, for playing without a mouse
+  P.yaw += ((K.has('ArrowLeft') ? 1 : 0) - (K.has('ArrowRight') ? 1 : 0)) * dt * 1.9 * INPUT.sens;
+  P.pitch += ((K.has('PageUp') ? 1 : 0) - (K.has('PageDown') ? 1 : 0)) * dt * 1.1 * INPUT.sens;
   P.pitch = clamp(P.pitch, -1.45, 1.45);
   INPUT.look.dx = 0; INPUT.look.dy = 0;
 }
@@ -7023,20 +7059,42 @@ const SKEY = 'understory.v1';
 function sget(k, d) { try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e) { return d; } }
 function sset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 function sdel(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+// saving: progress and the story come first. if the browser is out of room, the kept pictures in the sketchbook make way
+// for them (the oldest first, places before your own sketches); if it still can't save, say so once and on the pause page
+const SAVE = { failed: false, warned: false, dropped: 0 };
+function ssave(k, v) {
+  if (sset(k, v)) { if (SAVE.failed) { SAVE.failed = false; refreshSaveNote(); } return true; }
+  const pics = [...Object.keys(UI.found).map((id) => [UI.found[id].t || 0, id, 0]), ...UI.sketches.map((s) => [s.t || 0, s.id, 1])].sort((a, b) => a[2] - b[2] || a[0] - b[0]);
+  for (const [, id] of pics) {
+    const key = SKEY + '.img.' + id; let had = false; try { had = localStorage.getItem(key) !== null; } catch (e) { break; }
+    if (!had) continue; sdel(key); SAVE.dropped++;
+    if (sset(k, v)) { showToast('The browser ran out of room, so some older pictures in the sketchbook were let go to keep your progress.', 6); return true; }
+  }
+  if (!SAVE.failed) { SAVE.failed = true; refreshSaveNote(); }
+  if (!SAVE.warned) { SAVE.warned = true; showToast("This browser isn't letting the game save. Anything you do now will be lost when the page closes.", 7); }
+  return false;
+}
+function refreshSaveNote() { const n = $('p-save'); if (n) { n.hidden = !SAVE.failed; n.textContent = "Not saving: this browser has no room left for the game, or has storage turned off. Progress from now on will be lost when the page closes."; } }
 function loadProgress() {
   const s = sget(SKEY, null);
-  if (s) { UI.found = s.found || {}; UI.settings = { ...UI.settings, ...(s.settings || {}) }; UI.trail = s.trail || []; UI.saved = s.pos || null; UI.sketchCount = s.sketchCount || 0; }
+  if (s) { UI.found = s.found || {}; UI.settings = { ...UI.settings, ...(s.settings || {}) }; UI.trail = s.trail || []; UI.saved = s.pos || null; UI.sketchCount = s.sketchCount || 0; UI.hadSettings = !!s.settings; }
   UI.sketches = (sget(SKEY + '.sk', []) || []);
 }
 function saveProgress() {
   const P = PLAYER;
-  sset(SKEY, { found: UI.found, settings: UI.settings, trail: UI.trail.slice(-1500), pos: { x: P.pos.x, y: P.pos.y, z: P.pos.z, yaw: P.yaw }, sketchCount: UI.sketchCount || 0 });
+  // where you stood is only worth keeping once you have been somewhere (not on the title's view of the house)
+  const pos = G.mode === 'play' ? { x: P.pos.x, y: P.pos.y, z: P.pos.z, yaw: P.yaw, pitch: P.pitch, tod: R.tod } : UI.saved;
+  return ssave(SKEY, { found: UI.found, settings: UI.settings, trail: UI.trail.slice(-1500), pos, sketchCount: UI.sketchCount || 0 });
 }
-function saveImage(id, data) { if (!sset(SKEY + '.img.' + id, data)) { /* quota: keep in memory only */ } }
+function saveImage(id, data) { return sset(SKEY + '.img.' + id, data); }
 function loadImage(id) { return sget(SKEY + '.img.' + id, null); }
 
 // ---- state machine --------------------------------------------------------------------
+// the sheets laid over the view, and the control each one hands the keyboard to when it opens
+const DIALOGS = { pause: 'b-resume', map: 'b-map-close', book: null, reader: 'rd-close', lock: null, title: 'b-begin' };
 function setState(s) {
+  const was = UI.state;
+  if (DIALOGS[s] !== undefined && DIALOGS[was] === undefined && document.activeElement && document.activeElement !== document.body) UI.focusBack = document.activeElement;
   UI.state = s; document.body.dataset.state = s;
   $('title').hidden = s !== 'title';
   $('hud').hidden = !(s === 'play' || s === 'sight');
@@ -7046,29 +7104,44 @@ function setState(s) {
   $('sight').hidden = s !== 'sight';
   $('reader').hidden = s !== 'reader';
   $('lock').hidden = s !== 'lock';
-  $('touch').hidden = !(UI.touch && (s === 'play' || s === 'sight'));
+  $('touch').hidden = !(UI.touch && (s === 'play' || s === 'sight')); document.body.classList.toggle('touchui', !$('touch').hidden);
   if (s !== 'play' && s !== 'sight' && document.pointerLockElement) { UI.suppressPause = true; document.exitPointerLock(); }
   if (s === 'pause') refreshPause();
   if (s === 'map') openMap();
   if (s === 'book') openBook();
   if (s === 'title') refreshTitle();
+  // keyboard focus: into a sheet when it opens, back to whatever had it when the sheets close
+  if (DIALOGS[s] !== undefined) { const id = DIALOGS[s]; const el = id ? $(id) : null; if (el && !el.hidden) { try { el.focus({ preventScroll: true }); } catch (e) { /* fine */ } } }
+  else if (DIALOGS[was] !== undefined) { const back = UI.focusBack; UI.focusBack = null; if (back && document.contains(back) && !back.closest('[hidden]')) { try { back.focus({ preventScroll: true }); } catch (e) { /* fine */ } } else if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
 }
+// pointer lock only for a mouse: never after a touch, and never in the tests
 function lockPointer() {
-  if (UI.touch || G.test) return;
+  if (G.test || UI.lastPointer === 'touch' || (UI.touch && !UI.lastPointer)) return;
   const c = $('view');
   try { const p = c.requestPointerLock && c.requestPointerLock(); if (p && p.catch) p.catch(() => showHint('Drag to look around', 4)); } catch (e) { showHint('Drag to look around', 4); }
 }
+// back to the walk from a sheet, or to the title if the walk hasn't started yet
+function resumePlay() { if (G.mode === 'play') { setState('play'); lockPointer(); } else setState('title'); }
 function beginPlay() {
   if (!G.noAudio) { audioInit(); audioVolume(UI.settings.vol); musicVolume(UI.settings.music); }
-  if (G.mode !== 'play') startPlayerAtSpawn();
+  // a walk carried over from last time starts where it was left; otherwise in the survey house
+  const resumed = G.mode !== 'play' && G.resumed;
+  if (G.mode !== 'play' && !G.resumed) startPlayerAtSpawn();
+  G.resumed = false;
   G.mode = 'play';
   setState('play'); lockPointer();
-  if (!UI.greeted && !STORY.beats.wake && !G.test) {
+  if (!UI.greeted && !STORY.beats.wake && !G.test && !resumed) {
     // the first morning: the page comes up out of white, and you sit up
     const f = $('fade'); if (f) { f.hidden = false; f.style.transitionDuration = '0s'; f.classList.add('on'); void f.offsetWidth; fadePaper(false, 3.6); }
-    PLAYER.rise = 0;
+    PLAYER.rise = UI.calm ? 1 : 0;
   }
-  if (!UI.greeted) { UI.greeted = true; showNote('', 'Kettle Hill', STORY.beats.wake ? 'The valley runs north to the lake. The stations of the survey are where you left them.' : "You don't remember coming up here.", 'E use \u00b7 R key the nearest set \u00b7 M map \u00b7 J sketchbook \u00b7 T wait'); }
+  if (!UI.greeted) {
+    UI.greeted = true;
+    const keys = UI.touch ? '' : 'E use \u00b7 R key the nearest set \u00b7 M map \u00b7 J sketchbook \u00b7 T wait';
+    if (resumed) showNote('', capFirst(nearestPlaceName(PLAYER.pos.x, PLAYER.pos.z)), 'Back where you were. The stations of the survey are as you left them.', keys);
+    else showNote('', 'Kettle Hill', STORY.beats.wake ? 'The valley runs north to the lake. The stations of the survey are where you left them.' : "You don't remember coming up here.", keys);
+  }
+  storyResume();
 }
 function showHint(text, sec = 3) { const h = $('hint'); h.textContent = text; h.classList.add('show'); UI.hintT = sec; }
 function showToast(text, sec = 2.2) { const t = $('toast'); t.textContent = text; t.classList.add('show'); UI.toastT = sec; }
@@ -7227,7 +7300,6 @@ function updateCompass(yaw) {
   const px = (heading / 15) * COMPASS_STEP + 2 * 24 * COMPASS_STEP + COMPASS_STEP / 2;
   const w = $('compass').clientWidth;
   $('compass-strip').style.transform = `translateX(${(w / 2 - px).toFixed(1)}px)`;
-  $('compass').style.display = UI.settings.compass ? '' : 'none';
 }
 // ---- discovery ------------------------------------------------------------------------------
 function checkDiscovery(dt) {
@@ -7281,8 +7353,10 @@ function afterRender() {
     if (img) {
       UI.sketchCount = (UI.sketchCount || 0) + 1; const id = 's' + UI.sketchCount; const near = nearestPlaceName(PLAYER.pos.x, PLAYER.pos.z);
       const entry = { id, t: Date.now(), near, x: Math.round(PLAYER.pos.x), z: Math.round(PLAYER.pos.z), y: Math.round(PLAYER.pos.y), tod: R.tod };
-      UI.sketches.push(entry); UI.images = UI.images || {}; UI.images[id] = img; saveImage(id, img); sset(SKEY + '.sk', UI.sketches); saveProgress();
-      showToast('Sketch ' + UI.sketchCount + ' added to the book');
+      UI.sketches.push(entry); UI.images = UI.images || {}; UI.images[id] = img;
+      const kept = saveImage(id, img); const listed = ssave(SKEY + '.sk', UI.sketches) && saveProgress();
+      showToast(!listed ? 'Sketch ' + UI.sketchCount + " is in the book for now, but the game can't save it in this browser."
+        : kept ? 'Sketch ' + UI.sketchCount + ' added to the book' : 'Sketch ' + UI.sketchCount + " is in the book, but there isn't room to keep the picture after you leave.", kept && listed ? 2.2 : 5);
     }
   }
 }
@@ -7293,7 +7367,7 @@ function nearestPlaceName(x, z) {
   return bd < (best.r || 30) * 1.2 ? best.name : `${Math.round(bd / 10) * 10} m ${dir} of ${best.name}`;
 }
 function compassWord(a) { const w = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']; return w[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8]; }
-function fmtPos(x, z, y) { return `${Math.abs(Math.round(-z))} m ${-z >= 0 ? 'N' : 'S'} \u00b7 ${Math.abs(Math.round(x))} m ${x >= 0 ? 'E' : 'W'} \u00b7 ${Math.round(y)} m up`; }
+function fmtPos(x, z, y) { return `${Math.abs(Math.round(-z))}\u00a0m\u00a0${-z >= 0 ? 'N' : 'S'} \u00b7 ${Math.abs(Math.round(x))}\u00a0m\u00a0${x >= 0 ? 'E' : 'W'} \u00b7 ${Math.round(y)}\u00a0m\u00a0up`; }
 
 // ---- title / pause ---------------------------------------------------------------------------
 function tallyText() {
@@ -7306,12 +7380,24 @@ function refreshPause() {
   const row = $('tod-row'); row.innerHTML = '';
   for (const k of TOD_ORDER) {
     const b = document.createElement('button'); b.className = 'chip'; b.textContent = TOD_PRESETS[k].label; b.setAttribute('aria-pressed', R.tod === k ? 'true' : 'false');
-    b.onclick = () => { setTimeOfDay(k); refreshPause(); }; row.appendChild(b);
+    b.onclick = () => { setTimeOfDay(k); saveProgress(); refreshPause(); }; row.appendChild(b);
   }
   const S = UI.settings;
   $('s-sens').value = S.sens; $('s-inv').checked = S.invert; $('s-fov').value = S.fov; $('s-q').value = S.quality; $('s-vol').value = S.vol; $('s-mus').value = S.music;
   $('s-frame').checked = S.frame; $('s-boil').checked = S.boil; $('s-bob').checked = S.bob; $('s-compass').checked = S.compass; $('s-notes').checked = S.notes !== false;
+  $('s-text').value = String(S.text || 1); $('s-wait').checked = !!S.wait;
   $('p-confirm').hidden = true; UI.confirmReset = false; UI.confirmRestart = false;
+  refreshSaveNote(); refreshLog();
+  // a story begun from the title's settings has nowhere to return to in the valley yet
+  $('b-home').hidden = G.mode !== 'play';
+}
+// the radio, written down: everything said and keyed this session, newest at the bottom
+function refreshLog() {
+  const L = $('p-log'); if (!L) return; L.innerHTML = '';
+  const lines = RAD.log || [];
+  if (!lines.length) { const p = document.createElement('p'); p.className = 'none'; p.textContent = 'Nothing on the sets yet.'; L.appendChild(p); return; }
+  for (const [who, text] of lines) { const p = document.createElement('p'); const b = document.createElement('b'); b.textContent = who; p.appendChild(b); p.appendChild(document.createTextNode(text)); L.appendChild(p); }
+  L.scrollTop = L.scrollHeight;
 }
 function applySettings() {
   const S = UI.settings;
@@ -7322,6 +7408,8 @@ function applySettings() {
   for (const lm of R.lineMats) lm.uniforms.uBoil.value = S.boil ? 1 : 0;
   audioVolume(S.vol); musicVolume(S.music);
   if (R.quality !== S.quality) setQuality(S.quality);
+  $('compass').style.display = S.compass ? '' : 'none';
+  document.documentElement.style.setProperty('--ts', String(S.text || 1));
 }
 function bindSettings() {
   const S = UI.settings; const save = () => { applySettings(); saveProgress(); };
@@ -7336,6 +7424,8 @@ function bindSettings() {
   $('s-bob').onchange = (e) => { S.bob = e.target.checked; save(); };
   $('s-compass').onchange = (e) => { S.compass = e.target.checked; save(); };
   $('s-notes').onchange = (e) => { S.notes = e.target.checked; save(); };
+  $('s-text').onchange = (e) => { S.text = +e.target.value; save(); };
+  $('s-wait').onchange = (e) => { S.wait = e.target.checked; save(); };
 }
 
 // ---- survey map ---------------------------------------------------------------------------------
@@ -7451,8 +7541,9 @@ function clampMap(fw) { const s = (fw / MAP.size) * MAP.zoom; const span = MAP.s
 function applyMapTransform() {
   const fw = $('map-frame').clientWidth || 600; const s = MAP.zoom;
   for (const id of ['map-base', 'map-over']) $(id).style.transform = `translate(${MAP.px}px, ${MAP.py}px) scale(${s})`;
-  const mPerPx = (2 * WH) / (fw * s); const bar = $('map-frame').clientWidth * 0.0; void bar;
-  const seg = Math.round((mPerPx * 230) / 4 / 50) * 50 || 50;
+  // a scale bar of four equal parts that fits the side panel: the longest round length that does
+  const mPerPx = (2 * WH) / (fw * s); const room = Math.max(80, ($('map').querySelector('.where').clientWidth || 190) - 4);
+  const seg = [1000, 500, 250, 200, 100, 50, 25, 10].find((v) => (v * 4) / mPerPx <= room) || 10;
   $('m-scale').textContent = `0 \u00b7 ${seg * 2} \u00b7 ${seg * 4} m`;
   document.querySelector('#map .scale').style.width = `${(seg * 4) / mPerPx}px`;
 }
@@ -7493,17 +7584,33 @@ function drawMapOverlay() {
   g.restore();
   $('m-pos').textContent = fmtPos(PLAYER.pos.x, PLAYER.pos.z, PLAYER.pos.y);
 }
+// zoom the map to z, keeping the point under (mx, my) in the frame where it is
+function mapZoomAt(z, mx, my) {
+  const fw = $('map-frame').clientWidth; const z0 = MAP.zoom, z1 = clamp(z, 1, 5);
+  const s0 = (fw / MAP.size) * z0, s1 = (fw / MAP.size) * z1;
+  const wx = (mx - MAP.px) / s0, wy = (my - MAP.py) / s0; MAP.zoom = z1; MAP.px = mx - wx * s1; MAP.py = my - wy * s1; clampMap(fw); applyMapTransform();
+}
 function bindMap() {
-  const f = $('map-frame');
-  f.addEventListener('pointerdown', (e) => { MAP.drag = { x: e.clientX, y: e.clientY, px: MAP.px, py: MAP.py }; f.setPointerCapture(e.pointerId); });
-  f.addEventListener('pointermove', (e) => { if (!MAP.drag) return; MAP.px = MAP.drag.px + e.clientX - MAP.drag.x; MAP.py = MAP.drag.py + e.clientY - MAP.drag.y; clampMap(f.clientWidth); applyMapTransform(); });
-  f.addEventListener('pointerup', () => { MAP.drag = null; });
-  f.addEventListener('wheel', (e) => {
-    e.preventDefault(); const r = f.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top;
-    const z0 = MAP.zoom; const z1 = clamp(z0 * Math.exp(-e.deltaY * 0.0015), 1, 5);
-    const s0 = (f.clientWidth / MAP.size) * z0, s1 = (f.clientWidth / MAP.size) * z1;
-    const wx = (mx - MAP.px) / s0, wy = (my - MAP.py) / s0; MAP.zoom = z1; MAP.px = mx - wx * s1; MAP.py = my - wy * s1; clampMap(f.clientWidth); applyMapTransform();
-  }, { passive: false });
+  // each finger (or the mouse) is tracked by its own id: one drags, two pinch about their midpoint
+  const f = $('map-frame'); const P = new Map(); let pinch = null;
+  const local = (e) => { const r = f.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const startDrag = () => { const p = [...P.values()][0]; MAP.drag = p ? { x: p[0], y: p[1], px: MAP.px, py: MAP.py } : null; };
+  const startPinch = () => { const [a, b] = [...P.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z: MAP.zoom, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2, px: MAP.px, py: MAP.py }; MAP.drag = null; };
+  f.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.zoom')) return; P.set(e.pointerId, local(e)); try { f.setPointerCapture(e.pointerId); } catch (err) { /* fine */ } if (P.size === 1) startDrag(); else if (P.size === 2) startPinch(); });
+  f.addEventListener('pointermove', (e) => {
+    if (!P.has(e.pointerId)) return; P.set(e.pointerId, local(e));
+    if (P.size >= 2 && pinch) {
+      const [a, b] = [...P.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      const fw = f.clientWidth; const z1 = clamp((pinch.z * d) / pinch.d, 1, 5); const s0 = (fw / MAP.size) * pinch.z, s1 = (fw / MAP.size) * z1;
+      const wx = (pinch.mx - pinch.px) / s0, wy = (pinch.my - pinch.py) / s0;
+      MAP.zoom = z1; MAP.px = mx - wx * s1; MAP.py = my - wy * s1; clampMap(fw); applyMapTransform();
+    } else if (P.size === 1 && MAP.drag) { const p = [...P.values()][0]; MAP.px = MAP.drag.px + p[0] - MAP.drag.x; MAP.py = MAP.drag.py + p[1] - MAP.drag.y; clampMap(f.clientWidth); applyMapTransform(); }
+  });
+  const end = (e) => { if (!P.delete(e.pointerId)) return; pinch = null; if (P.size === 1) startDrag(); else if (P.size >= 2) startPinch(); else MAP.drag = null; };
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) f.addEventListener(ev, end);
+  f.addEventListener('wheel', (e) => { e.preventDefault(); const [mx, my] = local(e); mapZoomAt(MAP.zoom * Math.exp(-e.deltaY * 0.0015), mx, my); }, { passive: false });
+  $('m-zin').onclick = () => { const fw = f.clientWidth; mapZoomAt(MAP.zoom * 1.4, fw / 2, fw / 2); };
+  $('m-zout').onclick = () => { const fw = f.clientWidth; mapZoomAt(MAP.zoom / 1.4, fw / 2, fw / 2); };
 }
 
 // ---- sketchbook ----------------------------------------------------------------------------------------
@@ -7519,14 +7626,23 @@ function openBook() {
   const L = $('book-list'); L.innerHTML = '';
   const entries = bookEntries();
   if (!UI.bookSel || !entries.find((e) => e.id === UI.bookSel)) { const f = entries.filter((e) => e.found && UI.found[e.id]).sort((a, b) => UI.found[b.id].t - UI.found[a.id].t)[0]; UI.bookSel = f ? f.id : entries[0].id; }
+  let selBtn = null;
   for (const e of entries) {
     const b = document.createElement('button'); b.className = 'entry' + (e.found ? '' : ' unknown'); b.setAttribute('aria-current', e.id === UI.bookSel ? 'true' : 'false');
     b.innerHTML = `<span class="n">${e.n}</span><span class="t"></span>`; b.querySelector('.t').textContent = e.found ? e.name : (e.place && e.place.type === 'town' ? 'An unvisited settlement' : 'Not yet found');
-    b.onclick = () => { if (e.doc) { UI.bookSel = e.id; openDoc(e.doc, 'book'); return; } UI.bookSel = e.id; openBook(); };
-    L.appendChild(b);
+    b.onclick = () => { UI.bookSel = e.id; if (e.doc) { openDoc(e.doc, 'book'); return; } openBook(); };
+    L.appendChild(b); if (e.id === UI.bookSel) selBtn = b;
   }
-  let e = entries.find((x) => x.id === UI.bookSel); if (e && e.doc) e = entries.find((x) => !x.doc && x.found) || entries[0];
+  const e = entries.find((x) => x.id === UI.bookSel);
   const pic = $('book-pic'), cap = $('book-cap'); pic.innerHTML = ''; cap.innerHTML = '';
+  if (e && e.doc) {
+    // a paper you have read: its name here, and Enter or a click on it in the list to read it again
+    const d = document.createElement('div'); d.className = 'empty'; d.textContent = 'A paper you have read. Press Enter, or click it in the list, to read it again.'; pic.appendChild(d);
+    const h = document.createElement('h3'); h.textContent = DOCS[e.doc].title || e.name; cap.appendChild(h);
+    const dd = document.createElement('div'); dd.className = 'data'; dd.textContent = DOCS[e.doc].label || ''; cap.appendChild(dd);
+  }
+  if (selBtn) { try { selBtn.scrollIntoView({ block: 'nearest' }); selBtn.focus({ preventScroll: true }); } catch (err) { /* fine */ } }
+  if (e && e.doc) return;
   const img = e && e.found ? ((UI.images && UI.images[e.id]) || loadImage(e.id)) : null;
   if (img) { const im = new Image(); im.src = img; im.alt = 'Sketch of ' + e.name; pic.appendChild(im); }
   else { const d = document.createElement('div'); d.className = 'empty'; d.textContent = e && e.found ? 'This page was drawn in another session and did not keep its sketch.' : 'Blank page. Find this place to draw it here.'; pic.appendChild(d); }
@@ -7545,18 +7661,21 @@ function openBook() {
 // ---- input binding ----------------------------------------------------------------------------------------
 function bindInput() {
   const c = $('view');
+  // which kind of pointer was used last decides whether a click locks the mouse, so a laptop with a touch screen
+  // can go back and forth; the touch controls stay up once a finger has been seen
+  window.addEventListener('pointerdown', (e) => { UI.lastPointer = e.pointerType || 'mouse'; }, true);
   document.addEventListener('pointerlockchange', () => {
     UI.locked = document.pointerLockElement === c;
-    if (!UI.locked && UI.state === 'play' && !UI.touch && !UI.suppressPause) setState('pause');
-    if (!UI.locked && UI.state === 'sight' && !UI.touch && !UI.suppressPause) closeSight();
+    if (!UI.locked && UI.state === 'play' && !UI.suppressPause) setState('pause');
+    if (!UI.locked && UI.state === 'sight' && !UI.suppressPause) closeSight();
     UI.suppressPause = false;
   });
   document.addEventListener('mousemove', (e) => {
     if (UI.state !== 'play' && UI.state !== 'sight') return;
     if (UI.locked || UI.dragging) { INPUT.look.dx += e.movementX || 0; INPUT.look.dy += e.movementY || 0; }
   });
-  c.addEventListener('mousedown', (e) => {
-    if ((UI.state !== 'play' && UI.state !== 'sight') || UI.touch) return;
+  c.addEventListener('pointerdown', (e) => {
+    if ((UI.state !== 'play' && UI.state !== 'sight') || e.pointerType !== 'mouse') return;
     if (!UI.locked) { UI.dragging = true; lockPointer(); }
     e.preventDefault();
   });
@@ -7567,63 +7686,69 @@ function bindInput() {
     if (e.repeat && (k === 'KeyE' || k === 'KeyR' || k === 'Enter' || k === 'Space') && UI.state !== 'play') return;
     if (RAD.choice && (UI.state === 'play' || UI.state === 'sight') && /^(Digit|Numpad)[1-4]$/.test(k)) { pickChoice(+k.slice(-1) - 1); e.preventDefault(); return; }
     if (UI.state === 'reader') { if (k === 'KeyE' || k === 'Escape' || k === 'Space' || k === 'Enter') { closeDoc(); e.preventDefault(); } return; }
-    if (UI.state === 'lock') { if (k === 'Escape') closeLock(); if (k === 'Enter') tryLock(); return; }
+    if (UI.state === 'lock') { if (k === 'Escape') closeLock(); if (k === 'Enter' && !(e.target && e.target.tagName === 'BUTTON')) tryLock(); return; }
     if (UI.state === 'sight') {
       INPUT.keys.add(k);
       if (k === 'KeyE' || k === 'Enter') { sightTake(); e.preventDefault(); }
       if (k === 'Escape') closeSight();
       if (k === 'KeyR') radioKey();
+      if (/^(Arrow|Page)/.test(k)) e.preventDefault();
       return;
     }
     if (UI.state === 'play') {
       INPUT.keys.add(k);
+      if (/^(Arrow|Page)/.test(k)) e.preventDefault();
       if (k === 'KeyE') { useInteract(); e.preventDefault(); }
       if (k === 'KeyR') radioKey();
       if (k === 'Space') { INPUT.jump = true; e.preventDefault(); }
       if (k === 'KeyM') { UI.suppressPause = true; setState('map'); }
       if (k === 'KeyJ' || k === 'Tab') { UI.suppressPause = true; setState('book'); e.preventDefault(); }
       if (k === 'KeyF') UI.manualSketch = true;
-      if (k === 'KeyT') { const i = TOD_ORDER.indexOf(R.tod); const nk = TOD_ORDER[(i + 1) % TOD_ORDER.length]; setTimeOfDay(nk); showToast(TOD_PRESETS[nk].label); }
+      if (k === 'KeyT') { const i = TOD_ORDER.indexOf(R.tod); const nk = TOD_ORDER[(i + 1) % TOD_ORDER.length]; setTimeOfDay(nk); showToast(TOD_PRESETS[nk].label); saveProgress(); }
       if (k === 'KeyG' && e.shiftKey && e.altKey) { PLAYER.fly = !PLAYER.fly; showToast(PLAYER.fly ? 'Drifting' : 'Walking'); }
       if (k === 'Escape' && !UI.locked) setState('pause');
     } else if (UI.state === 'map') {
-      if (k === 'KeyM' || k === 'Escape') { setState('play'); lockPointer(); }
+      if (k === 'KeyM' || k === 'Escape') resumePlay();
       if (k === 'KeyJ') setState('book');
     } else if (UI.state === 'book') {
-      if (k === 'KeyJ' || k === 'Escape' || k === 'Tab') { setState('play'); lockPointer(); e.preventDefault(); }
+      // Tab moves between the entries and Close; Enter or Space on an entry opens it
+      if (k === 'KeyJ' || k === 'Escape') { resumePlay(); e.preventDefault(); }
       if (k === 'KeyM') setState('map');
       if (k === 'ArrowDown' || k === 'ArrowUp') { const en = bookEntries(); const i = en.findIndex((x) => x.id === UI.bookSel); const j = clamp(i + (k === 'ArrowDown' ? 1 : -1), 0, en.length - 1); UI.bookSel = en[j].id; openBook(); e.preventDefault(); }
     } else if (UI.state === 'pause') {
-      if (k === 'Escape') { setState('play'); lockPointer(); }
+      if (k === 'Escape') resumePlay();
     } else if (UI.state === 'title') {
-      if (k === 'Enter' || k === 'Space') beginPlay();
+      if ((k === 'Enter' || k === 'Space') && !(e.target && e.target.tagName === 'BUTTON')) beginPlay();
     }
   });
   window.addEventListener('keyup', (e) => INPUT.keys.delete(e.code));
   window.addEventListener('blur', () => INPUT.keys.clear());
+  // keep where you are, the light and the story whenever the page is put away
+  const keep = () => { if (!G.ready) return; if (G.mode === 'play') saveProgress(); storySave(); };
+  window.addEventListener('pagehide', keep);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') keep(); });
   $('b-begin').onclick = beginPlay;
   $('b-title-settings').onclick = () => { setState('pause'); };
-  $('b-resume').onclick = () => { if (G.mode === 'play') { setState('play'); lockPointer(); } else setState('title'); };
+  $('b-resume').onclick = () => resumePlay();
   $('b-map').onclick = () => setState('map'); $('b-book').onclick = () => setState('book');
-  $('b-map-close').onclick = () => { setState('play'); lockPointer(); }; $('b-book-close').onclick = () => { setState('play'); lockPointer(); };
-  $('b-home').onclick = () => { startPlayerAtSpawn(); setState('play'); lockPointer(); };
+  $('b-map-close').onclick = () => resumePlay(); $('b-book-close').onclick = () => resumePlay();
+  $('b-home').onclick = () => { if (G.mode !== 'play') { G.resumed = false; beginPlay(); return; } startPlayerAtSpawn(); setState('play'); lockPointer(); };
   $('b-restart').onclick = () => {
-    if (!UI.confirmRestart) { UI.confirmRestart = true; $('p-confirm').hidden = false; $('p-confirm').textContent = 'Press again to wake in the survey house with nothing done.'; return; }
-    UI.confirmRestart = false; storyReset(); for (const k of Object.keys(STORY_HOOKS)) if (k.startsWith('_')) delete STORY_HOOKS[k];
-    if (prop('dialring')) { prop('dialring').rot.y = MONF('dial').rot; propSync(prop('dialring')); }
-    propsRefresh(); updateSatchel(); setTimeOfDay('morning'); startPlayerAtSpawn(); G.mode = 'play'; setState('play'); lockPointer();
+    if (!UI.confirmRestart) { UI.confirmRestart = true; $('p-confirm').hidden = false; $('p-confirm').textContent = 'Press again to start the story over: you wake in the survey house with nothing done. The sketchbook keeps its drawings.'; return; }
+    UI.confirmRestart = false; storyRestart(); setTimeOfDay('morning'); G.resumed = false;
+    if (G.mode !== 'play') beginPlay(); else { startPlayerAtSpawn(); setState('play'); lockPointer(); }
   };
   $('rd-close').onclick = () => closeDoc();
   $('lk-try').onclick = () => tryLock(); $('lk-close').onclick = () => closeLock();
-  $('b-end').onclick = () => { $('ending').hidden = true; document.body.classList.remove('quiet'); lockPointer(); };
+  $('b-end').onclick = () => { $('ending').hidden = true; document.body.classList.remove('quiet'); setFlag('card_seen'); lockPointer(); };
   $('b-reset').onclick = () => {
-    if (!UI.confirmReset) { UI.confirmReset = true; $('p-confirm').hidden = false; $('p-confirm').textContent = 'Press again to clear every page and your trail.'; return; }
+    if (!UI.confirmReset) { UI.confirmReset = true; $('p-confirm').hidden = false; $('p-confirm').textContent = 'Press again to clear the drawings, the places found and your trail from the book. The story stays where it is.'; return; }
     for (const id of Object.keys(UI.found)) sdel(SKEY + '.img.' + id); for (const s of UI.sketches) sdel(SKEY + '.img.' + s.id);
-    UI.found = {}; UI.sketches = []; UI.images = {}; UI.trail = []; UI.sketchCount = 0; sset(SKEY + '.sk', []); saveProgress(); refreshPause(); $('p-confirm').hidden = false; $('p-confirm').textContent = 'The sketchbook is blank again.';
+    UI.found = {}; UI.sketches = []; UI.images = {}; UI.trail = []; UI.sketchCount = 0; ssave(SKEY + '.sk', []); saveProgress(); refreshPause(); $('p-confirm').hidden = false; $('p-confirm').textContent = 'The sketchbook is blank again.';
   };
   bindSettings(); bindMap();
   // touch
-  const startTouch = () => { if (UI.touch) return; UI.touch = true; if (UI.state === 'play') $('touch').hidden = false; };
+  const startTouch = () => { if (UI.touch) return; UI.touch = true; if (UI.state === 'play' || UI.state === 'sight') { $('touch').hidden = false; document.body.classList.add('touchui'); } };
   window.addEventListener('touchstart', startTouch, { passive: true, once: true });
   if (window.matchMedia && matchMedia('(pointer: coarse)').matches) UI.touch = true;
   const stick = $('stick'), knob = stick.querySelector('i'); let sid = null, sc = null;
@@ -7632,9 +7757,10 @@ function bindInput() {
   const endStick = (e) => { if (e.pointerId !== sid) return; sid = null; INPUT.stick.x = 0; INPUT.stick.y = 0; knob.style.transform = ''; };
   stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
   let lid = null, lp = null;
-  c.addEventListener('pointerdown', (e) => { if (!UI.touch || (UI.state !== 'play' && UI.state !== 'sight') || e.pointerType === 'mouse') return; lid = e.pointerId; lp = [e.clientX, e.clientY]; });
+  c.addEventListener('pointerdown', (e) => { if ((UI.state !== 'play' && UI.state !== 'sight') || e.pointerType === 'mouse') return; lid = e.pointerId; lp = [e.clientX, e.clientY]; });
   c.addEventListener('pointermove', (e) => { if (e.pointerId !== lid) return; INPUT.look.dx += (e.clientX - lp[0]) * 1.6; INPUT.look.dy += (e.clientY - lp[1]) * 1.6; lp = [e.clientX, e.clientY]; });
-  c.addEventListener('pointerup', (e) => { if (e.pointerId === lid) lid = null; });
+  const endLook = (e) => { if (e.pointerId === lid) lid = null; };
+  c.addEventListener('pointerup', endLook); c.addEventListener('pointercancel', endLook);
   $('t-run').onclick = () => { INPUT.stick.run = !INPUT.stick.run; $('t-run').style.background = INPUT.stick.run ? 'var(--ink)' : ''; $('t-run').style.color = INPUT.stick.run ? 'var(--paper)' : ''; };
   $('t-hop').onclick = () => { INPUT.jump = true; };
   $('t-map').onclick = () => setState('map'); $('t-sketch').onclick = () => { UI.manualSketch = true; };
@@ -7919,7 +8045,7 @@ function audioUpdate(dt, pos, tod) {
 // ---------------------------------------------------------------------------
 const MUSIC = { bus: null, next: 0, vol: 0.6, armed: false };
 // D minor pentatonic from D2 up; the five stones at Station II are D3 to C4 (indices 5 to 9)
-const PENTA = [73.42, 87.31, 98.0, 110.0, 130.81, 146.83, 174.61, 196.0, 220.0, 261.63, 293.66, 349.23, 392.0, 440.0, 523.25, 587.33, 698.46, 783.99, 880.0];
+const PENTA = [73.42, 87.31, 98.0, 110.0, 130.81, 146.83, 174.61, 196.0, 220.0, 261.63, 293.66, 349.23, 392.0, 440.0, 523.25, 587.33, 698.46, 783.99, 880.0, 1046.5, 1174.66];
 // the Survey Night hymn: stone ranks (1 is the lowest) and how long each word is held
 const HYMN_RANKS = [3, 1, 4, 2, 5], HYMN_BEATS = [1, 0.5, 0.75, 0.75, 2.5];
 
@@ -8013,6 +8139,7 @@ function musicPhrase(kind, opt = {}) {
   padSwell(t0, total + 7, PAD_ROOTS[root].slice(1), kind === 'finale' ? 0.03 : kind === 'hymn' ? 0.024 : 0.016);
   let t = t0 + beat * (kind === 'finale' ? 2 : 1);
   for (const [n, d, v] of seq) {
+    if (n >= PENTA.length) console.warn('music: no note', n); // the scale must reach every note a phrase asks for
     if (n >= 0) feltNote(PENTA[clamp(n, 0, PENTA.length - 1)], t + (Math.random() - 0.5) * 0.025, v * (kind === 'finale' ? 1.1 : 1), clamp(d * beat * 2.2, 1.6, 6), pan + (Math.random() - 0.5) * 0.2);
     t += d * beat;
   }
@@ -8475,7 +8602,7 @@ const BEATS = {
     { l: 'rang' }, { o: "And Pell's school bell rang by itself an hour ago. Was that you?" }, { c: [K1('r'), K2('r')], def: 0, t: 18 }, { l: 'r' }, { jump: 'real' },
     { l: 'end' },
   ] },
-  bell: { keep: true, on: 'bell', script: [
+  bell: { keep: true, on: 'bell', due: () => flag('bell') && !flag('met'), script: [
     { pause: 5 },
     { if: () => !flag('heard'), go: 'cold' },
     { o: 'Pell just called me.' },
@@ -8544,7 +8671,7 @@ const BEATS = {
     { o: 'I was fourteen and I was very rude to the council about it.' },
     { l: 'end' },
   ] },
-  cap: { keep: true, on: 'take:cap', script: [
+  cap: { keep: true, on: 'take:cap', due: () => !inWorld('cap'), script: [
     { pause: 6 },
     { o: 'Marit at the Ring just called me.' },
     { o: "She says Nell's stone got up off the shrine and went down the steps by itself." },
@@ -8558,14 +8685,14 @@ const BEATS = {
     { o: "Put it back where it goes, if that's what you need it for. She'd have liked that better than a shelf." },
     { l: 'end' },
   ] },
-  lens: { on: 'take:lens', need: () => flag('heard'), script: [
+  lens: { on: 'take:lens', need: () => flag('heard'), due: () => held('lens'), script: [
     { pause: 8 },
     { o: 'Tobiah Venn just called from Glasshouse. His lens got up off the bench and left.' },
     { o: "He's delighted. He says it's waited eleven years for somebody to take it back to the Lantern." },
     { o: 'He would like whoever has it to know the bracket is on the inside of the slit, about head height, and that the gold hour is the only time it works.' },
     { o: "He doesn't know who you are. He just assumed." },
   ] },
-  lantern: { on: /^(lantern|doc:lantern)$/, need: () => flag('heard'), script: [
+  lantern: { on: /^(lantern|doc:lantern)$/, need: () => flag('heard'), due: () => !!STORY.docs.lantern || flag('lantern'), script: [
     { pause: 1 },
     { c: [['Key her the numbers: two, two, nothing, nine', 'n', 'kd'], LET('q')], def: 1, t: 18, p: 'Figures of light on the wall of the Lantern. Key them to her?' },
     { l: 'q' }, { go: 'end' },
@@ -8581,14 +8708,15 @@ const BEATS = {
     { o: "Nobody's opened that door in twenty years. I asked for the number for most of them." },
     { o: 'Go in, then. I would.' },
   ] },
-  pages: { keep: true, on: /^doc:pages_/, need: () => !flag('dilly') && !!STORY.docs.pages_cover && (!!STORY.docs.pages_last || !!STORY.docs.pages_dilly), script: [
+  pages: { keep: true, on: /^doc:pages_/, need: () => !flag('dilly') && !!STORY.docs.pages_cover && (!!STORY.docs.pages_last || !!STORY.docs.pages_dilly), due: () => true, script: [
     { pause: 1.5 },
     { c: [[Q('Dilly?'), 'dilly'], K1('click'), LET('quiet')], def: 2, t: 26, p: 'The name under every drawing. Say it into the set?' },
-    { l: 'quiet' }, { f: 'pages_quiet' }, { go: 'end' },
+    // letting it be is only for now: the name comes back when the pages are opened again or a set is keyed
+    { l: 'quiet' }, { f: 'pages_quiet' }, { defer: true },
     { l: 'click' },
     { o: () => capFirst(dropName()) + ". You've been quiet a long time. Have you found something?" },
     { c: [K1('found'), K2('quiet2')], def: 0, t: 20 },
-    { l: 'quiet2' }, { o: "All right. I'm here when you want me." }, { f: 'pages_quiet' }, { go: 'end' },
+    { l: 'quiet2' }, { o: "All right. I'm here when you want me." }, { f: 'pages_quiet' }, { defer: true },
     { l: 'found' }, { o: 'Something you want to tell me? Then try saying it. Sometimes a word gets through when nothing else does.' },
     { c: [[Q('Dilly.'), 'dilly']], def: 0, t: 30 },
     { l: 'dilly' }, { pause: 3 }, { o: '...' },
@@ -8615,11 +8743,11 @@ const BEATS = {
     { l: 'readj' }, { jump: 'journal' },
     { l: 'end' },
   ] },
-  journal: { keep: true, on: 'doc:journal', need: () => flag('dilly'), script: [
+  journal: { keep: true, on: 'doc:journal', need: () => flag('dilly'), due: () => !!STORY.docs.journal, script: [
     { pause: 1 },
     { o: "Does Hester's journal say how to bring a walker back? Once for yes." },
     { c: [K1('y'), K2('n')], def: 0, t: 20 },
-    { l: 'n' }, { o: "Read it again. Hester never wrote anything down that wasn't for something." }, { go: 'end' },
+    { l: 'n' }, { o: "Read it again. Hester never wrote anything down that wasn't for something." }, { defer: true },
     { l: 'y' },
     { o: 'Is it the survey?' },
     { c: [K1('y2'), K2('y2')], def: 0, t: 20 }, { l: 'y2' },
@@ -8658,7 +8786,7 @@ const BEATS = {
     { l: 'early' }, { o: "Something's moved in the battery hall. If that's you with the VII cell, I'd like to know what you think you're doing with it." },
     { l: 'end' },
   ] },
-  letter: { keep: true, on: 'doc:letter', need: () => flag('heard'), script: [
+  letter: { keep: true, on: 'doc:letter', need: () => flag('heard'), due: () => !!STORY.docs.letter, script: [
     { pause: 1.5 },
     { c: [K1('k'), LET('q')], def: 1, t: 16, p: "Hester's letter, from the drawer at the seed bank. Key the box under the Ferrow horn?" },
     { l: 'q' }, { go: 'end' },
@@ -8834,9 +8962,11 @@ const STORY = {
   ended: false,
 };
 const STORY_KEY = 'understory.story.v2';
-function storySave() { sset(STORY_KEY, { st: STORY.st, items: STORY.items, docs: STORY.docs, beats: STORY.beats, flags: STORY.flags, dial: STORY.dial, ended: STORY.ended }); }
-function storyLoad() { const s = sget(STORY_KEY, null); if (s && s.st) { Object.assign(STORY, s); STORY.st = (s.st || []).concat([0, 0, 0, 0, 0, 0, 0]).slice(0, 7); } }
-function storyReset() { STORY.st = [0, 0, 0, 0, 0, 0, 0]; STORY.items = {}; STORY.docs = {}; STORY.beats = {}; STORY.flags = {}; STORY.dial = 0; STORY.ended = false; sdel(STORY_KEY); RAD.queue.length = 0; RAD.cur = null; RAD.choice = null; }
+function storySave() { return ssave(STORY_KEY, { st: STORY.st, items: STORY.items, docs: STORY.docs, beats: STORY.beats, flags: STORY.flags, dial: STORY.dial, ended: STORY.ended, log: (RAD.log || []).slice(-80) }); }
+function storyLoad() { const s = sget(STORY_KEY, null); if (s && s.st) { const { log, ...rest } = s; Object.assign(STORY, rest); STORY.st = (s.st || []).concat([0, 0, 0, 0, 0, 0, 0]).slice(0, 7); RAD.log = Array.isArray(log) ? log : []; } }
+// every run of the story is numbered, so a timer left from the last one can tell it has been overtaken
+let STORY_RUN = 0;
+function storyReset() { STORY_RUN++; STORY.st = [0, 0, 0, 0, 0, 0, 0]; STORY.items = {}; STORY.docs = {}; STORY.beats = {}; STORY.flags = {}; STORY.dial = 0; STORY.ended = false; sdel(STORY_KEY); RAD.queue.length = 0; RAD.cur = null; RAD.choice = null; RAD.t = 0; RAD.log = []; RAD.deferT = {}; }
 const stationsClosed = () => STORY.st.reduce((a, b) => a + b, 0);
 const sixClosed = () => STORY.st.slice(0, 6).every(Boolean);
 const flag = (k) => !!STORY.flags[k];
@@ -8935,9 +9065,10 @@ function openDoc(id, from) {
   UI.readerFirst = first ? id : null;
 }
 function closeDoc() {
-  const first = UI.readerFirst; UI.readerFirst = null;
-  if (UI.readerFrom === 'book') setState('book'); else { setState('play'); lockPointer(); }
-  if (first) storyEvent('doc:' + first);
+  const first = UI.readerFirst; UI.readerFirst = null; const id = UI.readerDoc;
+  if (UI.readerFrom === 'book') setState('book'); else resumePlay();
+  // the first reading is news; reading it again only brings back a conversation about it that never finished
+  if (first) storyEvent('doc:' + first); else if (id) storyEvent('doc:' + id, true);
 }
 
 // ---- the valley's sets ---------------------------------------------------------------------------------------------
@@ -8983,7 +9114,9 @@ function keyClicks(kind) {
 }
 
 // ---- the radio ------------------------------------------------------------------------------------------------------
-const RAD = { queue: [], cur: null, t: 0, cool: 0, choice: null, near: false, clock: 0, qt: {}, set: null };
+const RAD = { queue: [], cur: null, t: 0, cool: 0, choice: null, near: false, clock: 0, qt: {}, set: null, log: [], deferT: {} };
+// the radio, written down for the pause page
+function radioLog(who, text) { RAD.log.push([who, text]); if (RAD.log.length > 120) RAD.log.splice(0, RAD.log.length - 120); }
 function radioQueue(id) {
   if (STORY.beats[id] || RAD.queue.includes(id) || (RAD.cur && RAD.cur.id === id) || !BEATS[id]) return;
   // the last thing said: whatever else was waiting is let go
@@ -9003,6 +9136,7 @@ function radioTick(dt) {
   const box = $('radio'); if (!box) return;
   const ear = radioEar();
   if (live && (ear || (RAD.cur && RAD.near))) RAD.clock += dt;
+  document.body.classList.toggle('choosing', !!RAD.choice);
   if (!RAD.cur) {
     if (RAD.cool > 0) RAD.cool -= dt;
     if (!live || RAD.cool > 0 || !RAD.queue.length) { if (!RAD.choice) box.classList.remove('show'); return; }
@@ -9020,12 +9154,14 @@ function radioTick(dt) {
   // walk away from the set and the line hangs until you are back in earshot of one
   const far = !RAD.near && !ear; box.classList.toggle('far', far);
   if (far) return;
-  if (RAD.choice) { RAD.choice.t -= dt; const bar = box.querySelector('.t'); if (bar) bar.style.transform = `scaleX(${clamp(RAD.choice.t / RAD.choice.T, 0, 1)})`; if (RAD.choice.t <= 0) pickChoice(RAD.choice.def); return; }
+  if (RAD.choice) { if (RAD.choice.wait) return; RAD.choice.t -= dt; const bar = box.querySelector('.t'); if (bar) bar.style.transform = `scaleX(${clamp(RAD.choice.t / RAD.choice.T, 0, 1)})`; if (RAD.choice.t <= 0) pickChoice(RAD.choice.def); return; }
   if (RAD.t > 0) { RAD.t -= dt; if (RAD.t <= 0) box.classList.remove('show'); return; }
   // run steps until one takes time
   for (let guard = 0; guard < 60 && RAD.cur; guard++) {
     const st = RAD.cur.s[RAD.cur.i++];
     if (!st) { STORY.beats[RAD.cur.id] = 1; storySave(); const done = RAD.cur.id; RAD.cur = null; RAD.cool = 3.5; if (!RAD.near) sfx('click'); box.classList.remove('show'); storyEvent('beat:' + done); return; }
+    // put off, not finished: the conversation ends here but is still to be had, when the thing is looked at again or a set is keyed
+    if (st.defer) { const done = RAD.cur.id; RAD.deferT[done] = RAD.clock; RAD.cur = null; RAD.cool = 3.5; if (!RAD.near) sfx('click'); box.classList.remove('show'); storySave(); return; }
     if (st.if) { if (st.if()) jumpTo(st.go); continue; }
     if (st.l !== undefined) continue;
     if (st.go) { jumpTo(st.go); continue; }
@@ -9043,6 +9179,7 @@ function showLine(who, text) {
   box.querySelector('.who').textContent = who === 'o' ? (RAD.near ? 'Odile' : 'Odile · Vane') : 'You';
   box.querySelector('.hiss').textContent = RAD.near ? '' : who === 'n' ? (clarity() < 0.99 ? 'what reaches Vane' : '') : (RAD.set ? 'on ' + RAD.set.name : '');
   box.querySelector('.line').textContent = text; box.querySelector('.choices').innerHTML = '';
+  if (text !== '...') radioLog(who === 'o' ? (RAD.near ? 'Odile' : 'Odile, on the set') : 'You', text);
   RAD.t = text === '...' ? 1.8 : clamp(1.7 + text.length * 0.06, 2.6, 10);
   if (who === 'o' && text !== '...') radioVoice(Math.min(RAD.t * 0.75, 0.6 + text.length * 0.045), RAD.near ? 0 : radioStatic(), RAD.near);
   else if (who === 'n' && text.startsWith('(')) RAD.t = Math.min(RAD.t, 2.2);
@@ -9056,11 +9193,14 @@ function showChoices(st) {
     b.onclick = (e) => { e.stopPropagation(); pickChoice(i); }; ch.appendChild(b);
   });
   const bar = document.createElement('div'); bar.className = 't'; ch.appendChild(bar);
-  RAD.choice = { st, t: st.t || 16, T: st.t || 16, def: st.def !== undefined ? st.def : st.c.length - 1 };
+  // with 'Choices wait for me' on, nothing is chosen for you
+  RAD.choice = { st, t: st.t || 16, T: st.t || 16, def: st.def !== undefined ? st.def : st.c.length - 1, wait: !!UI.settings.wait };
+  if (RAD.choice.wait) bar.hidden = true;
+  document.body.classList.add('choosing');
 }
 function pickChoice(i) {
   if (!RAD.choice || !RAD.cur) return;
-  const st = RAD.choice.st; RAD.choice = null; const [text, label, kind] = st.c[clamp(i, 0, st.c.length - 1)];
+  const st = RAD.choice.st; RAD.choice = null; document.body.classList.remove('choosing'); const [text, label, kind] = st.c[clamp(i, 0, st.c.length - 1)];
   // a key pressed is heard as clicks; a thing said reaches Vane as much as the figure lets through; an action is not heard
   RAD.cur.s = RAD.cur.s.slice(); let ins;
   if (kind && kind[0] === 'k') { ins = [{ n: CLICKS[kind] || '(click)' }, { go: label }]; keyClicks(kind); if (!RAD.near) RAD.set = nearSet('ear') || RAD.set; }
@@ -9080,7 +9220,19 @@ function radioKey(set) {
   if (RAD.queue.length) { RAD.cool = 0; return; }
   if (!STORY.beats.wake) { radioQueue('wake'); RAD.cool = 0; return; }
   if (!flag('heard')) { delete STORY.beats.callback; radioQueue('callback'); RAD.cool = 0; return; }
+  // a conversation that was due and never finished (cut off by leaving, or put off) comes before anything else
+  const due = pendingBeat(); if (due) { radioQueue(due); RAD.cool = 0; return; }
   const id = askBeat(S); RAD.queue.push(id); RAD.cool = 0;
+}
+// the conversations the story can't go without: one whose cause has happened (by what the save says) and that was never
+// heard. one put off comes back only after a while, so that keying a set isn't answered with the same question every time
+function pendingBeat() {
+  for (const id in BEATS) {
+    const B = BEATS[id]; if (!B.due || STORY.beats[id] || RAD.queue.includes(id) || (RAD.cur && RAD.cur.id === id)) continue;
+    if (RAD.deferT[id] !== undefined && RAD.clock - RAD.deferT[id] < 75) continue;
+    if (B.due() && (!B.need || B.need())) return id;
+  }
+  return null;
 }
 // she knows the place from the drop; the first time she tells you about it, after that what to do next. once your words
 // get through you can tell her where you have been, and she tells you about that instead
@@ -9101,8 +9253,9 @@ function askBeat(S) {
 function pickOf(list, seedStr) { return list[hashStr(seedStr) % list.length]; }
 
 // ---- events: everything that happens may wake a radio beat or a puzzle -----------------------------------------
-function storyEvent(name) {
+function storyEvent(name, beatsOnly) {
   for (const id in BEATS) { const B = BEATS[id]; if (B.on && (B.on === name || (B.on.test && B.on.test(name))) && !STORY.beats[id] && (!B.need || B.need())) radioQueue(id); }
+  if (beatsOnly) return;
   const h = STORY_HOOKS[name]; if (h) h();
 }
 const STORY_HOOKS = {};
@@ -9111,7 +9264,9 @@ const STORY_HOOKS = {};
 const SIGHT = { on: null, yaw: 0, pitch: 0, aligned: false };
 // def: { x, y, z, yaw, target: {x, y, z, st} or null, title, onTake(), tol, fov }
 function openSight(def) {
-  SIGHT.on = def; SIGHT.yaw = def.yaw; SIGHT.pitch = def.pitch || 0; SIGHT.aligned = false;
+  // pointed level with the mark it is to be turned onto, so the turn across is what there is to find
+  const lev = def.target ? Math.atan2(def.target.y + MARK_H - def.y, Math.hypot(def.target.x - def.x, def.target.z - def.z)) : 0;
+  SIGHT.on = def; SIGHT.yaw = def.yaw; SIGHT.pitch = def.pitch !== undefined ? def.pitch : clamp(lev, -0.3, 0.3); SIGHT.aligned = false;
   setState('sight'); $('sight').querySelector('.what').textContent = def.title || 'The sight';
   $('sight').querySelector('.keys').textContent = UI.touch ? (def.target ? 'Drag to turn · Use to take the sight · Menu to step back' : 'Drag to look · Use to step back') : (def.target ? 'A and D or the mouse to turn · E to take the sight · Esc to step back' : 'A and D or the mouse to look · E or Esc to step back');
   $('sight').classList.remove('on');
@@ -9135,15 +9290,17 @@ function sightTick(dt) {
   if (S.target) {
     const want = Math.atan2(-(S.target.x - S.x), -(S.target.z - S.z));
     const off = wrapAngle(want - SIGHT.yaw);
-    on = Math.abs(off) < (S.tol || 0.02);
-    if (on && turn === 0) SIGHT.yaw += off * Math.min(1, dt * 5);
+    // the mark is drawn MARK_H above the station, and the cross has to sit on it in both directions
+    const elev = Math.atan2(S.target.y + MARK_H - S.y, Math.hypot(S.target.x - S.x, S.target.z - S.z)); const offP = elev - SIGHT.pitch;
+    on = Math.abs(off) < (S.tol || 0.02) && Math.abs(offP) < (S.tolP || 0.03);
+    if (Math.abs(off) < (S.tol || 0.02) * 1.5 && Math.abs(offP) < (S.tolP || 0.03) * 1.5 && turn === 0) { SIGHT.yaw += off * Math.min(1, dt * 5); SIGHT.pitch += offP * Math.min(1, dt * 5); }
   }
   if (on !== SIGHT.aligned) { SIGHT.aligned = on; $('sight').classList.toggle('on', on); if (on) sfx('tick'); }
 }
 function sightTake() {
   const S = SIGHT.on; if (!S) return;
   if (!S.target) { closeSight(); return; }
-  if (!SIGHT.aligned) { showHint('The cross is not on the mark yet', 2); return; }
+  if (!SIGHT.aligned) { showHint('The cross is not on the mark yet. Turn it across, and up or down, onto the mark', 2.6); return; }
   sfx('closed'); const fn = S.onTake; closeSight(); if (fn) fn();
 }
 
@@ -9153,26 +9310,29 @@ const LOCK = { cfg: null, vals: [] };
 function openLock(cfg) {
   LOCK.cfg = cfg; LOCK.vals = cfg.start ? cfg.start.slice() : new Array(cfg.n).fill(0);
   $('lk-t').textContent = cfg.title; $('lk-m').textContent = cfg.note || '';
-  drawLock(); setState('lock');
+  buildLock(); setState('lock');
+  const first = $('lk-w').querySelector('button'); if (first) { try { first.focus({ preventScroll: true }); } catch (e) { /* fine */ } }
 }
-function drawLock() {
+function buildLock() {
   const w = $('lk-w'); w.innerHTML = ''; const sy = LOCK.cfg.symbols;
   LOCK.vals.forEach((v, i) => {
     const col = document.createElement('div'); col.className = 'wheel';
     const up = document.createElement('button'); up.textContent = '▲'; up.setAttribute('aria-label', 'Turn wheel ' + (i + 1) + ' up');
-    const val = document.createElement('div'); val.className = 'v'; val.textContent = sy[v];
+    const val = document.createElement('div'); val.className = 'v'; val.setAttribute('aria-live', 'polite'); val.setAttribute('aria-label', 'Wheel ' + (i + 1));
     const dn = document.createElement('button'); dn.textContent = '▼'; dn.setAttribute('aria-label', 'Turn wheel ' + (i + 1) + ' down');
     up.onclick = () => { LOCK.vals[i] = (LOCK.vals[i] + 1) % sy.length; sfx('tick'); drawLock(); };
     dn.onclick = () => { LOCK.vals[i] = (LOCK.vals[i] + sy.length - 1) % sy.length; sfx('tick'); drawLock(); };
     col.appendChild(up); col.appendChild(val); col.appendChild(dn); w.appendChild(col);
   });
+  drawLock();
 }
+function drawLock() { const sy = LOCK.cfg.symbols; $('lk-w').querySelectorAll('.v').forEach((el, i) => { el.textContent = sy[LOCK.vals[i]]; }); }
 function tryLock() {
   const c = LOCK.cfg; if (!c) return; const code = LOCK.vals.map((v) => c.symbols[v]).join('');
-  if (code === c.code) { sfx('unlock'); LOCK.cfg = null; setState('play'); lockPointer(); c.onOpen(); }
+  if (code === c.code) { sfx('unlock'); LOCK.cfg = null; resumePlay(); c.onOpen(); }
   else { sfx('thunk'); $('lk-m').textContent = c.wrong || 'It does not give.'; c.start = LOCK.vals.slice(); }
 }
-function closeLock() { if (LOCK.cfg) LOCK.cfg.start = LOCK.vals.slice(); LOCK.cfg = null; setState('play'); lockPointer(); }
+function closeLock() { if (LOCK.cfg) LOCK.cfg.start = LOCK.vals.slice(); LOCK.cfg = null; resumePlay(); }
 
 // ---- sightlines: the survey drawn over the valley in pencil ------------------------------------------------------
 const _sv = new THREE.Vector3(), _sw = new THREE.Vector3();
@@ -9281,9 +9441,9 @@ function radioVoice(dur, hiss, near) {
 
 // ---- the end --------------------------------------------------------------------------------------------------------
 function fadePaper(on, sec = 2) { const f = $('fade'); if (!f) return; f.hidden = false; f.style.transitionDuration = sec + 's'; void f.offsetWidth; f.classList.toggle('on', on); if (!on) setTimeout(() => { if (!f.classList.contains('on')) f.hidden = true; }, sec * 1000 + 150); }
-function showEnding() {
-  STORY.ended = true; storySave();
-  setTimeout(() => { $('end-t').textContent = ENDING_TEXT; $('ending').hidden = false; }, 2500);
+function showEnding(delay = 2.5) {
+  STORY.ended = true; storySave(); const run = STORY_RUN;
+  setTimeout(() => { if (run !== STORY_RUN) return; $('end-t').textContent = ENDING_TEXT; $('ending').hidden = false; try { $('b-end').focus({ preventScroll: true }); } catch (e) { /* fine */ } }, delay * 1000);
 }
 
 // ---- per frame -----------------------------------------------------------------------------------------------------
@@ -9622,13 +9782,22 @@ function storyGlasshouse() {
   b.part(hex('#5c5a55'), CLS.BUILD, 0); for (let i = 0; i < 5; i++) b.boxY(-1.2 + i * 0.3, y + 1.5, -1.27, 0.04, 0.4 + (i % 2) * 0.15, 0.03);
   b.part(BRONZE, CLS.BUILD, 0); b.cyl(1.1, y + 0.99, -1.0, 0.08, 0.3, 8);
   b.pop();
-  colBox(sp.x, sp.z, 4.0, 3.0, ry, y - 1, y + 2.6, false); TREE_BLOCK.push([sp.x, sp.z, 4]);
+  // you can walk in under the roof: the base is a low step, the back and sides are walls, and the bench is in the way
+  { const box = (lx, lz, w, d, y0, y1, walk, solid) => { const [qx, qz] = toWorld(sp.x, sp.z, ry, lx, lz); colBox(qx, qz, w, d, ry, y0, y1, walk, solid); };
+    box(0, 0, 4.0, 3.0, y - 1, y + 0.12, true, false); colSurf('stone');
+    box(0, -1.35, 3.8, 0.14, y + 0.12, y + 2.72, false, true);
+    for (const sx of [-1.84, 1.84]) box(sx, -0.2, 0.14, 2.3, y + 0.12, y + 2.52, false, true);
+    box(0, -0.85, 3.0, 0.8, y + 0.12, y + 0.99, true, true); }
+  TREE_BLOCK.push([sp.x, sp.z, 4]);
+  // what's on the bench is reached from in front of it, not through the walls
+  const cs = Math.cos(ry), sn = Math.sin(ry);
+  const atBench = () => { const c = R.camera.position; const dx = c.x - sp.x, dz = c.z - sp.z; const lx = cs * dx - sn * dz, lz = sn * dx + cs * dz; return Math.abs(lx) < 1.8 && lz > -0.6; };
   const at = (lx, ly, lz) => { const [wx, wz] = toWorld(sp.x, sp.z, ry, lx, lz); return [wx, y + ly, wz]; };
   const lp = at(-0.4, 0.99, -0.85);
   propDef('lens_bench', (pb) => { lensGeo(pb); pb.part(cc('woodDark'), CLS.WOOD, 0); pb.boxY(0, 0, 0, 0.5, 0.08, 0.16); }, { pos: lp, ry, visible: () => inWorld('lens') });
   const np = at(0.7, 0.995, -0.7); paperSheet(b, np[0], np[1], np[2], ry + 0.2);
-  interact({ x: np[0], y: np[1], z: np[2], r: 2.2, size: 0.25, label: () => 'Read the note on the bench', act: () => openDoc('tobiah') });
-  interact({ x: lp[0], y: lp[1] + 0.45, z: lp[2], r: 2.2, size: 0.45, when: () => inWorld('lens'), label: () => 'Take the lens', act: () => take('lens') });
+  interact({ x: np[0], y: np[1], z: np[2], r: 2.2, size: 0.25, when: atBench, label: () => 'Read the note on the bench', act: () => openDoc('tobiah') });
+  interact({ x: lp[0], y: lp[1] + 0.45, z: lp[2], r: 2.2, size: 0.45, when: () => inWorld('lens') && atBench(), label: () => 'Take the lens', act: () => take('lens') });
   T.workshop = { x: sp.x, z: sp.z };
   hornNear(sp.x, sp.z, { id: 'glasshouse', place: 'glasshouse', name: 'the Glasshouse horn', drop: 'the Glasshouse drop' }, 62);
 }
@@ -9698,11 +9867,15 @@ function storyRoom() {
   const lp = MP(F, 2.6, 1.35, S / 2 + 0.2);
   const LOCKCFG = { title: 'The Room', symbols: '0123456789', n: 4, code: '2209', start: [1, 9, 6, 1], note: 'Four brass wheels, stiff with disuse.', wrong: 'The wheels click round. The door does not move.', onOpen: () => openRoom() };
   interact({ x: lp[0], y: lp[1], z: lp[2], r: 2.4, size: 0.4, when: () => !flag('room'), label: () => 'Try the lock', act: () => openLock(LOCKCFG) });
-  function openRoom() { setFlag('room'); doorCol.solid = false; STORY_HOOKS._doorT = 0.001; storyEvent('room'); showToast('The door gives.', 2.5); }
+  function openRoom() { setFlag('room'); storyEvent('room'); showToast('The door gives.', 2.5); }
+  // the doors follow the story: shut and solid until the lock gives, then swinging in; loading or starting over sets them at once
+  let doorA = 0;
+  const setDoors = (a) => { doorA = a; const e = smoothstep(0, 1, a); const L = prop('doorL'), Rr = prop('doorR'); if (L) { L.rot.y = F.rot + e * 1.45; propSync(L); } if (Rr) { Rr.rot.y = F.rot - e * 1.45; propSync(Rr); } };
+  STORY_SYNC.push(() => { setDoors(flag('room') ? 1 : 0); doorCol.solid = !flag('room'); });
   STORY_TICKS.push((dt) => {
-    const want = flag('room') ? 1 : 0; const cur = STORY_HOOKS._doorA || 0; if (Math.abs(want - cur) < 1e-3) { if (want && !STORY_HOOKS._doorSet) { STORY_HOOKS._doorSet = 1; doorCol.solid = false; } return; }
-    const n = clamp(cur + Math.sign(want - cur) * dt * 0.35, 0, 1); STORY_HOOKS._doorA = n; const e = smoothstep(0, 1, n);
-    const L = prop('doorL'), Rr = prop('doorR'); if (L) { L.rot.y = F.rot + e * 1.45; propSync(L); } if (Rr) { Rr.rot.y = F.rot - e * 1.45; propSync(Rr); }
+    doorCol.solid = !flag('room');
+    const want = flag('room') ? 1 : 0; if (Math.abs(want - doorA) < 1e-3) return;
+    setDoors(clamp(doorA + Math.sign(want - doorA) * dt * 0.35, 0, 1));
   });
   // inside: a long table with the pages, the journal, the card and the head in its case
   b.pushTR(F.m.x, F.m.y, F.m.z, F.rot);
@@ -10210,8 +10383,9 @@ function checkVII() { if (placed('head') && placed('cell') && sixClosed()) story
 
 // ---- the finale ---------------------------------------------------------------------------------------------------------
 function finale() {
-  sfx('swell'); fadePaper(true, 2.6); setFlag('closing'); document.body.classList.add('quiet');
+  sfx('swell'); fadePaper(true, 2.6); setFlag('closing'); document.body.classList.add('quiet'); const run = STORY_RUN;
   setTimeout(() => {
+    if (run !== STORY_RUN) return; // the story was started over in the meantime
     STORY.ended = true; storySave(); R.U.uVanish.value = 0; propsRefresh();
     // Odile comes over
     const V = STORY_HOOKS.VII; const c = PLAYER.pos; const dx = c.x - V.ox, dz = c.z - V.oz; const L = Math.hypot(dx, dz) || 1;
@@ -10269,6 +10443,38 @@ function nearestOpenStation() {
   return best;
 }
 
+// ---- coming back to a story left part way through a turn ------------------------------------------------------------------
+// the close of VII runs in steps (the fade, Odile, the last conversation, the card), and a page closed between any two of
+// them is picked up at the step it stopped on; so is a conversation the story needs that was cut off
+let STORY_RESUMED = -1;
+function storyResume() {
+  if (STORY_RESUMED === STORY_RUN) return; STORY_RESUMED = STORY_RUN;
+  if (STORY.st[6] && !STORY.ended) { finale(); return; }
+  if (STORY.ended && !STORY.beats.finale) { document.body.classList.add('quiet'); const run = STORY_RUN; setTimeout(() => { if (run === STORY_RUN) storyEvent('closed_all'); }, 1500); return; }
+  if (STORY.beats.finale && !flag('card_seen')) { document.body.classList.add('quiet'); showEnding(1.5); return; }
+  const due = pendingBeat(); if (due) radioQueue(due);
+}
+// things in the world whose state is the story's: the sight heads turned onto their stations, the Dial's ring, the Room's
+// doors, Odile where she stood. on loading a save they are set to it at once, and starting over puts them back
+const STORY_SYNC = [];
+function storySyncProps(reset) {
+  if (reset) for (const id in PROPS.map) { const P = PROPS.map[id], o = P.def.opts; P.pos.set(...(o.pos || [0, 0, 0])); P.rot.set(o.rx || 0, o.ry || 0, o.rz || 0); if (P.mesh) P.mesh.scale.set(1, 1, 1); if (P.lines) P.lines.scale.set(1, 1, 1); propSync(P); }
+  for (let k = 0; k < 7; k++) { const P = prop('sight' + k), S = STATIONS[k]; if (P && S && S.idle !== undefined) { P.rot.y = STORY.flags['yaw' + k] !== undefined ? STORY.flags['yaw' + k] : S.idle; propSync(P); } }
+  const D = prop('dialring'); if (D) { D.rot.y = MONF('dial').rot + STORY.dial * (TAU / 12); propSync(D); }
+  for (const fn of STORY_SYNC) fn();
+  propsRefresh();
+}
+// start the story over: the save, the radio, every timer and anything on the screen from the last run
+function storyRestart() {
+  storyReset(); for (const k of Object.keys(STORY_HOOKS)) if (k.startsWith('_')) delete STORY_HOOKS[k];
+  if (SIGHT.on) { SIGHT.on = null; R.camera.fov = UI.settings.fov; R.camera.updateProjectionMatrix(); }
+  const box = $('radio'); if (box) { box.classList.remove('show'); box.querySelector('.choices').innerHTML = ''; }
+  document.body.classList.remove('quiet', 'choosing');
+  $('ending').hidden = true; const f = $('fade'); if (f) { f.classList.remove('on'); f.hidden = true; }
+  R.U.uVanish.value = vanishDistance();
+  storySyncProps(true); updateSatchel(); storySave();
+}
+
 // ---- entry points --------------------------------------------------------------------------------------------------------
 // before the forest is planted: everything static, the colliders and the props' definitions
 function storyBuild() {
@@ -10290,7 +10496,7 @@ function storyBuild() {
 }
 // after the renderer exists
 function storyInit() {
-  storyLoad(); buildProps(); updateSatchel();
+  storyLoad(); buildProps(); storySyncProps(); updateSatchel();
   if (STORY.ended) R.U.uVanish.value = 0; else R.U.uVanish.value = vanishDistance();
 }
 
@@ -10563,8 +10769,22 @@ function setQuality(q) {
   if (R.gbuf) onResize();
   if (R.camera) { updateForest(R.camera.position, R.camera.rotation.y, true); updateGrass(R.camera.position, true); }
 }
+// the code is running, so the files arrived: take back the loading page's 'didn't load' note if a slow line had put it up
+{ const f = document.querySelector('#loading .fail'); if (f) { f.remove(); const t = $('load-track'); if (t) t.hidden = false; const m = $('load-msg'); if (m) m.textContent = 'Stretching the paper'; } }
+// a plain message and a way to try again, instead of a stuck loading bar
+function startFailure(what, help) {
+  const m = $('load-msg'); if (!m) return; m.textContent = what;
+  const w = m.parentNode; if (w.querySelector('.fail')) return;
+  const d = document.createElement('div'); d.className = 'fail';
+  if (help) { const p = document.createElement('p'); p.textContent = help; d.appendChild(p); }
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Reload'; b.onclick = () => location.reload(); d.appendChild(b);
+  w.appendChild(d); $('load-track').hidden = true;
+}
+function webgl2Ok() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2')); } catch (e) { return false; } }
 async function boot() {
   const canvas = $('view');
+  // the drawing needs WebGL 2; find out before spending half a minute building the valley
+  if (!webgl2Ok()) { startFailure("This browser can't draw the valley. The game needs WebGL 2, which is turned off or missing here.", 'A current Chrome, Firefox, Safari or Edge should work. If one of those does not, check that hardware acceleration is turned on in its settings.'); return; }
   setLoading(0.01, 'Stretching the paper');
   await sleep();
   await generateWorld((p, msg) => setLoading(p * 0.5, msg));
@@ -10588,17 +10808,26 @@ async function boot() {
   buildMap(); buildCompass();
   try { if (document.fonts && document.fonts.load) document.fonts.load('15px "Architects Daughter"'); } catch (e) { /* the canvas falls back to a system hand */ }
   loadProgress();
+  // with reduced motion asked for, the head bob, the line wobble and the waking sway start off (and can be turned on)
+  UI.calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (UI.calm && !UI.hadSettings) { UI.settings.bob = false; UI.settings.boil = false; }
   const hot = window.claude && window.claude.hot && window.claude.hot.data;
   if (hot && hot.settings) UI.settings = { ...UI.settings, ...hot.settings };
   setQuality(UI.settings.quality);
   onResize(); applySettings();
   window.addEventListener('resize', onResize);
   bindInput();
+  // a walk under way last time carries on where it stopped, in the light it stopped in
+  const S0 = UI.saved; const carry = !!(S0 && isFinite(S0.x) && isFinite(S0.z) && (Object.keys(UI.found).length || UI.trail.length > 1 || STORY.beats.wake));
   if (hot && hot.tod && TOD_PRESETS[hot.tod]) setTimeOfDay(hot.tod, true);
   else if (!STORY.beats.wake) setTimeOfDay('morning', true);
+  else if (carry && S0.tod && TOD_PRESETS[S0.tod]) setTimeOfDay(S0.tod, true);
   startPlayerAtSpawn();
-  if (hot && hot.pos) { PLAYER.pos.set(hot.pos.x, hot.pos.y, hot.pos.z); PLAYER.yaw = hot.pos.yaw || 0; }
-  else if (UI.saved && Object.keys(UI.found).length) { PLAYER.pos.set(UI.saved.x, UI.saved.y, UI.saved.z); PLAYER.yaw = UI.saved.yaw || 0; }
+  if (hot && hot.pos) { PLAYER.pos.set(hot.pos.x, hot.pos.y, hot.pos.z); PLAYER.yaw = hot.pos.yaw || 0; G.resumed = true; }
+  else if (carry) {
+    const y = supportHeight(S0.x, S0.z, (isFinite(S0.y) ? S0.y : 1e4) + 0.6, 0);
+    PLAYER.pos.set(S0.x, y + 0.02, S0.z); PLAYER.yaw = S0.yaw || 0; PLAYER.pitch = clamp(S0.pitch || -0.04, -1.4, 1.4); G.resumed = true;
+  }
   cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true);
   updateForest(R.camera.position, PLAYER.yaw, true); updateRocks(R.camera.position, true); updateGrass(R.camera.position, true);
   setLoading(1, 'Ready');
@@ -10643,12 +10872,22 @@ function loop(now) {
   const dt = Math.min(0.1, (now - G.last) / 1000); G.last = now; G.time += dt;
   stepTod(dt);
   const cam = R.camera;
+  // behind a sheet (pause, map, book, a paper, the lock) the valley only needs drawing a dozen times a second
+  if (/^(pause|map|book|reader|lock)$/.test(UI.state)) {
+    storyTick(dt); uiTick(dt); audioUpdate(dt, cam.position, R.tod);
+    if (G.time - (G.sheetDraw || 0) < 1 / 12) { requestAnimationFrame(loop); return; }
+    G.sheetDraw = G.time; G.ft.length = 0;
+    cam.updateMatrixWorld(true); animateBuilt(dt); lifeTick(dt); R.U.uWind.value = 0.6 + 0.4 * Math.sin(G.time * 0.21);
+    renderFrame(G.time); afterRender();
+    requestAnimationFrame(loop); return;
+  }
   if (UI.state === 'play') {
-    applyLook(); updatePlayer(dt); edgeTick(dt); if (PLAYER.rise !== undefined && PLAYER.rise < 1) PLAYER.rise = Math.min(1, PLAYER.rise + dt / 3.4); cameraFromPlayer(cam, UI.settings.bob);
+    applyLook(dt); updatePlayer(dt); edgeTick(dt); if (PLAYER.rise !== undefined && PLAYER.rise < 1) PLAYER.rise = Math.min(1, PLAYER.rise + dt / 3.4); cameraFromPlayer(cam, UI.settings.bob);
     checkDiscovery(dt);
   } else if (UI.state === 'title') {
     const s = G.deck || G.spawn; const t = G.time * 0.05;
-    cam.position.set(s.x, s.y + PLAYER.eye, s.z); cam.rotation.order = 'YXZ'; cam.rotation.set(-0.05 + Math.sin(t * 0.7) * 0.02, s.yaw + Math.sin(t) * 0.45, 0);
+    const sway = UI.calm ? 0.12 : 1;
+    cam.position.set(s.x, s.y + PLAYER.eye, s.z); cam.rotation.order = 'YXZ'; cam.rotation.set(-0.05 + Math.sin(t * 0.7) * 0.02 * sway, s.yaw + Math.sin(t) * 0.45 * sway, 0);
   }
   storyTick(dt);
   cam.updateMatrixWorld(true);
@@ -10706,6 +10945,36 @@ window.__U = {
   },
   stairs() { return JSON.stringify(STAIRS); },
   wraps() { return JSON.stringify({ w: WRAPS, links: WRAPS.links }); },
+  persist() { const a = saveProgress(), b = storySave(); return [a, b]; },
+  propRot(id) { const P = prop(id); return P ? +P.rot.y.toFixed(3) : null; },
+  look(dt = 0.5) { applyLook(dt); return +PLAYER.yaw.toFixed(3); },
+  keyNear() { radioKey(nearSet('ear')); return JSON.stringify({ queue: RAD.queue.slice(), cur: RAD.cur && RAD.cur.id }); },
+  sightNudge(dp) { SIGHT.pitch += dp; sightTick(0.016); return SIGHT.aligned; },
+  stationElev() { return STATIONS.map((S, k) => { const N = STATIONS[(k + 1) % 7]; return +Math.atan2(N.y + MARK_H - S.y, Math.hypot(N.x - S.x, N.z - S.z)).toFixed(3); }); },
+  finaleNow() { finale(); return STORY_RUN; },
+  doorState() { const L = prop('doorL'); const col = PHYS.list.find((c) => c.type === 'box' && c.walk === false && c.y1 - c.y0 > 7 && Math.abs(c.hx - 1.5) < 0.01 && Math.abs(c.hz - 0.3) < 0.01); return JSON.stringify({ open: L ? +(L.rot.y - MONF('box').rot).toFixed(3) : null, solid: col ? col.solid : null }); },
+  radioState() { return JSON.stringify({ cur: RAD.cur && RAD.cur.id, queue: RAD.queue.slice(), choice: !!RAD.choice, deferT: RAD.deferT, clock: +RAD.clock.toFixed(1), beats: Object.keys(STORY.beats), ended: STORY.ended, st: STORY.st, card: !document.getElementById('ending').hidden, fade: document.getElementById('fade').classList.contains('on'), quiet: document.body.classList.contains('quiet'), log: (RAD.log || []).length }); },
+  mark(id) { UI.found[id] = { t: Date.now(), tod: R.tod }; return saveProgress(); },
+  storySet(o) { Object.assign(STORY, o); return storySave(); },
+  // turn to look at a point and say what the prompt offers from here
+  lookAt(x, y, z) { const c = R.camera.position; PLAYER.yaw = Math.atan2(-(x - c.x), -(z - c.z)); cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true); const c2 = R.camera.position; PLAYER.pitch = Math.atan2(y - c2.y, Math.hypot(x - c2.x, z - c2.z)); cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true); updateInteract(); return INT.cur ? INT.cur.label() : null; },
+  interDbg(text) { const it = INTER.find((q) => { const l = q.label && q.label(); return l && l.toLowerCase().includes(text.toLowerCase()); }); if (!it) return 'none'; const cam = R.camera; const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion); const dx = it.x - cam.position.x, dy = it.y - cam.position.y, dz = it.z - cam.position.z; const dist = Math.hypot(dx, dy, dz); const cos = (dx * fwd.x + dy * fwd.y + dz * fwd.z) / dist; const need = Math.cos(Math.min(1.0, Math.atan2(it.size || 0.45, dist) + (it.slack !== undefined ? it.slack : 0.16))); return JSON.stringify({ dist: +dist.toFixed(2), r: it.r, cos: +cos.toFixed(3), need: +need.toFixed(3), when: it.when ? it.when() : 'none', state: UI.state, cam: cam.position.toArray().map(v => +v.toFixed(2)), it: [it.x, it.y, it.z].map(v => +v.toFixed(2)) }); },
+  interAt(text) { const it = INTER.find((q) => { const l = q.label && q.label(); return l && l.toLowerCase().includes(text.toLowerCase()); }); return it ? [it.x, it.y, it.z] : null; },
+  // every solid collider, sampled just outside its edge all the way round: is it in the lookup from that point?
+  colCheck() {
+    let miss = 0, n = 0; const ex = [];
+    for (const c of PHYS.list) {
+      if (c.type !== 'cyl' || c.solid === false) continue;
+      for (let k = 0; k < 16; k++) { const a = (k / 16) * TAU; const x = c.x + Math.cos(a) * (c.r + 0.3), z = c.z + Math.sin(a) * (c.r + 0.3); n++; const L = nearColliders(x, z); if (!L || !L.includes(c)) { miss++; if (ex.length < 3) ex.push([Math.round(x), Math.round(z), c.r]); } }
+    }
+    return JSON.stringify({ n, miss, ex });
+  },
+  // fall from h metres above the walkable surface at (x, z), and say where the feet stop
+  fall(x, z, h = 20) {
+    const top = supportHeight(x, z, 1e4, 0); const P = PLAYER; P.pos.set(x, top + h, z); P.vel.set(0, 0, 0); P.onGround = false; INPUT.keys.clear();
+    let t = 0; for (; t < 6 && !P.onGround; t += 1 / 30) stepPlayer(1 / 30);
+    return [+top.toFixed(2), +P.pos.y.toFixed(2), +t.toFixed(2)];
+  },
   // loudness of the river at its bank and of the lake at its shore, rendered offline: [rms dB, loudest 100 ms dB, peak dB]
   async waterLevels(secs = 12) {
     const sr = 44100, n = sr * secs, out = {};
@@ -10934,7 +11203,7 @@ window.__U = {
   frame(dt = 1 / 30) {
     G.time += dt; stepTod(dt);
     const cam = R.camera;
-    if (UI.state === 'play') { applyLook(); updatePlayer(dt); cameraFromPlayer(cam, UI.settings.bob); checkDiscovery(dt); }
+    if (UI.state === 'play') { applyLook(dt); updatePlayer(dt); cameraFromPlayer(cam, UI.settings.bob); checkDiscovery(dt); }
     storyTick(dt);
     cam.updateMatrixWorld(true);
     updateForest(cam.position, cam.rotation.y, false); updateRocks(cam.position, false); updateGrass(cam.position, false);
@@ -10945,7 +11214,7 @@ window.__U = {
   drop(x, z) { const P = PLAYER; const y = supportHeight(x, z, 1e4, 0); P.pos.set(x, y + 0.02, z); P.vel.set(0, 0, 0); P.onGround = true; return y; },
   step(n = 1, dt = 1 / 30, keys = []) { if (keys.includes('Space')) INPUT.jump = true; for (const k of keys) INPUT.keys.add(k); for (let i = 0; i < n; i++) updatePlayer(dt); for (const k of keys) INPUT.keys.delete(k); return [PLAYER.pos.x, PLAYER.pos.y, PLAYER.pos.z]; },
 };
-boot().catch((e) => { console.error(e); const m = $('load-msg'); if (m) m.textContent = 'The page could not start: ' + e.message; });
+boot().catch((e) => { console.error(e); startFailure('The valley could not be drawn in this browser.', 'What went wrong: ' + (e && e.message ? e.message : e) + '. Reloading sometimes helps; a current Chrome, Firefox, Safari or Edge should work.'); });
 
 </script>
 </body>
