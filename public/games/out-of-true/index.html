@@ -1084,7 +1084,7 @@ function routeTrails() {
     const A = byId[a], B = byId[b];
     const [ti, tj] = toCell(B.x, B.z); const goal = tj * G + ti;
     const cells = search(A.x, A.z, (c) => c === goal, B.x, B.z, 1e9);
-    if (cells) addCells(cells, 1.7, 'trail');
+    if (cells) { addCells(cells, 1.7, 'trail'); trails[trails.length - 1].ends = [a, b]; }
   }
   // axial approaches cut through the woods toward the bigger monuments
   for (const m of World.monuments) {
@@ -1525,10 +1525,25 @@ class GeoBuilder {
     const n = Math.max(2, Math.round(Math.abs(dy) / 0.19)); const rot = Math.atan2(-dz, dx);
     this.pushTR(ax, ay, az, rot);
     const run = L / n, rise = dy / n;
+    // a flight going down steps down from its first tread; solid treads fill to below the lower end, not up to the upper
+    const bot = Math.min(0, dy) - (opts.base || 0);
+    // solid flights are inked by hand: each box's own twelve edges run down through the steps below it and
+    // show through the treads, so a flight seen from above read as a glass case
+    const ink = this.cur.lines; if (opts.solid) this.cur.lines = false;
     for (let i = 0; i < n; i++) {
-      const top = rise * (i + 1);
-      if (opts.solid) this.boxY(run * (i + 0.5), Math.min(0, top) - (opts.base || 0), 0, run + 0.01, Math.abs(top) + (opts.base || 0) + 0.02, w);
+      const top = dy >= 0 ? rise * (i + 1) : rise * i;
+      if (opts.solid) this.boxY(run * (i + 0.5), bot, 0, run + 0.01, top - bot + 0.02, w);
       else this.boxY(run * (i + 0.5), top - 0.08, 0, run * 1.15, 0.08, w);
+    }
+    if (opts.solid && ink) {
+      this.cur.lines = true; const hw = w / 2; const prof = [[0, 0]];
+      for (let i = 0; i < n; i++) {
+        const x0 = run * i, x1 = run * (i + 1);
+        if (dy >= 0) { const t = rise * (i + 1); prof.push([x0, t], [x1, t]); this.seg(x0, t, -hw, x0, t, hw); this.seg(x0, t - rise, -hw, x0, t - rise, hw); }
+        else { const t = rise * i; prof.push([x1, t], [x1, t + rise]); this.seg(x1, t, -hw, x1, t, hw); this.seg(x1, t + rise, -hw, x1, t + rise, hw); }
+      }
+      const g = Math.min(0, dy);
+      for (const s of [-1, 1]) { this.polyLine(prof.map(([px, py]) => [px, py, s * hw]), false); this.seg(0, g, s * hw, L, g, s * hw); }
     }
     if (!opts.solid) { // stringers
       for (const s of [-1, 1]) this.beam(0, -0.15, s * (w / 2 + 0.04), L, dy - 0.15, s * (w / 2 + 0.04), 0.2, 0.06);
@@ -1885,11 +1900,15 @@ void main() {
     vDab = cr * k.x + cu * k.y;
     wp.xyz += vDab * aCard.z * length(M[0].xyz);
   }
+#ifdef USE_INSTANCING
+  // only plants sway: their position.y runs 0..1 up the plant. built things are merged in world space, where
+  // position.y is the height above sea level, and swaying by its square threw roof gardens hundreds of metres
   if (aInfo.w > 0.0) {
     float ph = uTime * 0.9 + dot(base.xz, vec2(0.031, 0.047));
     float sway = (sin(ph) + 0.45 * sin(ph * 2.7 + 1.3) + 0.2 * sin(ph * 5.3 + base.x)) * aInfo.w * uWind;
     wp.xz += vec2(0.7, 0.45) * sway * position.y * position.y;
   }
+#endif
   vWP = wp.xyz;
   // normals under a rotation-and-scale matrix: divide by the squared axis scales before rotating
   mat3 M3 = mat3(M);
@@ -2795,6 +2814,8 @@ uniform sampler2D tMask;
 uniform float uForestCam;
 uniform float uWH;
 uniform mat4 uViewProj;
+uniform float uEdge;
+uniform float uLimit;
 ${GLSL_WASH}
 ${GLSL_SKY}
 in vec2 vUv;
@@ -2836,6 +2857,7 @@ void main() {
   vec3 C; float fog = 0.0, fogD = 0.0; float cInk = 0.0; float litMask = 1.0;
   vec3 wp = uCamPos;
   float turb;
+  float eK = 0.0, eGrid = 0.0;
   if (sky) {
     C = skyPigment(ray, 1.0, cInk);
     turb = tn(vec2(atan(ray.x, -ray.z) * 0.7, ray.y * 1.6) + 0.5);
@@ -2925,6 +2947,19 @@ void main() {
     C = mix(C, fHaze, fFog);
     fog = max(fog, fFog * 0.75);
     turb = texture(tCell, wp * (1.0 / 15.0) + 0.7).a * 0.65 + texture(tCell, wp * (1.0 / 4.0) + 0.1).a * 0.35;
+    // the edge of the survey: walking out toward it, the ground past the last surveyed line was never painted,
+    // only pencilled: bare paper, a ruled grid, the outlines left in graphite
+    if (uEdge > 0.0) {
+      float eD = max(abs(wp.x), abs(wp.z)) + (tn(wp.xz * 0.013 + 2.7) - 0.5) * 60.0;
+      eK = smoothstep(uLimit - 150.0, uLimit + 20.0, eD) * uEdge;
+      if (eK > 0.0) {
+        vec2 gq = wp.xz / 12.5; vec2 gw = max(fwidth(gq), vec2(1e-4));
+        vec2 gl = 1.0 - smoothstep(gw * 0.6, gw * 1.6, abs(fract(gq + 0.5) - 0.5));
+        eGrid = max(gl.x, gl.y) * (1.0 - smoothstep(0.08, 0.3, max(gw.x, gw.y))) * smoothstep(0.35, 0.9, eK);
+        C = mix(C, vec3(1.0), eK);
+        fogD *= 1.0 - eK;
+      }
+    }
   }
   // pigment pools at the borders of each wash, settles unevenly, and sinks into the paper's tooth
   vec4 bl = texture(tBlur, uvW);
@@ -2984,8 +3019,9 @@ void main() {
   inkA = max(inkA, mInk * 0.85 * mix(1.0, 0.55, lost));
   inkA = max(inkA, cInk);
   inkA *= 1.0 - fog * 0.9;
+  inkA = max(inkA * mix(1.0, 0.5, eK), eGrid * 0.32);
   inkA *= lineM;
-  vec3 inkC = uInk * (0.9 + 0.2 * nFine.z);
+  vec3 inkC = mix(uInk * (0.9 + 0.2 * nFine.z), vec3(0.42, 0.42, 0.45), eK);
   col = mix(col, inkC * paper, clamp(inkA, 0.0, 1.0) * 0.92);
   oCol = vec4(col, 1.0);
 }
@@ -3314,6 +3350,7 @@ function buildPost() {
     uSunDir: R.U.uSunDir, uHazeCool: { value: new THREE.Vector3() }, uHazeWarm: { value: new THREE.Vector3() },
     uMist: { value: new THREE.Vector4() }, uPaper: { value: new THREE.Vector3() }, uInk: { value: new THREE.Vector3() }, uFrame: { value: 1 }, uDebug: { value: 0 },
     tRays: { value: null }, uShaft: { value: 1 }, tMask: { value: R.tex.mask }, uForestCam: { value: 0 }, uWH: { value: WH }, uViewProj: { value: new THREE.Matrix4() },
+    uEdge: { value: 0 }, uLimit: { value: PLAY_LIMIT },
   });
   R.mats.tshadow = post(TSHADOW_FRAG, { uHeight: { value: R.tex.height }, uSunDir: { value: new THREE.Vector3() } });
   R.raysScene = fsScene(R.mats.rays);
@@ -3435,6 +3472,8 @@ function renderFrame(time) {
   R.U.uTime.value = time;
   const cam = R.camera; cam.updateMatrixWorld(true);
   updateTerrain(cam.position);
+  // how near the eye is to the edge of the survey, where the painting gives out
+  R.mats.comp.uniforms.uEdge.value = smoothstep(PLAY_LIMIT - 340, PLAY_LIMIT - 90, Math.max(Math.abs(cam.position.x), Math.abs(cam.position.z)));
   if (R.U.uShadowParams.value.z > 0.5) {
     const fw = _v1.set(0, 0, -1).applyQuaternion(cam.quaternion); fw.y = 0; if (fw.lengthSq() > 1e-6) fw.normalize();
     updateShadowCamera(_v5.copy(cam.position).addScaledVector(fw, R.shadowR * 0.45));
@@ -4279,6 +4318,7 @@ function colRamp(x0, z0, y0, x1, z1, y1, w) {
 }
 function colRing(x, z, rin, rout, y, y0) { addCollider({ type: 'ring', x, z, rin, rout, y, y0 }); }
 function colSeg(ax, az, bx, bz, y0, y1) { addCollider({ type: 'seg', ax, az, bx, bz, y0, y1 }); }
+function colSurf(surf) { PHYS.list[PHYS.list.length - 1].surf = surf; } // the footstep sound of the collider just added
 function colPoly(pts, y0, y1) { for (let i = 0; i < pts.length - 1; i++) colSeg(pts[i][0], pts[i][2], pts[i + 1][0], pts[i + 1][2], y0, y1); }
 
 // a site is one merged mesh
@@ -4319,7 +4359,18 @@ function deckRing(b, cx, cz, y, rin, rout, gaps = [], opts = {}) {
 function stairFlight(b, x0, z0, y0, x1, z1, y1, w = 1.2, opts = {}) {
   b.part(cc(opts.color || 'wood'), CLS.WOOD, 0);
   b.stairs(x0, y0, z0, x1, y1, z1, w, { solid: opts.solid });
-  colRamp(x0, z0, y0, x1, z1, y1, w);
+  colRamp(x0, z0, y0, x1, z1, y1, w); if (/stone|sand|concrete/.test(opts.color || '')) colSurf('stone');
+  if (opts.cheeks) {
+    // a low wall up each side with its coping on the line of the nosings: the flight reads as a stair from any
+    // side, and its own side faces (a sawtooth of light grey) are hidden
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz), dy = y1 - y0, c = 0.45, t = 0.3;
+    const lo = Math.min(0, dy) - (opts.base || 0.4);
+    b.part(cc(opts.cheekColor || 'sand'), CLS.BUILD, PAT.BLOCK); b.pushTR(x0, y0, z0, Math.atan2(-dz, dx));
+    for (const s of [-1, 1]) { b.push(new THREE.Matrix4().makeTranslation(0, 0, s * (w / 2 + t / 2))); b.slab([[0, lo], [L, lo], [L, dy + c], [0, c]], t); b.pop(); }
+    b.pop();
+    const nx = -dz / L, nz = dx / L;
+    for (const s of [-1, 1]) { const o = s * (w / 2 + t / 2); colSeg(x0 + nx * o, z0 + nz * o, x1 + nx * o, z1 + nz * o, Math.min(y0, y1) - 1, Math.max(y0, y1) + 1); }
+  }
   if (opts.rail !== false) {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz); const nx = -dz / L, nz = dx / L;
     b.part(cc('woodDark'), CLS.WOOD, 0);
@@ -5297,18 +5348,22 @@ function buildRing(t) {
   b.part(cc('sand'), CLS.BUILD, PAT.BLOCK);
   b.cyl(x, g.min - 2, z, Rw, wallTop - g.min + 2, 64, { top: false });
   b.part(cc('stone'), CLS.BUILD, 0); b.ring(x, wallTop, z, Rw - 3.2, Rw + 0.2, 0.4, 64);
-  colRing(x, z, Rw - 3.2, Rw + 0.2, wallTop, g.min - 2);
-  b.part(cc('sand'), CLS.BUILD, PAT.BLOCK); b.cyl(x, gy - 1, z, Rw - 3.2, wallTop - gy + 1 - 0.4, 64, { top: false, inner: true });
+  colRing(x, z, Rw - 3.2, Rw + 0.2, wallTop, g.min - 2); colSurf('stone');
+  b.part(cc('sand'), CLS.BUILD, PAT.BLOCK); b.cyl(x, gy - 1, z, Rw - 3.2, wallTop - gy + 1, 64, { top: false, inner: true });
   const levels = [[Rw - 3.2, Rw - 9, gy + 2.0, 'leaf'], [Rw - 9, Rw - 15, gy + 1.2, 'leaf'], [Rw - 15, Rw - 18.5, gy + 0.7, 'stone']];
   for (const [ro, ri, y, mat] of levels) {
-    b.part(cc(mat), mat === 'leaf' ? CLS.FOLIAGE : CLS.BUILD, 0, 0.0); b.ring(x, y, z, ri, ro, 0.3, 56);
-    b.part(cc('sand'), CLS.BUILD, PAT.BLOCK); b.cyl(x, gy - 1, z, ri, y - gy + 1 - 0.3, 56, { top: false, inner: true });
-    colRing(x, z, ri, ro, y, gy - 1);
+    b.part(cc(mat), mat === 'leaf' ? CLS.GRASS : CLS.BUILD, mat === 'leaf' ? 0 : PAT.BLOCK, 0.0); b.ring(x, y, z, ri, ro, 0.3, 56);
+    b.part(cc('sand'), CLS.BUILD, PAT.BLOCK); b.cyl(x, gy - 1, z, ri, y - gy + 1, 56, { top: false, inner: true });
+    colRing(x, z, ri, ro, y, gy - 1); colSurf(mat === 'leaf' ? 'grass' : 'stone');
   }
+  // a pale coping round the paddy, so the paved rim reads as dry ground and the water as lower than it
+  b.part(cc('cream'), CLS.BUILD, 0); b.ring(x, gy + 0.79, z, Rw - 18.5, Rw - 18.0, 0.09, 72);
+  b.cyl(x, gy + 0.7, z, Rw - 18.5, 0.09, 72, { top: false, inner: true, lines: false });
+  colRing(x, z, Rw - 18.5, Rw - 18.0, gy + 0.79); colSurf('stone');
   // inner walls between terraces block walking off the edge into the pool
-  const poolY = gy + 0.45; const poolR = Rw - 18.5;
+  const poolY = gy + 0.38; const poolR = Rw - 18.5;
   BUILT.pools.push({ type: 'disc', x, z, y: poolY, r: poolR + 0.05, depth: 1.0 });
-  colCyl(x, z, poolR, gy - 2, poolY - 0.14, true, false); // paddy water: shallow enough to step out of
+  colCyl(x, z, poolR, gy - 2, poolY - 0.08, true, false); colSurf('water'); // paddy water: shallow enough to wade, and to step out of onto the rim
   b.part(cc('green'), CLS.FOLIAGE, 0, 0.0);
   for (let k = 0; k < 40; k++) { const a = rng.range(0, TAU), d = rng.range(2, poolR - 1.5); b.cyl(x + Math.cos(a) * d, poolY + 0.02, z + Math.sin(a) * d, rng.range(0.35, 0.7), 0.04, 8); }
   // arched bridge across the pool between the stone rims
@@ -5319,8 +5374,23 @@ function buildRing(t) {
     const y0 = yEnd + (1 - s0 * s0) * (yTop - yEnd), y1 = yEnd + (1 - s1 * s1) * (yTop - yEnd);
     const ax = x + ux * s0 * span, az = z + uz * s0 * span, bx = x + ux * s1 * span, bz = z + uz * s1 * span;
     b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.push(new THREE.Matrix4().makeRotationY(Math.atan2(-(bz - az), bx - ax)).multiply(new THREE.Matrix4().makeRotationZ(Math.atan2(y1 - y0, Math.hypot(bx - ax, bz - az)))).setPosition((ax + bx) / 2, (y0 + y1) / 2, (az + bz) / 2));
-    b.boxY(0, -0.6, 0, Math.hypot(bx - ax, bz - az, y1 - y0) + 0.05, 0.6, 2.6); b.pop();
-    colRamp(ax, az, y0, bx, bz, y1, 2.6);
+    const segL = Math.hypot(bx - ax, bz - az, y1 - y0) + 0.05;
+    b.boxY(0, -0.6, 0, segL, 0.6, 2.6);
+    // a low parapet along each side, so it reads as a bridge and nobody walks off it into the paddy
+    b.part(cc('stone'), CLS.BUILD, 0); for (const s of [-1, 1]) b.boxY(0, 0, s * 1.19, segL, 0.55, 0.22);
+    b.pop();
+    colRamp(ax, az, y0, bx, bz, y1, 2.6); colSurf('stone');
+    for (const s of [-1, 1]) { const ox = -uz * s * 1.19, oz = ux * s * 1.19; colSeg(ax + ox, az + oz, bx + ox, bz + oz, Math.min(y0, y1) - 0.2, Math.max(y0, y1) + 0.6); }
+  }
+  // piers down into the paddy, so the deck stands on something and does not hang over the water
+  for (const s of [-0.64, -0.22, 0.22, 0.64]) {
+    const px = x + ux * s * span, pz = z + uz * s * span; const yd = yEnd + (1 - s * s) * (yTop - yEnd) - 0.55;
+    b.part(cc('stone'), CLS.BUILD, PAT.BLOCK); b.pushTR(px, 0, pz, -bAng);
+    b.boxY(0, gy - 1, 0, 1.1, yd - gy + 1, 2.3);
+    // cutwaters: the pier's ends come to a point, the way a bridge stands in moving water
+    b.prism([[0.55, 1.15], [0, 1.95], [-0.55, 1.15]], gy - 1, poolY + 0.5); b.prism([[-0.55, -1.15], [0, -1.95], [0.55, -1.15]], gy - 1, poolY + 0.5);
+    b.pop();
+    colBox(px, pz, 1.1, 3.6, -bAng, gy - 2, yd, false);
   }
   // stairs: outside up to the walkway, walkway down through the terraces. one flight meets every trail that
   // arrives, and the rest are spaced round so no side is far from a way in
@@ -5335,17 +5405,33 @@ function buildRing(t) {
   { const wt = World.towns.find((q) => q.id === t.id); if (wt) wt.ringInfo = { gy, wallTop, Rw, angs: angs.slice() }; }
   for (const a of angs) {
     const ca = Math.cos(a), sa = Math.sin(a);
-    stairFlight(b, x + ca * (Rw + 7.5), z + sa * (Rw + 7.5), heightAt(x + ca * (Rw + 7.5), z + sa * (Rw + 7.5)), x + ca * (Rw + 0.2), z + sa * (Rw + 0.2), wallTop, 2.4, { solid: true, color: 'sand', rail: false, base: 3 });
-    stairFlight(b, x + ca * (Rw - 3.4), z + sa * (Rw - 3.4), wallTop, x + ca * (Rw - 5.6), z + sa * (Rw - 5.6), gy + 2.0, 2.0, { solid: true, color: 'stone', rail: false, base: 2 });
-    stairFlight(b, x + ca * (Rw - 9.2), z + sa * (Rw - 9.2), gy + 2.0, x + ca * (Rw - 10.6), z + sa * (Rw - 10.6), gy + 1.2, 2.0, { solid: true, color: 'stone', rail: false, base: 2 });
-    stairFlight(b, x + ca * (Rw - 15.2), z + sa * (Rw - 15.2), gy + 1.2, x + ca * (Rw - 16.2), z + sa * (Rw - 16.2), gy + 0.7, 2.0, { solid: true, color: 'stone', rail: false, base: 2 });
+    stairFlight(b, x + ca * (Rw + 7.5), z + sa * (Rw + 7.5), heightAt(x + ca * (Rw + 7.5), z + sa * (Rw + 7.5)), x + ca * (Rw + 0.2), z + sa * (Rw + 0.2), wallTop, 2.4, { solid: true, color: 'sand', rail: false, base: 3, cheeks: true, cheekColor: 'stone' });
+    // each flight starts right at the edge it drops from, so there is no slot between the wall and the top step
+    stairFlight(b, x + ca * (Rw - 3.2), z + sa * (Rw - 3.2), wallTop, x + ca * (Rw - 5.6), z + sa * (Rw - 5.6), gy + 2.0, 2.0, { solid: true, color: 'stone', rail: false, base: 2, cheeks: true });
+    stairFlight(b, x + ca * (Rw - 9.0), z + sa * (Rw - 9.0), gy + 2.0, x + ca * (Rw - 10.6), z + sa * (Rw - 10.6), gy + 1.2, 2.0, { solid: true, color: 'stone', rail: false, base: 2, cheeks: true });
+    stairFlight(b, x + ca * (Rw - 15.0), z + sa * (Rw - 15.0), gy + 1.2, x + ca * (Rw - 16.2), z + sa * (Rw - 16.2), gy + 0.7, 2.0, { solid: true, color: 'stone', rail: false, base: 2, cheeks: true });
+    // a path of laid flags across each lawn from the foot of one flight to the head of the next
+    for (const [r0, r1, y] of [[Rw - 5.6, Rw - 9.0, gy + 2.0], [Rw - 10.6, Rw - 15.0, gy + 1.2]]) {
+      const nf = Math.max(2, Math.round((r0 - r1) / 1.0)); const L = (r0 - r1) / nf;
+      b.part(cc('stone'), CLS.BUILD, 0);
+      for (let k = 0; k < nf; k++) {
+        const rm = r0 - L * (k + 0.5); const fx = x + ca * rm, fz = z + sa * rm; const tw = rng.range(-0.04, 0.04);
+        const ox = rng.range(-0.03, 0.03), oz = rng.range(-0.06, 0.06), fl = (L - 0.13) / 2, fw = rng.range(1.75, 1.95) / 2;
+        b.pushTR(fx, y, fz, -a + tw); b.boxY(ox, 0, oz, fl * 2, 0.07, fw * 2);
+        b.polyLine([[ox - fl, 0.07, oz - fw], [ox + fl, 0.07, oz - fw], [ox + fl, 0.07, oz + fw], [ox - fl, 0.07, oz + fw]], true); b.pop();
+        colBox(fx, fz, L, 1.9, -a, y - 0.2, y + 0.07, true, false); colSurf('stone');
+      }
+    }
   }
   for (let k = 0; k < 3; k++) {
-    const a = k * (TAU / 3) + 1.0; const px = x + Math.cos(a) * (Rw - 1.6), pz = z + Math.sin(a) * (Rw - 1.6);
+    let a = k * (TAU / 3) + 1.0;
+    // a pavilion never stands across the head of a stair
+    for (const q of angs) if (Math.abs(wrapAngle(a - q)) < 0.16) a = q + Math.sign(wrapAngle(a - q) || 1) * 0.16;
+    const px = x + Math.cos(a) * (Rw - 1.6), pz = z + Math.sin(a) * (Rw - 1.6);
     b.part(cc('cream'), CLS.BUILD, 0); for (let c = 0; c < 6; c++) { const ca = (c / 6) * TAU; b.rod(px + Math.cos(ca) * 1.3, wallTop, pz + Math.sin(ca) * 1.3, px + Math.cos(ca) * 1.3, wallTop + 2.4, pz + Math.sin(ca) * 1.3, 0.09, 6); colCyl(px + Math.cos(ca) * 1.3, pz + Math.sin(ca) * 1.3, 0.12, wallTop, wallTop + 2.4, false); }
     b.part(cc('glass'), CLS.BUILD, 9); b.geodome(px, wallTop + 2.4, pz, 1.8, 1, 0.8);
   }
-  for (let k = 0; k < 22; k++) { const a = rng.range(0, TAU); const lv = levels[k % 2]; const d = rng.range(lv[1] + 1, lv[0] - 1); PLANT.push([rng.chance(0.7) ? 'decid' : 'birch', x + Math.cos(a) * d, z + Math.sin(a) * d, rng.range(4, 7), rng.pick(rng.chance(0.2) ? PALETTE.autumn : PALETTE.decid), lv[2]]); }
+  for (let k = 0; k < 22; k++) { const a = rng.range(0, TAU); const lv = levels[k % 2]; const d = rng.range(lv[1] + 1, lv[0] - 1); if (angs.some((q) => Math.abs(wrapAngle(q - a)) * d < 3.2) || Math.abs(wrapAngle(a - bAng)) * d < 2.5 || Math.abs(wrapAngle(a - bAng - Math.PI)) * d < 2.5) continue; PLANT.push([rng.chance(0.7) ? 'decid' : 'birch', x + Math.cos(a) * d, z + Math.sin(a) * d, rng.range(4, 7), rng.pick(rng.chance(0.2) ? PALETTE.autumn : PALETTE.decid), lv[2]]); }
   TREE_BLOCK.push([x, z, Rw + 4]);
   pencil(x + ux * 6, poolY + 1.0, z + uz * 6, 'rice in the low pools', 150, 8);
   for (const [a, rr, yy, pose] of [[2.1, Rw - 1.6, wallTop, 1], [3.6, Rw - 1.6, wallTop, 0], [5.0, Rw - 6, gy + 2.0, 3], [0.9, Rw - 12, gy + 1.2, 3], [4.3, Rw - 12, gy + 1.2, 0]]) fig(pose, x + Math.cos(a) * rr, yy, z + Math.sin(a) * rr, Math.atan2(-Math.cos(a), -Math.sin(a)) + (pose === 1 ? Math.PI / 2 : 0));
@@ -5407,11 +5493,28 @@ function buildTowns() {
   buildSpool(T.spool); buildFerrow(T.ferrow); buildGlasshouse(T.glasshouse); buildVane(T.vane); buildRing(T.ring);
   for (const h of World.homesteads) buildHomestead(h);
   buildFootbridges();
+  // pencilled along the edge of the survey, where the painting stops
+  for (let k = -4; k <= 4; k++) for (const [sx, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const u = k * 420 + (sx + sz * 2) * 37; const L = PLAY_LIMIT + 8;
+    const x = sx ? sx * L : u, z = sz ? sz * L : u; pencil(x, heightAt(x, z) + 4.5, z, 'edge of the survey', 170, 6);
+  }
   return look;
 }
+// the paths out of Kettle Hill, away from the towns at either end: no figure stands within sight of them
+function firstPathPts() {
+  const out = [];
+  for (const tr of World.trails) {
+    if (!tr.ends || !tr.ends.includes('lookout')) continue;
+    const towns = tr.ends.map((id) => TOWN_DEFS.find((t) => t.id === id));
+    for (let i = 0; i < tr.pts.length; i += 4) { const p = tr.pts[i]; if (towns.every((t) => dist2(p.x, p.z, t.x, t.z) > t.r * 1.1)) out.push(p); }
+  }
+  return out;
+}
 function addFigureMeshes() {
+  const fp = firstPathPts();
+  const keep = FIGS.filter((f) => !fp.some((p) => dist2(p.x, p.z, f.x, f.z) < 60));
   for (let pose = 0; pose < 4; pose++) {
-    const list = FIGS.filter((f) => f.pose === pose); if (!list.length) continue;
+    const list = keep.filter((f) => f.pose === pose); if (!list.length) continue;
     const m = new THREE.InstancedMesh(figureGeometry(pose), R.mats.obj, list.length);
     m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(list.length * 3), 3);
     const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
@@ -5990,7 +6093,7 @@ function stepPlayer(dt) {
     // refuse steps onto something much higher than we can climb (walls without colliders, e.g. cliffs are fine)
     const p = { x: nx, z: nz };
     for (let it = 0; it < 3; it++) resolveSolids(p, P.radius, P.pos.y + P.stepUp * 0.9, P.pos.y + P.height);
-    const lim = PLAY_LIMIT; p.x = clamp(p.x, -lim, lim); p.z = clamp(p.z, -lim, lim);
+    const lim = PLAY_LIMIT + 70; p.x = clamp(p.x, -lim, lim); p.z = clamp(p.z, -lim, lim); // past PLAY_LIMIT the page is blank, and edgeTick takes you home
     P.travelled += Math.hypot(p.x - P.pos.x, p.z - P.pos.z);
     P.pos.x = p.x; P.pos.z = p.z;
   }
@@ -6011,6 +6114,27 @@ function stepPlayer(dt) {
     const prev = P.bobPhase; P.bobPhase += dt * 5.95 * Math.pow(v / P.walk, 0.55);
     if (Math.floor(prev / Math.PI) !== Math.floor(P.bobPhase / Math.PI)) footstep(P.surf === 'ground' ? groundSurface(P.pos.x, P.pos.z) : P.surf, v / P.walk);
   }
+}
+// the edge of the survey: walk on into the blank paper past it and the page turns white, and you come back in at
+// the origin of the survey on Kettle Hill
+const EDGE = { t: -1, moved: false };
+function edgeTick(dt) {
+  if (EDGE.t < 0) {
+    if (Math.max(Math.abs(PLAYER.pos.x), Math.abs(PLAYER.pos.z)) > PLAY_LIMIT + 24 && !PLAYER.fly) { EDGE.t = 0; EDGE.moved = false; fadePaper(true, 1.3); }
+    return;
+  }
+  EDGE.t += dt;
+  if (EDGE.t > 1.5 && !EDGE.moved) {
+    EDGE.moved = true;
+    const H = (World.towns.find((q) => q.id === 'lookout') || {}).house;
+    if (H) {
+      const r = H.Ro + 3.4, x = H.x + Math.cos(H.aD) * r, z = H.z + Math.sin(H.aD) * r;
+      PLAYER.pos.set(x, supportHeight(x, z, 1e4, 0) + 0.02, z); PLAYER.vel.set(0, 0, 0); PLAYER.yaw = Math.atan2(-Math.cos(H.aD), -Math.sin(H.aD)); PLAYER.pitch = -0.05; PLAYER.onGround = true;
+    } else startPlayerAtSpawn();
+    fadePaper(false, 2.4);
+    showToast('Past the edge of the survey the page is blank. You come back in at Kettle Hill.', 5);
+  }
+  if (EDGE.t > 4.2) EDGE.t = -1;
 }
 function groundSurface(x, z) { if (pathAt(x, z) > 0.45) return 'gravel'; if (maskAt(x, z, 0) > 0.5) return 'forest'; return 'grass'; }
 function applyLook() {
@@ -9287,6 +9411,8 @@ function lifeInit() {
   // ---- people: one going the whole way along each trail, one near each end of it ----
   for (const tr of World.trails) {
     if (tr.kind !== 'trail' || tr.pts.length < 40) continue;
+    // nobody walks the paths out of Kettle Hill: the first person you see should come as a surprise
+    if (tr.ends && tr.ends.includes('lookout')) continue;
     const L = (tr.pts.length - 1) * 3;
     // stop short of each town's middle, where the trail ends among the buildings
     const endIn = (p) => { for (const tw of World.towns) if (dist2(p.x, p.z, tw.x, tw.z) < tw.r * 0.5) return tw; return null; };
@@ -9381,6 +9507,12 @@ function lifeTick(dt) {
     const fl = b.fl; const th = fl.th + b.ox * 0.004;
     const cx = fl.hx + Math.cos(th) * fl.R, cz = fl.hz + Math.sin(th) * fl.R * fl.ry, cy = fl.hy + Math.sin(th * 1.7 + b.gl) * 3;
     const x = cx + b.ox + Math.sin(t * 0.31 + b.ph) * 2.5, y = cy + b.oy + Math.sin(t * 0.53 + b.ph * 2) * 1.4, z = cz + b.oz + Math.cos(t * 0.27 + b.ph) * 2.5;
+    // a bird with ground between it and the eye is not drawn at all. the strokes are only tested against the
+    // drawn depth with some slack, and the distant ground is drawn coarser than it is, so birds behind a
+    // ridge could show through its crest
+    { const ddx = x - cam.x, ddy = y - cam.y, ddz = z - cam.z; let hid = false;
+      for (let k = 1; k < 12 && !hid; k++) { const u = k / 12; if (heightLin(cam.x + ddx * u, cam.z + ddz * u) > cam.y + ddy * u + 0.4) hid = true; }
+      if (hid) { for (let k = 0; k < 4; k++) put(x, y, z, x, y, z); continue; } }
     // drawn the way a sketch draws a bird: the wings always spread across the page, whichever way it flies
     const cdx = x - cam.x, cdz = z - cam.z; const cl = Math.hypot(cdx, cdz) || 1;
     const rx = cdz / cl, rz = -cdx / cl, fx = 0, fz = 0;
@@ -9609,7 +9741,7 @@ function loop(now) {
   stepTod(dt);
   const cam = R.camera;
   if (UI.state === 'play') {
-    applyLook(); updatePlayer(dt); if (PLAYER.rise !== undefined && PLAYER.rise < 1) PLAYER.rise = Math.min(1, PLAYER.rise + dt / 3.4); cameraFromPlayer(cam, UI.settings.bob);
+    applyLook(); updatePlayer(dt); edgeTick(dt); if (PLAYER.rise !== undefined && PLAYER.rise < 1) PLAYER.rise = Math.min(1, PLAYER.rise + dt / 3.4); cameraFromPlayer(cam, UI.settings.bob);
     checkDiscovery(dt);
   } else if (UI.state === 'title') {
     const s = G.deck || G.spawn; const t = G.time * 0.05;
@@ -9638,6 +9770,44 @@ window.__U = {
     placeCamera(cx, cz, yaw, pitch, 1.7); R.snapFog = true; return m.num + ' ' + m.name;
   },
   stepsInfo() { return JSON.stringify({ on: AUDIO.on, state: AUDIO.ctx && AUDIO.ctx.state, banks: Object.keys(STEPS.bank).map((k) => k + ':' + STEPS.bank[k].length), bus: !!STEPS.bus }); },
+  birdsVis(v = true) { if (LIFE.bl) LIFE.bl.m.visible = v; return v; },
+  // per flock: how far it flies above the highest ground anywhere round its loop (negative: through a hill)
+  flockClear() { return LIFE.flocks.map((f, i) => { let lo = 1e9; for (let k = 0; k < 72; k++) { const th = (k / 72) * TAU; for (const [ox, oz] of [[0, 0], [11, 11], [-11, 11], [11, -11], [-11, -11]]) lo = Math.min(lo, f.hy - 4 - heightAt(f.hx + Math.cos(th) * f.R + ox, f.hz + Math.sin(th) * f.R * f.ry + oz)); } return [i, Math.round(f.hx), Math.round(f.hz), Math.round(f.R), +lo.toFixed(1)]; }); },
+  // stand where flock k is just behind a rise in the ground, looking at it
+  birdHidden(k = 0, dMin = 220, dMax = 650, oMin = 4, oMax = 30) {
+    const f = LIFE.flocks[k]; if (!f) return 'none';
+    const fx = f.hx + Math.cos(f.th) * f.R, fz = f.hz + Math.sin(f.th) * f.R * f.ry, fy = f.hy;
+    let best = null;
+    for (let d = dMin; d <= dMax; d += 40) for (let a = 0; a < 72; a++) {
+      const ang = (a / 72) * TAU; const cx = fx + Math.cos(ang) * d, cz = fz + Math.sin(ang) * d;
+      if (Math.abs(cx) > 1800 || Math.abs(cz) > 1800) continue;
+      const cy = heightAt(cx, cz) + 1.7; let over = -1e9;
+      for (let s = 0.04; s < 0.96; s += 0.01) { const x = cx + (fx - cx) * s, z = cz + (fz - cz) * s, y = cy + (fy - cy) * s; over = Math.max(over, heightAt(x, z) - y); }
+      if (over > oMin && over < oMax && (!best || over < best.over)) best = { cx, cz, cy, over, d };
+    }
+    if (!best) return 'none';
+    placeCamera(best.cx, best.cz, Math.atan2(-(fx - best.cx), -(fz - best.cz)), Math.atan2(fy - best.cy, best.d) - 0.04, 0, best.cy); R.snapFog = true;
+    return [Math.round(best.d), +best.over.toFixed(1), Math.round(fy - best.cy)];
+  },
+  // the nearest tree of a type (index into TREE_TYPES) to (x, z), at least dMin away: [x, base y, z, height, width]
+  nearTree(t = 1, x = 0, z = 0, dMin = 0) {
+    let best = null, bd = 1e9;
+    for (const ch of FOREST.chunks) { if (Math.abs(ch.x - x) > 700 || Math.abs(ch.z - z) > 700) continue; const D = ch.types[t]; for (let k = 0; k < D.n; k++) { const o = k * 16; const tx = D.mats[o + 12], tz = D.mats[o + 14]; const d = Math.hypot(tx - x, tz - z); if (d >= dMin && d < bd) { bd = d; const sx = Math.hypot(D.mats[o], D.mats[o + 1], D.mats[o + 2]), sy = Math.hypot(D.mats[o + 4], D.mats[o + 5], D.mats[o + 6]); best = [+tx.toFixed(1), +D.mats[o + 13].toFixed(1), +tz.toFixed(1), +sy.toFixed(1), +sx.toFixed(1)]; } } }
+    return best;
+  },
+  // tree instances whose crowns lie near the ray through screen pixel (px, py): [type, lod-free x, y, z, height, distance along ray, miss]
+  pickTree(px, py, w = 1280, h = 720, miss = 8) {
+    const ndc = new THREE.Vector3((px / w) * 2 - 1, -(py / h) * 2 + 1, 0.5).unproject(R.camera); const o = R.camera.position; const d = ndc.sub(o).normalize();
+    const out = [];
+    for (const ch of FOREST.chunks) { if (Math.hypot(ch.x - o.x, ch.z - o.z) > 1800) continue; for (let t = 0; t < TREE_TYPES.length; t++) { const D = ch.types[t]; for (let k = 0; k < D.n; k++) { const q = k * 16; const ht = Math.hypot(D.mats[q + 4], D.mats[q + 5], D.mats[q + 6]); const c = new THREE.Vector3(D.mats[q + 12], D.mats[q + 13] + ht * 0.75, D.mats[q + 14]); const v = c.clone().sub(o); const s = v.dot(d); if (s < 0) continue; const m = v.sub(d.clone().multiplyScalar(s)).length(); if (m < miss) out.push([TREE_TYPES[t], Math.round(c.x), Math.round(c.y), Math.round(c.z), +ht.toFixed(1), Math.round(s), +m.toFixed(1)]); } } }
+    return out.sort((a, b) => a[5] - b[5]).slice(0, 12);
+  },
+  // trees standing well above (or below) the ground under them: [type, x, base above ground, z, height]
+  treesOff(dy = 3) {
+    const out = [];
+    for (const ch of FOREST.chunks) for (let t = 0; t < TREE_TYPES.length; t++) { const D = ch.types[t]; for (let k = 0; k < D.n; k++) { const o = k * 16; const x = D.mats[o + 12], y = D.mats[o + 13], z = D.mats[o + 14]; const g = heightAt(x, z); if (Math.abs(y - g) > dy) out.push([TREE_TYPES[t], Math.round(x), +(y - g).toFixed(1), Math.round(z), +Math.hypot(D.mats[o + 4], D.mats[o + 5], D.mats[o + 6]).toFixed(1)]); } }
+    return out;
+  },
   // hide or show the trees and grass (to see built things clearly in tests)
   forestVis(v = true) { for (const t of TREE_TYPES) for (let l = 0; l < 3; l++) { const m = FOREST.meshes[t][l]; if (m) m.visible = v; } for (const k in GRASS.meshes) GRASS.meshes[k].visible = v; return v; },
   // look at a monument from the air: d metres out on a bearing (from its front), up metres over the ground there, aiming ty up its middle
@@ -9746,6 +9916,13 @@ window.__U = {
   // let the radio run until it has nothing left to say, answering every question with choice p
   drain(maxSec = 120, p = 0, dt = 0.25) { const said = []; let last = ''; for (let t = 0; t < maxSec; t += dt) { storyTick(dt); const ln = $('radio').querySelector('.line').textContent; const who = $('radio').querySelector('.who').textContent; if (RAD.cur && ln !== last && ln !== '\u2026') { said.push(who + ': ' + ln); last = ln; } if (RAD.choice) { const c = RAD.choice.st.c; said.push('  [' + c.map((q) => q[0]).join(' | ') + '] -> ' + (Math.min(p, c.length - 1) + 1)); pickChoice(Math.min(p, c.length - 1)); } if (!RAD.cur && !RAD.queue.length && !RAD.choice && t > 4) break; } return said; },
   key(code) { window.dispatchEvent(new KeyboardEvent('keydown', { code })); window.dispatchEvent(new KeyboardEvent('keyup', { code })); return UI.state; },
+  // walk from (x, z) facing yaw with keys held for sec seconds; where it went, every half second: [x, feet y, z, surface]
+  walk(x, z, yaw, sec = 5, top = 1e4, keys = ['KeyW']) {
+    this.stand(x, z, yaw, 0, top); INPUT.keys.clear(); for (const k of keys) INPUT.keys.add(k);
+    const out = []; const dt = 1 / 30;
+    for (let n = 0; n * dt < sec; n++) { stepPlayer(dt); edgeTick(dt); if (n % 15 === 14) out.push([+PLAYER.pos.x.toFixed(1), +PLAYER.pos.y.toFixed(2), +PLAYER.pos.z.toFixed(1), PLAYER.surf]); }
+    INPUT.keys.clear(); cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true); return out;
+  },
   stand(x, z, yaw = 0, pitch = 0, top = 1e4) { const y = supportHeight(x, z, top, 0); PLAYER.pos.set(x, y + 0.02, z); PLAYER.vel.set(0, 0, 0); PLAYER.yaw = yaw; PLAYER.pitch = pitch; PLAYER.onGround = true; cameraFromPlayer(R.camera, false); R.camera.updateMatrixWorld(true); updateForest(R.camera.position, yaw, true); updateRocks(R.camera.position, true); updateGrass(R.camera.position, true); R.snapFog = true; return [+x.toFixed(1), +(y).toFixed(2), +z.toFixed(1)]; },
   // stand so you're looking at an interactable from d metres (by index or by label text)
   face(match, d = 1.6, dy = 0) {
