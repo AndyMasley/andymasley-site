@@ -37,7 +37,7 @@
    or wants attention. A building's kind shows as a small coloured hex. Names (the town, its buildings, its chapters)
    are set in Fraunces; figures and labels in Jost. Paper is kept for what the valley writes: letters and the chronicle. */
 :root {
-  --glass: rgba(21, 31, 27, 0.92);      /* a piece docked at the edge of the screen */
+  --glass: rgba(24, 34, 30, 0.95);      /* a piece docked at the edge of the screen: all but solid, so its words read over anything */
   --glass-hi: #1b2722;                  /* a piece that floats over the others: menus, tips, toasts */
   --card-bg: #18221e;                   /* the card for what is picked, solid so its header and foot can match it */
   --prog: rgba(244, 237, 221, 0.72);    /* progress, kept apart from the honey of things to press */
@@ -58,7 +58,7 @@
   /* paper: letters and the chronicle */
   --paper: #f2ead7; --paper-2: #e6dcc4; --paper-ink: #2b2a22; --paper-ink-2: #5d594b; --paper-rule: #d6caad;
   /* each kind of building's colour, light enough to read on the glass */
-  --k-logistics: #74bde6; --k-gather: #95d171; --k-make: #e8a668; --k-power: #f2cf55; --k-city: #64d1b9; --k-civic: #baa2ec; --k-weather: #88bad5; --k-great: #f39579;
+  --k-logistics: #74bde6; --k-gather: #95d171; --k-make: #e8a668; --k-power: #f2cf55; --k-city: #64d1b9; --k-civic: #baa2ec; --k-weather: #9ea8ec; --k-great: #e58db4;
   /* the names the scripts and older rules still use */
   --ink: var(--tx); --ink-2: var(--tx-2); --ink-3: var(--tx-3); --card: #1b2622; --card-2: var(--surf-2); --card-3: var(--surf-3); --rule: var(--line);
   --good: var(--leaf); --warn: var(--honey); --bad: var(--ember); --info: var(--sky);
@@ -82,17 +82,19 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 /* a name: the town, a building, a chapter */
 .townname, .phead h3, .goals h2, .shead h2, .tour .th b, .fanfare h3, .techcard h3, .treehead .cur b, .tiercard h4 { font-family: var(--story); font-variation-settings: "SOFT" 60, "opsz" 24; letter-spacing: 0.005em; }
 /* chosen or switched on: one look everywhere (solid honey is kept for the one main action on a surface) */
-.speed button.on, .bandbtn.on, .bandbtn.lit, .seg button.on, .ltab.on { background: var(--honey-wash); color: var(--honey-2); box-shadow: inset 0 0 0 1px rgba(243, 182, 73, 0.7); }
+.speed button.on, .bandbtn.on, .bandbtn.lit, .seg button.on, .ltab.on, .tab.on, .menu button.on { background: var(--honey-wash); color: var(--honey-2); box-shadow: inset 0 0 0 1px rgba(243, 182, 73, 0.7); }
+.bandbtn.on, .bandbtn.lit { background: linear-gradient(var(--honey-wash), var(--honey-wash)), var(--glass-hi); }
+/* a kind of building is a hex; a state (working, short, a warning) is a round dot */
 /* a key that does the same thing, as a small cap */
 kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 5px; background: rgba(255, 246, 226, 0.09); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25); font: 600 11px/18px var(--ui); color: var(--tx-2); text-align: center; white-space: nowrap; }
 /* the small hex that marks a kind or a state */
-.tab::before, .status::before, .note::before, .phead .kind::before { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.tab::before, .phead .kind::before { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 
 /* ---------- the top: the town, its people, its stores, the clock ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; }
 #hud > * { pointer-events: auto; }
 /* what only shows something never takes a click or a touch meant for the valley under it */
-#hud > .story-line, #hud > .toasts, #hud > .toolsign, #hud > .fanfare { pointer-events: none; }
+#hud > .story-line, #hud > .toasts, #hud > .fanfare { pointer-events: none; }
 .band { position: absolute; top: 0; left: 0; right: 0; z-index: 12; display: flex; align-items: center; gap: 8px; padding: calc(var(--gap) + env(safe-area-inset-top, 0px)) max(var(--gap), env(safe-area-inset-right, 0px)) 0 max(var(--gap), env(safe-area-inset-left, 0px)); pointer-events: none !important; color: var(--tx); }
 .band > * { pointer-events: auto; }
 .band .sep { display: none; }
@@ -110,15 +112,15 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .tierbar i { display: block; height: 100%; }
 .newcomers { font-size: 11.5px; line-height: 14px; color: var(--tx-2); white-space: nowrap; }
 .newcomers:empty { display: none; }
-.newcomers.want { color: var(--honey); }
+.newcomers.want { color: var(--tx); }
 .powerbox { order: 3; display: flex; flex-direction: column; justify-content: center; gap: 4px; flex: none; min-width: 104px; cursor: default; padding: 4px 14px; }
 .powerbox .pw { font-size: 13.5px; font-weight: 500; white-space: nowrap; }
 .powerbox .pb { height: 3px; border-radius: 2px; background: var(--surf-2); overflow: hidden; }
 .powerbox .pb i { display: block; height: 100%; background: var(--honey); }
 .powerbox.short .pw { color: var(--ember); }
 .powerbox.short .pb i { background: var(--ember); }
-.stores { order: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 16px; flex: 0 1 auto; min-width: 0; margin: 0 auto; padding: 0 16px; }
-.chip { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 0; border-radius: 6px; }
+.stores { order: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 16px; flex: 0 1 auto; min-width: 0; margin: 0 auto; padding: 0 10px 0 16px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; margin: 0 -4px; border-radius: 6px; }
 .chip img { width: 26px; height: 26px; display: block; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3)); }
 .chip .n { font-size: 15px; font-weight: 500; }
 .chip .tr { font-size: 8.5px; width: 8px; display: inline-block; text-align: center; }
@@ -126,7 +128,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .chip .tr.down { color: var(--ember); }
 .chip.low .n { color: var(--ember); }
 .chip.warnlow .n { color: var(--honey); }
-.chip:hover .n { color: var(--honey-2); }
+.chip:hover { background: var(--surf-2); }
 .chipsep { width: 1px; align-self: stretch; margin: 4px 0; background: var(--line); flex: none; }
 .chip.need img { width: 24px; height: 24px; }
 .chip.flash { animation: flash 0.7s ease-out 2; }
@@ -141,13 +143,17 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .bandbtns { order: 6; display: flex; gap: 8px; flex: none; }
 .bandbtn { display: inline-flex; align-items: center; gap: 8px; border: none; color: var(--tx); padding: 0 14px 0 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; white-space: nowrap; flex: none; }
 .bandbtn svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
-.bandbtn:hover { background: var(--glass-hi); color: var(--honey-2); }
+.bandbtn:hover { background: var(--glass-hi); }
 .bandbtn.on, .bandbtn.lit { box-shadow: inset 0 0 0 1px rgba(243, 182, 73, 0.7), var(--shadow); }
+.bandbtn.on:hover, .bandbtn.lit:hover { background: linear-gradient(rgba(243, 182, 73, 0.22), rgba(243, 182, 73, 0.22)), var(--glass-hi); }
 /* when the stores do not fit beside everything else they take a row of their own, in the middle */
 .band.tiered { flex-wrap: wrap; row-gap: 0; }
+.band.tiered > * { margin-bottom: 8px; }
 .band.tiered::after { content: ""; order: 98; flex-basis: 100%; height: 0; }
-.band.tiered .stores { order: 99; flex: 0 1 auto; margin: 8px auto 0; height: auto; min-height: 48px; padding-top: 6px; padding-bottom: 6px; }
+.band.tiered .stores { order: 99; flex: 0 1 auto; margin: 0 auto; height: auto; min-height: 48px; padding-top: 6px; padding-bottom: 6px; }
 .band.tiered .chip { flex: none; }
+.stores.gridded { display: grid; justify-content: center; column-gap: 14px; row-gap: 2px; }
+.stores.gridded .chipsep { display: none; }
 .band.tiered .when { margin-left: auto; }
 
 /* ---------- menus and the map legend ---------- */
@@ -156,7 +162,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .menu button:hover { background: var(--surf-2); }
 .menu .key { justify-self: end; }
 .menu .mi svg { width: 17px; height: 17px; display: block; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75; }
-.menu button:hover .mi svg { opacity: 1; color: var(--honey-2); }
+.menu button:hover .mi svg { opacity: 1; }
 .menu .desc { grid-column: 2 / -1; font-size: 12.5px; color: var(--tx-2); line-height: 1.35; margin-top: 1px; }
 .menu .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--tx-3); align-self: center; }
 .menu button.on .dot { background: var(--honey); border-color: var(--honey); box-shadow: inset 0 0 0 2px var(--glass-hi); }
@@ -180,7 +186,9 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .plan > .sky { flex: none; }
 /* a column too short for all of it fades where it is cut, so it is plain there is more to scroll */
 .plan > .goals, .plan > .notes { -webkit-mask-image: linear-gradient(#000 calc(100% - 10px), transparent); mask-image: linear-gradient(#000 calc(100% - 10px), transparent); }
-.plan > .notes { flex: 0 5 auto; min-height: 0; overflow: auto; touch-action: pan-y; }
+.plan > .notes { flex: 0 5 auto; min-height: 56px; overflow: auto; touch-action: pan-y; }
+.plan:not(.mini) > .goals { min-height: 92px; }
+.plan:has(> .happen.letter) > .study, .plan:has(> .happen.letter) > .notes { display: none; }
 /* the quick tour: a honey-lit sign at the head of the plan */
 .plan > .tour { background: linear-gradient(180deg, rgba(243, 182, 73, 0.2), rgba(243, 182, 73, 0.08)); color: var(--tx); border-top: none; padding: 14px 16px; box-shadow: inset 3px 0 0 var(--honey); }
 .plan > .tour + section { border-top: none; }
@@ -230,11 +238,12 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .study .unl img { width: 24px; height: 24px; }
 .study.flashin { animation: learnIn 1.2s ease-out; }
 @keyframes learnIn { 0% { background: rgba(159, 216, 130, 0.35); } 100% { background: var(--leaf-wash); } }
-.study.idle { background: var(--honey-wash); box-shadow: inset 3px 0 0 var(--honey); }
-.study.idle:hover { background: rgba(243, 182, 73, 0.2); }
+.study.idle { box-shadow: inset 3px 0 0 var(--honey); }
+.study.idle:hover { background: var(--surf); }
 .study.idle .nm { color: var(--tx); }
+.study.idle .r1::after, .study.learned .r1::after { content: ""; width: 7px; height: 7px; margin-right: 4px; border: solid var(--tx-3); border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); flex: none; }
 .study.pulse { animation: studyPulse 1.8s ease-in-out infinite; }
-@keyframes studyPulse { 50% { background: rgba(243, 182, 73, 0.24); } }
+@keyframes studyPulse { 50% { background: rgba(243, 182, 73, 0.12); } }
 .goals header { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
 .goals h2 { font-size: 17px; font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
 .goals h2 small { display: block; font-family: var(--ui); font-size: 12px; font-weight: 500; color: var(--tx-2); margin-bottom: 2px; font-variation-settings: normal; letter-spacing: 0; }
@@ -243,7 +252,8 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .goals .collapse:hover, .placard .details:hover, .tour .skip:hover { background: var(--surf-2); color: var(--tx); }
 .goals .gsub { font-size: 13px; color: var(--tx-2); margin: 0 0 6px; }
 .goal { display: grid; grid-template-columns: 18px 1fr auto; gap: 4px 10px; padding: 6px 0; cursor: pointer; align-items: center; border-radius: 6px; }
-.goal:hover .gt { color: var(--honey-2); }
+.goal:hover { background: var(--surf); }
+.goal { margin: 0 -6px; padding-left: 6px; padding-right: 6px; }
 .goal .box { width: 14px; height: 15px; background: var(--tx-3); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); position: relative; grid-row: 1; align-self: start; top: 2px; }
 .goal .box::before { content: ""; position: absolute; inset: 1.5px; background: var(--glass-hi); clip-path: inherit; }
 .goal.next .box { background: var(--honey); }
@@ -252,7 +262,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .goal.done .box::after { content: ""; position: absolute; left: 5px; top: 2.5px; width: 3px; height: 7px; border: solid var(--card); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .goal .gt { grid-column: 2 / -1; font-size: 13.5px; line-height: 1.3; }
 .goal.done .gt { color: var(--tx-3); }
-.goal .gp { grid-column: 3; grid-row: 2; font-size: 12px; color: var(--tx-2); white-space: nowrap; }
+.goal .gp { grid-column: 3; grid-row: 2; min-width: 52px; text-align: right; font-size: 12px; color: var(--tx-2); white-space: nowrap; }
 .goal .gp:empty { display: none; }
 .goal .meter { grid-column: 2; grid-row: 2; height: 3px; }
 .goal .hint { grid-column: 2 / -1; font-size: 13px; color: var(--tx-2); line-height: 1.5; display: none; margin: 5px 0 2px; }
@@ -266,22 +276,24 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .plan.mini .goal, .plan.mini .gsub, .plan.mini .donefold { display: none; }
 .plan.mini .goals header { margin-bottom: 0; }
 .shelf { background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
-.shelf .h { font-weight: 500; margin-bottom: 4px; }
+.shelf .h { font-family: var(--story); font-size: 18px; font-weight: 600; margin-bottom: 6px; font-variation-settings: "SOFT" 60, "opsz" 24; }
 .shelf p { margin: 4px 0; font-size: 13.5px; color: var(--tx-2); }
 .shelf ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 5px; }
-.shelf li { display: grid; grid-template-columns: minmax(140px, 34%) 1fr; gap: 2px 16px; font-size: 13.5px; line-height: 1.35; }
+.shelf li { display: grid; grid-template-columns: minmax(160px, 240px) 1fr; gap: 2px 16px; font-size: 13.5px; line-height: 1.35; }
 .shelf li b { font-weight: 600; }
 .shelf li span { color: var(--tx-2); }
 .sky { display: flex; flex-direction: column; gap: 10px; }
-.sky.flooding { background: var(--sky-wash); box-shadow: inset 3px 0 0 var(--sky); }
-.sky.warned { background: var(--ember-wash); box-shadow: inset 3px 0 0 var(--ember); }
-.sky.parched { background: var(--honey-wash); box-shadow: inset 3px 0 0 var(--honey); }
+.sky.flooding { box-shadow: inset 3px 0 0 var(--sky); }
+.sky.warned { box-shadow: inset 3px 0 0 var(--ember); }
+.sky.warned .nm { color: var(--ember); }
+.sky.parched { box-shadow: inset 3px 0 0 var(--honey); }
 .sky .skyrow + .skyrow { border-top: 1px solid var(--line); padding-top: 10px; }
 .sky .r1, .happen .r1 { display: flex; align-items: center; gap: 10px; }
 .sky .r1 img, .happen .r1 img { width: 30px; height: 30px; flex: none; }
 .sky .nm, .happen .nm { font-size: 14.5px; font-weight: 500; flex: 1; min-width: 0; line-height: 1.25; }
 .sky .nm small, .happen .nm small { display: block; font-size: 12.5px; font-weight: 400; color: var(--tx-2); }
 .sky p { margin: 6px 0 0; font-size: 12.5px; color: var(--tx-2); line-height: 1.45; }
+.sky .skyrow > :not(.r1), .happen:not(.post) > :not(.r1):not(.finds) { margin-left: 40px; }
 .sky .meter { margin-top: 8px; }
 .sky .meter.ebb i { background: var(--sky); }
 .sky .meter.dry i { background: var(--honey); }
@@ -299,7 +311,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .finds button { display: grid; gap: 2px; text-align: left; padding: 8px 11px 9px; font: inherit; color: var(--tx); background: var(--surf); border: 1px solid var(--edge); border-radius: var(--r-s); cursor: pointer; }
 .finds button b { font-size: 13.5px; font-weight: 500; line-height: 1.25; }
 .finds button span { font-size: 12.5px; color: var(--tx-2); line-height: 1.35; }
-.finds button:hover, .finds button:focus-visible { background: var(--surf-2); border-color: var(--honey); }
+.finds button:hover, .finds button:focus-visible { background: var(--surf-2); border-color: rgba(255, 244, 220, 0.28); }
 .placard .kept { font-size: 12.5px; color: var(--tx-2); }
 .finds.onCard { width: min(540px, 100%); gap: 8px; margin: 4px 0 6px; }
 .finds.onCard button { padding: 12px 15px 13px; border-radius: 12px; }
@@ -322,23 +334,29 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .happen.post .btn.primary:hover { background: #33433b; }
 .happen .letter { font-family: var(--story); font-size: 15px; line-height: 1.5; margin: 8px 0 0; font-variation-settings: "SOFT" 60, "opsz" 15; }
 .happen .gift { margin-top: 8px; font-size: 12.5px; line-height: 1.45; }
+.happen.letter .gift { flex: none; padding-top: 6px; border-top: 1px solid var(--paper-rule); }
+/* who a letter is from is its label; the letter itself is the voice */
+.happen.post .r1 .nm { font-size: 12.5px; font-weight: 600; color: var(--paper-ink-2); text-wrap: balance; }
+.happen.post .r1 img { width: 26px; height: 26px; }
 .happen .gift b { font-weight: 500; }
 /* a letter's answer stays in view at the foot of its panel: when the column is short, only the letter above it scrolls */
 .plan > .happen.letter { display: flex; flex-direction: column; overflow: hidden; min-height: 96px; }
 .happen.letter .hscroll { flex: 0 1 auto; min-height: 0; overflow: auto; touch-action: pan-y; padding-bottom: 10px; -webkit-mask-image: linear-gradient(#000 calc(100% - 10px), transparent); mask-image: linear-gradient(#000 calc(100% - 10px), transparent); }
 .happen.letter .btns { margin-top: 2px; }
 .happen.letter .btns { flex: none; }
-.happen.festive { background: var(--honey-wash); box-shadow: inset 3px 0 0 var(--honey); }
-.notes { display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 10px !important; }
-.note { display: grid; grid-template-columns: 8px 24px 1fr; gap: 9px; align-items: center; text-align: left; background: none; border: none; padding: 6px 8px; border-radius: var(--r-s); cursor: pointer; font-size: 13px; line-height: 1.35; color: var(--tx); }
+.happen.festive { box-shadow: inset 3px 0 0 var(--honey); }
+.notes { display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 10px 12px !important; }
+.note { position: relative; display: grid; grid-template-columns: 24px 1fr 10px; gap: 10px; align-items: center; text-align: left; background: none; border: none; padding: 6px 8px 6px 12px; border-radius: var(--r-s); cursor: pointer; font-size: 13px; line-height: 1.35; color: var(--tx); }
 .note:hover { background: var(--surf-2); }
-.note::before { content: ""; width: 8px; height: 9px; background: var(--ember); }
+.note::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--ember); }
 .note.warn::before { background: var(--honey); }
 .note.calm::before { background: var(--leaf); }
 .note img { width: 24px; height: 24px; }
+.note::after { content: ""; width: 6px; height: 6px; border: solid var(--tx-3); border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); opacity: 0; transition: opacity 0.12s; }
+.note:hover::after { opacity: 1; }
 
 /* ---------- the card for whatever is picked, on the right ---------- */
-.placard { position: absolute; right: max(var(--gap), env(safe-area-inset-right, 0px)); top: calc(var(--band-h) + 8px); width: 344px; max-height: calc(100% - var(--band-h) - var(--drawer-h) - 2 * var(--gap) - 16px); overflow: auto; touch-action: pan-y; background: var(--card-bg); border-radius: var(--r); box-shadow: var(--lift), var(--shadow); scrollbar-width: thin; --k: var(--tx-3); animation: cardSlide 0.22s ease-out; }
+.placard { scroll-padding: 84px 0 84px; position: absolute; right: max(var(--gap), env(safe-area-inset-right, 0px)); top: calc(var(--band-h) + 8px); width: 344px; max-height: calc(100% - var(--band-h) - var(--drawer-h) - 2 * var(--gap) - 16px); overflow: auto; touch-action: pan-y; background: var(--card-bg); border-radius: var(--r); box-shadow: var(--lift), var(--shadow); scrollbar-width: thin; --k: var(--tx-3); animation: cardSlide 0.22s ease-out; }
 @keyframes cardSlide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 .phead { position: sticky; top: 0; z-index: 2; display: flex; gap: 12px; align-items: center; padding: 14px 50px 12px 14px; background: var(--card-bg); background: linear-gradient(180deg, color-mix(in srgb, var(--k) 18%, transparent), transparent), var(--card-bg); }
 .phead img { width: 48px; height: 48px; flex: none; border-radius: 12px; background: var(--surf-2); background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--k) 38%, transparent), color-mix(in srgb, var(--k) 10%, transparent) 70%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k) 55%, transparent); }
@@ -348,14 +366,14 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .phead .close { position: absolute; right: 12px; top: 14px; background: var(--surf); border: none; color: var(--tx-2); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 0 2px; }
 .phead .close:hover { background: var(--surf-3); color: var(--tx); }
 .pbody { padding: 2px 16px 16px; }
-.pbody > .btns:last-child { position: sticky; bottom: 0; z-index: 1; align-items: center; background: var(--card-bg); margin: 14px -16px -16px; padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+.pbody > .btns:last-child { position: sticky; bottom: 0; z-index: 1; align-items: center; background: var(--card-bg); margin: 14px -16px -16px; padding: 14px 16px 14px; border-top: 1px solid var(--line); }
 .pbody > .btns:last-child::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% + 1px); height: 18px; background: linear-gradient(rgba(24, 34, 30, 0), var(--card-bg)); pointer-events: none; }
 /* Clear: a small hex at the end of the row, as in the dock */
 .pbody > .btns:last-child .btn.danger[data-a="remove"] { margin-left: auto; width: 36px; height: 34px; padding: 0; font-size: 0; color: transparent; border-color: rgba(255, 155, 127, 0.3); background: center / 20px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23ff9b7f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 1.8l7.1 4.1v8.2L10 18.2l-7.1-4.1V5.9z' stroke-opacity='.5'/%3E%3Cpath d='M7.3 7.3l5.4 5.4M12.7 7.3l-5.4 5.4'/%3E%3C/svg%3E"); }
 .pbody > .btns:last-child .btn.danger[data-a="remove"]:hover { background-color: var(--ember-wash); border-color: var(--ember); }
 .pbody p { font-size: 13.5px; line-height: 1.5; color: var(--tx-2); margin: 6px 0 8px; }
 .status { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; line-height: 1.35; font-weight: 500; margin: 0 0 4px; padding: 5px 12px 5px 10px; border-radius: 999px; background: var(--leaf-wash); color: var(--tx); }
-.status::before { content: ""; width: 8px; height: 9px; background: var(--leaf); flex: none; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); flex: none; }
 .status.warn { background: var(--ember-wash); color: var(--ember); }
 .status.warn::before { background: var(--ember); }
 .status.idle { background: var(--surf); color: var(--tx-2); }
@@ -382,13 +400,18 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .nd i { position: absolute; right: -5px; bottom: -5px; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 9.5px; font-weight: 700; color: var(--card-bg); background: var(--leaf); border: 2px solid var(--card-bg); }
 .nd.no { background: var(--ember-wash); box-shadow: inset 0 0 0 1px rgba(255, 155, 127, 0.5); }
 .nd.no i { background: var(--ember); }
-.upg { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 12px 0 2px; padding: 8px 10px; border-radius: 12px; background: var(--surf); }
+.upg { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; margin: 12px 0 2px; padding: 8px 10px; border-radius: 12px; background: var(--surf); }
 .upg .uw { font-size: 13px; color: var(--tx-2); }
-.upg .costline { margin-top: 0; margin-left: auto; }
+.upg .costline { margin-top: 0; justify-content: flex-end; }
+/* the rest setting fills its row */
+.seg:has(> [data-a="limit"]) { display: grid; grid-template-columns: 1.4fr repeat(5, 1fr); }
 .placard .details { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0 -8px; }
 .placard .details svg { transition: transform 0.15s; }
 .placard .details.open svg { transform: rotate(90deg); }
 .placard .more > .facts:first-child { margin-top: 4px; }
+.cap { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 12px 0 4px; font-size: 13.5px; }
+.cap > span:first-child { color: var(--tx-2); }
+.cap > span:last-child { font-weight: 500; }
 .rates { display: grid; grid-template-columns: 22px 1fr auto; gap: 5px 8px; align-items: center; font-size: 13.5px; margin: 6px 0; }
 .rates img { width: 22px; height: 22px; }
 .rates .num { font-size: 13px; color: var(--tx-2); }
@@ -412,10 +435,10 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .jds { display: flex; gap: 3px; }
 .jd { width: 34px; height: 32px; padding: 0; border: none; border-radius: 8px; background: var(--surf); color: var(--tx-3); display: grid; place-items: center; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
 .jd svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.jd.to { color: var(--tx); }
+.jd.to { color: var(--tx-2); }
 .jd:hover { background: var(--surf-2); }
-.jd.on { background: var(--jc); color: #1b2622; box-shadow: none; }
-.jd[disabled] { opacity: 0.35; cursor: default; background: none; }
+.jd.on { background: var(--surf); background: color-mix(in srgb, var(--jc) 22%, transparent); color: var(--jc); box-shadow: inset 0 0 0 1.5px var(--jc); }
+.jd[disabled] { opacity: 0.4; cursor: default; background: none; box-shadow: inset 0 0 0 1px var(--edge); outline: 1px dashed rgba(255, 244, 220, 0.25); outline-offset: -1px; }
 .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .btn { position: relative; border: 1px solid var(--edge); background: var(--surf-2); color: var(--tx); padding: 7px 14px; border-radius: var(--r-s); cursor: pointer; font-size: 13.5px; font-weight: 500; transition: background 0.12s, border-color 0.12s; }
 .btn:hover { background: var(--surf-3); border-color: rgba(255, 244, 220, 0.24); }
@@ -424,7 +447,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .btn.danger { color: var(--ember); border-color: rgba(255, 155, 127, 0.35); background: none; }
 .btn.danger:hover { background: var(--ember-wash); border-color: var(--ember); }
 .btn[disabled], .btn[disabled]:hover { opacity: 0.42; cursor: default; }
-.btn kbd { position: absolute; top: -8px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 5px; background: #2b3b34; box-shadow: 0 0 0 1px var(--edge); font-size: 10.5px; line-height: 16px; }
+.btn kbd { position: absolute; top: -8px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 5px; background: #2b3b34; box-shadow: 0 0 0 2px var(--card-bg), inset 0 0 0 1px var(--edge); font-size: 10.5px; line-height: 16px; }
 .btn.primary kbd { color: var(--tx); }
 .btn.primary[disabled] { background: var(--surf-2); color: var(--tx-2); border-color: var(--edge); }
 .rows { display: grid; gap: 7px; margin: 10px 0; }
@@ -436,32 +459,42 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .costline span { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 500; }
 .costline img { width: 22px; height: 22px; }
 .costline .short { color: var(--ember); }
+.costline .lbl { font-size: 12px; font-weight: 500; color: var(--tx-2); margin-right: 2px; }
+.jhint { margin: 8px 0 2px !important; font-size: 12.5px !important; color: var(--tx-2) !important; }
 
 /* ---------- the build dock ---------- */
-.drawer { box-sizing: border-box; position: absolute; left: 50%; transform: translateX(-50%); bottom: max(var(--gap), env(safe-area-inset-bottom, 0px)); width: max-content; max-width: calc(100% - 2 * max(var(--gap), env(safe-area-inset-left, 0px))); display: flex; flex-direction: column; z-index: 10; background: var(--dock); border-radius: 18px; box-shadow: var(--lift), var(--shadow); padding: 6px; }
-.tabs { display: flex; gap: 2px; padding: 0 2px 4px; align-items: center; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; position: relative; }
+.drawer { box-sizing: border-box; position: absolute; left: 50%; transform: translateX(-50%); bottom: max(var(--gap), env(safe-area-inset-bottom, 0px)); width: max-content; max-width: calc(100% - 2 * max(var(--gap), env(safe-area-inset-left, 0px))); display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs fold" "tools tools"; z-index: 10; background: var(--dock); border-radius: 18px; box-shadow: var(--lift), var(--shadow); padding: 6px; }
+.drawer > .tabs { grid-area: tabs; }
+.drawer > .tabfold { grid-area: fold; }
+.drawer > .tools { grid-area: tools; }
+.dockpage { position: absolute; left: 10px; z-index: 3; width: 28px; height: 64px; padding: 0; border: none; border-radius: 10px; background: rgba(27, 39, 34, 0.96); color: var(--tx-2); box-shadow: 0 0 0 1px var(--edge), 0 4px 12px rgba(6, 12, 9, 0.35); cursor: pointer; display: grid; place-items: center; }
+.dockpage.next { left: auto; }
+.dockpage:hover { color: var(--tx); background: #2a3a33; }
+.tabs { display: flex; gap: 2px; padding: 0 18px 4px 2px; align-items: center; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; position: relative; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 18px), transparent); }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { position: relative; display: inline-flex; align-items: center; gap: 7px; background: none; color: var(--tx-2); border: none; border-radius: 999px; padding: 6px 13px 6px 11px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; flex: none; }
 .tab::before { content: ""; width: 9px; height: 10px; background: var(--k, var(--tx-3)); opacity: 0.75; flex: none; }
 .tab:hover { color: var(--tx); background: var(--surf); }
-.tab.on { background: var(--surf-3); color: var(--tx); }
+.tab.on { color: var(--honey-2); }
 .tab.on::before { opacity: 1; }
 .tab .dot, .tab.hint::after { position: absolute; top: 3px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--honey); content: ""; }
-.tab.hint { color: var(--honey-2); }
 .tab.hint::after { animation: hintDot 1.6s ease-in-out infinite; }
 @keyframes hintDot { 50% { transform: scale(1.5); } }
-.tabfold { margin-left: auto; position: sticky; right: 0; flex: none; width: 32px; height: 28px; border: none; border-radius: 999px; background: var(--dock); color: var(--tx-3); cursor: pointer; display: grid; place-items: center; box-shadow: -8px 0 8px var(--dock); }
+.tabfold { flex: none; width: 32px; height: 28px; margin: 0 2px 4px 4px; border: none; border-radius: 999px; background: none; color: var(--tx-3); cursor: pointer; display: grid; place-items: center; }
 .tabfold:hover { color: var(--tx); background: var(--surf-2); }
 .drawer.folded .tools { display: none; }
 .drawer.folded .tabs { padding-bottom: 0; }
+.drawer.folded .tabfold { margin-bottom: 0; }
 .tools { display: flex; gap: 4px; padding: 4px 2px 2px; border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--surf-3) transparent; touch-action: pan-x; }
 .tool { position: relative; flex: none; width: 82px; border: none; background: rgba(255, 246, 226, 0.04); border-radius: 12px; cursor: pointer; padding: 6px 3px 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--tx); transition: background 0.12s, transform 0.12s; }
 .tool:hover { background: var(--surf-2); transform: translateY(-2px); }
 .tool.on { background: var(--honey-wash); box-shadow: inset 0 0 0 2px var(--honey); }
 .tool > img, .tool > svg { width: 54px; height: 54px; display: block; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35)); }
-.tool > svg { width: 40px; height: 40px; margin: 7px 0; color: var(--tx-2); filter: none; }
+.tool > svg { width: 40px; height: 40px; margin: 7px 0; color: rgba(244, 237, 221, 0.82); filter: none; }
+.tool > svg path { stroke-width: 2.4; }
 .tool:hover > svg { color: var(--tx); }
-.tool .nm { font-size: 12px; line-height: 1.2; text-align: center; color: var(--tx); }
+.tool .nm { font-size: 12px; line-height: 1.2; text-align: center; color: var(--tx); min-height: 2.4em; display: flex; align-items: center; justify-content: center; }
+.edits .tool:last-child:hover > svg, .edits .tool.on:last-child > svg { color: var(--ember); }
 .tool .key { position: absolute; top: 5px; left: 5px; min-width: 16px; padding: 1px 4px; border-radius: 5px; background: rgba(0, 0, 0, 0.28); font-size: 10.5px; line-height: 14px; font-weight: 600; color: var(--tx-2); text-align: center; }
 .tool.cant > img { opacity: 0.55; }
 .tool.cant .nm { color: var(--ember); }
@@ -471,16 +504,18 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 @keyframes toolPulse { 0%, 100% { box-shadow: inset 0 0 0 2px rgba(243, 182, 73, 0.15); } 50% { box-shadow: inset 0 0 0 2px rgba(243, 182, 73, 0.9); } }
 .toolsep { width: 1px; background: var(--line); margin: 8px 6px; flex: none; }
 .edits { display: flex; flex: none; gap: inherit; position: sticky; right: -2px; margin-left: auto; margin-right: -2px; padding-right: 2px; background: var(--dock); }
-.edits::before { content: ""; position: absolute; top: 0; bottom: 0; right: 100%; width: 28px; background: linear-gradient(90deg, rgba(24, 34, 30, 0), var(--dock)); pointer-events: none; }
+.edits::before { content: ""; position: absolute; top: 0; bottom: 0; right: 100%; width: 60px; background: linear-gradient(90deg, rgba(24, 34, 30, 0), var(--dock) 45%); pointer-events: none; }
 
 /* ---------- small things ---------- */
 .toolsign { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--drawer-h) + var(--gap) + 10px); z-index: 11; display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; justify-content: center; max-width: min(760px, calc(100% - 32px)); background: var(--glass-hi); color: var(--tx); border-radius: 999px; padding: 8px 18px; font-size: 13.5px; line-height: 1.35; pointer-events: none; box-shadow: var(--lift), var(--shadow); }
-.toolsign b { font-weight: 600; color: var(--honey-2); }
+.toolsign b { font-weight: 600; color: var(--tx); }
 .toolsign .esc { color: var(--tx-3); }
+.toolsign .signbtn.ghost { background: var(--surf-3); color: var(--tx); }
 .toolsign .signbtn { pointer-events: auto; border: none; background: var(--honey); color: var(--honey-ink); border-radius: 999px; padding: 4px 12px; font: inherit; font-weight: 600; cursor: pointer; }
 #hud.cine .plan, #hud.cine .tourpin, #hud.cine .drawer, #hud.cine .placard, #hud.cine .toolsign, #hud.cine .legend, #hud.cine .story-line { display: none !important; }
-#hud .band { transition: opacity 0.9s ease; }
-#hud.cine .band { opacity: 0; }
+/* the band slips away slowly for a film moment, and comes straight back after one, or after a sheet */
+#hud .band { transition: opacity 0.25s ease; }
+#hud.cine .band { opacity: 0; transition: opacity 0.9s ease; }
 #hud.cine .band > * { pointer-events: none; }
 #hud.tooling .toasts { bottom: calc(var(--drawer-h) + var(--gap) + 62px); }
 .toasts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--drawer-h) + var(--gap) + 14px); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 13; }
@@ -493,7 +528,7 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .story-line { position: absolute; left: 50%; top: calc(var(--band-h) + 16px); transform: translateX(-50%); width: min(560px, calc(100% - 720px)); min-width: 300px; text-align: center; pointer-events: none; font-family: var(--story); font-weight: 400; font-size: 16.5px; line-height: 1.5; color: var(--tx); background: var(--glass); border-radius: var(--r); padding: 11px 20px 12px; opacity: 0; transition: opacity 1.2s ease; font-variation-settings: "SOFT" 60, "opsz" 16; text-wrap: balance; z-index: 9; box-shadow: var(--lift), var(--shadow); }
 .story-line.on { opacity: 1; }
 #hud.legending .story-line { top: calc(var(--band-h) + 64px); }
-.tip { position: absolute; z-index: 30; background: var(--glass-hi); color: var(--tx); border-radius: 12px; padding: 9px 13px 10px; font-size: 13px; line-height: 1.45; max-width: 300px; pointer-events: none; box-shadow: var(--lift), var(--shadow); }
+.tip { position: absolute; z-index: 30; background: #222e29; border: 1px solid rgba(255, 244, 220, 0.12); color: var(--tx); border-radius: 12px; padding: 9px 13px 10px; font-size: 13px; line-height: 1.45; max-width: 300px; pointer-events: none; box-shadow: var(--lift), var(--shadow); }
 .tip b { font-weight: 600; font-size: 13.5px; }
 .tip > b:first-child { font-family: var(--story); font-size: 16px; font-variation-settings: "SOFT" 60, "opsz" 16; }
 .tip .num { font-size: 12.5px; color: var(--tx-2); }
@@ -516,27 +551,31 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 @keyframes fanIn { from { opacity: 0; transform: translate(-50%, 12px) scale(0.97); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 
 /* ---------- sheets: research, ledger, guide, settings (and the chronicle, a book) ---------- */
-#game:has(> #modal:not([hidden])) #hud .band { opacity: 0; transition: opacity 0.2s; }
+#game:has(> #modal:not([hidden])) #hud > :not(.toasts) { opacity: 0; pointer-events: none !important; transition: opacity 0.15s; }
+#game:has(> #modal:not([hidden])) #hud > .band > * { pointer-events: none; }
+/* so does the interface under a chapter's card, so the valley shows behind it */
+#game:has(> #card:not([hidden])) #hud { visibility: hidden; }
 #modal { position: absolute; inset: 0; z-index: 35; display: grid; place-items: start center; background: rgba(8, 13, 11, 0.58); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)); animation: sheetFade 0.18s ease-out; }
 @keyframes sheetFade { from { opacity: 0; } to { opacity: 1; } }
 .sheet { width: min(700px, 100%); max-height: 100%; display: flex; flex-direction: column; background: #1a2420; color: var(--tx); border-radius: 18px; overflow: hidden; box-shadow: var(--lift), 0 24px 60px rgba(4, 8, 6, 0.5); animation: sheetIn 0.22s ease-out; }
 @keyframes sheetIn { from { transform: translateY(10px); opacity: 0.6; } to { transform: none; opacity: 1; } }
 .sheet.wide { width: min(1240px, 100%); }
-.shead { padding: 16px 16px 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none; border-bottom: 1px solid var(--line); }
+.shead { padding: 16px 24px 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none; border-bottom: 1px solid var(--line); }
 .shead h2 { font-size: 23px; font-weight: 600; margin: 0; line-height: 1.2; }
-.shead .close { background: var(--surf-2); border: 1px solid var(--edge); color: var(--tx); border-radius: var(--r-s); padding: 6px 14px; font-size: 13.5px; font-weight: 500; cursor: pointer; flex: none; }
+.shead .close { display: inline-flex; align-items: center; gap: 8px; background: var(--surf-2); border: 1px solid var(--edge); color: var(--tx); border-radius: var(--r-s); padding: 6px 12px 6px 14px; font-size: 13.5px; font-weight: 500; cursor: pointer; flex: none; }
 .shead .close:hover { background: var(--surf-3); }
 .sbody { padding: 16px 24px 22px; overflow: auto; touch-action: pan-y; min-height: 0; scrollbar-width: thin; -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent); }
 .sheet.mid { width: min(1000px, 100%); }
-.sheet h4 { font-size: 14.5px; font-weight: 600; margin: 20px 0 5px; color: var(--tx); }
+.sheet h4 { font-family: var(--story); font-size: 18px; font-weight: 600; margin: 24px 0 6px; color: var(--tx); font-variation-settings: "SOFT" 60, "opsz" 24; }
 .sbody > h4:first-child { margin-top: 0; }
-.sheet p, .sheet li { font-size: 14px; line-height: 1.6; color: var(--tx-2); max-width: 68ch; }
+.sheet p, .sheet li { font-size: 14.5px; line-height: 1.6; color: rgba(244, 237, 221, 0.8); max-width: 68ch; }
 .sheet ul { padding-left: 18px; margin: 4px 0; }
 /* the chronicle is the town's book: paper, and Fraunces */
 .sheet.book { background: var(--paper); color: var(--paper-ink); }
-.sheet.book .shead { background: #23302a; color: var(--paper); border-bottom: none; }
-.sheet.book .shead .close { background: rgba(242, 234, 215, 0.14); color: var(--paper); }
-.sheet.book .shead .close:hover { background: rgba(242, 234, 215, 0.24); }
+.sheet.book .shead { background: none; color: var(--paper-ink); border-bottom: 1px solid var(--paper-rule); }
+.sheet.book .shead .close { background: rgba(255, 255, 255, 0.5); color: var(--paper-ink); border-color: var(--paper-rule); }
+.sheet.book .shead .close:hover { background: #fff; }
+.sheet.book .shead .close kbd { background: rgba(43, 42, 34, 0.08); color: var(--paper-ink-2); box-shadow: none; }
 .sheet.book .sbody p, .sheet.book .sbody li { color: var(--paper-ink-2); }
 .sheet.book .shelf { background: rgba(255, 255, 255, 0.45); border-color: var(--paper-rule); }
 .sheet.book .shelf .h, .sheet.book .shelf li b { color: var(--paper-ink); }
@@ -547,12 +586,23 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .entry .d { font-size: 12.5px; color: var(--paper-ink-2); }
 .entry .t { font-family: var(--story); font-size: 16.5px; line-height: 1.6; font-weight: 400; color: var(--paper-ink); font-variation-settings: "SOFT" 60, "opsz" 16; max-width: 62ch; }
 .entry .t .h { font-family: var(--story); font-size: 18px; font-weight: 600; margin-bottom: 4px; font-variation-settings: "SOFT" 60, "opsz" 24; }
+.entry .t .again { font-family: var(--ui); font-size: 12px; font-weight: 600; color: var(--paper-ink-2); margin-left: 8px; white-space: nowrap; }
 .entry.chap .t { font-style: italic; }
 .entry.chap .t .h { font-style: normal; }
-.setrow { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: center; min-height: 52px; box-sizing: border-box; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.setrow { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 16px; align-items: center; min-height: 52px; box-sizing: border-box; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .setrow:first-child, h4 + .setrow { border-top: none; }
-.setrow input[type=range] { width: 100%; accent-color: var(--honey); }
-.setrow select { max-width: 100%; background: var(--surf-2); color: var(--tx); border: 1px solid var(--edge); padding: 6px 10px; font: inherit; border-radius: var(--r-s); }
+.setrow.ranged { grid-template-columns: 216px minmax(0, 1fr) 34px; }
+.setrow output { justify-self: end; font-size: 13px; color: var(--tx-2); font-variant-numeric: tabular-nums; }
+.setrow input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; --v: 50%; }
+.setrow input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(244, 237, 221, 0.62) var(--v), rgba(255, 246, 226, 0.12) var(--v)); }
+.setrow input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(255, 246, 226, 0.12); }
+.setrow input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: rgba(244, 237, 221, 0.62); }
+.setrow input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: var(--tx); box-shadow: 0 0 0 4px rgba(24, 34, 30, 0.9), 0 1px 4px rgba(0, 0, 0, 0.4); }
+.setrow input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--tx); box-shadow: 0 0 0 4px rgba(24, 34, 30, 0.9); }
+.setrow input[type=range]:active::-webkit-slider-thumb, .setrow input[type=range]:focus-visible::-webkit-slider-thumb { background: var(--honey-2); }
+.setrow input[type=range]:active::-moz-range-thumb, .setrow input[type=range]:focus-visible::-moz-range-thumb { background: var(--honey-2); }
+.setrow select { -webkit-appearance: none; appearance: none; justify-self: start; width: min(260px, 100%); background: var(--surf-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23f4eddd' stroke-opacity='.7' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.8L6 6.2l4.5-4.4'/%3E%3C/svg%3E") right 12px center / 12px 8px no-repeat; color: var(--tx); border: 1px solid var(--edge); padding: 8px 36px 8px 12px; font: inherit; border-radius: var(--r-s); cursor: pointer; }
+.setrow select:hover { background-color: var(--surf-3); }
 .setrow select option { background: #1a2420; color: var(--tx); }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13.5px; color: var(--tx-2); }
 .keys kbd { font-family: var(--ui); font-size: 12px; font-weight: 600; color: var(--tx); background: var(--surf-2); border: 1px solid var(--edge); border-bottom-width: 2px; padding: 1px 8px; border-radius: 6px; white-space: nowrap; justify-self: start; }
@@ -563,7 +613,10 @@ kbd, .menu .key:not(:empty) { display: inline-block; min-width: 18px; height: 18
 .ltab:hover { background: var(--surf-2); color: var(--tx); }
 .ledwrap { overflow-x: auto; touch-action: pan-x pan-y; }
 table.led { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-table.led th { text-align: right; font-weight: 500; font-size: 12px; color: var(--tx-3); padding: 6px 10px; border-bottom: 1px solid var(--edge); white-space: nowrap; }
+table.led th { position: sticky; top: -16px; z-index: 1; background: #1a2420; text-align: right; font-weight: 500; font-size: 12px; color: var(--tx-3); padding: 6px 10px; border-bottom: 1px solid var(--edge); white-space: nowrap; }
+.led.works td:nth-child(2) { width: 190px; }
+.led.works td:nth-child(3), .led.works td:nth-child(4) { width: 64px; }
+.led.works td.why, .led.works th:nth-child(5) { padding-left: 28px; }
 table.led th:nth-child(2) { text-align: left; }
 table.led td { padding: 5px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
 table.led tr:first-child td { border-top: none; }
@@ -575,7 +628,13 @@ table.led td.pos { color: var(--leaf); }
 table.led tr.lcat td { padding-top: 16px; font-size: 12.5px; font-weight: 600; color: var(--tx-2); text-align: left; border-top: none; }
 table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
 table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
+table.led tr.nil td { opacity: 0.45; }
 .led.works tr.go { cursor: pointer; }
+.led.works tr.go td:nth-child(4) { color: var(--ember); }
+.led.works tr.go td.why { color: var(--tx); }
+.led.works tr.go td.why::after { content: "Show"; margin-left: 10px; font-size: 12px; font-weight: 500; color: var(--tx-3); }
+.led.works tr.go:hover td.why::after { color: var(--honey-2); }
+.led.works tr:not(.go) td.why { color: var(--tx-3); }
 .led.works tr.go:hover td { background: var(--surf-2); }
 .led.works th:nth-child(5) { text-align: left; }
 .led.works td.why { font-size: 13px; color: var(--tx-2); text-align: left; white-space: normal; font-weight: 400; }
@@ -598,12 +657,16 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 .node { position: absolute; width: 176px; height: 66px; border: none; border-radius: 12px; background: #24322c; display: grid; grid-template-columns: 42px 1fr; gap: 0 8px; padding: 5px 8px 5px 5px; cursor: pointer; text-align: left; color: var(--tx); overflow: hidden; box-shadow: inset 0 0 0 1px var(--edge), 0 2px 6px rgba(0, 0, 0, 0.25); transition: background 0.12s; }
 .node img.ic { width: 40px; height: 40px; grid-row: span 2; align-self: center; }
 .node .nn { font-size: 13px; line-height: 1.15; font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; align-self: end; }
+.node { grid-template-rows: 2.3em auto; align-content: center; }
 .node .nc { display: flex; align-items: center; gap: 1px; font-size: 12px; color: var(--tx-2); align-self: start; margin-top: 3px; white-space: nowrap; }
 .node .nc .units { margin-right: 4px; }
 .node .nc img { width: 16px; height: 16px; flex: none; }
-.node.done { background: #22382b; box-shadow: inset 0 0 0 1px rgba(159, 216, 130, 0.45); }
-.node.done::after { content: "✓"; position: absolute; right: 9px; bottom: 6px; font-size: 13px; font-weight: 600; color: var(--leaf); }
-.node.available { box-shadow: inset 0 0 0 1px rgba(243, 182, 73, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25); }
+.node.done { background: rgba(255, 246, 226, 0.035); box-shadow: inset 0 0 0 1px rgba(255, 244, 220, 0.08); }
+.node.done .nn { color: var(--tx-2); }
+.node.done img.ic { opacity: 0.75; }
+.node .nc.learned { color: var(--tx-3); }
+.node .nc.learned::before { content: "✓"; margin-right: 5px; font-weight: 600; color: var(--leaf); }
+.node.available { background: #2a3a33; box-shadow: inset 0 0 0 1px rgba(243, 182, 73, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3); }
 .node.available:hover { background: #2d3e37; }
 .node.locked { opacity: 0.5; background: rgba(36, 50, 44, 0.6); box-shadow: inset 0 0 0 1px var(--line); }
 .node.current { box-shadow: inset 0 0 0 2px var(--honey), 0 0 14px rgba(243, 182, 73, 0.35); }
@@ -611,6 +674,11 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 .node.sel { outline: 2px solid var(--tx); outline-offset: 3px; }
 .node .qn { position: absolute; right: 6px; top: 5px; font-size: 12px; font-weight: 700; color: var(--honey); }
 .node .pg { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--honey); }
+.techcard:has(> p:only-child) { background: none; box-shadow: none; padding: 8px 2px 0; }
+.techcard > p:only-child { margin: 0; font-size: 12.5px; color: var(--tx-3); }
+.treewrap:not(.atend) { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+.treewrap:not(.atstart):not(.atend) { -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 32px), transparent); }
+.treewrap.atend:not(.atstart) { -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px); mask-image: linear-gradient(90deg, transparent, #000 24px); }
 .techcard { margin-top: 12px; padding: 14px 16px; border-radius: var(--r); display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: start; min-height: 0; background: var(--surf); box-shadow: inset 0 0 0 1px var(--line); }
 .techcard h3 { font-size: 20px; font-weight: 600; margin: 0; }
 .techcard p { margin: 4px 0; font-size: 13.5px; }
@@ -625,19 +693,21 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--leaf-wash); color: var(--leaf); }
 
 /* ---------- title ---------- */
-#title { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: flex-end; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(24px + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(90deg, rgba(12, 19, 16, 0.78) 0%, rgba(12, 19, 16, 0.38) 42%, rgba(12, 19, 16, 0) 70%), linear-gradient(0deg, rgba(12, 19, 16, 0.5) 0%, rgba(12, 19, 16, 0) 40%); color: var(--tx); }
-.titleblock { max-width: 560px; margin-left: clamp(0px, 5vw, 80px); display: flex; flex-direction: column; gap: 18px; pointer-events: auto; }
-.titlemark { width: 78px; height: 78px; filter: drop-shadow(0 6px 18px rgba(6, 12, 9, 0.4)); }
+#title { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: flex-end; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(24px + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(90deg, rgba(10, 16, 13, 0.85) 0%, rgba(10, 16, 13, 0.55) 40%, rgba(10, 16, 13, 0) 66%), linear-gradient(0deg, rgba(10, 16, 13, 0.55) 0%, rgba(10, 16, 13, 0) 42%); color: var(--tx); }
+.titleblock { max-width: 560px; margin-left: clamp(0px, 5vw, 80px); align-items: stretch; display: flex; flex-direction: column; gap: 18px; pointer-events: auto; }
+.titlemark { width: 78px; height: 78px; margin-left: -7px; filter: drop-shadow(0 6px 18px rgba(6, 12, 9, 0.4)); }
 .titleblock h1 { font-family: var(--story); font-weight: 600; font-size: clamp(58px, 9vw, 116px); line-height: 0.92; margin: 0; letter-spacing: -0.015em; color: #fbf4e2; text-shadow: 0 3px 34px rgba(6, 12, 9, 0.45); font-variation-settings: "SOFT" 100, "opsz" 144; }
 .titleblock .lede { font-family: var(--story); font-size: 18px; line-height: 1.55; max-width: 42ch; color: rgba(251, 244, 226, 0.88); margin: 0; font-variation-settings: "SOFT" 60, "opsz" 18; }
 .namefield { display: flex; flex-direction: column; gap: 7px; max-width: 340px; font-size: 13px; font-weight: 500; color: var(--tx-2); }
-.namefield input { background: var(--glass); border: 1px solid var(--edge); border-radius: 12px; color: #fbf4e2; font-family: var(--story); font-size: 22px; font-weight: 600; padding: 9px 14px 10px; font-variation-settings: "SOFT" 60, "opsz" 24; box-shadow: var(--shadow); }
+.namefield input { box-sizing: border-box; width: 100%; background: var(--glass); border: 1px solid var(--edge); border-radius: 12px; color: #fbf4e2; font-family: var(--story); font-size: 22px; font-weight: 600; padding: 9px 14px 10px; font-variation-settings: "SOFT" 60, "opsz" 24; box-shadow: var(--shadow); }
 .namefield input:focus { outline: none; border-color: var(--honey); }
-.titlebtns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.titlebtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 340px; }
+.titlebtns > [hidden] { display: none; }
+.titlebtns > #bContinue:not([hidden]) { grid-column: 1 / -1; }
 .bigbtn { border: none; background: var(--honey); color: var(--honey-ink); font-size: 16px; font-weight: 600; padding: 13px 30px; border-radius: 12px; cursor: pointer; box-shadow: 0 6px 18px rgba(6, 12, 9, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35); transition: background 0.12s, transform 0.12s; }
 .bigbtn:hover { background: var(--honey-2); transform: translateY(-1px); }
 .bigbtn.ghost { background: var(--glass); color: var(--tx); box-shadow: var(--lift), var(--shadow); }
-.bigbtn.ghost:hover { background: var(--glass-hi); color: var(--honey-2); }
+.bigbtn.ghost:hover { background: var(--glass-hi); color: var(--tx); box-shadow: var(--lift), inset 0 0 0 1px rgba(255, 244, 220, 0.2), var(--shadow); }
 .titlefoot { font-size: 13px; color: var(--tx-3); }
 #title .confirmline { color: var(--tx); background: var(--glass); padding: 10px 12px 10px 16px; border-radius: var(--r); box-shadow: var(--shadow); }
 .titlenote { font-size: 14px; line-height: 1.45; color: var(--honey-2); max-width: 44ch; margin: 0; }
@@ -649,7 +719,7 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 .oops .btn { background: #fff; color: #1c2924; border-color: #c9bfa6; }
 
 /* ---------- chapter card ---------- */
-#card { position: absolute; inset: 0; z-index: 40; touch-action: pan-y; display: grid; place-items: start center; background: radial-gradient(ellipse at 30% 40%, #1d2a24, #0c120f); color: var(--tx); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px; animation: cardIn 0.9s ease-out; overflow: auto; }
+#card { position: absolute; inset: 0; z-index: 40; touch-action: pan-y; display: grid; place-items: start center; background: linear-gradient(90deg, rgba(12, 18, 15, 0.94) 0%, rgba(12, 18, 15, 0.86) 48%, rgba(12, 18, 15, 0.55) 100%); color: var(--tx); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px; animation: cardIn 0.9s ease-out; overflow: auto; }
 @keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
 .cardinner { max-width: 620px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; margin-block: auto; }
 .cardinner .kicker { font-size: 13.5px; font-weight: 600; color: var(--honey-2); letter-spacing: 0.02em; }
@@ -672,7 +742,7 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 
 /* ---------- narrower screens ---------- */
 @media (max-width: 1180px) {
-  .crest { max-width: 190px; }
+  .crest { max-width: 230px; }
   .datelabel { min-width: 0; }
   .band .when canvas { display: none; }
   .bandbtn span { display: none; }
@@ -681,7 +751,7 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
 }
 /* a phone held upright: the valley gets most of the screen. The top is one glass bar of two rows (the town, its date,
    the speed and the menu; then the people and the stores), the plan a card under it, and the dock a slim shelf */
-@media (max-width: 760px) and (min-height: 521px), (max-width: 560px) {
+@media (max-width: 900px) and (min-height: 521px), (max-width: 560px) {
   :root { --gap: 8px; }
   .band { flex-wrap: wrap; gap: 3px 8px; padding: calc(7px + env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); background: var(--glass); border-radius: 0 0 18px 18px; box-shadow: var(--lift), var(--shadow); pointer-events: auto !important; }
   .band::after { content: ""; order: 5; flex-basis: 100%; height: 0; }
@@ -780,15 +850,16 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
   .toasts { width: calc(100% - 24px); align-items: stretch; bottom: calc(var(--drawer-h) + 10px); }
   #hud.tooling .toasts { bottom: calc(var(--drawer-h) + 56px); }
   /* the chronicle's lines come in just under the plan, small enough to leave the valley in view */
-  .story-line { width: calc(100% - 24px); min-width: 0; font-size: 14px; line-height: 1.45; padding: 8px 14px 9px; top: calc(var(--plan-b, var(--band-h)) + 8px); }
+  .story-line { box-sizing: border-box; width: calc(100% - 24px); min-width: 0; font-size: 14px; line-height: 1.45; padding: 8px 14px 9px; top: calc(var(--plan-b, var(--band-h)) + 8px); }
   #hud.legending .story-line { top: calc(var(--plan-b, var(--band-h)) + 8px); }
   .legend { flex-wrap: wrap; top: auto; bottom: calc(var(--drawer-h) + 10px); left: 10px; right: 10px; transform: none; max-width: none; gap: 8px 14px; }
   #hud.legending .toasts { bottom: calc(var(--drawer-h) + 100px); }
   .menu { right: 8px !important; left: 8px !important; top: calc(var(--band-h) + 6px); min-width: 0; max-height: calc(100% - var(--band-h) - 16px); overflow: auto; touch-action: pan-y; }
   body.touch #hud .menu button { padding-top: 9px; padding-bottom: 9px; }
-  .menu .mapviews { display: grid; grid-template-columns: 1fr 1fr; }
-  .menu .mapviews button { grid-template-columns: 18px 1fr; }
-  .menu .mh { font-size: 12px; font-weight: 600; color: var(--tx-3); padding: 6px 12px 2px; }
+  .menu .mapviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px 6px 6px; }
+  .menu .mapviews button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 66px; padding: 8px 4px; border-radius: 10px; background: var(--surf); text-align: center; font-size: 12.5px; line-height: 1.2; }
+  .menu .mapviews .mi svg { width: 20px; height: 20px; }
+  .menu .mh { font-size: 12.5px; font-weight: 600; color: var(--tx-2); padding: 8px 12px 4px; }
   .titleblock { margin-left: 0; gap: 14px; }
   .titleblock .lede { font-size: 16px; }
   .sheet { border-radius: 16px; }
@@ -796,10 +867,106 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
   .shead h2 { font-size: 20px; }
   .sbody { padding: 12px 16px 16px; }
   .setrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; }
+  .setrow.ranged { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 28px; }
   .shelf li { grid-template-columns: 1fr; }
+}
+/* a phone held upright, the second pass: the valley first */
+@media (max-width: 900px) and (min-height: 521px), (max-width: 560px) {
+  /* the plan steps aside while a building is in hand or a map view is on, unless the tour is talking */
+  #hud.tooling .plan:not(.touring), #hud.legending .plan:not(.touring) { display: none; }
+  /* folded, the goals are one line: the chapter's name and the button to open them */
+  .plan.mini .goals h2 small { display: none; }
+  .plan.mini .goals header { align-items: center; }
+  /* a letter has the plan to itself, but for a flood on its way */
+  .plan:has(> .happen.letter) > .study, .plan:has(> .happen.letter) > .notes, .plan:has(> .happen.letter) > .sky:not(.warned):not(.flooding), .plan:has(> .happen.letter) > .goals { display: none; }
+  /* and the room to be read whole: the column may run further down the screen while it waits for an answer */
+  .plan:has(> .happen.letter) { max-height: 62%; }
+  /* the card's head is its handle: a grabber on it, and a pull down puts the card away */
+  .phead { touch-action: none; padding-top: 20px; }
+  .phead::before { content: ""; position: absolute; left: 50%; top: 7px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: rgba(244, 237, 221, 0.28); }
+  .phead .close { top: 16px; }
+  .pbody > .btns:last-child .btn.danger[data-a="remove"] { margin-left: 10px; }
+  /* sheets fill the screen below its top edge, so nothing of the game shows round them */
+  #modal { padding: env(safe-area-inset-top, 0px) 0 0; place-items: stretch; }
+  .sheet, .sheet.wide, .sheet.mid { width: 100%; max-height: none; height: 100%; border-radius: 20px 20px 0 0; }
+  .sbody { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  /* the ledger on a phone's width: what is in store and which way it is going */
+  table.led.goods th:nth-child(4), table.led.goods td:nth-child(4), table.led.goods th:nth-child(5), table.led.goods td:nth-child(5), table.led.goods th:nth-child(7), table.led.goods td:nth-child(7) { display: none; }
+  .ltabs { width: 100%; box-sizing: border-box; display: grid; grid-template-columns: repeat(3, 1fr); }
+  /* the map view's key: one row over the dock */
+  .legend { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; left: 8px; right: 8px; padding: 6px 6px 6px 14px; }
+  .legend::-webkit-scrollbar { display: none; }
+  .legend .keys { flex-wrap: nowrap; white-space: nowrap; }
+  .legend .btn { position: sticky; right: 0; z-index: 1; background: linear-gradient(var(--surf-2), var(--surf-2)), var(--glass-hi); box-shadow: -14px 0 10px 2px var(--dock), 10px 0 0 0 var(--dock); }
+  /* the title: the name and its buttons fill the column, over a deeper shade */
+  .namefield, .titlebtns { max-width: none; }
+  #title { background: linear-gradient(0deg, rgba(10, 16, 13, 0.92) 0%, rgba(10, 16, 13, 0.62) 46%, rgba(10, 16, 13, 0) 76%); }
+  /* the chapter's card is dark under its words from top to bottom, and its button spans them */
+  #card { background: linear-gradient(180deg, rgba(12, 18, 15, 0.7), rgba(12, 18, 15, 0.95) 32%); }
+  .cardinner .bigbtn { align-self: stretch; }
+  /* dock tiles: one width each, room for a two-line name */
+  .tools { gap: 5px; }
+  .tool { width: 74px; min-width: 0; padding: 5px 3px 6px; background: rgba(255, 246, 226, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 244, 220, 0.07); }
+  .tool .nm { white-space: normal; font-size: 11.5px; }
+  .tool.on { box-shadow: inset 0 0 0 2px var(--honey); }
+  /* the research tree's empty word and the tour's words wrap well */
+  .tour p { text-wrap: pretty; }
+}
+/* a tablet held upright, or a narrow window: the phone's layout, with the plan and the card kept to a readable width */
+@media (min-width: 561px) and (max-width: 900px) and (min-height: 521px) {
+  .plan { right: auto; width: min(calc(100% - 16px), 460px); }
+  .placard { left: max(0px, calc(50% - 330px)); right: max(0px, calc(50% - 330px)); }
+  .jrow { justify-content: flex-start; gap: 16px; }
+  .jl { width: 96px; }
+}
+/* a phone or any short screen: power is a bolt and its figures */
+@media (max-width: 900px) and (min-height: 521px), (max-width: 560px), (max-height: 520px) and (min-width: 561px) {
+  .powerbox .pw::before { content: ""; display: inline-block; width: 9px; height: 13px; margin-right: 6px; vertical-align: -1px; background: currentColor; clip-path: polygon(62% 0, 0 58%, 44% 58%, 32% 100%, 100% 38%, 58% 38%); }
+}
+/* a desktop window not much taller than a laptop's: the card for what is picked packs a little closer */
+@media (max-height: 820px) and (min-width: 761px) and (min-height: 521px) {
+  .phead { padding-top: 11px; padding-bottom: 9px; }
+  .phead img { width: 42px; height: 42px; border-radius: 11px; }
+  .ph { margin-top: 12px; }
+  .nds { margin-top: 8px; gap: 6px; }
+  .nd { width: 34px; height: 34px; }
+  .nd img { width: 25px; height: 25px; }
+  .upg { margin-top: 8px; }
+  .pbody > .btns:last-child { margin-top: 10px; padding-top: 12px; padding-bottom: 12px; }
+}
+/* fingers: everything that is pressed is at least about a fingertip's size */
+@media (pointer: coarse) {
+  .speed button { width: 40px; height: 38px; }
+  .bandbtn, .bandbtn:hover { min-width: 44px; height: 40px; }
+  .tab { min-height: 36px; }
+  .tabfold { width: 40px; height: 36px; }
+  .btn { min-height: 40px; padding-top: 9px; padding-bottom: 9px; }
+  .plan .btn, .sky .btn { min-height: 36px; padding-top: 7px; padding-bottom: 7px; }
+  .seg button { height: 40px; min-width: 46px; }
+  .jd { width: 42px; height: 38px; }
+  .ltab { min-height: 40px; }
+  .phead .close { width: 40px; height: 40px; font-size: 20px; }
+  .shead .close { min-height: 40px; }
+  .menu button { min-height: 48px; }
+  .goals .collapse, .placard .details, .tour .skip { padding: 10px 10px; }
+  .tour .btn { min-height: 40px; padding-left: 18px; padding-right: 18px; }
+  .note { min-height: 40px; }
+}
+/* a finger leaves no hover behind it: a tapped control goes back to how it looked */
+@media (hover: none) {
+  .tool:hover { transform: none; }
+  .tab:not(.on):hover { background: none; color: var(--tx-2); }
+  .seg button:not(.on):hover, .jd:not(.on):hover { background: var(--surf); }
+  .btn:not(.primary):not(.danger):hover { background: var(--surf-2); border-color: var(--edge); }
+  .btn.primary:hover { background: var(--honey); border-color: var(--honey); }
+  .btn.danger:hover { background: none; border-color: rgba(255, 155, 127, 0.35); }
+  .goal:hover, .note:hover, .study:not(.idle):hover, .chip:hover, .menu button:not(.on):hover { background: none; }
+  .study.idle:hover { background: none; }
+  .speed button:not(.on):hover { background: none; color: var(--tx-2); }
 }
 /* a narrow phone keeps the town's name whole: the menu button shows only its icon */
 @media (max-width: 420px) {
+  .crest .mark { display: none; }
   .bandbtn span { display: none; }
   .bandbtn, .bandbtn:hover { width: 40px; padding: 0; justify-content: center; }
 }
@@ -856,6 +1023,11 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
   .pbody > .btns:last-child::before { display: none; }
   .phead img { width: 38px; height: 38px; }
   .story-line { font-size: 14px; left: calc(50% + 142px); width: min(440px, calc(100% - 310px)); min-width: 240px; }
+  .menu { max-height: calc(100% - var(--band-h) - 16px); overflow: auto; touch-action: pan-y; }
+  .menu button, body.touch #hud .menu button { min-height: 40px; padding-top: 6px; padding-bottom: 6px; }
+  /* a map view's key takes the plan's place, and keeps clear of a card */
+  #hud.legending .plan:not(.touring) { display: none; }
+  #hud.inspecting .legend { left: max(var(--gap), env(safe-area-inset-left, 0px)); transform: none; max-width: calc(100% - 320px - 3 * var(--gap)); }
   .toast { font-size: 13px; padding: 7px 12px; }
   #title { padding-block: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)); }
   .titleblock { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; row-gap: 10px; align-items: end; max-width: 680px; }
@@ -868,6 +1040,15 @@ table.led tbody tr:not(.lcat):hover td { background: var(--surf); }
   .titlenote, .titletip, .titlefoot { grid-column: 1 / -1; }
   .bigbtn { padding: 10px 22px; font-size: 15px; }
   #card { padding-block: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)); }
+  /* a sheet keeps its frame slim, so the short screen goes to what it holds */
+  #modal { padding-block: calc(8px + env(safe-area-inset-top, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .shead { padding: 6px 10px 6px 18px; }
+  .shead h2 { font-size: 19px; }
+  .shead .close { min-height: 36px; padding-block: 4px; }
+  .sbody { padding: 10px 18px 14px; }
+  .ltabs { margin-bottom: 8px; }
+  .ltab { min-height: 34px; padding-block: 4px; }
+  .treehead { margin-bottom: 8px; }
   .cardinner { gap: 10px; }
   .cardinner h2 { font-size: 34px; }
   .cardinner .story { font-size: 15px; line-height: 1.5; }
@@ -1119,7 +1300,7 @@ function M(x = 0, y = 0, z = 0, ry = 0, sx = 1, sy = 1, sz = 1, rx = 0, rz = 0) 
   _e.set(rx, ry, rz, 'YXZ'); _q.setFromEuler(_e); _p.set(x, y, z); _s.set(sx, sy, sz);
   return new THREE.Matrix4().compose(_p, _q, _s);
 }
-function fmt(n) { n = Math.floor(n); return n >= 10000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
+function fmt(n) { n = Math.floor(n); return n >= 10000 ? (n / 1000).toFixed(1) + 'k' : n >= 1000 ? Math.floor(n / 1000) + ',' + String(n % 1000).padStart(3, '0') : String(n); }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 const WORDNUM = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
@@ -6501,7 +6682,7 @@ function computeAlerts() {
   }
   let jam = null, jams = 0; for (const e of S.ents.values()) if (e.jam) { jams++; if (!jam) jam = e; }
   if (jam) A.push({ k: 'jam', item: String(jam.id), text: `${jams > 1 ? `${jams} works are jammed` : `${BUILD[jam.type].name} is jammed`}.`, icon: jam.jam });
-  if (S.power.use > 0 && S.power.sat < 0.999) A.push({ k: 'power', text: `Power short, ${Math.round(S.power.sat * 100)}% supplied.`, icon: 'b_turbine' });
+  if (S.power.use > 0 && S.power.sat < 0.999) A.push({ k: 'power', text: `Power short. Works that need it run at ${Math.round(S.power.sat * 100)}%.`, icon: 'b_turbine' });
   const short = {}; let cold = 0, unserved = 0;
   for (const e of S.ents.values()) if (e.type === 'home' && e.built >= 1) {
     if (!e.served) unserved++;
@@ -8532,8 +8713,8 @@ function labelTexture(kind) {
   if (BADGE.tex[kind]) return BADGE.tex[kind];
   const [, item, st] = kind.split(':');
   const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
-  g.beginPath(); g.arc(48, 48, 42, 0, TAU); g.fillStyle = 'rgba(240,236,224,0.96)'; g.fill();
-  g.lineWidth = 8; g.strokeStyle = st === 'ok' ? '#3b8753' : st === 'rest' ? '#9a9a8a' : '#c0452e'; g.stroke();
+  g.beginPath(); g.arc(48, 48, 42, 0, TAU); g.fillStyle = 'rgba(24,34,30,0.94)'; g.fill();
+  g.lineWidth = 7; g.strokeStyle = st === 'ok' ? '#9fd882' : st === 'rest' ? '#8a8f86' : '#ff9b7f'; g.stroke();
   if (ICON_CANVAS[item]) { g.globalAlpha = st === 'rest' ? 0.55 : 1; g.drawImage(ICON_CANVAS[item], 10, 8, 76, 76); g.globalAlpha = 1; }
   const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding;
   BADGE.tex[kind] = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
@@ -8548,28 +8729,28 @@ function badgeTexture(kind) {
   const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
   g.beginPath(); for (let k = 0; k < 6; k++) { const a = (k * 60 + 30) * Math.PI / 180; g.lineTo(48 + Math.cos(a) * 44, 48 + Math.sin(a) * 44); } g.closePath();
   const warm = ['nores', 'nohands', 'nopower', 'cold', 'reach', 'jam', 'far'].includes(kind) || kind.startsWith('nores:') || !!ITEMS[kind];
-  g.fillStyle = 'rgba(240,230,205,0.95)'; g.fill(); g.lineWidth = 6; g.strokeStyle = kind === 'arcology' ? '#c9a548' : kind === 'full' ? '#3f8f88' : kind === 'dormant' ? '#7fa8c8' : kind === 'flooded' || kind === 'mend' ? '#3d6c86' : warm ? '#d4703f' : '#9a8a6a'; g.stroke();
+  g.fillStyle = 'rgba(24,34,30,0.94)'; g.fill(); g.lineWidth = 6; g.strokeStyle = kind === 'arcology' ? '#f3b649' : kind === 'full' ? '#64d1b9' : kind === 'dormant' ? '#8fcaec' : kind === 'flooded' || kind === 'mend' ? '#8fcaec' : warm ? '#ff9b7f' : '#a7a99c'; g.stroke();
   if (kind === 'flooded') {
     // three lines of water
-    g.strokeStyle = '#3d6c86'; g.lineWidth = 7; g.lineCap = 'round';
+    g.strokeStyle = '#8fcaec'; g.lineWidth = 7; g.lineCap = 'round';
     for (const y of [32, 50, 68]) { g.beginPath(); for (let x = 22; x <= 74; x += 2) g.lineTo(x, y + Math.sin((x - 22) / 52 * Math.PI * 2) * 6); g.stroke(); }
     const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; BADGE.tex[kind] = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }); return BADGE.tex[kind];
   }
   if (kind === 'blight') {
-    g.strokeStyle = '#8a4fa8'; g.lineWidth = 6; g.beginPath(); for (let k = 0; k < 6; k++) { const a = (k * 60 + 30) * Math.PI / 180; g.lineTo(48 + Math.cos(a) * 44, 48 + Math.sin(a) * 44); } g.closePath(); g.stroke();
-    g.fillStyle = '#6a3a7a'; for (const [x, y, r] of [[36, 38, 9], [58, 34, 7], [52, 58, 11], [32, 60, 6], [66, 54, 5]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+    g.strokeStyle = '#c690e0'; g.lineWidth = 6; g.beginPath(); for (let k = 0; k < 6; k++) { const a = (k * 60 + 30) * Math.PI / 180; g.lineTo(48 + Math.cos(a) * 44, 48 + Math.sin(a) * 44); } g.closePath(); g.stroke();
+    g.fillStyle = '#b77fd1'; for (const [x, y, r] of [[36, 38, 9], [58, 34, 7], [52, 58, 11], [32, 60, 6], [66, 54, 5]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
     const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; BADGE.tex[kind] = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }); return BADGE.tex[kind];
   }
   if (kind === 'mend') {
     // a mallet: the wardens' sign
-    g.save(); g.translate(48, 50); g.rotate(-0.7); g.fillStyle = '#6e4a31'; g.fillRect(-4, -6, 8, 34); g.fillStyle = '#3d6c86'; g.fillRect(-17, -24, 34, 18); g.restore();
+    g.save(); g.translate(48, 50); g.rotate(-0.7); g.fillStyle = '#c9a27a'; g.fillRect(-4, -6, 8, 34); g.fillStyle = '#8fcaec'; g.fillRect(-17, -24, 34, 18); g.restore();
     const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; BADGE.tex[kind] = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }); return BADGE.tex[kind];
   }
-  const slash = () => { g.strokeStyle = '#b8442e'; g.lineWidth = 8; g.lineCap = 'round'; g.beginPath(); g.moveTo(26, 26); g.lineTo(70, 70); g.stroke(); };
+  const slash = () => { g.strokeStyle = '#ff9b7f'; g.lineWidth = 8; g.lineCap = 'round'; g.beginPath(); g.moveTo(26, 26); g.lineTo(70, 70); g.stroke(); };
   if (kind.startsWith('nores:') && ICON_CANVAS[kind.slice(6)]) { g.globalAlpha = 0.75; g.drawImage(ICON_CANVAS[kind.slice(6)], 12, 10, 72, 72); g.globalAlpha = 1; slash(); }
   else if (kind === 'far' && ICON_CANVAS.home1) { g.globalAlpha = 0.75; g.drawImage(ICON_CANVAS.home1, 12, 10, 72, 72); g.globalAlpha = 1; slash(); }
   else if (ICON_CANVAS[kind]) g.drawImage(ICON_CANVAS[kind], 12, 10, 72, 72);
-  else { g.fillStyle = kind === 'nopower' ? '#c98a1a' : kind === 'jam' ? '#b8442e' : '#5a4630'; g.font = 'bold 42px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(BADGE_GLYPH[kind] || '!', 48, 51); }
+  else { g.fillStyle = kind === 'nopower' ? '#f3b649' : kind === 'jam' ? '#ff9b7f' : '#f4eddd'; g.font = 'bold 42px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(BADGE_GLYPH[kind] || '!', 48, 51); }
   const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding;
   BADGE.tex[kind] = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
   return BADGE.tex[kind];
@@ -8671,7 +8852,7 @@ function paintOverlay(mode, extra) {
   const pred = mode === 'hazard' ? hazardPrediction() : null;
   for (const t of W.inner) {
     const s = OVER.tileVerts.get(t.i); let c = noC, a = 0;
-    if (mode === 'harmony') { const h = S.harmony[t.i]; c = harmonyColor(h); a = t.type === 'water' ? 0 : 0.5; }
+    if (mode === 'harmony') { const h = S.harmony[t.i]; c = harmonyColor(h); a = t.type === 'water' ? 0 : 0.4; }
     else if (mode === 'reach') { if (S.reach[t.i]) { c = reachC; a = 0.28; } }
     else if (mode === 'resource') { if (extra && extra.has(t.type)) { c = resC; a = 0.4; } else if (extra && extra.has('bloom') && t.type === 'meadow' && !t.ent) { c = resC; a = 0.25; } }
     else if (mode === 'sites') { const n = siteYield(extra, t); if (n > 0) { c = siteC; a = n > 0.99 ? 0.55 : 0.05 + 0.3 * n * n; } }
@@ -9053,7 +9234,8 @@ function buildIcons() {
   { const m = getModel('arcology:0'); const objs = [new THREE.Mesh(m.solid, MAT.building)]; if (m.glass) objs.push(new THREE.Mesh(m.glass, MAT.glass)); shoot(objs, 2.5, 1.25, 'arcology'); }
   for (const lv of [1, 2]) { const gb = new GB(); refitMark(gb, lv); const m = new THREE.Mesh(gb.build(), MAT.building); m.scale.setScalar(1.6); m.position.set(0.3, 0, 0.5); shoot([tileBase(0.98), m], 1.0, 0.5, 'refit' + lv); }
   for (const k of ITEM_ORDER) {
-    const tok = new GB(); hexp(tok, 0.15, 0.025, 0, -0.025, 0, '#e8dfc6');
+    // each good stands on a slate hex: dark enough that the good, not its token, is what reads on the glass and on paper
+    const tok = new GB(); hexp(tok, 0.15, 0.025, 0, -0.025, 0, '#5f6b61');
     shoot([new THREE.Mesh(tok.build(), MAT.building), new THREE.Mesh(itemGeometry(k), MAT.item)], 0.17, 0.03, k, 0.5);
   }
   r.setClearColor(oldClear, oldAlpha); rt.dispose(); U.snow.value = oldSnow;
@@ -9559,6 +9741,8 @@ function setTool(tool) {
   // putting a carried building down anywhere but a new spot sends it back where it was
   if (INPUT.tool && INPUT.tool.carry && tool !== INPUT.tool) { const c = INPUT.tool.carry; INPUT.tool.carry = null; putBack(c); }
   INPUT.tool = tool; INPUT.drag = null; if (OVER.trail) OVER.trail.visible = false;
+  // a building picked some other way than from the dock (by its key, or Q on one in the valley) brings its tab up
+  if (tool && tool.kind === 'build' && BUILD[tool.type] && BUILD[tool.type].cat !== UI.tab && drawerTypes(BUILD[tool.type].cat).includes(tool.type)) { UI.tab = BUILD[tool.type].cat; UI.palSig = ''; UI.renderTabs(); }
   if (!tool || tool.kind !== 'paste') { INPUT.bp = tool && tool.kind === 'copy' ? null : INPUT.bp; clearBlueprintGhost(); }
   if (tool && tool.kind === 'build') { INPUT.rotLocked = false; makeGhost(tool.type, INPUT.rot); }
   else makeGhost(null);
@@ -9936,7 +10120,7 @@ function initInput() {
   // ground has just brought up
   cv.addEventListener('pointerleave', (ev) => {
     if (INPUT.pointers.size) return;
-    if (ev.pointerType === 'mouse') { INPUT.hover = null; updateHover(); UI.hideTip(); }
+    if (ev.pointerType === 'mouse') { INPUT.hover = null; INPUT.lastX = undefined; updateHover(); UI.hideTip(); }
     else if (INPUT.tool) { INPUT.hover = null; updateHover(); }
   });
   cv.addEventListener('wheel', (ev) => { ev.preventDefault(); if (CAM.cinematic && CAM.cinematic.arc) { arcShowEnd(); return; } if (CAM.cinematic) return; const f = Math.exp(ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.0012)); CAM.tdist = clamp(CAM.tdist * f, CAM.minD, CAM.maxD); }, { passive: false });
@@ -10140,7 +10324,7 @@ const GAME = { mode: 'title', speed: 1, lastSpeed: 1 };
 const SPEEDS = [0, 1, 2, 4];
 const $ = (id) => document.getElementById(id);
 const UI = { overlay: null, tab: 'gather', inspectSig: '', pressInInspect: false, tipSource: null, seenUnlock: {}, ledgerTab: 'goods', modalKind: null };
-const TIER_COL = ['', '#cdb37c', '#c07a4c', '#6fb0a6', '#93b56b', '#a08fd0'];
+const TIER_COL = ['', '#cdb37c', '#7fa6d8', '#6fb0a6', '#93b56b', '#a08fd0'];
 
 function iconImg(name, cls = '') { return ICON[name] ? `<img src="${ICON[name]}" alt="" class="${cls}">` : ''; }
 function costLine(cost) {
@@ -10223,16 +10407,14 @@ UI.init = function () {
     if (need && k === NEED_CHIPS[0]) UI.needSep = mkSep();
     const ch = document.createElement('div'); ch.className = 'chip' + (need ? ' need' : ''); ch.dataset.item = k; ch.hidden = true;
     ch.innerHTML = `${iconImg(k)}<span class="n">0</span><span class="tr"></span>`;
-    ch.addEventListener('mouseenter', (ev) => { UI.tipSource = 'chip:' + k; UI.chipTip(k); UI.moveTip(ev.clientX, ev.clientY); });
-    ch.addEventListener('mousemove', (ev) => UI.moveTip(ev.clientX, ev.clientY));
+    ch.addEventListener('mouseenter', () => { UI.tipSource = 'chip:' + k; UI.chipTip(k); UI.anchorBelow(ch); });
     ch.addEventListener('mouseleave', () => UI.hideTip());
     ch.addEventListener('click', () => { UI.hideTip(); UI.ledgerTab = 'goods'; UI.openModal('ledger'); });
     st.appendChild(ch);
   }
   const pe = $('people');
   pe.innerHTML = '<span class="ppl" id="popLine">0 people</span><span class="tierbar" id="tierBar"></span><span class="newcomers" id="demand"></span>';
-  pe.addEventListener('mouseenter', (ev) => { UI.tipSource = 'people'; UI.peopleTip(); UI.moveTip(ev.clientX, ev.clientY); });
-  pe.addEventListener('mousemove', (ev) => UI.moveTip(ev.clientX, ev.clientY));
+  pe.addEventListener('mouseenter', () => { UI.tipSource = 'people'; UI.peopleTip(); UI.anchorBelow(pe); });
   pe.addEventListener('mouseleave', () => UI.hideTip());
   pe.addEventListener('click', () => { UI.hideTip(); if (S.demand.why === 'land') UI.pickTool('zone'); else { UI.ledgerTab = 'people'; UI.openModal('ledger'); } });
   UI.renderTabs(); UI.refreshPalette();
@@ -10250,6 +10432,12 @@ UI.init = function () {
     else UI.openModal(a);
   };
   document.addEventListener('pointerdown', (ev) => { if (!ev.target.closest('.menu, #bMap, #bMenu')) UI.closeMenus(); });
+  // on a phone the card for what is picked is pulled down by its head to put it away
+  { const box = $('inspect'); let y0 = null, dy = 0;
+    box.addEventListener('pointerdown', (ev) => { if (UI.form() !== 'phone' || ev.pointerType === 'mouse' || !ev.target.closest('.phead') || ev.target.closest('button')) return; y0 = ev.clientY; dy = 0; try { box.setPointerCapture(ev.pointerId); } catch (err) {} });
+    box.addEventListener('pointermove', (ev) => { if (y0 === null) return; dy = Math.max(0, ev.clientY - y0); box.style.transform = dy > 2 ? `translateY(${dy}px)` : ''; });
+    const end = () => { if (y0 === null) return; y0 = null; box.style.transform = ''; if (dy > 64) { const c = box.querySelector('.phead .close'); if (c) c.click(); } dy = 0; };
+    box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end); }
   $('legend').addEventListener('click', (ev) => { if (ev.target.closest('[data-a="closeMap"]')) UI.setOverlay(null); });
   $('studyw').onclick = () => UI.openModal('research');
   $('skyw').addEventListener('click', UI.onSkyClick);
@@ -10268,8 +10456,8 @@ UI.init = function () {
     if (ev.target.closest('[data-a="bpTurn"]') && INPUT.bp) { INPUT.bp.rot = (INPUT.bp.rot + 1) % 6; updateHover(); AUDIO.sfx('tick'); }
     if (ev.target.closest('[data-a="toolOff"]')) { setTool(null); AUDIO.sfx('tick'); }
   });
-  $('powerw').addEventListener('mouseenter', (ev) => { UI.tipSource = 'power'; UI.powerTip(); UI.moveTip(ev.clientX, ev.clientY); });
-  $('powerw').addEventListener('mousemove', (ev) => UI.moveTip(ev.clientX, ev.clientY)); $('powerw').addEventListener('mouseleave', () => UI.hideTip());
+  $('powerw').addEventListener('mouseenter', () => { UI.tipSource = 'power'; UI.powerTip(); UI.anchorBelow($('powerw')); });
+  $('powerw').addEventListener('mouseleave', () => UI.hideTip());
   $('alerts').addEventListener('click', (ev) => { const a = ev.target.closest('.note'); if (a) UI.alertClick(a.dataset.k, a.dataset.item, +a.dataset.tier); });
   const ins = $('inspect');
   ins.addEventListener('pointerdown', () => { UI.pressInInspect = true; });
@@ -10289,9 +10477,12 @@ UI.init = function () {
   $('palette').addEventListener('mouseleave', () => UI.hideTip());
   // a long row of buildings scrolls sideways under an ordinary mouse wheel
   $('tools').addEventListener('wheel', (ev) => { const el = ev.currentTarget; if (el.scrollWidth > el.clientWidth + 1 && Math.abs(ev.deltaY) > Math.abs(ev.deltaX)) { el.scrollLeft += ev.deltaY * (ev.deltaMode === 1 ? 30 : 1); ev.preventDefault(); } }, { passive: false });
-  if (UI.form() !== 'wide') $('leftcol').classList.add('mini');
+  if (UI.form() !== 'wide') $('leftcol').classList.add('mini'); UI.lastForm = UI.form();
   document.body.classList.toggle('touch', UI.touch);
-  window.addEventListener('resize', () => { UI.tierHold = false; UI.alertSig = ''; UI.skySig = ''; if (GAME.mode === 'play') { UI.fitBand(); UI.sizeDock(); UI.closeMenus(); if (!UI.doneOpen) UI.doneFold = false; UI.renderGoals(true); } });
+  window.addEventListener('resize', () => {
+    const f = UI.form(), lc = $('leftcol');
+    if (f !== UI.lastForm) { if (f === 'wide') lc.classList.toggle('mini', !!UI.wideMini); else { if (UI.lastForm === 'wide') UI.wideMini = lc.classList.contains('mini'); lc.classList.add('mini'); } UI.lastForm = f; }
+    UI.tierHold = false; UI.alertSig = ''; UI.skySig = ''; if (GAME.mode === 'play') { UI.fitBand(); UI.sizeDock(); UI.closeMenus(); if (!UI.doneOpen) UI.doneFold = false; UI.renderGoals(true); } });
 };
 // the drawer holds only what can be built now (and the great works once they are known), so it grows with the valley
 // instead of opening on rows of locked buildings; a tab with nothing in it yet stays out of the way
@@ -10308,23 +10499,24 @@ UI.renderTabs = function () {
     b.onclick = () => { if ($('palette').classList.contains('folded')) UI.foldDrawer(false); UI.tab = c.id; for (const k of Object.keys(BUILD)) if (BUILD[k].cat === c.id && unlocked(k)) UI.seenUnlock[k] = 1; UI.renderTabs(); UI.palSig = ''; UI.refreshPalette(); AUDIO.sfx('tick'); };
     tabs.appendChild(b);
   }
+  const oldFold = $('palette').querySelector(':scope > .tabfold'); if (oldFold) oldFold.remove();
   const fold = document.createElement('button'); fold.className = 'tabfold';
   const folded = $('palette').classList.contains('folded');
   fold.innerHTML = `<svg viewBox="0 0 14 10" width="14" height="10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="${folded ? 'M2 7l5-4 5 4' : 'M2 3l5 4 5-4'}"/></svg>`;
   fold.setAttribute('aria-label', folded ? 'Open the drawer' : 'Fold the drawer away'); fold.title = folded ? 'Open the drawer' : 'Fold the drawer';
   fold.onclick = () => UI.foldDrawer(!$('palette').classList.contains('folded'));
-  tabs.appendChild(fold);
+  $('palette').insertBefore(fold, $('tools'));
   // a narrow screen scrolls the tabs: the one a hint points at (or the open one) is brought clear of the fold button
   tabs.scrollLeft = sl;
   const want = tabs.querySelector('.tab.hint') || tabs.querySelector('.tab.on');
   if (want && tabs.scrollWidth > tabs.clientWidth + 1) {
-    const fw = fold.offsetWidth + 10, l = want.offsetLeft, r = l + want.offsetWidth;
+    const fw = 24, l = want.offsetLeft, r = l + want.offsetWidth;
     if (l < tabs.scrollLeft + 6) tabs.scrollLeft = l - 6; else if (r > tabs.scrollLeft + tabs.clientWidth - fw) tabs.scrollLeft = r - tabs.clientWidth + fw;
   }
 };
 UI.foldDrawer = function (on) {
   $('palette').classList.toggle('folded', on); if (on) setTool(null);
-  UI.renderTabs(); UI.layout(); AUDIO.sfx('tick');
+  UI.renderTabs(); UI.layout(); UI.dockPages(); AUDIO.sfx('tick');
 };
 // the dock keeps the width of its longest tab, so the tabs stay where they are as one and then another is picked
 UI.sizeDock = function () {
@@ -10336,6 +10528,20 @@ UI.sizeDock = function () {
   const n = Math.max(0, ...CATS.map((c) => drawerTypes(c.id).length));
   const w = n * (t.offsetWidth + gap) + ed.offsetWidth + parseFloat(bs.paddingLeft) + parseFloat(bs.paddingRight) + parseFloat(ps.paddingLeft) + parseFloat(ps.paddingRight);
   const px = Math.round(Math.min(w, window.innerWidth - 24)) + 'px'; if (pal.style.minWidth !== px) { pal.style.minWidth = px; UI.layout(); }
+  UI.dockPages();
+};
+// a row of buildings longer than the dock gets a button at each end that turns it a page at a time (a finger just swipes)
+UI.dockPages = function () {
+  const pal = $('palette'), box = $('tools'); if (!pal || !box) return;
+  if (!UI.pageBtns) {
+    UI.pageBtns = ['prev', 'next'].map((d) => { const b = document.createElement('button'); b.className = 'dockpage ' + d; b.setAttribute('aria-label', d === 'prev' ? 'Earlier buildings' : 'More buildings'); b.innerHTML = `<svg viewBox="0 0 10 16" width="10" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d === 'prev' ? 'M7.5 2L2 8l5.5 6' : 'M2.5 2L8 8l-5.5 6'}"/></svg>`; b.onclick = () => { const ed = box.querySelector('.edits'); box.scrollBy({ left: (d === 'prev' ? -1 : 1) * Math.max(120, box.clientWidth - (ed ? ed.offsetWidth : 0) - 96), behavior: 'smooth' }); AUDIO.sfx('tick'); }; pal.appendChild(b); return b; });
+    box.addEventListener('scroll', () => UI.dockPages(), { passive: true });
+  }
+  const [prev, next] = UI.pageBtns, ed = box.querySelector('.edits');
+  const over = !UI.touch && !pal.classList.contains('folded') && box.scrollWidth > box.clientWidth + 4;
+  const top = box.offsetTop + Math.max(0, (box.offsetHeight - 64) / 2);
+  prev.hidden = !over || box.scrollLeft < 4; next.hidden = !over || box.scrollLeft + box.clientWidth >= box.scrollWidth - 4;
+  prev.style.top = next.style.top = top + 'px'; next.style.right = ((ed ? ed.offsetWidth : 0) + 10) + 'px';
 };
 UI.refreshPalette = function () {
   const box = $('tools'); if (!box) return;
@@ -10358,8 +10564,7 @@ UI.refreshPalette = function () {
       AUDIO.unlock(); AUDIO.sfx('tick');
       setTool(on ? null : { kind: 'build', type });
     };
-    b.onmouseenter = (ev) => { UI.tipSource = 'tool'; UI.toolTip(type); UI.moveTip(ev.clientX, ev.clientY); };
-    b.onmousemove = (ev) => UI.moveTip(ev.clientX, ev.clientY);
+    b.onmouseenter = () => { UI.tipSource = 'tool'; UI.toolTip(type); UI.anchorTip(b); };
     b.onmouseleave = () => UI.hideTip();
     box.appendChild(b);
   }
@@ -10371,8 +10576,7 @@ UI.refreshPalette = function () {
     const b = document.createElement('button'); b.className = 'tool' + (ron ? ' on' : '');
     b.innerHTML = `${svg}<span class="nm">${label}</span><span class="key">${key}</span>`;
     b.onclick = () => { AUDIO.sfx('tick'); setTool(ron ? null : { kind }); };
-    b.onmouseenter = (ev) => { UI.showTip(tip); UI.moveTip(ev.clientX, ev.clientY); };
-    b.onmousemove = (ev) => UI.moveTip(ev.clientX, ev.clientY);
+    b.onmouseenter = () => { UI.showTip(tip); UI.anchorTip(b); };
     b.onmouseleave = () => UI.hideTip();
     edits.appendChild(b);
   };
@@ -10388,7 +10592,7 @@ UI.renderToolSign = function () {
   const el = $('toolSign'); if (!el) return; const T = INPUT.tool;
   if (!T) { el.hidden = true; el.dataset.sig = ''; clearTimeout(UI.signT); $('hud').classList.remove('tooling'); return; }
   let name = '', how = '';
-  if (T.kind === 'build' && T.carry) { el.innerHTML = `<b>Moving the ${lowerName(BUILD[T.type].name)}</b><span>${noKeys('Click where it goes.')}${BUILD[T.type].rot && !UI.touch ? ' R turns it.' : ''}</span><span class="esc">${UI.touch ? 'Tap Move to put it back.' : 'Esc puts it back.'}</span>`; UI.signShown(el); return; }
+  if (T.kind === 'build' && T.carry) { el.innerHTML = `<b>Moving the ${lowerName(BUILD[T.type].name)}</b><span>${noKeys('Click where it goes.')}${BUILD[T.type].rot && !UI.touch ? ' <kbd>R</kbd> turns it.' : ''}</span><span class="esc">${UI.touch ? 'Tap Move to put it back.' : '<kbd>Esc</kbd> puts it back.'}</span>`; UI.signShown(el); return; }
   if (T.kind === 'move') { name = 'Move'; how = 'Click a works to pick it up.'; }
   else if (T.kind === 'build') {
     const def = BUILD[T.type]; name = def.name;
@@ -10403,16 +10607,16 @@ UI.renderToolSign = function () {
     else if (def.extract && def.extract.fields) how = 'Place it in open meadow.';
     else if (def.genKind === 'water') how = 'Place it beside water.';
     else if (def.service) how = 'Place it near homes.';
-    if (def.rot && !def.chan && !UI.touch) how += (how ? ' ' : '') + 'R turns the spout.';
+    if (def.rot && !def.chan && !UI.touch) how += (how ? ' ' : '') + '<kbd>R</kbd> turns the spout.';
   } else if (T.kind === 'remove') { name = 'Clear'; how = 'Click something to take it down.'; }
   else if (T.kind === 'copy') { name = 'Copy'; how = 'Drag out from a centre.'; }
-  else if (T.kind === 'paste') { name = 'Paste'; how = UI.touch ? 'Tap where it goes.' : 'Click to stamp it down. R turns it.'; }
+  else if (T.kind === 'paste') { name = 'Paste'; how = UI.touch ? 'Tap where it goes.' : 'Click to stamp it down. <kbd>R</kbd> turns it.'; }
   else if (T.kind === 'call') { name = 'Call the wardens'; how = 'Click where they should go.'; }
-  // a touch screen has no R key, so a copied patch gets a button to turn it; and the wardens' call, which comes from the
-  // lodge's card rather than the drawer, gets one to put it away
+  // a touch screen has no R key, so a copied patch gets a button to turn it; and on a touch screen any tool has a button
+  // to put it away, where a keyboard has Esc
   const turn = T.kind === 'paste' && UI.touch ? '<button class="signbtn" data-a="bpTurn">Turn it</button>' : '';
-  const off = T.kind === 'call' && UI.touch ? '<button class="signbtn" data-a="toolOff">Put it away</button>' : '';
-  el.innerHTML = `<b>${name}</b>${how ? `<span>${noKeys(how)}</span>` : ''}${turn}${off || `<span class="esc">${UI.touch ? 'Tap again to put it away.' : 'Esc puts it away.'}</span>`}`;
+  const off = UI.touch ? '<button class="signbtn ghost" data-a="toolOff">Put it away</button>' : '';
+  el.innerHTML = `<b>${name}</b>${how ? `<span>${noKeys(how)}</span>` : ''}${turn}${off || '<span class="esc"><kbd>Esc</kbd> puts it away.</span>'}`;
   UI.signShown(el);
 };
 // on a phone the sign fades once there has been time to read it, and comes back when another tool is picked
@@ -10431,6 +10635,16 @@ UI.setSpeed = function (s) {
 
 /* ---------- menus and map views ---------- */
 const MAP_VIEWS = [[null, 'Plain', '', 'The valley as it is.'], ['flow', 'Flow of goods', 'F', 'How full each channel runs, red where it is backed up, and what every works makes.'], ['harmony', 'Harmony', 'H', 'Where people like to live. Gardens, trees and water raise it; noisy works lower it.'], ['reach', 'Commons reach', 'V', 'Homes can only be supplied within reach of a Commons.'], ['services', 'Services', 'G', 'Which homes have a school, bathhouse, library or concert shell nearby.'], ['hazard', 'Hazards', 'K', 'Where the next flood will reach and which banks will hold it, which fields have blight, and what the cisterns keep watered.']];
+// a small drawing for each map view, in the menus
+const MAP_ICON = {
+  plain: '<path d="M10 2.6l6.4 3.7v7.4L10 17.4l-6.4-3.7V6.3z"/>',
+  flow: '<path d="M2.8 7.2c2-1.9 4-1.9 6 0s4 1.9 6 0M2.8 12.8c2-1.9 4-1.9 6 0s4 1.9 6 0"/><path d="M15.2 4.6l2 2.6-2 2.6"/>',
+  harmony: '<path d="M4 16C4 9.2 8.4 4.6 16 4c-.4 7.6-5 12-12 12z"/><path d="M4 16l6.2-6.2"/>',
+  reach: '<circle cx="10" cy="10" r="2"/><circle cx="10" cy="10" r="7" stroke-dasharray="2.4 2.6"/>',
+  services: '<path d="M10 3.2l1.9 4.2 4.5.5-3.4 3 1 4.4L10 13.1l-4 2.2 1-4.4-3.4-3 4.5-.5z"/>',
+  hazard: '<path d="M10 2.8c2.4 3 3.9 5.2 3.9 7a3.9 3.9 0 0 1-7.8 0c0-1.8 1.5-4 3.9-7z"/><path d="M2.8 16.6c1.5-1 3-1 4.4 0s3 1 4.4 0 3-1 4.4 0"/>',
+};
+const mapIcon = (m) => `<span class="mi"><svg viewBox="0 0 20 20" aria-hidden="true">${MAP_ICON[m || 'plain']}</svg></span>`;
 const MENU_ICON = {
   research: '<path d="M7.5 2.5h5M8.5 2.5v5.2L3.8 15.3a1.5 1.5 0 0 0 1.3 2.2h9.8a1.5 1.5 0 0 0 1.3-2.2l-4.7-7.6V2.5"/><path d="M6 12.5h8"/>',
   ledger: '<path d="M3 17h14M5 14V9M10 14V4.5M15 14v-7"/>',
@@ -10444,10 +10658,10 @@ const MENU_ICON = {
 UI.toggleMenu = function (which) {
   const el = which === 'map' ? $('mapMenu') : $('mainMenu'); const btn = which === 'map' ? $('bMap') : $('bMenu');
   const opening = el.hidden; UI.closeMenus(); if (!opening) return;
-  if (which === 'map') el.innerHTML = MAP_VIEWS.map(([m, nm, key, desc]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}" title="${desc}"><span class="dot"></span><span>${nm}</span><span class="key">${key}</span></button>`).join('');
+  if (which === 'map') el.innerHTML = MAP_VIEWS.map(([m, nm, key, desc]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}" title="${desc}">${mapIcon(m)}<span>${nm}</span><span class="key">${key}</span></button>`).join('');
   else {
     // a phone has no room in the band for the map views, so they come into this menu
-    const views = UI.form() === 'phone' ? '<hr><div class="mh">Map view</div><div class="mapviews">' + MAP_VIEWS.map(([m, nm]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}"><span class="dot"></span><span>${nm}</span></button>`).join('') + '</div>' : '';
+    const views = UI.form() === 'phone' ? '<hr><div class="mh">Map view</div><div class="mapviews">' + MAP_VIEWS.map(([m, nm]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}">${mapIcon(m)}<span>${nm}</span></button>`).join('') + '</div>' : '';
     el.innerHTML = [['research', 'Research', 'T'], ['ledger', 'Ledger', 'P'], ['chronicle', 'Chronicle', 'J'], ['postcard', 'Postcard view', 'O'], ['guide', 'How to play', 'F1'], 'views', '-', ['settings', 'Sound and picture', ''], ['save', 'Save now', ''], ['title', 'Back to the title', '']].map((x) => x === '-' ? '<hr>' : x === 'views' ? views : `<button data-act="${x[0]}"><span class="mi"><svg viewBox="0 0 20 20" aria-hidden="true">${MENU_ICON[x[0]]}</svg></span><span>${x[1]}</span><span class="key">${x[2]}</span></button>`).join('');
   }
   el.hidden = false; btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true');
@@ -10462,6 +10676,7 @@ UI.setOverlay = function (mode) {
   UI.overlay = mode || null;
   const v = MAP_VIEWS.find((x) => x[0] === UI.overlay);
   const mb = $('bMap'); mb.title = UI.overlay ? 'Map view: ' + lower(v[1]) : 'Map views'; mb.classList.toggle('lit', !!UI.overlay);
+  for (const b of document.querySelectorAll('.menu [data-map]')) b.classList.toggle('on', (b.dataset.map || null) === UI.overlay);
   if (!INPUT.tool) paintOverlay(UI.overlay);
   UI.renderLegend(); AUDIO.sfx('tick');
 };
@@ -10533,7 +10748,7 @@ UI.update = function () {
     if (need) anyNeed = true;
     const el = ch.querySelector('.n'); const txt = fmt(n); if (el.textContent !== txt) el.textContent = txt;
     ch.classList.toggle('low', low); ch.classList.toggle('warnlow', warnlow);
-    const tr = ch.querySelector('.tr'); const cls = net > 0.5 ? 'up' : net < -0.5 ? 'down' : ''; const sym = cls === 'up' ? '▲' : cls === 'down' ? '▼' : '';
+    const tr = ch.querySelector('.tr'); const cls = n > 0 && net > 0.5 ? 'up' : n > 0 && net < -0.5 ? 'down' : ''; const sym = cls === 'up' ? '▲' : cls === 'down' ? '▼' : '';
     if (tr.textContent !== sym) { tr.textContent = sym; tr.className = 'tr ' + cls; }
   }
   if (UI.needSep && UI.needSep.hidden === anyNeed) UI.needSep.hidden = !anyNeed;
@@ -10553,7 +10768,7 @@ UI.update = function () {
   if (pw.hidden === showP) pw.hidden = !showP;
   if (showP) {
     const P = S.power, short = P.sat < 0.999, gen = Math.floor(P.gen);
-    const pt = UI.form() !== 'wide' ? `Power: ${short ? `${gen} for ${P.use}` : `${P.use} of ${gen}`}` : short ? `Power short: ${gen} for ${P.use}` : `Power: ${P.use} of ${gen} in use`; if ($('powerNum').textContent !== pt) $('powerNum').textContent = pt;
+    const pt = UI.form() !== 'wide' ? (short ? `${gen} for ${P.use}` : `${P.use} of ${gen}`) : short ? `Power short: ${gen} for ${P.use}` : `Power: ${P.use} of ${gen} in use`; if ($('powerNum').textContent !== pt) $('powerNum').textContent = pt;
     $('powerBar').style.width = (short ? Math.min(100, P.gen / Math.max(1, P.use) * 100) : P.gen ? Math.min(100, P.use / P.gen * 100) : 0) + '%';
     pw.classList.toggle('short', short);
   }
@@ -10579,10 +10794,10 @@ UI.update = function () {
 };
 // when the stores do not fit beside everything else, they get a row of their own under the band
 // the shape of the screen: a phone held upright, a short screen (a phone on its side), or anything wider
-UI.form = function () { const w = window.innerWidth, h = window.innerHeight; return w <= 560 ? 'phone' : h <= 520 ? 'low' : w <= 760 ? 'phone' : 'wide'; };
+UI.form = function () { const w = window.innerWidth, h = window.innerHeight; return w <= 560 ? 'phone' : h <= 520 ? 'low' : w <= 900 ? 'phone' : 'wide'; };
 UI.fitBand = function () {
   const band = $('band'), st = $('stores'); if (!band || !st) return;
-  if (UI.form() !== 'wide') { band.classList.remove('tiered'); UI.layout(); return; }
+  if (UI.form() !== 'wide') { band.classList.remove('tiered'); st.classList.remove('gridded'); st.style.gridTemplateColumns = ''; UI.layout(); return; }
   const ss = getComputedStyle(st);
   let need = parseFloat(ss.paddingLeft) + parseFloat(ss.paddingRight), n = 0; for (const c of st.children) if (!c.hidden) { need += c.getBoundingClientRect().width; n++; }
   need += Math.max(0, n - 1) * (parseFloat(ss.columnGap) || 14);
@@ -10592,7 +10807,10 @@ UI.fitBand = function () {
   // once the stores have needed a row of their own they keep it until the window changes size, so a good running short
   // and recovering does not make the band, and everything under it, jump up and down
   if (need > avail) UI.tierHold = true;
-  band.classList.toggle('tiered', need > avail || !!UI.tierHold);
+  const tiered = need > avail || !!UI.tierHold; band.classList.toggle('tiered', tiered);
+  const rowW = band.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, lines = tiered && need > rowW ? Math.ceil(need / rowW) : 1;
+  if (lines > 1) { const chips = [...st.children].filter((c) => !c.hidden && c.classList.contains('chip')).length; st.style.gridTemplateColumns = `repeat(${Math.ceil(chips / lines)}, auto)`; st.classList.add('gridded'); }
+  else if (st.classList.contains('gridded')) { st.style.gridTemplateColumns = ''; st.classList.remove('gridded'); }
   UI.layout();
 };
 UI.layout = function () {
@@ -10614,7 +10832,7 @@ UI.renderStudy = function () {
     const un = (t.unlocks || []).map((k) => `<span title="${BUILD[k].name}">${iconImg('b_' + k)}${BUILD[k].name}</span>`);
     for (const ef of t.effects || []) if (ef.k === 'home') un.push(`<span>${iconImg('home' + ef.level)}${HOMES[ef.level].name}s</span>`);
     box.classList.remove('idle', 'pulse', 'quiet'); box.classList.add('learned');
-    box.innerHTML = `<div class="r1">${iconImg(techIcon(UI.learned.id))}<span class="nm">Learned ${t.name}</span></div>${un.length ? `<div class="unl">${un.join('')}</div>` : ''}`;
+    box.innerHTML = `<div class="r1">${iconImg(techIcon(UI.learned.id))}<span class="nm">Learned ${t.name.replace(/^The /, 'the ')}</span></div>${un.length ? `<div class="unl">${un.join('')}</div>` : ''}`;
     return;
   }
   box.classList.remove('learned');
@@ -10633,8 +10851,9 @@ UI.renderStudy = function () {
     box.classList.remove('idle', 'pulse', 'quiet');
     h = `<div class="r1">${iconImg(techIcon(R.cur))}<span class="nm">${t.name}${t.repeat ? ' ' + ((S.techLevel[R.cur] || 0) + 1) : ''}</span><span class="frac">${R.prog} of ${units}</span></div><span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>`;
     // the study goods it uses are in the ledger; the line names only one that has run out, since that stops it
-    const out = t.packs.filter((k) => S.stores[k] < 1);
-    if (out.length) h += `<div class="packs"><span>Out of:</span>${out.map((k) => `<span class="miss" title="${ITEMS[k].name}">${iconImg(k)}${ITEMS[k].name.toLowerCase()}</span>`).join('')}</div>`;
+    const out = t.packs.filter((k) => S.stores[k] < 1), school = [...S.ents.values()].some((e) => BUILD[e.type] && BUILD[e.type].lab && !BUILD[e.type].great);
+    if (!school) h += `<div class="packs"><span class="miss">Build a Schoolhouse to study it</span></div>`;
+    else if (out.length) h += `<div class="packs"><span>Out of:</span>${out.map((k) => `<span class="miss" title="${ITEMS[k].name}">${iconImg(k)}${ITEMS[k].name.toLowerCase()}</span>`).join('')}</div>`;
   }
   box.innerHTML = h;
 };
@@ -10644,7 +10863,7 @@ UI.renderAlerts = function () {
   const A = (S.alerts || []).filter((a) => a.k !== 'research' && a.k !== 'pack' && a.k !== 'flood' && a.k !== 'floodsoon' && a.k !== 'dry' && a.k !== 'blight').slice(0, UI.form() === 'wide' ? 3 : 1);
   const sig = A.map((a) => a.k + a.text).join('|'); if (sig === UI.alertSig) return; UI.alertSig = sig;
   const sev = { research: 'warn', pack: 'warn', land: 'warn', build: 'warn', far: 'warn', thin: 'calm', full: 'calm', grow: 'calm', mend: 'warn' };
-  $('alerts').innerHTML = A.map((a) => `<button class="note ${sev[a.k] || ''}" data-k="${a.k}" data-item="${a.item || ''}" data-tier="${a.tier || 0}">${iconImg(a.icon) || '<span></span>'}<span>${escapeHtml(noKeys(a.text))}</span></button>`).join('');
+  $('alerts').innerHTML = A.map((a) => `<button class="note ${sev[a.k] || ''}" data-k="${a.k}" data-item="${a.item || ''}" data-tier="${a.tier || 0}">${iconImg(a.icon) || '<span></span>'}<span>${escapeHtml(noKeys(a.text)).replace(/ \(((?:⇧)?[A-Z])\)/g, ' <kbd>$1</kbd>')}</span></button>`).join('');
 };
 UI.alertClick = function (k, item, tier) {
   AUDIO.sfx('tick');
@@ -10736,8 +10955,8 @@ UI.renderHappen = function () {
     const sig = 'L' + L.i + L.item + L.n; if (sig === UI.happenSig) return; UI.happenSig = sig;
     const gift = L.gift ? KEEPSAKES[L.gift] : null;
     h = `<div class="hscroll"><div class="r1">${iconImg('paper')}<span class="nm">A letter from ${T.from}</span></div><div class="letter">${escapeHtml(letterText(L))}</div>`;
-    if (gift) h += `<div class="gift">In return, <b>${lower(gift.name)}</b>. ${gift.desc}</div>`;
-    h += `</div><div class="btns"><button class="btn primary" data-a="letterYes">Send ${L.n} ${unit}</button><button class="btn" data-a="letterNo">Not this time</button></div>`;
+    // what comes back is what the choice turns on, so it stays in view under the letter, with the answer
+    h += `</div>${gift ? `<div class="gift">In return, <b>${lower(gift.name)}</b>. ${gift.desc}</div>` : ''}<div class="btns"><button class="btn primary" data-a="letterYes">Send ${L.n} ${unit}</button><button class="btn" data-a="letterNo">Not this time</button></div>`;
     cls = 'post letter';
   } else if (S.season <= 1 && !SETTINGS.golden && S.flags.fairDay !== S.day && fairsOpen()) {
     const st = fairState(); const b = st.basket;
@@ -10783,26 +11002,40 @@ UI.renderGoals = function (force) {
 // on a touch screen a tip sits above the finger rather than under it, never over the band, and goes by itself
 UI.showTip = function (html) {
   const t = $('tip'); t.innerHTML = noKeys(html); t.hidden = false;
-  if (UI.touch) {
-    clearTimeout(UI.tipT); UI.tipT = setTimeout(() => UI.hideTip(), 4200);
-    const top = (UI.bandH || 54) + 6; if ((parseFloat(t.style.top) || 0) < top) { t.style.top = top + 'px'; if (!t.style.left) t.style.left = '8px'; }
-  }
+  if (UI.touch) { clearTimeout(UI.tipT); UI.tipT = setTimeout(() => UI.hideTip(), 4200); if (INPUT.ptype !== 'mouse') UI.placeTouchTip(); }
+};
+// on a touch screen a tip has one place: centred just above the dock (or the card standing in for it, or the sign for the
+// building in hand while it shows), clear of the plan
+UI.placeTouchTip = function () {
+  const t = $('tip'); if (t.hidden) return; const card = $('inspect'), sign = $('toolSign');
+  const under = !card.hidden && UI.form() === 'phone' ? card : sign && !sign.hidden && !sign.classList.contains('quiet') && sign.offsetHeight ? sign : $('palette');
+  const r = under.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  t.style.left = Math.max(8, Math.round((window.innerWidth - w) / 2)) + 'px'; t.style.top = Math.max((UI.bandH || 54) + 6, Math.round(r.top - h - 10)) + 'px';
 };
 UI.hideTip = function () { $('tip').hidden = true; UI.tipSource = null; };
 UI.moveTip = function (x, y) {
   const t = $('tip'); if (t.hidden) return;
+  if (UI.touch && INPUT.ptype !== 'mouse') { UI.placeTouchTip(); return; }
   const w = t.offsetWidth, h = t.offsetHeight, top = (UI.bandH || 54) + 6; let px = x + 16, py = y + 18;
+  const card = $('inspect'); if (!card.hidden) { const r = card.getBoundingClientRect(); if (px + w > r.left - 8 && px < r.right && py < r.bottom && py + h > r.top) px = Math.min(px, r.left - w - 12); }
   if (INPUT.ptype && INPUT.ptype !== 'mouse') { px = x - w / 2; py = y - h - 48; if (py < top) py = y + 48; }
   if (px + w > window.innerWidth - 8) px = x - w - 12; if (py + h > window.innerHeight - 8) py = y - h - 12;
   t.style.left = Math.max(8, Math.min(px, window.innerWidth - w - 8)) + 'px'; t.style.top = Math.max(UI.touch ? top : 8, py) + 'px';
 };
 // keyboard letters in brackets mean nothing on a touch screen
 // a key named at the end of a button, "Turn the spout (R)", becomes a small cap on the button's corner
-function keyCaps(h) { return UI.touch ? h : h.replace(/ \(([A-Z]|F1|⇧Z|Space)\)<\/button>/g, '<kbd>$1</kbd></button>').replace(/ data-a="remove">Clear<\/button>/g, ` data-a="remove" title="Clear${UI.touch ? '' : ' (X)'}" aria-label="Clear">Clear</button>`); }
+function keyCaps(h) { h = h.replace(/(<div class="status[^"]*">[^<]*?)\.<\/div>/g, '$1</div>'); return UI.touch ? h : h.replace(/ \(([A-Z]|F1|⇧Z|Space)\)<\/button>/g, '<kbd>$1</kbd></button>').replace(/ data-a="remove">Clear<\/button>/g, ` data-a="remove" title="Clear${UI.touch ? '' : ' (X)'}" aria-label="Clear">Clear</button>`); }
 function noKeys(s) { return UI.touch && typeof s === 'string' ? s.replace(/ \((?:[A-Z]|F1|⇧Z|Space)\)/g, '').replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap') : s; }
+// what a gathering works counts around it, in the singular for one
+function nearLabel(ex, n) {
+  const one = n === 1, ruins = nearKinds(ex).length > 1;
+  if (ex.fields) return { field: one ? 'field' : 'fields', pasture: one ? 'pasture' : 'pastures', orchard: one ? 'orchard plot' : 'orchard plots' }[ex.fields];
+  return { forest: one ? 'forest hex' : 'forest hexes', rock: one ? 'outcrop' : 'outcrops', water: 'water', sand: one ? 'sandy hex' : 'sandy hexes', ruin: ruins ? (one ? 'ruin or outcrop' : 'ruins and outcrops') : one ? 'ruin' : 'ruins', clay: one ? 'clay bank' : 'clay banks', bloom: one ? 'flowering hex' : 'flowering hexes' }[ex.near];
+}
+const plainRate = (x) => (x < 0.05 ? '0' : x < 10 ? String(Math.round(x * 10) / 10) : String(Math.round(x)));
 UI.chipTip = function (k) {
   const made = statRate(k, 'made', 60), used = statRate(k, 'used', 60), n = Math.floor(S.stores[k]), net = made - used;
-  let h = `<b>${ITEMS[k].name}</b><br><span class="num">${fmt(n)} in store, with room for ${fmt(S.cap)}</span><br><span class="num">${fmtRate(made)} made and ${fmtRate(used)} used each minute</span>`;
+  let h = `<b>${ITEMS[k].name}</b><br><span class="num">${fmt(n)} in store, with room for ${fmt(S.cap)}</span><br><span class="num">${plainRate(made)} made and ${plainRate(used)} used a minute</span>`;
   if (NEED_CHIPS.includes(k)) {
     const users = []; for (let l = 1; l <= 5; l++) { const L = HOMES[l]; if (S.homesTier[l] && (L.needs.includes(k) || L.comforts.includes(k))) users.push(L.name.toLowerCase() + 's'); }
     if (users.length) h += `<br><span class="num">Wanted by ${users.join(', ')}.</span>`;
@@ -10895,18 +11128,28 @@ UI.toolTip = function (type) {
   if (def.gen) bits.push(`makes ${def.gen} power`);
   if (def.lab) bits.push(`studies at ${def.lab} times a school's pace`.replace('1 times a school', 'a school'));
   if (def.service) bits.push(`serves homes within ${def.service.r} hexes`);
-  if (bits.length) h += `<span class="num">${bits.join('; ')}.</span>`;
-  if (Object.keys(def.cost).length) h += costLine(def.cost);
+  if (bits.length) h += `<div class="num">${bits.join('; ')}.</div>`;
+  if (Object.keys(def.cost).length) h += costLine(def.cost).replace('<div class="costline">', '<div class="costline"><span class="lbl">Cost</span>');
   UI.showTip(h);
+};
+// a tip for something in the band hangs under its capsule, from its left edge
+UI.anchorBelow = function (el) {
+  const t = $('tip'); if (t.hidden || UI.touch) return; const r = el.getBoundingClientRect(), cap = (el.closest('.stores, .peoplebox, .powerbox') || el).getBoundingClientRect(), w = t.offsetWidth;
+  t.style.left = Math.max(8, Math.min(r.left - 6, window.innerWidth - w - 8)) + 'px'; t.style.top = (cap.bottom + 8) + 'px';
+};
+UI.anchorTip = function (el) {
+  const t = $('tip'); if (t.hidden) return; const r = el.getBoundingClientRect(), d = $('palette').getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  t.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px'; t.style.top = Math.max((UI.bandH || 54) + 6, d.top - h - 10) + 'px';
 };
 UI.buildTip = function (t, type, chk, rot) {
   if (!t || t.outer || GAME.mode !== 'play') { UI.hideTip(); return; }
+  if (!chk.ok && BUILD[type].chan && INPUT.drag && t.ent) { const o = entAtTile(t); if (o && !isChan(o)) { UI.hideTip(); return; } }
   const def = BUILD[type]; let h = `<b>${def.name}</b>`;
   if (!chk.ok) h += `<br><span class="warn">${chk.reason}</span>`;
   else if (def.extract) {
     const ex = def.extract; let n;
     if (ex.fields) n = Math.min(freeMeadows(t, null).length, ex.cap); else if (ex.near === 'bloom') n = Math.min(bloomCount(t), ex.cap); else n = Math.min(countNear(t, ex), ex.cap);
-    const label = ex.fields ? { field: 'fields', pasture: 'pastures', orchard: 'orchard plots' }[ex.fields] : { forest: 'forest hexes', rock: 'outcrops', water: 'water', sand: 'sandy hexes', ruin: nearKinds(ex).length > 1 ? 'ruins and outcrops' : 'ruins', clay: 'clay banks', bloom: 'flowering hexes' }[ex.near];
+    const label = nearLabel(ex, n);
     const sm = ex.season ? seasonInfo()[ex.season] : 1;
     // (a deep well draws anywhere, so it has nothing beside it to count)
     h += `<br><span class="num">${ex.any ? '' : `${n} ${label} here: `}${fmtRate((ex.flat ? ex.per : ex.per * n) * sm)} ${ITEMS[ex.item].name.toLowerCase()} a minute${ex.season && sm !== 1 ? ' this ' + seasonInfo().name.toLowerCase() : ''}</span>`;
@@ -10970,8 +11213,8 @@ function hazardTip(t, busy) {
     const r = HZR.list[HZR.of[t.i]]; const ru = reachRunoff(r);
     h += `<br><span class="num">${r.name}. ${ru.runoff >= 0.55 ? 'It floods high' : ru.runoff >= 0.3 ? 'It floods now and then' : 'It floods low'}: ${Math.max(0, Math.round(ru.cut * 100))}% of the woods above it are cut and ${Math.round(ru.seal * 100)}% of its land is built over${ru.green > 0.02 ? `, softened by ${Math.round(ru.green * 100)}% in gardens and hedges` : ''}.</span>`;
   }
-  if (t.wet) h += `<br><span class="warn">Under water.</span>`;
-  else if (UI.overlay === 'hazard') { const p = hazardPrediction(); if (p && !p.now && p.dist.has(t.i)) h += `<br><span class="warn">${reachName(p.ev.reach)} will flood here ${hzWhen(p.ev)}.</span>`; }
+  if (t.wet && !busy) h += `<br><span class="warn">Under water.</span>`;
+  else if (UI.overlay === 'hazard' && !t.wet) { const p = hazardPrediction(); if (p && !p.now && p.dist.has(t.i)) h += `<br><span class="warn">${reachName(p.ev.reach)} will flood here ${hzWhen(p.ev)}.</span>`; }
   if (busy) return h;
   if (t.field) {
     if (t.fallowDay && S.day < t.fallowDay) h += `<br><span class="num">Burnt, fallow until spring.</span>`;
@@ -11041,9 +11284,9 @@ UI.renderInspect = function (periodic) {
     h += placardHead(e, iconImg('arcology'), escapeHtml(e.arcName), `Arcology, ${e.residents} ${peopleWord(e.level, e.residents)}`) + '<div class="pbody">';
     if (e.raising < 1) h += `<div class="status amber">Being raised, ${Math.round(e.raising * 100)}% done.</div>`;
     else if (!e.served) h += `<div class="status warn">Too far from a Commons to be supplied.</div>`;
-    else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).join(' and ')}.</div>`;
+    else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).reduce((a, w, i, arr) => a + (i === 0 ? w : i === arr.length - 1 ? ' and ' + w : ', ' + w), '')}.</div>`;
     else h += `<div class="status">Well supplied.</div>`;
-    h += `<div class="rows"><div class="row"><span>${iconImg('arcology')}</span><span class="meter"><i style="width:${Math.round(e.residents / most * 100)}%"></i></span><span class="num">${e.residents} of ${most}</span></div></div>`;
+    h += `<div class="cap"><span>Living here</span><span class="meter"><i style="width:${Math.round(e.residents / most * 100)}%"></i></span><span>${e.residents} of ${most}</span></div>`;
     const goods = (k) => needPill(!!(e.met && e.met[k]), iconImg(k), `${ITEMS[k].name}, ${fmtRate(NEED_RATE[k] * e.residents)} a minute`);
     h += `<div class="nds"><span class="ndl" title="Each one met makes room for ${Math.round(L.per * 7 * ARCOLOGY.mult)} more">Needs</span>${L.needs.map(goods).join('')}</div>`;
     h += `<div class="nds"><span class="ndl" title="Each one adds harmony">Comforts</span>${L.comforts.map(goods).join('')}</div>`;
@@ -11054,19 +11297,19 @@ UI.renderInspect = function (periodic) {
   }
   if (e.type === 'home') {
     const L = HOMES[e.level], nx = HOMES[e.level + 1]; const cap = e.cap || 0;
-    h += placardHead(e, iconImg('home' + e.level), L.name, `${e.residents} ${peopleWord(e.level, e.residents)}`) + '<div class="pbody">';
+    h += placardHead(e, iconImg('home' + e.level), L.name, `${e.residents} ${peopleWord(e.level, e.residents).toLowerCase()}`) + '<div class="pbody">';
     if (e.built < 1) h += `<div class="status idle">Being built.</div>`;
     else if (e.flooded) h += `<div class="status warn">Under water.</div>`;
     else if (e.wet > 0) h += `<div class="status warn">Damp after the flood${S.hz.claims && S.hz.claims.has('e' + e.id) ? '. Wardens are on their way' : ''}.</div>`;
     else if (!e.served) h += `<div class="status warn">Too far from a Commons to be supplied.</div>`;
     else if (e.cold) h += `<div class="status warn">Cold: no charcoal or timber in store.</div>`;
-    else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).join(' and ')}.</div>`;
+    else if (e.metN < L.needs.length) h += `<div class="status warn">Short of ${L.needs.filter((k) => !e.met[k]).map((k) => ITEMS[k].name.toLowerCase()).reduce((a, w, i, arr) => a + (i === 0 ? w : i === arr.length - 1 ? ' and ' + w : ', ' + w), '')}.</div>`;
     else h += `<div class="status">Well supplied.</div>`;
     if (!nx && S.techs.has('arcology') && arcRing(e)) {
       const ok = canAfford(ARCOLOGY.cost);
       h += `<div class="ph">Raise an arcology</div><p>These seven Belvederes can become one great house, with room for half as many people again.</p>${costLine(ARCOLOGY.cost)}<div class="btns" style="margin-top:6px"><button class="btn primary" data-a="raiseArc" ${ok ? '' : 'disabled'}>Raise it</button></div>`;
     }
-    h += `<div class="rows"><div class="row"><span>${iconImg('home' + e.level)}</span><span class="meter"><i style="width:${Math.round(e.residents / HOME_CAP(e.level) * 100)}%"></i></span><span class="num">${e.residents} of ${HOME_CAP(e.level)}</span></div></div>`;
+    { const room = e.cap || HOME_CAP(e.level); h += `<div class="cap" title="${room < HOME_CAP(e.level) ? `Room for ${HOME_CAP(e.level)} once every need is met` : ''}"><span>Living here</span><span class="meter"><i style="width:${Math.round(e.residents / Math.max(1, room) * 100)}%"></i></span><span>${e.residents} of ${room}</span></div>`; }
     // what it lives on, one row of icons each, ticked or crossed (the status line above names whatever is missing)
     const goods = (k) => needPill(!!(e.met && e.met[k]), iconImg(k), `${ITEMS[k].name}, ${fmtRate(NEED_RATE[k] * e.residents)} a minute`);
     h += `<div class="nds"><span class="ndl" title="Each one met makes room for ${L.per} more">Needs</span>${L.needs.map(goods).join('')}</div>`;
@@ -11115,7 +11358,8 @@ UI.renderInspect = function (periodic) {
   if (isChan(e)) {
     const capN = Math.round(def.speed / SPACING * 60), flowN = Math.round(e.flow || 0);
     h += chanStuck(e) ? `<div class="status warn">Backed up.</div>` : flowN ? `<div class="status">Carrying ${flowN} goods a minute.</div>` : `<div class="status idle">Nothing afloat.</div>`;
-    const flowMeter = `<span class="meter"><i style="width:${Math.min(100, Math.round(flowN / capN * 100))}%"></i></span>` + facts([['Can carry', `${capN} a minute`]]);
+    // how full it runs, as a bar between what it can carry and that figure
+    const flowMeter = `<div class="cap"><span>Can carry</span><span class="meter"><i style="width:${Math.min(100, Math.round(flowN / capN * 100))}%"></i></span><span>${capN} a minute</span></div>`;
     if (e.type !== 'junction') h += flowMeter;
     // a junction leads with where its goods go and how it chooses, since that is what anyone opening it wants to change
     if (e.type === 'junction') {
@@ -11126,7 +11370,7 @@ UI.renderInspect = function (periodic) {
       if (S.mods.overflow) h += `<button class="${e.mode === 'over' && !pick ? 'on' : ''}" data-a="mode" data-v="over" title="Goods go out of the side only when the yellow outlet is backed up">Spill over</button>`;
       h += `<button class="${pick ? 'on' : ''}" data-a="jSort" title="One good goes out of the side, everything else straight on">Sort one good</button></div>`;
       if (pick) {
-        h += `<div class="seg">`;
+        h += `<p class="jhint">${sorting ? `${ITEMS[e.mode].name} goes out of the side.` : 'Pick a good to send out of the side.'}</p><div class="seg goods">`;
         for (const k of ITEM_ORDER) if (S.made[k] > 0 || S.stores[k] >= 1) h += `<button class="${e.mode === k ? 'on' : ''}" data-a="mode" data-v="${k}" title="Send ${ITEMS[k].name.toLowerCase()} out of the side">${iconImg(k)}</button>`;
         h += `</div>`;
       }
@@ -11173,7 +11417,7 @@ UI.renderInspect = function (periodic) {
   const sp = speedOf(e); const rows = [];
   if (def.extract) {
     const ex = def.extract; const n = e.count || 0; const rate = extractRate(e) / typeSpeed(e.type) * speedOf(e);
-    const lbl = ex.fields ? { field: 'fields', pasture: 'pastures', orchard: 'orchard plots' }[ex.fields] : { forest: 'forest hexes', rock: 'outcrops', water: 'water', sand: 'sandy hexes', ruin: nearKinds(ex).length > 1 ? 'ruins and outcrops' : 'ruins', clay: 'clay banks', bloom: 'flowering hexes' }[ex.near];
+    const lbl = nearLabel(ex, n);
     h += eqHtml([], [[ex.item, rate]], ex.any ? 'a minute' : `a minute, from ${n} ${lbl}`);
     if (ex.season) rows.push([seasonInfo().name, `${Math.round(seasonInfo()[ex.season] * 100)}% of the usual`]);
     if (ex.deplete) { const left = nearTiles(tileOf(e), ex).reduce((a, t) => a + Math.max(0, t.amount), 0); rows.push(['Left to take beside it', fmt(Math.round(left))]); }
@@ -11204,7 +11448,7 @@ UI.renderInspect = function (periodic) {
   if (def.upkeep) for (const k in def.upkeep) rows.push([`${ITEMS[k].name} from the stores`, `${def.upkeep[k]} a minute`]);
   if (def.harmony) rows.push(['Harmony nearby', `${def.harmony[0] > 0 ? '+' : ''}${(def.harmony[0] * (e.greened && def.harmony[0] < 0 ? 0.25 : 1)).toFixed(2)}${e.greened ? ' with trellis' : ''}`, def.harmony[0] < 0 ? 'neg' : 'good']);
   if (def.hands && e.staff === undefined) rows.push(['Worked by', `${HOMES[def.tier || 1].people}, on their way`, '']);
-  else if (def.hands) { const have = Math.round((e.staff || 0) * def.hands); rows.push(['Worked by', `${have} of ${def.hands} ${HOMES[def.tier || 1].people}${have < def.hands ? (e.handsWhy === 'far' ? ', the rest live too far' : ', short-handed') : ''}`, have < def.hands ? 'bad' : '']); }
+  else if (def.hands) { const have = Math.round((e.staff || 0) * def.hands); rows.push(['Worked by', `${have} of ${def.hands} ${HOMES[def.tier || 1].people}${have < def.hands ? (e.handsWhy === 'far' ? ' (the rest live too far away)' : ' (short-handed)') : ''}`, have < def.hands ? 'bad' : '']); }
   if (NEIGHBOURS[e.type]) rows.push(e.adjWith ? [`Beside ${e.adjWith === 'water' ? 'the river' : aName(BUILD[e.adjWith].name)}`, `${pctWord(NEIGHBOURS[e.type].bonus)} faster`, 'good'] : ['Runs faster beside', partnerList(NEIGHBOURS[e.type]).replace(/\ban? /g, '')]);
   if (e.refit) rows.push(['Refitted', e.refit === 1 ? 'once' : 'twice', 'good']);
   if (def.power) rows.push(['Power', `${def.power}${S.power.sat < 0.999 ? `, ${Math.round(S.power.sat * 100)}% supplied` : ''}`, S.power.sat < 0.999 ? 'bad' : '']);
@@ -11355,7 +11599,7 @@ UI.onInspectClick = function (ev) {
   if (a === 'jAlt') { const d = +b.dataset.v; setJunction(e, e.out === d ? e.alt : e.out, d); }
   if (a === 'jSwap') setJunction(e, e.alt, e.out);
   if (a === 'mode') { e.mode = b.dataset.v; if (!ITEMS[e.mode]) UI.jSort = 0; EV.emit('change', e); }
-  if (a === 'jSort') { UI.jSort = UI.jSort === e.id && !ITEMS[e.mode] ? 0 : e.id; }
+  if (a === 'jSort') { UI.jSort = UI.jSort === e.id && !ITEMS[e.mode] ? 0 : e.id; if (UI.jSort) setTimeout(() => { const g = $('inspect').querySelector('.seg.goods'); if (g) g.scrollIntoView({ block: 'nearest' }); }, 0); }
   if (a === 'item') { e.item = b.dataset.v; }
   if (a === 'toggle') { e.enabled = !e.enabled; markDirty(); S.dirty.cover = true; }
   if (a === 'hold') { e.hold = !e.hold; }
@@ -11411,19 +11655,26 @@ function avg(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 UI.renderTree = function () {
   const L = techLayout(); const R = S.research;
   let svg = `<svg width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">`;
+  // what the picked topic needs, all the way back
+  const chain = new Set(); const back = (id) => { for (const r of TECHS[id].req) if (!chain.has(r)) { chain.add(r); back(r); } };
+  if (UI.techSel && TECHS[UI.techSel]) { chain.add(UI.techSel); back(UI.techSel); }
+  const dim = [], strong = [];
   for (const id in TECHS) for (const r of TECHS[id].req) {
     const a = L.pos[r], b = L.pos[id]; const x1 = a.x + 176, y1 = a.y + 33, x2 = b.x, y2 = b.y + 33;
-    // a prerequisite several columns back runs along its own row, behind the nodes, and turns only in the last gap
-    const bx = x2 - x1 > 240 ? x2 - 30 : x1, mx = (bx + x2) / 2;
-    const done = S.techs.has(r); svg += `<path d="M${x1} ${y1}${bx > x1 ? ` H${bx}` : ''} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" stroke="${done ? 'rgba(159,216,130,0.6)' : 'rgba(244,237,221,0.2)'}" stroke-width="1.5" fill="none"/>`;
+    // a thread runs along its own row (behind the topics, if it reaches back several columns) and turns, square, only
+    // in the gap before the topic it leads to, so the threads into one topic share one stem
+    const xm = x2 - 15, dy = y2 - y1, sg = Math.sign(dy), rr = Math.min(6, Math.abs(dy) / 2);
+    const d = Math.abs(dy) < 1 ? `M${x1} ${y1} H${x2}` : `M${x1} ${y1} H${xm - rr} Q${xm} ${y1} ${xm} ${y1 + sg * rr} V${y2 - sg * rr} Q${xm} ${y2} ${xm + rr} ${y2} H${x2}`;
+    if (chain.has(id) && chain.has(r)) strong.push(`<path d="${d}" stroke="rgba(244,237,221,0.85)" stroke-width="2" fill="none"/>`);
+    else dim.push(`<path d="${d}" stroke="${S.techs.has(r) ? 'rgba(159,216,130,0.4)' : 'rgba(244,237,221,0.16)'}" stroke-width="1.5" fill="none"/>`);
   }
-  svg += '</svg>';
+  svg += dim.join('') + strong.join('') + '</svg>';
   let nodes = '';
   for (const id in TECHS) {
     const t = TECHS[id]; const p = L.pos[id]; const st = techState(id); const qi = R.queue.indexOf(id);
     const units = techUnits(id);
     const prog = st === 'current' ? (R.prog + (R.active ? R.unit : 0)) / units : (R.saved && R.saved[id] ? R.saved[id] / units : 0);
-    nodes += `<button class="node ${st}${qi >= 0 ? ' queued' : ''}${UI.techSel === id ? ' sel' : ''}" data-id="${id}" style="left:${p.x}px;top:${p.y}px">${iconImg(techIcon(id), 'ic')}<span class="nn">${t.name}${t.repeat && S.techLevel[id] ? ' ' + (S.techLevel[id] + 1) : ''}</span><span class="nc" title="${units} rounds, each using one of every study good shown"><span class="units">${units}</span>${t.packs.map((k) => iconImg(k)).join('')}</span>${qi >= 0 ? `<span class="qn">${qi + 1}</span>` : ''}${prog > 0 ? `<span class="pg" style="width:${Math.round(prog * 100)}%"></span>` : ''}</button>`;
+    nodes += `<button class="node ${st}${qi >= 0 ? ' queued' : ''}${UI.techSel === id ? ' sel' : ''}" data-id="${id}" style="left:${p.x}px;top:${p.y}px">${iconImg(techIcon(id), 'ic')}<span class="nn">${t.name}${t.repeat && S.techLevel[id] ? ' ' + (S.techLevel[id] + 1) : ''}</span>${st === 'done' ? '<span class="nc learned">Learned</span>' : `<span class="nc" title="${units} rounds, each using one of every study good shown"><span class="units">${units}${t.packs.length > 1 ? ' each' : ''}</span>${t.packs.map((k) => iconImg(k)).join('')}</span>`}${qi >= 0 ? `<span class="qn">${qi + 1}</span>` : ''}${prog > 0 ? `<span class="pg" style="width:${Math.round(prog * 100)}%"></span>` : ''}</button>`;
   }
   return `<div class="tree" style="width:${L.W}px;height:${L.H}px">${svg}${nodes}</div>`;
 };
@@ -11447,7 +11698,8 @@ UI.techCard = function (id) {
 UI.treeHead = function () {
   const R = S.research;
   let h = `<div class="cur">`;
-  if (R.cur) { const t = TECHS[R.cur]; const u = techUnits(R.cur); h += `${iconImg(techIcon(R.cur))}<div><b>Studying ${t.name}</b><small>${R.prog} of ${u}, ${(S.labSpeed * LAB_RATE * 60).toFixed(1)} a minute</small></div>`; }
+  const school = [...S.ents.values()].some((e) => BUILD[e.type] && BUILD[e.type].lab && !BUILD[e.type].great);
+  if (R.cur) { const t = TECHS[R.cur]; const u = techUnits(R.cur); h += `${iconImg(techIcon(R.cur))}<div><b>${school ? 'Studying' : 'Next to study:'} ${t.name}</b><small>${school ? `${R.prog} of ${u}, ${(S.labSpeed * LAB_RATE * 60).toFixed(1)} a minute` : 'Build a Schoolhouse to study it'}</small></div>`; }
   else h += `<div><b>${[...S.ents.values()].some((e) => BUILD[e.type] && BUILD[e.type].lab && !BUILD[e.type].great) ? 'Nothing being studied' : 'Build a Schoolhouse to study'}</b></div>`;
   h += `</div><div class="queue">${R.queue.length ? 'Queued ' + R.queue.map((id) => `<span title="${TECHS[id].name}">${iconImg(techIcon(id))}</span>`).join('') : ''}</div>`;
   return h;
@@ -11513,7 +11765,7 @@ UI.renderLedger = function () {
     setLedger(body, h); return;
   }
   // every good in one table, under a line for each kind (gathered, parts, goods for homes, study goods)
-  let h = '<div class="ledwrap"><table class="led"><thead><tr><th></th><th>Good</th><th>In store</th><th>Made a minute</th><th>Used a minute</th><th>Difference</th><th style="text-align:center">Last ten minutes</th></tr></thead><tbody>';
+  let h = '<div class="ledwrap"><table class="led goods"><thead><tr><th></th><th>Good</th><th>In store</th><th>Made a minute</th><th>Used a minute</th><th>Difference</th><th style="text-align:center">Last ten minutes</th></tr></thead><tbody>';
   const rows = [];
   const CAT_NAME = { raw: 'Gathered', part: 'Parts', good: 'Goods for homes', study: 'Study goods' }, wanted = homeWants();
   for (const c of ITEM_CATS) for (const k of ITEM_ORDER) {
@@ -11523,7 +11775,7 @@ UI.renderLedger = function () {
     if (!rows.some((x) => ITEMS[x].cat === c.id)) h += `<tr class="lcat"><td></td><td colspan="6">${CAT_NAME[c.id] || c.name}</td></tr>`;
     const m = statRate(k, 'made', 120), u = statRate(k, 'used', 120), net = m - u;
     rows.push(k);
-    h += `<tr><td>${iconImg(k)}</td><td>${ITEMS[k].name}</td><td>${fmt(Math.floor(S.stores[k]))}</td><td>${fmtRate(m)}</td><td>${fmtRate(u)}</td><td class="${net > 0.05 ? 'pos' : net < -0.05 ? 'neg' : ''}">${Math.abs(net) < 0.05 ? '0.0' : (net > 0 ? '+' : '') + fmtRate(net)}</td><td style="text-align:center"><canvas data-k="${k}" width="120" height="24"></canvas></td></tr>`;
+    h += `<tr${Math.floor(S.stores[k]) === 0 && m < 0.05 && u < 0.05 ? ' class="nil"' : ''}><td>${iconImg(k)}</td><td>${ITEMS[k].name}</td><td>${fmt(Math.floor(S.stores[k]))}</td><td>${fmtRate(m)}</td><td>${fmtRate(u)}</td><td class="${net > 0.05 ? 'pos' : net < -0.05 ? 'neg' : ''}">${Math.abs(net) < 0.05 ? '0.0' : (net > 0 ? '+' : '') + fmtRate(net)}</td><td style="text-align:center"><canvas data-k="${k}" width="120" height="24"></canvas></td></tr>`;
   }
   h += '</tbody></table></div>';
   if (!rows.length) h += '<p>Nothing made yet.</p>';
@@ -11545,7 +11797,7 @@ UI.openModal = function (kind, arg) {
   UI.closeMenus(); UI.hideTip();
   const m = $('modal');
   const titles = { chronicle: `The chronicle of ${escapeHtml(S.name)}`, research: 'Research', ledger: 'Ledger', guide: 'How to play', settings: 'Sound and picture' };
-  let h = `<div class="sheet${kind === 'research' ? ' wide' : kind === 'ledger' ? ' mid' : ''}${kind === 'research' ? ' tall' : ''}${kind === 'chronicle' ? ' book' : ''}" role="dialog" aria-label="${titles[kind]}"><div class="shead"><h2>${titles[kind]}</h2><button class="close" data-a="close">Close</button></div><div class="sbody${kind === 'research' ? ' fill' : ''}">`;
+  let h = `<div class="sheet${kind === 'research' ? ' wide' : kind === 'ledger' ? ' mid' : ''}${kind === 'research' ? ' tall' : ''}${kind === 'chronicle' ? ' book' : ''}" role="dialog" aria-label="${titles[kind]}"><div class="shead"><h2>${titles[kind]}</h2><button class="close" data-a="close">Close${UI.touch ? '' : '<kbd>Esc</kbd>'}</button></div><div class="sbody${kind === 'research' ? ' fill' : ''}">`;
   UI.modalKind = kind;
   if (kind === 'chronicle') {
     const keep = S.flags.keep || [];
@@ -11557,7 +11809,12 @@ UI.openModal = function (kind, arg) {
       if (arcs.length) h += `<p>Arcologies: ${arcs.join(', ')}.</p>`;
       h += `</div>`;
     }
-    for (const c of S.chronicle.slice().reverse()) h += `<div class="entry ${c.kind === 'chap' ? 'chap' : ''}"><div class="d">Day ${c.day}</div><div class="t">${c.head ? `<div class="h">${escapeHtml(c.head.replace(/^Chapter ([A-Z])/, (m, x) => 'Chapter ' + x.toLowerCase()))}</div>` : ''}${escapeHtml(c.text)}</div></div>`;
+    const list = S.chronicle.slice().reverse();
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i]; let n = 1;
+      while (!c.head && i + 1 < list.length && !list[i + 1].head && list[i + 1].text === c.text) { n++; i++; }
+      h += `<div class="entry ${c.kind === 'chap' ? 'chap' : ''}"><div class="d">Day ${c.day}</div><div class="t">${c.head ? `<div class="h">${escapeHtml(c.head.replace(/^Chapter ([A-Z])/, (m, x) => 'Chapter ' + x.toLowerCase()))}</div>` : ''}${escapeHtml(c.text)}${n > 1 ? `<span class="again">${n === 2 ? 'twice' : n + ' times'}</span>` : ''}</div></div>`;
+    }
   } else if (kind === 'research') {
     UI.techSel = arg || S.research.cur || null; UI.treeSig = '';
     h += `<div class="treehead" id="treeHead"></div><div class="treewrap" id="treewrap">${UI.renderTree()}</div><div class="techcard" id="techCard">${UI.techCard(UI.techSel)}</div>`;
@@ -11565,7 +11822,7 @@ UI.openModal = function (kind, arg) {
     if (!['goods', 'works', 'people'].includes(UI.ledgerTab)) UI.ledgerTab = 'goods';
     h += `<div class="ltabs">${[['goods', 'Goods'], ['works', 'Works'], ['people', 'People']].map(([id, nm]) => `<button class="ltab${UI.ledgerTab === id ? ' on' : ''}" data-a="ltab" data-v="${id}">${nm}</button>`).join('')}</div><div id="ledgerBody"></div>`;
   } else if (kind === 'guide') {
-    h += `<div class="tourline"><button class="btn" data-a="tour">Take the quick tour</button></div>
+    h += `<div class="tourline"><button class="btn primary" data-a="tour">Take the quick tour</button></div>
       <h4 style="margin-top:4px">Homes</h4><p>Press Z and paint land for homes near a Commons. Newcomers build cabins there by themselves when there is work for them, food in store, homes enough already fed, and 6 timber and 2 stone to build with. Each need a home has met makes room for more people. When a home has every need and comfort, the services it wants nearby, enough harmony, and the materials in store, it grows into the next kind of home, once you have studied how.</p>
       <h4>Goods and channels</h4><p>Every works has a yellow spout. Goods come out there into whatever is in front of it: a channel, another works, or a Commons. Press C and drag to lay a line; the water flows the way you drag. Flumes climb one terrace step per hex. Stone and swift channels carry more; drag them over slower ones to upgrade. A junction set onto a line splits it. Its yellow outlet carries the line on and its side outlet turns off for a branch, which you lay by dragging out of the junction. Select a junction to point either outlet another way, or to have it send one good out of the side. Culverts run under anything. Ropeways, once studied, carry goods in hanging buckets straight over water, hills and works, up to twelve hexes: drag from the near station to the far one, feed the near one from any side, and the goods leave the far one by its spout. Storehouses and every Commons take deliveries into the shared stores. A channel carrying two goods into one works can jam, so give each good its own way in.</p>
       <h4>Hands and power</h4><p>About half of everyone works. Each works needs hands of a certain kind of people, and anyone can work at a works of their own kind or a simpler one. People walk up to ${COMMUTE} hexes to work, so a works far from any home stands idle until you mark land for homes nearer to it. Bicycles let them ride further. Newer works also need power from turbines, water wheels or steam engines. When power runs short, the works slow down together.</p>
@@ -11593,7 +11850,7 @@ UI.openModal = function (kind, arg) {
     // on a touch screen the keys in the text become the buttons that do the same
     if (UI.touch) for (const [a, b] of GUIDE_TOUCH) h = h.replace(a, b);
   } else if (kind === 'settings') {
-    const sl = (id, label, v) => `<div class="setrow"><label for="${id}">${label}</label><input type="range" id="${id}" min="0" max="100" value="${Math.round(v * 100)}"></div>`;
+    const sl = (id, label, v) => `<div class="setrow ranged"><label for="${id}">${label}</label><input type="range" id="${id}" min="0" max="100" value="${Math.round(v * 100)}"><output for="${id}">${Math.round(v * 100)}</output></div>`;
     h += `<h4>Sound</h4>${sl('sMusic', 'Music', SETTINGS.music)}${sl('sAmb', 'Birds, weather and the works', SETTINGS.ambience)}${sl('sSfx', 'Sounds', SETTINGS.sfx)}<h4>Picture</h4>${sl('sFilm', 'Film grain and haze', SETTINGS.film)}
       <div class="setrow"><label for="sQuality">Picture quality</label><select id="sQuality"><option value="auto">Automatic</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
       <div class="setrow"><label for="sPace">Frame rate</label><select id="sPace"><option value="auto">Automatic</option><option value="smooth">Always smooth</option><option value="battery">Save battery</option></select></div>
@@ -11602,12 +11859,21 @@ UI.openModal = function (kind, arg) {
       <div class="setrow"><label for="sBadges">Markers over buildings</label><select id="sBadges"><option value="1">Shown</option><option value="0">Hidden</option></select></div>`;
   }
   h += '</div></div>'; m.innerHTML = h; m.hidden = false;
-  if (kind === 'research') { UI.refreshTreeHead(); const tw = $('treewrap'); const p = techLayout().pos[UI.techSel || S.research.cur || 'fishing']; if (p && tw) tw.scrollLeft = Math.max(0, p.x - 260); }
+  if (kind === 'research') {
+    UI.refreshTreeHead(); const tw = $('treewrap'), L = techLayout();
+    const open = Object.keys(TECHS).filter((id) => techState(id) === 'available').sort((a, b) => L.pos[a].x - L.pos[b].x || L.pos[a].y - L.pos[b].y)[0];
+    const p = L.pos[UI.techSel || S.research.cur || open || 'fishing'];
+    // one whole column of what came before shows to its left, never a column cut in half (on a phone, the topic itself comes first)
+    if (p && tw) { tw.scrollLeft = Math.max(0, tw.clientWidth < 2 * 206 + 24 ? p.x : p.x - 206); tw.scrollTop = Math.max(0, p.y - 140); }
+    if (tw) { const edge = () => { tw.classList.toggle('atend', tw.scrollLeft + tw.clientWidth >= tw.scrollWidth - 2); tw.classList.toggle('atstart', tw.scrollLeft < 2); }; tw.onscroll = edge; edge(); }
+  }
   if (kind === 'ledger') UI.renderLedger();
   if (kind === 'settings') {
     $('sPace').value = SETTINGS.pace || 'auto'; $('sPace').onchange = (ev) => { SETTINGS.pace = ev.target.value; saveSettings(); };
     $('sQuality').value = SETTINGS.quality; $('sGolden').value = SETTINGS.golden ? '1' : '0'; $('sBadges').value = SETTINGS.badges ? '1' : '0'; $('sWeather').value = SETTINGS.weather ? '1' : '0';
     const bind = (id, key, fn) => $(id).addEventListener('input', (ev) => { SETTINGS[key] = ev.target.value / 100; saveSettings(); fn && fn(); });
+    // the slider's track fills up to its thumb
+    for (const r of m.querySelectorAll('input[type=range]')) { const out = r.nextElementSibling; const fill = () => { r.style.setProperty('--v', r.value + '%'); if (out) out.textContent = r.value; }; fill(); r.addEventListener('input', fill); }
     bind('sMusic', 'music', () => AUDIO.setVolumes()); bind('sAmb', 'ambience', () => AUDIO.setVolumes()); bind('sSfx', 'sfx', () => AUDIO.setVolumes()); bind('sFilm', 'film');
     $('sQuality').onchange = (ev) => { SETTINGS.quality = ev.target.value; saveSettings(); applyQuality(); };
     $('sGolden').onchange = (ev) => { SETTINGS.golden = ev.target.value === '1'; saveSettings(); };
@@ -12703,6 +12969,11 @@ function loop(now) {
   const wu = WATER.mat.uniforms; wu.uTime.value = time; wu.uSunDir.value.copy(U.sunDir.value); wu.uSunCol.value.copy(U.sunColor.value); wu.uCloud.value.copy(U.cloud.value); wu.uIce.value = U.snow.value * 0.92; wu.uRain.value = WEATHER.rain;
   MAT.chanWater.uniforms.uTime.value = time; MAT.chanWater.uniforms.uSky.value.copy(U.sky.value); MAT.chanWater.uniforms.uNight.value = SKY.night; MAT.chanWater.uniforms.uIce.value = U.snow.value;
   updateCamera(dt);
+  // the view moved under a mouse that stayed put: what is under the pointer is looked up again, so its tip stays true
+  if (GAME.mode === 'play' && INPUT.ptype === 'mouse' && INPUT.lastX !== undefined && !INPUT.pointers.size) {
+    const k = CAM.x.toFixed(2) + ',' + CAM.z.toFixed(2) + ',' + CAM.dist.toFixed(2) + ',' + CAM.yaw.toFixed(3);
+    if (k !== INPUT.camKey) { const was = INPUT.camKey; INPUT.camKey = k; if (was !== undefined) { const t = pickTile(INPUT.lastX, INPUT.lastY); if (t !== INPUT.hover) { INPUT.hover = t; updateHover(); } } }
+  }
   if (GAME.cine !== !!CAM.cinematic) { GAME.cine = !!CAM.cinematic; $('hud').classList.toggle('cine', GAME.cine); if (GAME.cine) UI.hideTip(); }
   // each part of the picture is drawn on its own, so one that breaks cannot stop the rest of the valley
   if (VIEW.dirtyChunks.size) run('channels', rebuildChannels);
