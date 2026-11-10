@@ -1048,118 +1048,409 @@
         M.tri(i0, i1, i2);
       }
     }
-    if (cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI) {
-      const [p0u, p0v, p1u, p1v, nu, nv, len] = W4[side];
-      const tu = (p1u - p0u) / len, tv = (p1v - p0v) / len;
-      const du = doorAt(len, cls, seed);
-      const floorY = y0 + found;
-      let walkFrom = 0.25;
-      const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
-        const us = [p0u + tu * a0 + nu * o0, p0u + tu * a1 + nu * o0, p0u + tu * a0 + nu * o1, p0u + tu * a1 + nu * o1];
-        const vs = [p0v + tv * a0 + nv * o0, p0v + tv * a1 + nv * o0, p0v + tv * a0 + nv * o1, p0v + tv * a1 + nv * o1];
-        M.box(Math.min(...us), Math.max(...us), ya, yb2, Math.min(...vs), Math.max(...vs), which);
-      };
-      if (porch && len > 4.2) {
-        const full = cls !== CLS.TRIPLE || (seed & 2) > 0;
-        const pw = full ? len : Math.max(3, len * 0.55);
-        const a0 = full ? 0 : clamp(du - pw / 2, 0, len - pw), a1 = a0 + pw, dep = cls === CLS.TRIPLE ? 2.1 : 1.9;
-        const decks = cls === CLS.TRIPLE ? Math.min(levels, 3) : cls === CLS.MULTI && seed & 4 ? 2 : 1;
-        const fh = FLOOR[cls];
-        const roofY = floorY + decks * fh - 0.25;
-        for (let lv = 0; lv < decks; lv++) {
-          const fy = floorY + lv * fh;
-          setM(MAT.DECK);
-          M.W[0] = pw;
-          M.W[1] = 0;
-          M.W[2] = 0;
-          M.W[3] = -1;
-          wbox(a0, a1, 0, dep, lv === 0 ? yb : fy - 0.22, fy, 63);
-          setM(MAT.RAIL);
-          const rail = (q0, q1, n2) => {
-            const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
-            const i0 = M.v(q0[0], fy, q0[1], n2[0], 0, n2[1], 0, 0), i1 = M.v(q1[0], fy, q1[1], n2[0], 0, n2[1], ln, 0);
-            const i2 = M.v(q1[0], fy + 0.95, q1[1], n2[0], 0, n2[1], ln, 0.95), i3 = M.v(q0[0], fy + 0.95, q0[1], n2[0], 0, n2[1], 0, 0.95);
-            M.quad(i0, i1, i2, i3);
-          };
-          const P2 = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
-          const gap0 = lv === 0 ? clamp(du - 0.75, a0, a1) : -1, gap1 = lv === 0 ? clamp(du + 0.75, a0, a1) : -1;
-          if (lv === 0 && gap1 > gap0) {
-            if (gap0 - a0 > 0.4) rail(P2(a0, dep), P2(gap0, dep), [nu, nv]);
-            if (a1 - gap1 > 0.4) rail(P2(gap1, dep), P2(a1, dep), [nu, nv]);
-          } else rail(P2(a0, dep), P2(a1, dep), [nu, nv]);
-          rail(P2(a0, 0), P2(a0, dep), [-tu, -tv]);
-          rail(P2(a1, 0), P2(a1, dep), [tu, tv]);
-        }
-        setM(MAT.TRIM);
-        const np = Math.max(2, Math.round(pw / 2.6) + 1);
-        for (let i = 0; i < np; i++) {
-          const al = a0 + 0.09 + (pw - 0.18) * i / (np - 1);
-          wbox(al - 0.08, al + 0.08, dep - 0.18, dep - 0.02, floorY, roofY, 51);
-        }
-        setM(MAT.ROOF);
-        const o1 = dep + 0.28;
-        const q = (al, o, y) => [p0u + tu * al + nu * o, y, p0v + tv * al + nv * o];
-        const sl = Math.hypot(o1, 0.3), n = [nu * 0.3 / sl, o1 / sl, nv * 0.3 / sl];
-        M.face(q(a0 - 0.2, 0, roofY + 0.42), q(a1 + 0.2, 0, roofY + 0.42), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), n, [tu, 0, tv], [nu, 0, nv]);
-        setM(MAT.TRIM);
-        M.face(q(a0 - 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), [nu, 0, nv], [tu, 0, tv], [0, 1, 0]);
-        M.face(q(a0 - 0.2, 0, roofY - 0.08), q(a1 + 0.2, 0, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a0 - 0.2, o1, roofY - 0.08), [0, -1, 0], [tu, 0, tv], [nu, 0, nv]);
-        setM(MAT.CONCRETE);
-        const st = Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19));
-        wbox(clamp(du - 0.7, a0, a1 - 1.4), clamp(du + 0.7, a0 + 1.4, a1), dep, dep + Math.min(st, 6) * 0.28, yb, floorY - 0.19, 55);
-        walkFrom = dep + Math.min(st, 6) * 0.28;
-      } else if (found > 0.2 && len > 2.5) {
-        walkFrom = floorY - y0 > 0.45 ? 1.64 : 1.32;
-        setM(MAT.CONCRETE);
-        M.W[0] = 1.6;
+    site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
+  }
+  function site(M, setM, wall, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
+    if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
+    const [p0u, p0v, p1u, p1v, nu, nv, len] = wall;
+    const tu = (p1u - p0u) / len, tv = (p1v - p0v) / len;
+    const du = doorAt(len, cls, seed);
+    const floorY = y0 + found;
+    let walkFrom = 0.25;
+    const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
+      const us = [p0u + tu * a0 + nu * o0, p0u + tu * a1 + nu * o0, p0u + tu * a0 + nu * o1, p0u + tu * a1 + nu * o1];
+      const vs = [p0v + tv * a0 + nv * o0, p0v + tv * a1 + nv * o0, p0v + tv * a0 + nv * o1, p0v + tv * a1 + nv * o1];
+      M.box(Math.min(...us), Math.max(...us), ya, yb2, Math.min(...vs), Math.max(...vs), which);
+    };
+    if (porch && len > 4.2) {
+      const full = cls !== CLS.TRIPLE || (seed & 2) > 0;
+      const pw = full ? len : Math.max(3, len * 0.55);
+      const a0 = full ? 0 : clamp(du - pw / 2, 0, len - pw), a1 = a0 + pw, dep = cls === CLS.TRIPLE ? 2.1 : 1.9;
+      const decks = cls === CLS.TRIPLE ? Math.min(levels, 3) : cls === CLS.MULTI && seed & 4 ? 2 : 1;
+      const fh = FLOOR[cls];
+      const roofY = floorY + decks * fh - 0.25;
+      for (let lv = 0; lv < decks; lv++) {
+        const fy = floorY + lv * fh;
+        setM(MAT.DECK);
+        M.W[0] = pw;
         M.W[1] = 0;
         M.W[2] = 0;
         M.W[3] = -1;
-        wbox(du - 0.8, du + 0.8, 0, 1, yb, floorY, 55);
-        wbox(du - 0.8, du + 0.8, 1, 1.32, yb, floorY - 0.2, 55);
-        if (floorY - y0 > 0.45) wbox(du - 0.8, du + 0.8, 1.32, 1.64, yb, floorY - 0.4, 55);
-      }
-      if (env && cls !== CLS.GARAGE && cls !== CLS.BARN) {
-        const at = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
-        const strip = (al, wid, o0, o1) => {
-          const n = Math.max(1, Math.ceil((o1 - o0) / 2.2));
-          let pl = -1, pr = -1;
-          for (let i = 0; i <= n; i++) {
-            const o = o0 + (o1 - o0) * i / n, L2 = at(al - wid / 2, o), Rr = at(al + wid / 2, o);
-            const il = M.v(L2[0], env.groundAt(L2[0], L2[1]) + 0.07, L2[1], 0, 1, 0, 0, o), ir = M.v(Rr[0], env.groundAt(Rr[0], Rr[1]) + 0.07, Rr[1], 0, 1, 0, wid, o);
-            if (i > 0) M.quad(pl, pr, ir, il);
-            pl = il;
-            pr = ir;
-          }
+        wbox(a0, a1, 0, dep, lv === 0 ? yb : fy - 0.22, fy, 63);
+        setM(MAT.RAIL);
+        const rail = (q0, q1, n2) => {
+          const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
+          const i0 = M.v(q0[0], fy, q0[1], n2[0], 0, n2[1], 0, 0), i1 = M.v(q1[0], fy, q1[1], n2[0], 0, n2[1], ln, 0);
+          const i2 = M.v(q1[0], fy + 0.95, q1[1], n2[0], 0, n2[1], ln, 0.95), i3 = M.v(q0[0], fy + 0.95, q0[1], n2[0], 0, n2[1], 0, 0.95);
+          M.quad(i0, i1, i2, i3);
         };
-        M.W[0] = 0;
-        M.W[1] = 0;
-        M.W[2] = 0;
-        M.W[3] = -1;
-        const P2 = at(du, walkFrom + 0.3);
-        const reach = env.roadEdge(P2[0], P2[1], nu, nv, 30);
-        if (reach > 0.5) {
-          setM(MAT.CONCRETE);
-          strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
+        const P2 = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
+        const gap0 = lv === 0 ? clamp(du - 0.75, a0, a1) : -1, gap1 = lv === 0 ? clamp(du + 0.75, a0, a1) : -1;
+        if (lv === 0 && gap1 > gap0) {
+          if (gap0 - a0 > 0.4) rail(P2(a0, dep), P2(gap0, dep), [nu, nv]);
+          if (a1 - gap1 > 0.4) rail(P2(gap1, dep), P2(a1, dep), [nu, nv]);
+        } else rail(P2(a0, dep), P2(a1, dep), [nu, nv]);
+        rail(P2(a0, 0), P2(a0, dep), [-tu, -tv]);
+        rail(P2(a1, 0), P2(a1, dep), [tu, tv]);
+      }
+      setM(MAT.TRIM);
+      const np = Math.max(2, Math.round(pw / 2.6) + 1);
+      for (let i = 0; i < np; i++) {
+        const al = a0 + 0.09 + (pw - 0.18) * i / (np - 1);
+        wbox(al - 0.08, al + 0.08, dep - 0.18, dep - 0.02, floorY, roofY, 51);
+      }
+      setM(MAT.ROOF);
+      const o1 = dep + 0.28;
+      const q = (al, o, y) => [p0u + tu * al + nu * o, y, p0v + tv * al + nv * o];
+      const sl = Math.hypot(o1, 0.3), n = [nu * 0.3 / sl, o1 / sl, nv * 0.3 / sl];
+      M.face(q(a0 - 0.2, 0, roofY + 0.42), q(a1 + 0.2, 0, roofY + 0.42), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), n, [tu, 0, tv], [nu, 0, nv]);
+      setM(MAT.TRIM);
+      M.face(q(a0 - 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), [nu, 0, nv], [tu, 0, tv], [0, 1, 0]);
+      M.face(q(a0 - 0.2, 0, roofY - 0.08), q(a1 + 0.2, 0, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a0 - 0.2, o1, roofY - 0.08), [0, -1, 0], [tu, 0, tv], [nu, 0, nv]);
+      setM(MAT.CONCRETE);
+      const st = Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19));
+      wbox(clamp(du - 0.7, a0, a1 - 1.4), clamp(du + 0.7, a0 + 1.4, a1), dep, dep + Math.min(st, 6) * 0.28, yb, floorY - 0.19, 55);
+      walkFrom = dep + Math.min(st, 6) * 0.28;
+    } else if (found > 0.2 && len > 2.5) {
+      walkFrom = floorY - y0 > 0.45 ? 1.64 : 1.32;
+      setM(MAT.CONCRETE);
+      M.W[0] = 1.6;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      wbox(du - 0.8, du + 0.8, 0, 1, yb, floorY, 55);
+      wbox(du - 0.8, du + 0.8, 1, 1.32, yb, floorY - 0.2, 55);
+      if (floorY - y0 > 0.45) wbox(du - 0.8, du + 0.8, 1.32, 1.64, yb, floorY - 0.4, 55);
+    }
+    if (env && cls !== CLS.GARAGE && cls !== CLS.BARN) {
+      const at = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
+      const strip = (al, wid, o0, o1) => {
+        const n = Math.max(1, Math.ceil((o1 - o0) / 2.2));
+        let pl = -1, pr = -1;
+        for (let i = 0; i <= n; i++) {
+          const o = o0 + (o1 - o0) * i / n, L2 = at(al - wid / 2, o), Rr = at(al + wid / 2, o);
+          const il = M.v(L2[0], env.groundAt(L2[0], L2[1]) + 0.07, L2[1], 0, 1, 0, 0, o), ir = M.v(Rr[0], env.groundAt(Rr[0], Rr[1]) + 0.07, Rr[1], 0, 1, 0, wid, o);
+          if (i > 0) M.quad(pl, pr, ir, il);
+          pl = il;
+          pr = ir;
         }
-        if (cls !== CLS.ROW && r3 < 0.74 && len > 4) {
-          const al = seed & 8 ? -1.85 : len + 1.85;
-          const Q = at(al, 0.4);
-          const run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
-          if (run > 2.5) {
-            const back = Math.min(6.5, Math.max(3, (side === 0 || side === 2 ? w : d) * 0.6));
-            setM(MAT.ASPHALT);
-            strip(al, 2.7, -back, 0.4 + run + 0.3);
-            if (r2 < 0.55) {
-              const oc = -back + 2.6 + r1 * Math.min(run + back - 6, 6), Cc = at(al, oc), gy = env.groundAt(Cc[0], Cc[1]) + 0.07;
-              putCar(M, setM, r3 * 7.3 % 1 > 0.55 ? 1 : 0, Cc[0], gy, Cc[1], seed & 16 ? nu : -nu, seed & 16 ? nv : -nv);
-            }
+      };
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      const P2 = at(du, walkFrom + 0.3);
+      const reach = env.roadEdge(P2[0], P2[1], nu, nv, 30);
+      if (reach > 0.5) {
+        setM(MAT.CONCRETE);
+        strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
+      }
+      if (cls !== CLS.ROW && r3 < 0.74 && len > 4) {
+        const al = seed & 8 ? -1.85 : len + 1.85;
+        const Q = at(al, 0.4);
+        const run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
+        if (run > 2.5) {
+          const back = Math.min(6.5, Math.max(3, depth * 0.6));
+          setM(MAT.ASPHALT);
+          strip(al, 2.7, -back, 0.4 + run + 0.3);
+          if (r2 < 0.55) {
+            const oc = -back + 2.6 + r1 * Math.min(run + back - 6, 6), Cc = at(al, oc), gy = env.groundAt(Cc[0], Cc[1]) + 0.07;
+            putCar(M, setM, r3 * 7.3 % 1 > 0.55 ? 1 : 0, Cc[0], gy, Cc[1], seed & 16 ? nu : -nu, seed & 16 ? nv : -nv);
           }
         }
       }
     }
   }
-  function buildHouseTile(world2, list, sel, cx, cy, cz, th) {
+  function parseReal(buf) {
+    const dv = new DataView(buf);
+    if (dv.getUint32(0, true) !== 860113986) throw new Error("bad building file");
+    const n = dv.getUint32(4, true);
+    return { n, off: new Uint32Array(buf.slice(8, 8 + (n + 1) * 4)), dv, base: 8 + (n + 1) * 4 };
+  }
+  var CUT = 2;
+  function clipPoly(P2, a, b, c, out) {
+    out.length = 0;
+    const n = P2.length / 3;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const su = P2[i * 3], sv = P2[i * 3 + 1], eu = P2[j * 3], ev = P2[j * 3 + 1];
+      const ds = a * su + b * sv + c, de = a * eu + b * ev + c;
+      if (de >= 0) {
+        if (ds < 0) {
+          const t = ds / (ds - de);
+          out.push(su + (eu - su) * t, sv + (ev - sv) * t, P2[i * 3 + 2]);
+        }
+        out.push(eu, ev, P2[j * 3 + 2]);
+      } else if (ds >= 0) {
+        const t = ds / (ds - de);
+        out.push(su + (eu - su) * t, sv + (ev - sv) * t, CUT);
+      }
+    }
+    return out;
+  }
+  function polyArea(P2) {
+    let s = 0;
+    const n = P2.length / 3;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      s += P2[i * 3] * P2[j * 3 + 1] - P2[j * 3] * P2[i * 3 + 1];
+    }
+    return s / 2;
+  }
+  function ears(P2, tri) {
+    const n = P2.length / 3, idx = [];
+    for (let i = 0; i < n; i++) idx.push(i);
+    let guard = 0;
+    while (idx.length > 3 && guard++ < 400) {
+      let cut = false;
+      for (let k = 0; k < idx.length; k++) {
+        const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
+        const ax = P2[i0 * 3], ay = P2[i0 * 3 + 1], bx = P2[i1 * 3], by = P2[i1 * 3 + 1], cx = P2[i2 * 3], cy = P2[i2 * 3 + 1];
+        const cr = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+        if (cr <= 1e-9) {
+          if (cr > -1e-9) {
+            idx.splice(k, 1);
+            cut = true;
+            break;
+          }
+          continue;
+        }
+        let ok = true;
+        for (const q of idx) {
+          if (q === i0 || q === i1 || q === i2) continue;
+          const px = P2[q * 3], py = P2[q * 3 + 1];
+          const d0 = (bx - ax) * (py - ay) - (by - ay) * (px - ax), d1 = (cx - bx) * (py - by) - (cy - by) * (px - bx), d2 = (ax - cx) * (py - cy) - (ay - cy) * (px - cx);
+          if (d0 > 1e-9 && d1 > 1e-9 && d2 > 1e-9) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        tri(i0, i1, i2);
+        idx.splice(k, 1);
+        cut = true;
+        break;
+      }
+      if (!cut) break;
+    }
+    for (let k = 1; k + 1 < idx.length; k++) tri(idx[0], idx[k], idx[k + 1]);
+  }
+  var _A = [];
+  var _B = [];
+  var _F = [];
+  var _G = [];
+  function roofOf(M, setM, P2, pl, lift) {
+    const np = pl.length;
+    for (let q = 0; q < np; q++) {
+      let F = P2;
+      if (np > 1) {
+        F = _F;
+        F.length = 0;
+        for (let i = 0; i < P2.length; i++) F.push(P2[i]);
+        for (let r = 0; r < np && F.length >= 9; r++) {
+          if (r === q) continue;
+          const a2 = pl[r][0] - pl[q][0], b2 = pl[r][1] - pl[q][1], c2 = pl[r][2] - pl[q][2];
+          if (Math.abs(a2) < 1e-6 && Math.abs(b2) < 1e-6) {
+            if (c2 < 0 || c2 === 0 && r < q) F.length = 0;
+            continue;
+          }
+          clipPoly(F, a2, b2, c2, _G);
+          F.length = 0;
+          for (let i = 0; i < _G.length; i++) F.push(_G[i]);
+        }
+      }
+      if (F.length < 9 || polyArea(F) < 0.02) continue;
+      const a = pl[q][0], b = pl[q][1], c = pl[q][2] + lift, gl = Math.hypot(a, b), sl = Math.hypot(1, gl);
+      const flat = gl < 0.14;
+      setM(flat ? MAT.FLATROOF : MAT.ROOF);
+      const ids = [];
+      for (let i = 0; i < F.length / 3; i++) {
+        const u = F[i * 3], v = F[i * 3 + 1];
+        const tu = flat ? u : (-b * u + a * v) / gl, tv = flat ? v : (a * u + b * v) / gl * sl;
+        ids.push(M.v(u, a * u + b * v + c, v, -a / sl, 1 / sl, -b / sl, tu, tv));
+      }
+      ears(F, (i0, i1, i2) => M.tri(ids[i0], ids[i1], ids[i2]));
+    }
+  }
+  var _T = [];
+  function wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, info) {
+    const nu = (v1 - v0) / len, nv = -(u1 - u0) / len;
+    const all = [];
+    for (const pl of over) for (const q of pl) all.push(q);
+    const ts = _T;
+    ts.length = 0;
+    ts.push(ta, tb);
+    for (let q = 0; q < all.length; q++) for (let r = q + 1; r < all.length; r++) {
+      const da = all[q][0] - all[r][0], db = all[q][1] - all[r][1], dc = all[q][2] - all[r][2];
+      const d0 = da * u0 + db * v0 + dc, d1 = da * u1 + db * v1 + dc;
+      if (d0 < 0 !== d1 < 0 && d0 !== d1) {
+        const t = d0 / (d0 - d1);
+        if (t > ta + 4e-3 && t < tb - 4e-3) ts.push(t);
+      }
+    }
+    ts.sort((x, y) => x - y);
+    const H = (t) => {
+      const u = u0 + (u1 - u0) * t, v = v0 + (v1 - v0) * t;
+      let top = -Infinity;
+      for (const pl of over) {
+        let h = Infinity;
+        for (const q of pl) {
+          const z = q[0] * u + q[1] * v + q[2];
+          if (z < h) h = z;
+        }
+        if (h > top) top = h;
+      }
+      return top + lift;
+    };
+    let lo = Infinity, hi = -Infinity;
+    const hs = [];
+    for (let k = 0; k < ts.length; k++) {
+      const h = H(ts[k]);
+      hs.push(h);
+      if (h < lo) lo = h;
+      if (h > hi) hi = h;
+    }
+    if (hi <= yb + 0.05) return;
+    const wi = info ? info(lo, hi - lo > 0.6, (tb - ta) * len) : null;
+    M.W[0] = len;
+    M.W[1] = wi ? wi[0] : 0;
+    M.W[2] = wi ? wi[1] : 1;
+    M.W[3] = wi ? wi[2] : -1;
+    const y0 = wi ? wi[3] : 0;
+    for (let k = 0; k + 1 < ts.length; k++) {
+      const t0 = ts[k], t1 = ts[k + 1];
+      if (t1 - t0 < 1e-4) continue;
+      const ua = u0 + (u1 - u0) * t0, va = v0 + (v1 - v0) * t0, ub = u0 + (u1 - u0) * t1, vb = v0 + (v1 - v0) * t1;
+      const a = M.v(ua, yb, va, nu, 0, nv, len * t0, yb - y0), b = M.v(ub, yb, vb, nu, 0, nv, len * t1, yb - y0);
+      const c = M.v(ub, hs[k + 1], vb, nu, 0, nv, len * t1, hs[k + 1] - y0), e = M.v(ua, hs[k], va, nu, 0, nv, len * t0, hs[k] - y0);
+      M.quad(a, b, c, e);
+    }
+  }
+  function realBuilding(M, real, id, B, k, g, gmin, gmax, env, theta) {
+    const dv = real.dv, o = real.base + real.off[id];
+    const nv = dv.getUint8(o), ns = dv.getUint8(o + 1);
+    if (!ns || nv < 3) return false;
+    const cls = B[k + 6], side = B[k + 8], mat = B[k + 12], seed = B[k + 13], yawOld = B[k + 4];
+    const r1 = h1(id, seed * 7 + 1), r2 = h1(id * 3 + 5, seed + 11), r3 = h1(id + 77, seed * 3 + 2);
+    const y0 = clamp(gmax - g, 0, 2.5), yb = Math.min(gmin - g, 0) - 0.6, lift = Math.min(gmin - g, 0), found = FOUND[cls];
+    M.C[1] = M.oy;
+    const setM = (m) => {
+      M.M[0] = m;
+      M.M[1] = mat;
+      M.M[2] = cls;
+      M.M[3] = seed;
+    };
+    let p = o + 16;
+    const P2 = _A;
+    P2.length = 0;
+    let minu = Infinity, maxu = -Infinity, minv = Infinity, maxv = -Infinity;
+    for (let i = 0; i < nv; i++, p += 4) {
+      const u = dv.getInt16(p, true) * 0.025, v = dv.getInt16(p + 2, true) * 0.025;
+      P2.push(u, v, 0);
+      if (u < minu) minu = u;
+      if (u > maxu) maxu = u;
+      if (v < minv) minv = v;
+      if (v > maxv) maxv = v;
+    }
+    const secs = [];
+    let low = Infinity;
+    for (let s = 0; s < ns; s++) {
+      const x0 = dv.getInt16(p, true) * 0.025, yy0 = dv.getInt16(p + 2, true) * 0.025, x1 = dv.getInt16(p + 4, true) * 0.025, yy1 = dv.getInt16(p + 6, true) * 0.025;
+      const npl = dv.getUint8(p + 9);
+      p += 10;
+      const pl = [];
+      for (let q = 0; q < npl; q++, p += 6) pl.push([dv.getInt16(p, true) / 8192, dv.getInt16(p + 2, true) / 8192, dv.getInt16(p + 4, true) * 0.02]);
+      secs.push([x0, yy0, x1, yy1, pl]);
+      for (const [u, v] of [[x0, yy0], [x1, yy0], [x1, yy1], [x0, yy1]]) {
+        let h = Infinity;
+        for (const q of pl) h = Math.min(h, q[0] * u + q[1] * v + q[2]);
+        if (h < low) low = h;
+      }
+    }
+    const basePl = [[0, 0, clamp(low - 0.15, 2.2, 400)]];
+    const fa = yawOld + side * Math.PI / 2 - theta, fu = Math.cos(fa), fv = Math.sin(fa);
+    let front = -1, fl = 2.5;
+    for (let i = 0; i < nv; i++) {
+      const j = (i + 1) % nv, du = P2[j * 3] - P2[i * 3], dw = P2[j * 3 + 1] - P2[i * 3 + 1], len = Math.hypot(du, dw);
+      if (len > fl && (dw * fu - du * fv) / len > 0.7) {
+        fl = len;
+        front = i;
+      }
+    }
+    const cuts = [];
+    let frontWall = null;
+    for (let i = 0; i < nv; i++) {
+      const j = (i + 1) % nv, u0 = P2[i * 3], v0 = P2[i * 3 + 1], u1 = P2[j * 3], v1 = P2[j * 3 + 1], len = Math.hypot(u1 - u0, v1 - v0);
+      if (len < 0.05) continue;
+      cuts.length = 0;
+      cuts.push(0, 1);
+      for (const sc of secs) {
+        if (Math.abs(u1 - u0) > 1e-6) for (const x of [sc[0], sc[2]]) {
+          const t = (x - u0) / (u1 - u0);
+          if (t > 0.01 && t < 0.99) cuts.push(t);
+        }
+        if (Math.abs(v1 - v0) > 1e-6) for (const y of [sc[1], sc[3]]) {
+          const t = (y - v0) / (v1 - v0);
+          if (t > 0.01 && t < 0.99) cuts.push(t);
+        }
+      }
+      cuts.sort((x, y) => x - y);
+      const isFront = i === front, door = isFront ? doorAt(len, cls, seed) : -1;
+      if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
+      setM(MAT.WALL);
+      for (let c = 0; c + 1 < cuts.length; c++) {
+        const ta = cuts[c], tb = cuts[c + 1];
+        if (tb - ta < 1e-4) continue;
+        const tm = (ta + tb) / 2, um = u0 + (u1 - u0) * tm, vm = v0 + (v1 - v0) * tm;
+        const over = [];
+        for (const sc of secs) if (um > sc[0] - 0.03 && um < sc[2] + 0.03 && vm > sc[1] - 0.03 && vm < sc[3] + 0.03) over.push(sc[4]);
+        if (!over.length) over.push(basePl);
+        wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, (lo, varies, plen) => {
+          if (plen < 1.2) return null;
+          const eave = Math.max(lo - y0, 0.3);
+          let flags = varies && plen > 3 ? 1 : 0;
+          if (isFront) {
+            flags |= 2;
+            if (cls === CLS.GARAGE || cls === CLS.BARN) flags |= 4;
+            if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
+          }
+          return [eave, clamp(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * flags, door, y0];
+        });
+      }
+    }
+    M.W[0] = 0;
+    M.W[1] = 0;
+    M.W[2] = 0;
+    M.W[3] = -1;
+    const clipped = [];
+    for (const [x0, yy0, x1, yy1, pl] of secs) {
+      let Q = clipPoly(P2, 1, 0, -x0, _B).slice();
+      Q = clipPoly(Q, -1, 0, x1, _B).slice();
+      Q = clipPoly(Q, 0, 1, -yy0, _B).slice();
+      Q = clipPoly(Q, 0, -1, yy1, _B).slice();
+      if (Q.length < 9 || polyArea(Q) < 0.5) continue;
+      roofOf(M, setM, Q, pl, lift);
+      clipped.push([Q, pl]);
+    }
+    roofOf(M, setM, P2, basePl, lift);
+    setM(MAT.WALL);
+    for (const [Q, pl] of clipped) {
+      const n = Q.length / 3;
+      for (let i = 0; i < n; i++) {
+        if (Q[i * 3 + 2] !== CUT) continue;
+        const j = (i + 1) % n, len = Math.hypot(Q[j * 3] - Q[i * 3], Q[j * 3 + 1] - Q[i * 3 + 1]);
+        if (len > 0.05) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], 0, 1, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
+      }
+    }
+    M.W[0] = 0;
+    M.W[1] = 0;
+    M.W[2] = 0;
+    M.W[3] = -1;
+    if (frontWall) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, false, found, y0, yb, r1, r2, r3, env);
+    return true;
+  }
+  function buildHouseTile(world2, list, sel, cx, cy, cz, th, reg) {
+    const real = reg && reg.real ? reg.real : null;
     const M = new Mesh();
     const c = Math.cos(th), s = Math.sin(th);
     const p3 = new Float64Array(3);
@@ -1186,9 +1477,18 @@
       }
     };
     for (const k of sel) {
-      const mx = list[k], my = list[k + 1], w = list[k + 2], d = list[k + 3], a = list[k + 4];
+      let mx = list[k], my = list[k + 1], a = list[k + 4];
+      const w = list[k + 2], d = list[k + 3], id = list[k + 14];
+      let measured2 = false;
+      if (real && id < real.n && real.off[id + 1] > real.off[id]) {
+        const o = real.base + real.off[id];
+        mx = reg.x0 + real.dv.getInt32(o + 4, true) * 0.01;
+        my = reg.y0 + real.dv.getInt32(o + 8, true) * 0.01;
+        a = real.dv.getInt16(o + 12, true) / 1e4;
+        measured2 = true;
+      }
       const g = world2.groundH(mx, my, true);
-      if (world2.g.water) continue;
+      if (world2.g.water && !measured2) continue;
       const ca = Math.cos(a), sa = Math.sin(a);
       let gmin = g, gmax = g;
       for (const [su, sv] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
@@ -1216,7 +1516,7 @@
       env.ca = ca;
       env.sa = sa;
       env.g = g;
-      building(M, list, k, g, gmin, gmax, env);
+      if (!(measured2 && realBuilding(M, real, id, list, k, g, gmin, gmax, env, a))) building(M, list, k, g, gmin, gmax, env);
       count++;
     }
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), idx: M.idx.slice(0, M.ni) };
@@ -1339,9 +1639,12 @@
   }
 
   // src/worker.js
+  var TREE_H = [12.8, 14.4];
   var world = null;
   var towers = [];
   var realBuildings = false;
+  var measured = /* @__PURE__ */ new Set();
+  var treeFiles = /* @__PURE__ */ new Set();
   var tmp = new Float64Array(3);
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
@@ -1354,6 +1657,8 @@
     if (m.zone) Object.assign(parts, { zone: new Uint8Array(m.zone), zoneW: m.zoneW, zoneH: m.zoneH, zoneRange: m.zoneRange });
     world = new World(meta, parts);
     realBuildings = !!(meta.tiles && meta.tiles.buildings);
+    measured = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
+    treeFiles = new Set(meta.tiles && meta.tiles.trees ? meta.tiles.trees : []);
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
   }
   function ensureRegion(rx, ry) {
@@ -1367,7 +1672,32 @@
           if (!res.ok) throw new Error("region " + rx + "_" + ry + " " + res.status);
           const png = await decodePNG(await res.arrayBuffer());
           const d = png.data;
-          world.addRegion(rx, ry, parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry));
+          const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry);
+          if (measured.has(k)) {
+            try {
+              const r3 = await fetch("data/b3/" + rx + "_" + ry + ".png");
+              if (r3.ok) {
+                const e = (await decodePNG(await r3.arrayBuffer())).data;
+                reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
+              }
+            } catch (err) {
+              postMessage({ type: "warn", message: "measured buildings " + rx + "_" + ry + ": " + String(err && err.message || err) });
+            }
+          }
+          if (treeFiles.has(k)) {
+            try {
+              const r4 = await fetch("data/t3/" + rx + "_" + ry + ".png");
+              if (r4.ok) {
+                const e = (await decodePNG(await r4.arrayBuffer())).data, dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
+                if (dv.getUint32(0, true) !== 860181076) throw new Error("bad tree file");
+                const T = dv.getUint32(4, true), n = dv.getUint32(8, true), o1 = 16 + (T * T + 1) * 4, o2 = o1 + T * T + 3 & ~3;
+                reg.trees = { T, off: new Uint32Array(e.buffer.slice(e.byteOffset + 16, e.byteOffset + o1)), mode: e.subarray(o1, o1 + T * T), rec: e.subarray(o2, o2 + n * 4) };
+              }
+            } catch (err) {
+              postMessage({ type: "warn", message: "trees " + rx + "_" + ry + ": " + String(err && err.message || err) });
+            }
+          }
+          world.addRegion(rx, ry, reg);
         } catch (err) {
           world.addRegion(rx, ry, EMPTY_REGION);
           postMessage({ type: "warn", message: String(err && err.message || err) });
@@ -1558,6 +1888,12 @@
       const n2 = Math.round(s / sp2), cell2 = s / n2;
       const cs = RS / 32;
       const near = kind === "trees" && realBuildings && reg && reg.nBld ? cellBuildings(reg, Math.floor((mx0 + s / 2 - reg.x0) / cs), Math.floor((my0 + s / 2 - reg.y0) / cs)) : null;
+      const tr = kind === "trees" && reg && reg.trees ? reg.trees : null;
+      let tI = -1;
+      if (tr) {
+        const tx = Math.floor((mx0 + s / 2 - reg.x0) / s), ty = Math.floor((my0 + s / 2 - reg.y0) / s);
+        if (tx >= 0 && ty >= 0 && tx < tr.T && ty < tr.T && tr.mode[ty * tr.T + tx] === 1) tI = ty * tr.T + tx;
+      }
       for (let j = 0; j < n2; j++) for (let i = 0; i < n2; i++) {
         const gi = Math.round(mx0 / cell2) + i, gj = Math.round(my0 / cell2) + j;
         const r1 = hash2(gi * 3 + 1, gj * 3 + 7), r2 = hash2(gi * 5 + 11, gj * 5 + 3), r3 = hash2(gi * 7 + 5, gj * 7 + 13), r4 = hash2(gi + 91, gj + 17);
@@ -1573,10 +1909,11 @@
         if (g.water || g.edge < (kind === "trees" ? 2.5 : 16)) continue;
         const sand = world.coverBilinear(mx, my, 2);
         if (sand > 0.5) continue;
+        if (tI >= 0 && world.nearestRoad(mx, my) < 28 && world._nr.reg.rCls[world._nr.road] < 14) continue;
         if (near) {
           let hit = false;
           for (let k = 0; k < near.length; k += 16) {
-            const dx = mx - near[k], dy = my - near[k + 1], rr = Math.max(near[k + 2], near[k + 3]) * 0.6 + 3;
+            const dx = mx - near[k], dy = my - near[k + 1], rr = tI >= 0 ? Math.max(near[k + 2], near[k + 3]) * 0.5 + 38 : Math.max(near[k + 2], near[k + 3]) * 0.6 + 3;
             if (dx * dx + dy * dy < rr * rr) {
               hit = true;
               break;
@@ -1589,6 +1926,27 @@
         cyl(mx, my, h, p3);
         out.push(p3[0] - cx, p3[1] - cy, p3[2] - cz, 0.75 + 0.65 * hash2(gi + 3, gj + 29), r1 * 6.2832, conifer, hash2(gi + 57, gj + 5));
         order.push(hash2(gi * 13 + 1, gj * 17 + 5));
+      }
+      if (tI >= 0) {
+        for (let q2 = tr.off[tI]; q2 < tr.off[tI + 1]; q2++) {
+          let mx = mx0 + (tr.rec[q2 * 4] + 0.5) * s / 256, my = my0 + (tr.rec[q2 * 4 + 1] + 0.5) * s / 256;
+          const tall = tr.rec[q2 * 4 + 2] * 0.25;
+          const e = world.nearestRoad(mx, my);
+          if (e < 1 && world._nr.reg.rCls[world._nr.road] < 14) {
+            const nr = world._nr, k = (1.3 - e) * nr.side;
+            mx += nr.ty * k;
+            my -= nr.tx * k;
+          }
+          const h = world.groundH(mx, my, true);
+          if (world.g.water) continue;
+          const gi = Math.round(mx * 2), gj = Math.round(my * 2);
+          const sand = world.coverBilinear(mx, my, 2);
+          const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
+          const conifer = hash2(gi + 91, gj + 17) < pc ? 1 : 0;
+          cyl(mx, my, h, p3);
+          out.push(p3[0] - cx, p3[1] - cy, p3[2] - cz, clamp(tall / (conifer ? TREE_H[1] : TREE_H[0]), 0.22, 2.9), hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832, conifer, hash2(gi + 57, gj + 5));
+          order.push(hash2(gi * 13 + 1, gj * 17 + 5));
+        }
       }
       const nT = order.length, perm = Array.from({ length: nT }, (_, i) => i).sort((a, b) => order[a] - order[b]);
       const arr2 = new Float32Array(nT * 7);
@@ -1604,7 +1962,7 @@
         const mx = list[k], my = list[k + 1];
         if (mx >= mx0 && mx < mx0 + s && my >= my0 && my < my0 + s) sel.push(k);
       }
-      const t = sel.length ? buildHouseTile(world, list, sel, cx, cy, cz, (my0 + s / 2) / R) : null;
+      const t = sel.length ? buildHouseTile(world, list, sel, cx, cy, cz, (my0 + s / 2) / R, reg) : null;
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
       postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.idx.buffer] : []);
       return;

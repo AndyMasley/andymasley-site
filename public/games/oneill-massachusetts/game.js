@@ -19596,6 +19596,10 @@ void main() {
       window.addEventListener("resize", () => this.resize());
       setLoad("Fetching the Commonwealth", 0.02);
       const meta = await (await fetch("data/world.json")).json();
+      if (params.get("measured") === "0" && meta.tiles) {
+        delete meta.tiles.measured;
+        delete meta.tiles.trees;
+      }
       this.meta = meta;
       const F = meta.files;
       const hk = F[this.quality.height] ? this.quality.height : "heightLo";
