@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Massachusetts, inside out</title>
+<meta name="theme-color" content="#1b302b">
+<meta name="description" content="The entire state at one to one, wrapped around the inside of an O'Neill cylinder thirty kilometres in radius. Drive in any direction and what you see in the sky is what you reach.">
+<link rel="canonical" href="https://andymasley.com/games/oneill-massachusetts/">
+<meta property="og:title" content="Massachusetts, inside out">
+<meta property="og:description" content="The entire state at one to one, wrapped around the inside of an O'Neill cylinder thirty kilometres in radius. Drive in any direction and what you see in the sky is what you reach.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://andymasley.com/games/oneill-massachusetts/">
+<meta property="og:image" content="https://andymasley.com/games/oneill-massachusetts/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Greater Boston lit up at night inside the cylinder, with the lights of other towns on the land curving up overhead">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://andymasley.com/games/oneill-massachusetts/og.jpg">
+<style>
+  :root {
+    --screen: #1b302b; --ink: #fff7e8; --dim: #d7dfd3; --rule: rgba(235, 224, 193, 0.25);
+    --panel: rgba(21, 38, 32, 0.9); --brass: #d9c28d; --amber: #f7cd87; --paper: #f4f3ee; --text: #1a1a1a;
+    --serif: Georgia, Cambria, 'Times New Roman', Times, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #05080c; color: var(--ink); font-family: var(--serif); overflow: hidden; overscroll-behavior: none; }
+  canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  button { font-family: var(--serif); cursor: pointer; }
+  .hidden { display: none !important; }
+
+  /* ---------- cover ---------- */
+  #cover { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; background: linear-gradient(0deg, rgba(5, 14, 16, .92) 0%, rgba(5, 14, 16, .55) 45%, rgba(5, 14, 16, .15) 100%); padding: clamp(18px, 4vw, 56px); }
+  #cover.bare { background: #0a1512; }
+  #cover .inner { max-width: 760px; }
+  #cover .kicker { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); margin: 0 0 10px; }
+  #cover h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.2rem, 6.4vw, 5.2rem); line-height: 1.0; letter-spacing: -.012em; margin: 0 0 16px; text-wrap: balance; }
+  #cover p { font-size: clamp(15px, 1.5vw, 18px); line-height: 1.55; color: var(--dim); margin: 0 0 14px; max-width: 62ch; }
+  #cover .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+  #play { background: var(--amber); color: #1c1608; border: 0; padding: 14px 30px; font-size: 18px; font-weight: 700; min-height: 48px; }
+  #play:hover { background: #ffe2ae; }
+  #play:disabled { background: #6f6a5c; color: #d9d2c0; cursor: default; }
+  #loadline { font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  #bar { width: 220px; height: 3px; background: var(--rule); }
+  #bar i { display: block; height: 100%; width: 0; background: var(--brass); transition: width .2s; }
+  #cover .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13.5px; color: var(--dim); margin-top: 18px; max-width: 560px; }
+  #cover .keys b { color: var(--ink); font-weight: 400; font-family: 'SF Mono', Consolas, monospace; font-size: 12.5px; white-space: nowrap; }
+  #fatal { color: #ffb4a0; font-size: 15px; white-space: pre-wrap; }
+
+  /* ---------- hud ---------- */
+  #hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+  #hud > * { pointer-events: auto; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); }
+  #place { position: absolute; left: 14px; top: 14px; padding: 10px 14px 10px; min-width: 190px; max-width: min(72vw, 420px); pointer-events: none; }
+  #place .town { font-size: 22px; line-height: 1.15; }
+  #place .sub { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); margin-top: 3px; }
+  #place .road { font-size: 14px; color: var(--dim); margin-top: 6px; min-height: 1.2em; }
+  #dash { position: absolute; left: 14px; bottom: 14px; padding: 10px 14px; display: grid; grid-template-columns: auto auto; gap: 2px 18px; align-items: baseline; pointer-events: none; font-variant-numeric: tabular-nums; }
+  #dash .big { font-size: 34px; line-height: 1; grid-row: span 2; align-self: center; }
+  #dash .big small { font-size: 13px; color: var(--dim); margin-left: 4px; }
+  #dash .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+  #dash .v { font-size: 15px; }
+  #dash .line { grid-column: 1 / -1; display: flex; gap: 18px; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--rule); }
+  #tools { position: absolute; right: 14px; top: 14px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 60vw; }
+  #tools button, .tbtn { background: var(--panel); color: var(--ink); border: 1px solid var(--rule); padding: 8px 12px; font-size: 14px; min-height: 40px; min-width: 44px; }
+  #tools button:hover { border-color: var(--brass); }
+  #tools button[aria-pressed="true"] { background: var(--brass); color: #1c1608; border-color: var(--brass); }
+  #toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); padding: 10px 18px; font-size: 16px; opacity: 0; transition: opacity .35s; pointer-events: none; text-align: center; max-width: 80vw; }
+  #toast.on { opacity: 1; }
+  #perf { position: absolute; right: 14px; bottom: 14px; padding: 8px 12px; font-size: 12.5px; line-height: 1.5; white-space: pre; text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; pointer-events: none; }
+  #labels { position: fixed; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
+  .lbl { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 13px; color: #fff7e8; text-shadow: 0 0 4px rgba(0, 10, 20, .95), 0 0 2px rgba(0, 10, 20, .95); will-change: transform; letter-spacing: .02em; }
+  .lbl.city { font-size: 15px; }
+  .lbl.big { font-size: 18px; letter-spacing: .08em; text-transform: uppercase; }
+  .lbl.region { font-size: 14px; letter-spacing: .22em; text-transform: uppercase; color: var(--brass); font-style: italic; }
+  .lbl.peak { font-size: 12.5px; color: #e9f0dc; }
+  .lbl.peak::before { content: '\25B2  '; font-size: 9px; }
+  .lbl.mark { font-size: 12px; color: var(--amber); }
+
+  /* ---------- map ---------- */
+  #mapwrap { position: fixed; inset: 0; z-index: 20; background: rgba(6, 14, 14, .82); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; }
+  #mapbox { position: relative; max-width: 100%; max-height: calc(100% - 146px); aspect-ratio: 2240 / 1280; width: min(96vw, calc((100vh - 178px) * 1.75)); border: 1px solid var(--rule); background: #8aaac4; }
+  #mapcv { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+  #maphead { width: min(96vw, calc((100vh - 178px) * 1.75)); display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+  #maphead h2 { margin: 0; font-size: 20px; font-weight: 400; }
+  #maphead span { font-size: 13px; color: var(--dim); }
+  #places { width: min(96vw, calc((100vh - 178px) * 1.75)); display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; max-height: 84px; overflow: auto; }
+  #places button { background: transparent; color: var(--ink); border: 1px solid var(--rule); padding: 6px 10px; font-size: 13px; min-height: 34px; }
+  #places button:hover { border-color: var(--brass); color: var(--amber); }
+
+  /* ---------- about ---------- */
+  #about { position: fixed; inset: 0; z-index: 25; background: rgba(6, 14, 14, .86); overflow: auto; padding: clamp(14px, 4vw, 48px); }
+  #about .sheet { max-width: 720px; margin: 0 auto; background: var(--paper); color: var(--text); padding: clamp(18px, 3vw, 36px); line-height: 1.6; font-size: 16px; }
+  #about h2 { margin: 0 0 6px; font-size: 26px; font-weight: 400; }
+  #about h3 { margin: 22px 0 6px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #1f5a7a; font-weight: 400; }
+  #about p { margin: 0 0 10px; }
+  #about table { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 6px 0 10px; }
+  #about td { border-top: 1px solid #d4d4d4; padding: 6px 8px 6px 0; vertical-align: top; }
+  #about td:first-child { white-space: nowrap; color: #333; width: 30%; }
+  #about .close { float: right; background: #1a1a1a; color: #f4f3ee; border: 0; padding: 8px 14px; font-size: 14px; }
+  #about a { color: #1f5a7a; }
+  #about .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- touch ---------- */
+  #touch { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+  #stick { position: absolute; left: 22px; bottom: 150px; width: 132px; height: 132px; border-radius: 50%; border: 1px solid var(--rule); background: rgba(21, 38, 32, .45); pointer-events: auto; touch-action: none; }
+  #stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px; border-radius: 50%; background: rgba(217, 194, 141, .75); }
+  #tbtns { position: absolute; right: 16px; bottom: 26px; display: grid; grid-template-columns: 64px 64px; gap: 8px; pointer-events: auto; }
+  #tbtns button { height: 56px; background: rgba(21, 38, 32, .7); color: var(--ink); border: 1px solid var(--rule); font-size: 14px; touch-action: none; }
+  #tbtns button[aria-pressed="true"] { background: var(--brass); color: #1c1608; border-color: var(--brass); }
+  @media (max-width: 720px) {
+    #place .town { font-size: 18px; } #dash .big { font-size: 26px; }
+    #tools button { padding: 6px 9px; font-size: 13px; min-height: 38px; }
+    #cover .keys { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="view" tabindex="0"></canvas>
+<div id="labels"></div>
+
+<div id="hud" class="hidden">
+  <div id="place" class="panel"><div class="town" id="h-town">&nbsp;</div><div class="sub" id="h-county">&nbsp;</div><div class="road" id="h-road"></div></div>
+  <div id="tools">
+    <button id="b-map" title="Map and places (M)">Map</button>
+    <button id="b-fly" title="Jetpack / drive (J)" aria-pressed="false">Fly</button>
+    <button id="b-cam" title="Camera (C)">Camera</button>
+    <button id="b-time" title="Time: [ and ] step an hour, T pauses the sun">Time</button>
+    <button id="b-labels" title="Names in the sky (L)" aria-pressed="true">Names</button>
+    <button id="b-lines" title="Town lines (B)" aria-pressed="false">Town lines</button>
+    <button id="b-haze" title="Air clarity (H)">Air</button>
+    <button id="b-about" title="What is real here">About</button>
+    <button id="b-full" title="Fullscreen (F)">Full</button>
+  </div>
+  <div id="dash" class="panel">
+    <div class="big"><span id="h-speed">0</span><small id="h-unit">mph</small></div>
+    <div><span class="k">Heading</span> <span class="v" id="h-hdg">N</span></div>
+    <div><span class="k">Elev</span> <span class="v" id="h-elev">0 ft</span></div>
+    <div class="line"><span><span class="k">Local sun</span> <span class="v" id="h-clock">3:30 PM</span></span><span><span class="k">Weight</span> <span class="v" id="h-g">1.00 g</span></span></div>
+  </div>
+  <div id="toast" class="panel"></div>
+  <div id="perf" class="panel hidden"></div>
+</div>
+
+<div id="touch" class="hidden">
+  <div id="stick"><i></i></div>
+  <div id="tbtns"><button id="t-up">Cruise</button><button id="t-boost">Boost</button><button id="t-down">Down</button><button id="t-brake">Brake</button></div>
+</div>
+
+<div id="mapwrap" class="hidden">
+  <div id="maphead"><h2>Massachusetts, unrolled</h2><span>Click anywhere to go there. The top edge meets the bottom edge. The dark part is the hull's glass.</span></div>
+  <div id="mapbox"><canvas id="mapcv"></canvas></div>
+  <div id="places"></div>
+</div>
+
+<div id="about" class="hidden"><div class="sheet">
+  <button class="close" id="about-close">Close</button>
+  <h2>What is real here</h2>
+  <p>The whole Commonwealth is laid on the inside of a spinning cylinder at one to one. The map frame is Massachusetts State Plane metres (the same grid the Webster drive uses), so a metre driven here is a metre there. East to west runs down the axis; north to south wraps around, which is why the land climbs the walls and the far side hangs overhead.</p>
+  <h3>The habitat</h3>
+  <table>
+    <tr><td>Radius</td><td class="num">30.0 km at sea level</td></tr>
+    <tr><td>Length</td><td class="num">329.9 km, Berkshires end to Atlantic end</td></tr>
+    <tr><td>Around</td><td class="num">188.5 km; the state's 182.2 km north to south leaves a 6.3 km seam</td></tr>
+    <tr><td>Windows</td><td>37% of the hull is glass, where New York, Vermont, New Hampshire, Connecticut and Rhode Island would be (O'Neill's Island Three alternated strips of land and window). Through it the sky turns once every 5 min 47 s. The habitat is drawn at L5, so the Earth is 1.9° across and the Moon half a degree, sixty degrees apart.</td></tr>
+    <tr><td>Spin</td><td class="num">one turn every 5 min 47 s gives 1 g at sea level; the ground moves at 542 m/s</td></tr>
+    <tr><td>Weight</td><td>Falls with altitude (about 3.5% lighter on Greylock) and changes when you drive with or against the spin: north is spinward here, so 65 mph north adds about 11%.</td></tr>
+    <tr><td>Air</td><td>Thins toward the axis as spin gravity fades. The blue overhead is real scattering through about 24 km of sea-level-equivalent air.</td></tr>
+    <tr><td>Sun</td><td>A lamp that rides the axis from the Atlantic cap at 6 to the Berkshire cap at 18, so it is noon under it and evening far from it, all at once.</td></tr>
+  </table>
+  <h3>Measured</h3>
+  <table>
+    <tr><td>Elevation</td><td>USGS 3DEP 1 arc-second (about 30 m), resampled to a 46 m grid (92 m on phones). No vertical exaggeration. Greylock's summit comes out at 1,063.3 m against a surveyed 1,063.4 m; knife-edge ridges such as Mount Tom read 3 to 4 m low.</td></tr>
+    <tr><td>Streets</td><td>Every public road in OpenStreetMap: about 68,000 km and 57,000 names, with one-way carriageways and lane counts where they are tagged.</td></tr>
+    <tr><td>Rails, runways, rivers</td><td>OpenStreetMap again: about 3,300 km of railway track on the surface (sidings and yards included), 114 km of runways and 214 km of taxiways at their tagged widths where they have one, and the centre lines of about 1,470 km of river too narrow to appear in the water map.</td></tr>
+    <tr><td>Buildings</td><td>2.66 million OpenStreetMap footprints (mostly from MassGIS). Each building stands at its footprint's own position, turned the way the footprint is turned, at the footprint's length and width (a rectangle fitted to the outline, for now).</td></tr>
+    <tr><td>Water</td><td>OpenStreetMap lakes, ponds and river polygons (about 12,700 still waters) and its coastline. Surface levels are read from the USGS elevation, which is flattened over water.</td></tr>
+    <tr><td>Land cover</td><td>NLCD 2025 land cover and tree canopy at 30 m: built-up land, canopy percentage, the evergreen share of the forest, cropland, pasture, marsh, sand and bare ground.</td></tr>
+    <tr><td>Town lines</td><td>US Census Bureau cartographic boundaries, 1:500,000, 2022 (all 351 cities and towns).</td></tr>
+    <tr><td>Webster</td><td>Ground heights inside the town come from the Webster drive's own LiDAR terrain (MassGIS). Its streets, buildings and trees are drawn the same way as every other town's.</td></tr>
+  </table>
+  <h3>Authored</h3>
+  <p>Building heights are mostly estimated: about 26,000 footprints carry a tagged height or storey count and eleven named towers carry their surveyed heights, and the rest are sized from the footprint, the kind of building and how built-up the surroundings are. The kind of building (house, cape, ranch, triple-decker, rowhouse, shop, mill and so on) is guessed from the footprint's size and shape, its OpenStreetMap tag where it has one, and its neighbours, and the front door goes on the side nearest a street. Roof shapes, siding, colours, windows, doors, porches and chimneys are invented, in the manner of the Webster drive and with its surface textures. Trees are scattered to match the measured canopy percentage; they are not individual surveyed trees. Sidewalks and kerbs are drawn along streets wherever the land-cover data says the land is built up; nobody surveyed them. Road widths come from the road class and lane tags. Utility poles, their wires and the street lamps that some of them carry, parked cars, front walks, driveways and the cars on them are placed by rule along streets and beside houses, and none of them is surveyed. The traffic is invented too: cars follow the mapped streets at about the speed limit, keep to the right, and pick a road at random where theirs ends. Buildings and other cars are solid. The boats are invented as well: sailing boats, launches and fishing boats wander wherever there is water enough, and ferries run between sixteen pairs of real terminals (Woods Hole and Vineyard Haven, Hyannis and Nantucket, Boston and Provincetown and so on) along the shortest path through the water map, which is close to the real course and is not it.</p>
+  <p>Roads follow the terrain, so overpasses and interchanges meet at grade, and a bridge is a flat deck 4.5 m above the water. A river narrower than about 50 m is drawn as a channel 8 m wide unless its width is tagged, which is rarely its true width, and streams are not drawn. Each railway track is drawn as one track on ballast, a railway bridge is a flat deck like a road's, and the tracks stop where the real line goes underground. Runway and taxiway paint and lamps are generic. Ground detail finer than the elevation grid has about a metre and a half of invented texture. Outside the state line there is a border sea about two kilometres wide, then a quay, then the glass; the Atlantic and the bays and sounds off the coast are sea, as they are. The window's frame (girders every 6 km, beams every 750 m, glazing bars every 50 m) is invented, and so are the lamps along the quay and the lifts and marker lamps on the end caps; the stars are scattered at random and are not the real sky, the Milky Way (its bulge, its dust lanes, its star clouds), Andromeda and the Magellanic Clouds are painted by formula and are not where the real ones lie, and the faces of the Earth and Moon are invented. So is the twin: O'Neill's cylinders were meant to come in pairs turning opposite ways, and a second one rides 135 km off, so its windows and the lights of its towns wheel past ours once a rotation. You can drive on the glass.</p>
+  <h3>Next</h3>
+  <p>Real building outlines, real bridge decks and overpasses, streams, lighthouses, the surveyed ferry courses, and 10 m elevation for the mountains.</p>
+  <p style="font-size:13px;color:#555">Data: US Census Bureau, USGS, MRLC, MassGIS, MassDOT (public domain); OpenStreetMap contributors (ODbL).</p>
+</div></div>
+
+<div id="cover" class="bare">
+  <div class="inner">
+    <p class="kicker">Island Three &middot; 42&deg;N</p>
+    <h1>Massachusetts, inside out</h1>
+    <p>The entire state at one to one, wrapped around the inside of an O'Neill cylinder thirty kilometres in radius. Drive in any direction and what you see in the sky is what you reach. Look up from Boston and New Bedford is overhead.</p>
+    <div class="row"><button id="play" disabled>Loading</button><div><div id="loadline">Fetching the Commonwealth</div><div id="bar"><i></i></div></div></div>
+    <div id="fatal"></div>
+    <div class="keys">
+      <b>W A S D / arrows</b><span>drive, or move while flying; E is cruise control</span>
+      <b>drag</b><span>look around, and up</span>
+      <b>J</b><span>jetpack on and off; Space and Q rise and sink, Shift boosts, wheel sets speed</span>
+      <b>M</b><span>map, click to go anywhere; 1 to 9 jump to places</span>
+      <b>[ ] T</b><span>move the sun an hour, or stop it</span>
+      <b>C L B H I</b><span>camera, names in the sky, town lines, air clarity, frame rate</span>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
