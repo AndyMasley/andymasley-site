@@ -6252,6 +6252,18 @@
       return e.object.zoom = this.zoom, e.object.left = this.left, e.object.right = this.right, e.object.top = this.top, e.object.bottom = this.bottom, e.object.near = this.near, e.object.far = this.far, this.view !== null && (e.object.view = Object.assign({}, this.view)), e;
     }
   };
+  var gl = class extends Yt {
+    constructor() {
+      super(), this.isInstancedBufferGeometry = true, this.type = "InstancedBufferGeometry", this.instanceCount = 1 / 0;
+    }
+    copy(t) {
+      return super.copy(t), this.instanceCount = t.instanceCount, this;
+    }
+    toJSON() {
+      let t = super.toJSON();
+      return t.instanceCount = this.instanceCount, t.isInstancedBufferGeometry = true, t;
+    }
+  };
   var vf = new Ht();
   var yf = new Ht();
   var Li = new Ht();
@@ -15426,10 +15438,14 @@ void main() {
     // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
     // A car down at a tunnel's floor (from 1.2 m above it to 1.7 m below) is in the tunnel, whatever the ground overhead:
     // g.onTunnel, and this._nt is the tunnel.
-    driveH(mx2, my2, href) {
+    // from: what the car is on now ('deck', 'tunnel' or 'ground').  A car on a deck follows it up its grade (a deck up
+    // to 1.7 m over it); one on the ground or in a tunnel gets onto a deck only where the deck meets its own level (a rim,
+    // within 0.45 m), so a road passing under a bridge never jumps up onto it.
+    driveH(mx2, my2, href, from) {
       const h = this.groundH(mx2, my2), g = this.g;
       g.onTunnel = false;
-      if (g.deck > -1e8 && this.nearestDeck(mx2, my2, href + 1.7) < 0.35) {
+      const reach = from === void 0 || from === "deck" ? 1.7 : 0.45;
+      if (g.deck > -1e8 && this.nearestDeck(mx2, my2, href + reach) < 0.35) {
         const nd2 = this._nd;
         if (nd2.z > h) {
           g.onDeck = true;
@@ -15452,6 +15468,26 @@ void main() {
         }
       }
       return h;
+    }
+    // Every surface a car could stand on at (mx, my), highest first: the decks the point is on, the ground, and the
+    // floors of the tunnels under it.  Each is { z, kind: 'deck' | 'ground' | 'tunnel' }.
+    surfaces(mx2, my2) {
+      const out = [];
+      const h = this.groundH(mx2, my2), water = this.g.water;
+      let zmax = 1e9;
+      for (let t = 0; t < 6 && this.nearestDeck(mx2, my2, zmax) < 0.35; t++) {
+        const z = this._nd.z;
+        if (z > h + 0.2) out.push({ z, kind: "deck" });
+        zmax = z - 0.8;
+      }
+      out.push({ z: h, kind: "ground", water });
+      zmax = h - 1.5;
+      for (let t = 0; t < 4 && this.nearestTunnel(mx2, my2, zmax) < 0; t++) {
+        const z = this._nt.z;
+        out.push({ z, kind: "tunnel" });
+        zmax = z - 3;
+      }
+      return out;
     }
     // surface normal in local (east, north, up) from central differences
     groundNormal(mx2, my2, d, out) {
@@ -16719,9 +16755,10 @@ flat varying vec3 vColA;
 flat varying vec3 vColB;
 flat varying vec3 vColC;
 void main() {
-  // beyond the detail radius the far box takes over: fold the whole building into its centre
+  // beyond the detail radius the far boxes take over: each building switches at its own distance inside the band
+  // (its seed), the same distance its boxes switch on at, and never grows or shrinks
   vec4 wc = modelMatrix * vec4(aC, 1.0);
-  float f = 1.0 - smoothstep(uHouseFade.x, uHouseFade.y, length(wc.xyz));
+  float f = step(length(wc.xyz), mix(uHouseFade.x, uHouseFade.y, aM.w / 255.0));
   vec4 wp = modelMatrix * vec4(aC + (position - aC) * f, 1.0);
   vRel = wp.xyz;
   vNor = normalize(mat3(modelMatrix) * normal);
@@ -17738,6 +17775,7 @@ void main() {
       c.hmin = m.hmin;
       c.hmax = m.hmax;
       c.sea = m.sea;
+      if (m.degraded) c.redoAt = performance.now() + 5e3;
     }
     request(key2, level, ix2, iy2, prio) {
       this.chunks.set(key2, { state: "pending", level, ix: ix2, iy: iy2, last: this.frame, prio });
@@ -17841,6 +17879,19 @@ void main() {
       this.updateScatter(camC);
       this.pump();
       if ((frame2 & 63) === 0) this.evict();
+      if ((frame2 & 31) === 0) this.redo();
+    }
+    // chunks made while their region could not be read are dropped and made again (the worker tries the region again)
+    redo() {
+      const now = performance.now();
+      for (const [k, c] of this.chunks) {
+        if (!c.redoAt || now < c.redoAt || c.state !== "ready") continue;
+        this.scene.remove(c.mesh);
+        c.mesh.geometry.dispose();
+        c.mesh.material.dispose();
+        for (const t of [c.roadTex, c.roadKTex, c.lcTex, c.tunTex]) if (t) t.dispose();
+        this.chunks.delete(k);
+      }
     }
     evict() {
       const limit2 = this.game.quality.chunkCache;
@@ -18138,7 +18189,7 @@ void main() {
       vis.length = 0;
       for (const [key2, t] of this.scatter) {
         if (t.state !== "ready") continue;
-        if (this.frame - t.last > 200) {
+        if (this.frame - t.last > 200 || t.redoAt && performance.now() > t.redoAt) {
           if (t.mesh) {
             this.scene.remove(t.mesh);
             if (t.mesh.dispose) t.mesh.dispose();
@@ -18187,6 +18238,7 @@ void main() {
       const t = this.scatter.get(m.key);
       if (!t) return;
       t.state = "ready";
+      if (m.degraded) t.redoAt = performance.now() + 5e3;
       const th = m.my / R, c = Math.cos(th), s29 = Math.sin(th);
       const basis = new Ht().set(1, 0, 0, 0, 0, c, -s29, 0, 0, s29, c, 0, 0, 0, 0, 1);
       if (m.kind === "houses" || m.kind === "decks") {
@@ -18263,6 +18315,7 @@ void main() {
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
+      const cenA = m.kind === "buildings" && st >= 15 ? new Float32Array(n * 3) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S = new C(), Y = new C(0, 1, 0);
       let rad = 0;
       const lp2 = new Float32Array(n * 3), mid = new C();
@@ -18275,7 +18328,7 @@ void main() {
         mid.add(P2);
         if (m.kind === "buildings") {
           Q.setFromAxisAngle(Y, d[o + 3]);
-          S.set(d[o + 4], d[o + 6], d[o + 5]);
+          S.set(d[o + 4], Math.max(d[o + 6], 0.3), d[o + 5]);
           inst[i * 4] = d[o + 8];
           inst[i * 4 + 1] = d[o + 7];
           inst[i * 4 + 2] = d[o + 10];
@@ -18286,6 +18339,12 @@ void main() {
             roofA[i * 4 + 1] = (rc2 >> 5 & 63) / 63;
             roofA[i * 4 + 2] = (rc2 & 31) / 31;
             roofA[i * 4 + 3] = 2;
+          }
+          if (cenA) {
+            const C3 = new C(d[o + 12], d[o + 13], d[o + 14]).applyMatrix4(inv);
+            cenA[i * 3] = C3.x;
+            cenA[i * 3 + 1] = C3.y;
+            cenA[i * 3 + 2] = C3.z;
           }
         } else if (m.kind === "poles") {
           Q.setFromAxisAngle(Y, d[o + 3]);
@@ -18314,6 +18373,7 @@ void main() {
       const ia2 = new vi(inst, 4);
       g2.setAttribute("aInst", ia2);
       if (roofA) g2.setAttribute("aRoof", new vi(roofA, 4));
+      if (cenA) g2.setAttribute("aCen", new vi(cenA, 3));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
       if (m.kind === "trees" && this.leafGeo) {
@@ -18351,9 +18411,10 @@ void main() {
     `
 attribute vec3 aCol;
 attribute float aPart;
-attribute vec4 aInst;      // trees: tint, species.  buildings: seed, pitched roof, cladding, class
+attribute vec4 aInst;      // trees: tint, species.  buildings: seed, roof rise (m), cladding, class
 #ifdef BLD
 attribute vec4 aRoof;      // the roof's colour from the aerial (sRGB), w 2 where there is one
+attribute vec3 aCen;       // the building's origin (tile frame): a box and the detailed model switch at its distance
 #endif
 uniform vec2 uFade;
 uniform vec2 uFadeIn;
@@ -18369,16 +18430,31 @@ void main() {
   vec3 pos = position;
   vStyle = 0.0;
   vCol2 = vec3(0.0);
-  float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
-  vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
-  float dc = length(wc.xyz);
-  float f = (1.0 - smoothstep(uFade.x, uFade.y, dc)) * smoothstep(uFadeIn.x, uFadeIn.y, dc);
-  pos *= keep * f;
   vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
-  vObj = position * sc;
+  vec3 nl = normal;
+  #ifdef BLD
+    float keep = (aPart > 1.5 || aInst.y > 0.3) ? 1.0 : 0.0;
+    vec4 wc = modelMatrix * vec4(aCen, 1.0);
+    float jit = aInst.x / 255.0;
+    if (aPart > 0.5 && aPart < 1.5) {
+      // the roof piece rises aInst.y metres over the eave, whatever the box's height (its slopes' normals follow)
+      float k = aInst.y / max(sc.y, 0.3) / 0.42;
+      pos.y = 1.0 + (pos.y - 1.0) * k;
+      nl.y /= max(k, 0.02);
+    }
+  #else
+    float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+    vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+    float jit = fract(aInst.x * 7.77 + 0.31);
+  #endif
+  float dc = length(wc.xyz);
+  // an instance is there or not: it switches at its own distance inside each band, and never grows or shrinks
+  float f = step(mix(uFadeIn.x, uFadeIn.y, jit), dc) * step(dc, mix(uFade.x, uFade.y, jit));
+  pos *= keep * f;
+  vObj = pos * sc;
   vec4 wp = modelMatrix * (instanceMatrix * vec4(pos, 1.0));
   vRel = wp.xyz;
-  vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * (normal / sc)));
+  vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * (nl / sc)));
   vCol = aCol;
   vAux = aInst.x;
   #ifdef CAR
@@ -18572,6 +18648,14 @@ void main() {
     return out;
   }
   var CAR_MAT = [MAT.CAR, MAT.CARGLASS, MAT.CARDARK, MAT.CARDARK, MAT.CARPALE, MAT.CARPALE, MAT.CARTAIL, MAT.CARPALE, MAT.CARDARK];
+  function parseReal(buf) {
+    const dv2 = new DataView(buf);
+    if (dv2.getUint32(0, true) !== 860113986) throw new Error("bad building file");
+    const n = dv2.getUint32(4, true);
+    return { n, off: new Uint32Array(buf.slice(8, 8 + (n + 1) * 4)), dv: dv2, base: 8 + (n + 1) * 4 };
+  }
+  var _p3a = new Float64Array(3);
+  var _p3b = new Float64Array(3);
 
   // src/player.js
   var e3 = [0, 0, 0];
@@ -18602,6 +18686,112 @@ void main() {
     };
     return [pick(false), pick(true)];
   }
+  var CAR_HL = 2.3;
+  var CAR_HW = 0.95;
+  var _push = [0, 0];
+  function footprintPolygon(reg, l, k) {
+    const real = reg.real, id2 = l[k + 14];
+    let pts = null;
+    if (real && id2 < real.n && real.off[id2 + 1] > real.off[id2]) {
+      const dv2 = real.dv, o = real.base + real.off[id2], nv2 = dv2.getUint8(o);
+      if (nv2 >= 3) {
+        const mx2 = reg.x0 + dv2.getInt32(o + 4, true) * 0.01, my2 = reg.y0 + dv2.getInt32(o + 8, true) * 0.01, a = dv2.getInt16(o + 12, true) / 1e4;
+        const ca2 = Math.cos(a), sa2 = Math.sin(a);
+        pts = new Float64Array(nv2 * 2);
+        for (let i = 0; i < nv2; i++) {
+          const u = dv2.getInt16(o + 16 + i * 4, true) * 0.025, v = dv2.getInt16(o + 18 + i * 4, true) * 0.025;
+          pts[i * 2] = mx2 + ca2 * u - sa2 * v;
+          pts[i * 2 + 1] = my2 + sa2 * u + ca2 * v;
+        }
+      }
+    }
+    if (!pts) {
+      const mx2 = l[k], my2 = l[k + 1], hu = l[k + 2] / 2, hv2 = l[k + 3] / 2, ca2 = Math.cos(l[k + 4]), sa2 = Math.sin(l[k + 4]);
+      pts = new Float64Array(8);
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([su, sv2], i) => {
+        pts[i * 2] = mx2 + ca2 * su * hu - sa2 * sv2 * hv2;
+        pts[i * 2 + 1] = my2 + sa2 * su * hu + ca2 * sv2 * hv2;
+      });
+    }
+    const n = pts.length / 2;
+    let area = 0, cx2 = 0, cy2 = 0;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      area += pts[i * 2] * pts[j * 2 + 1] - pts[j * 2] * pts[i * 2 + 1];
+      cx2 += pts[i * 2];
+      cy2 += pts[i * 2 + 1];
+    }
+    if (Math.abs(area) < 0.5) return null;
+    if (area < 0) {
+      for (let i = 0, j = n - 1; i < j; i++, j--) {
+        const tx2 = pts[i * 2], ty2 = pts[i * 2 + 1];
+        pts[i * 2] = pts[j * 2];
+        pts[i * 2 + 1] = pts[j * 2 + 1];
+        pts[j * 2] = tx2;
+        pts[j * 2 + 1] = ty2;
+      }
+    }
+    cx2 /= n;
+    cy2 /= n;
+    let rad = 0;
+    for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(pts[i * 2] - cx2, pts[i * 2 + 1] - cy2));
+    return { pts, n, cx: cx2, cy: cy2, rad };
+  }
+  function inPolygon(x, y, P2) {
+    const p = P2.pts, n = P2.n;
+    let inside = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const xi2 = p[i * 2], yi2 = p[i * 2 + 1], xj = p[j * 2], yj = p[j * 2 + 1];
+      if (yi2 > y !== yj > y && x < (xj - xi2) * (y - yi2) / (yj - yi2) + xi2) inside = !inside;
+    }
+    return inside;
+  }
+  function boxOutOfPolygon(cx2, cy2, fx2, fy2, P2, out) {
+    const rx2 = fy2, ry2 = -fx2, p = P2.pts, n = P2.n;
+    let best = 0;
+    for (const [sa2, sl2] of [[1, 1], [1, -1], [-1, -1], [-1, 1], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const x = cx2 + fx2 * CAR_HL * sa2 + rx2 * CAR_HW * sl2, y = cy2 + fy2 * CAR_HL * sa2 + ry2 * CAR_HW * sl2;
+      if (!inPolygon(x, y, P2)) continue;
+      let bd2 = 1e9, bx2 = 0, by2 = 0;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n, ax2 = p[i * 2], ay2 = p[i * 2 + 1], dx2 = p[j * 2] - ax2, dy2 = p[j * 2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+        let t = l2 > 0 ? ((x - ax2) * dx2 + (y - ay2) * dy2) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const qx2 = ax2 + dx2 * t - x, qy2 = ay2 + dy2 * t - y, d = Math.hypot(qx2, qy2);
+        if (d < bd2) {
+          bd2 = d;
+          bx2 = qx2;
+          by2 = qy2;
+        }
+      }
+      if (bd2 < 1e9 && bd2 + 0.02 > best) {
+        const k = (bd2 + 0.02) / Math.max(bd2, 1e-6);
+        best = bd2 + 0.02;
+        out[0] = bx2 * k;
+        out[1] = by2 * k;
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const vx2 = p[i * 2] - cx2, vy2 = p[i * 2 + 1] - cy2;
+      const a = vx2 * fx2 + vy2 * fy2, l = vx2 * rx2 + vy2 * ry2;
+      if (Math.abs(a) >= CAR_HL || Math.abs(l) >= CAR_HW) continue;
+      const dl = CAR_HW - Math.abs(l) + 0.02, da2 = CAR_HL - Math.abs(a) + 0.02;
+      if (dl <= da2) {
+        if (dl > best) {
+          best = dl;
+          const sg = l > 0 ? -1 : 1;
+          out[0] = rx2 * sg * dl;
+          out[1] = ry2 * sg * dl;
+        }
+      } else if (da2 > best) {
+        best = da2;
+        const sg = a > 0 ? -1 : 1;
+        out[0] = fx2 * sg * da2;
+        out[1] = fy2 * sg * da2;
+      }
+    }
+    return best;
+  }
   var Player = class {
     constructor(game2) {
       this.game = game2;
@@ -18624,32 +18814,65 @@ void main() {
       }
       this.M = new Ht();
     }
-    place(mx2, my2, hdgDeg = 0, snap = false) {
+    // Which surface to stand on at (mx, my): level undefined or 'top' (a start or a map jump: a bridge's deck rather than
+    // the water or the road under it), a number (resuming: the surface nearest that height, a tunnel's floor included), or
+    // { alt } (landing from the air: the highest surface at or below that height).
+    pickSurface(mx2, my2, level) {
+      const all = this.game.world.surfaces(mx2, my2);
+      if (typeof level === "number") {
+        let best = all[0], bd2 = 1e9;
+        for (const s29 of all) {
+          const d = Math.abs(s29.z - level);
+          if (d < bd2) {
+            bd2 = d;
+            best = s29;
+          }
+        }
+        return best;
+      }
+      if (level && typeof level === "object") {
+        for (const s29 of all) if (s29.kind !== "tunnel" && s29.z <= level.alt + 0.5) return s29;
+        return all.find((s29) => s29.kind === "ground");
+      }
+      return all[0];
+    }
+    place(mx2, my2, hdgDeg = 0, snap = false, level) {
       const w = this.game.world, c = this.car;
       c.mx = clamp(mx2, 300, L - 300);
       c.my = wrapY(my2);
       c.hdg = hdgDeg * Math.PI / 180;
       c.v = 0;
       c.steer = 0;
-      w.nearestRoad(c.mx, c.my);
-      const nr2 = w._nr;
+      let surf = this.pickSurface(c.mx, c.my, level);
+      const roadOn = (sf2) => {
+        if (sf2.kind === "deck") {
+          w.nearestDeck(c.mx, c.my, sf2.z + 0.3);
+          return w._nd;
+        }
+        if (sf2.kind === "tunnel") {
+          w.nearestTunnel(c.mx, c.my, sf2.z + 0.3);
+          return w._nt;
+        }
+        w.nearestRoad(c.mx, c.my);
+        return w._nr;
+      };
+      let nr2 = roadOn(surf);
       const street = () => nr2.road >= 0 && nr2.reg.rCls[nr2.road] < 14;
-      if (snap && street() && nr2.d >= nr2.hw + 2) {
+      if (surf.kind === "ground" && snap && street() && nr2.d >= nr2.hw + 2) {
         c.mx -= nr2.ty * nr2.d * nr2.side;
         c.my = wrapY(c.my + nr2.tx * nr2.d * nr2.side);
-        w.nearestRoad(c.mx, c.my);
+        surf = this.pickSurface(c.mx, c.my, level);
+        nr2 = roadOn(surf);
       }
-      if (street() && nr2.d < nr2.hw + 2) {
-        const one = nr2.reg.rFlags[nr2.road] & 1;
-        const sgn = one || Math.sin(c.hdg) * nr2.tx + Math.cos(c.hdg) * nr2.ty >= 0 ? 1 : -1;
-        const target = one ? 0 : Math.min(nr2.hw * 0.5, 1.75);
-        const shift = target - nr2.d * nr2.side * sgn;
-        c.mx += nr2.ty * sgn * shift;
-        c.my = wrapY(c.my - nr2.tx * sgn * shift);
-        c.hdg = Math.atan2(nr2.tx * sgn, nr2.ty * sgn);
-      }
-      c.h = w.groundH(c.mx, c.my);
-      c.water = w.g.water;
+      const onStreet = street() && nr2.d < nr2.hw + 2;
+      if (onStreet) this.toLane(nr2);
+      surf = this.pickSurface(c.mx, c.my, surf.z);
+      if (surf.kind === "ground" && this.clearOfBuildings(onStreet)) surf = this.pickSurface(c.mx, c.my, surf.z);
+      c.h = surf.z;
+      c.water = surf.kind === "ground" && !!surf.water;
+      c.deck = surf.kind === "deck";
+      c.tun = surf.kind === "tunnel";
+      this.noteWay();
       this.cam.yaw = 0;
       this.cam.pitch = -0.07;
       const f = this.fly;
@@ -18658,9 +18881,74 @@ void main() {
       f.alt = c.h + 120;
       f.yaw = c.hdg;
       f.pitch = -0.12;
+      f.vx = f.vy = f.vz = 0;
+      this.bCache = null;
+    }
+    // the right-hand lane of the street nr found, facing along it (a one-way carriageway: its middle, the way it runs)
+    toLane(nr2) {
+      const c = this.car;
+      const one = nr2.reg.rFlags[nr2.road] & 1;
+      const sgn = one || Math.sin(c.hdg) * nr2.tx + Math.cos(c.hdg) * nr2.ty >= 0 ? 1 : -1;
+      const target = one ? 0 : Math.min(nr2.hw * 0.5, 1.75);
+      const shift = target - nr2.d * nr2.side * sgn;
+      c.mx += nr2.ty * sgn * shift;
+      c.my = wrapY(c.my - nr2.tx * sgn * shift);
+      c.hdg = Math.atan2(nr2.tx * sgn, nr2.ty * sgn);
+    }
+    // A start, a jump or a landing must not leave the car inside a building (on an old town's narrow streets the measured
+    // outlines come right to the kerb).  If it would, the car moves to the nearest spot that is clear: along its street
+    // first, in its lane, then in widening rings.  Returns true if it moved.
+    clearOfBuildings(street) {
+      const w = this.game.world, c = this.car;
+      this.bCache = null;
+      const polys = this.buildingsNear();
+      if (!polys || !polys.length) return false;
+      const hits = (x, y, hdg) => {
+        const fx3 = Math.sin(hdg), fy3 = Math.cos(hdg);
+        for (const P2 of polys) {
+          let dx2 = x - P2.cx, dy2 = y - P2.cy;
+          if (dy2 > C2 / 2) dy2 -= C2;
+          else if (dy2 < -C2 / 2) dy2 += C2;
+          if (dx2 * dx2 + dy2 * dy2 > (P2.rad + 2.6) * (P2.rad + 2.6)) continue;
+          if (boxOutOfPolygon(P2.cx + dx2, P2.cy + dy2, fx3, fy3, P2, _push) > 0) return true;
+        }
+        return false;
+      };
+      if (!hits(c.mx, c.my, c.hdg)) return false;
+      const x02 = c.mx, y02 = c.my, h02 = c.hdg, fx2 = Math.sin(h02), fy2 = Math.cos(h02);
+      if (street) {
+        for (let d = 2; d <= 120; d += 2) for (const s29 of [1, -1]) {
+          c.mx = clamp(x02 + fx2 * d * s29, 300, L - 300);
+          c.my = wrapY(y02 + fy2 * d * s29);
+          c.hdg = h02;
+          w.nearestRoad(c.mx, c.my);
+          const nr2 = w._nr;
+          if (nr2.road < 0 || nr2.reg.rCls[nr2.road] >= 14 || nr2.d > nr2.hw + 2) continue;
+          this.toLane(nr2);
+          if (!hits(c.mx, c.my, c.hdg)) {
+            this.bCache = null;
+            return true;
+          }
+        }
+      }
+      for (let r = 2; r <= 80; r += 2) for (let k = 0; k < 24; k++) {
+        const a = k / 24 * 2 * Math.PI, x = clamp(x02 + Math.sin(a) * r, 300, L - 300), y = wrapY(y02 + Math.cos(a) * r);
+        if (!hits(x, y, h02)) {
+          c.mx = x;
+          c.my = y;
+          c.hdg = h02;
+          this.bCache = null;
+          return true;
+        }
+      }
+      c.mx = x02;
+      c.my = y02;
+      c.hdg = h02;
+      return false;
     }
     toggleFly() {
-      const c = this.car, f = this.fly, w = this.game.world;
+      const c = this.car, f = this.fly;
+      f.vx = f.vy = f.vz = 0;
       if (this.mode === "drive") {
         this.mode = "fly";
         f.mx = c.mx - Math.sin(c.hdg) * 10;
@@ -18674,9 +18962,38 @@ void main() {
         c.my = f.my;
         c.hdg = f.yaw;
         c.v = 0;
-        c.h = w.groundH(c.mx, c.my);
+        let surf = this.pickSurface(c.mx, c.my, { alt: f.alt });
+        if (surf.kind === "ground" && this.clearOfBuildings(false)) surf = this.pickSurface(c.mx, c.my, { alt: f.alt });
+        c.h = surf.z;
+        c.water = surf.kind === "ground" && !!surf.water;
+        c.deck = surf.kind === "deck";
+        c.tun = false;
+        this.noteWay();
         this.cam.yaw = 0;
         this.cam.pitch = -0.07;
+        this.bCache = null;
+      }
+    }
+    // half the car's reach across a way (tangent n.tx, n.ty), turned as it is: its half-width when it runs along the way,
+    // its half-length when it faces the side, so its nose and tail stop at a parapet or a tunnel wall as its flank does
+    across(n) {
+      const fx2 = Math.sin(this.car.hdg), fy2 = Math.cos(this.car.hdg);
+      return CAR_HL * Math.abs(fx2 * n.ty - fy2 * n.tx) + CAR_HW * Math.abs(fx2 * n.tx + fy2 * n.ty);
+    }
+    // the deck or tunnel way the car stands on (its parapets or walls are the ones that hold it), or none
+    noteWay() {
+      const w = this.game.world, c = this.car;
+      if (c.deck) {
+        w.nearestDeck(c.mx, c.my, c.h + 0.3);
+        c.wayRoad = w._nd.road;
+        c.wayReg = w._nd.reg;
+      } else if (c.tun) {
+        w.nearestTunnel(c.mx, c.my, c.h + 0.3);
+        c.wayRoad = w._nt.road;
+        c.wayReg = w._nt.reg;
+      } else {
+        c.wayRoad = -1;
+        c.wayReg = null;
       }
     }
     look(dx2, dy2) {
@@ -18695,57 +19012,64 @@ void main() {
       }
       this.cam.idle = 0;
     }
-    // Buildings are solid: if the car has ended up inside a footprint (plus its own half width) it is put back outside
-    // the nearest wall, and loses the part of its speed that was going into that wall.
-    bump() {
-      const w = this.game.world, c = this.car, cs2 = RS2 / 32, rad = 1.25;
-      if (c.deck || c.tun) return;
+    // The buildings near the car as polygons in map metres, counter-clockwise: a measured building's own outline, an
+    // estimated one's rectangle.  Kept for the nine 368 m cells around the car (a big building's centre can be in the next
+    // cell) and refreshed when the car moves to another cell.
+    buildingsNear() {
+      const w = this.game.world, c = this.car, cs2 = RS2 / 32;
       const reg = w.regionAt(c.mx, c.my);
-      if (!reg || !reg.nBld) return;
+      if (!reg || !reg.nBld) return null;
       const cx2 = Math.floor((c.mx - reg.x0) / cs2), cy2 = Math.floor((c.my - reg.y0) / cs2);
-      if (!this.bCache || this.bCache.reg !== reg || this.bCache.cx !== cx2 || this.bCache.cy !== cy2) {
-        const lists = [];
-        for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
-          const r2 = w.regionAt(clamp(c.mx + i * cs2, 300, L - 300), wrapY(c.my + j * cs2));
-          if (!r2 || !r2.nBld) continue;
-          const l = cellBuildings(r2, Math.floor((c.mx + i * cs2 - r2.x0) / cs2), Math.floor((wrapY(c.my + j * cs2) - r2.y0) / cs2));
-          if (l) lists.push(l);
+      if (this.bCache && this.bCache.reg === reg && this.bCache.cx === cx2 && this.bCache.cy === cy2 && this.bCache.real === !!reg.real) return this.bCache.polys;
+      const polys = [];
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+        const r2 = w.regionAt(clamp(c.mx + i * cs2, 300, L - 300), wrapY(c.my + j * cs2));
+        if (!r2 || !r2.nBld) continue;
+        const l = cellBuildings(r2, Math.floor((c.mx + i * cs2 - r2.x0) / cs2), Math.floor((wrapY(c.my + j * cs2) - r2.y0) / cs2));
+        if (!l) continue;
+        for (let k = 0; k < l.length; k += 16) {
+          if (l[k + 6] === CLS.CANOPY) continue;
+          const poly = footprintPolygon(r2, l, k);
+          if (poly) polys.push(poly);
         }
-        this.bCache = { reg, cx: cx2, cy: cy2, lists };
       }
-      for (const l of this.bCache.lists) for (let k = 0; k < l.length; k += 16) {
-        if (l[k + 6] === CLS.CANOPY) continue;
-        const dx2 = c.mx - l[k];
-        let dy2 = c.my - l[k + 1];
-        if (dy2 > C2 / 2) dy2 -= C2;
-        else if (dy2 < -C2 / 2) dy2 += C2;
-        const hu = l[k + 2] / 2 + rad, hv2 = l[k + 3] / 2 + rad;
-        if (Math.abs(dx2) > hu + hv2 || Math.abs(dy2) > hu + hv2) continue;
-        const ca2 = Math.cos(l[k + 4]), sa2 = Math.sin(l[k + 4]);
-        let u = dx2 * ca2 + dy2 * sa2, v = -dx2 * sa2 + dy2 * ca2;
-        if (Math.abs(u) >= hu || Math.abs(v) >= hv2) continue;
-        let nx2, ny2;
-        if (hu - Math.abs(u) < hv2 - Math.abs(v)) {
-          const sg = u < 0 ? -1 : 1;
-          u = sg * hu;
-          nx2 = sg * ca2;
-          ny2 = sg * sa2;
-        } else {
-          const sg = v < 0 ? -1 : 1;
-          v = sg * hv2;
-          nx2 = -sg * sa2;
-          ny2 = sg * ca2;
+      this.bCache = { reg, cx: cx2, cy: cy2, real: !!reg.real, polys };
+      return polys;
+    }
+    // Buildings are solid.  The car is a box (its own length and width, turned with it); if it has ended up overlapping a
+    // footprint it is put back outside the nearest wall, and loses the part of its speed that was going into that wall.
+    bump() {
+      const c = this.car;
+      if (c.deck || c.tun) return;
+      const polys = this.buildingsNear();
+      if (!polys) return;
+      const fx2 = Math.sin(c.hdg), fy2 = Math.cos(c.hdg);
+      for (let it = 0; it < 4; it++) {
+        let best = null, bl = 0;
+        for (const P2 of polys) {
+          let dx2 = c.mx - P2.cx, dy2 = c.my - P2.cy;
+          if (dy2 > C2 / 2) dy2 -= C2;
+          else if (dy2 < -C2 / 2) dy2 += C2;
+          if (dx2 * dx2 + dy2 * dy2 > (P2.rad + 2.6) * (P2.rad + 2.6)) continue;
+          const v = boxOutOfPolygon(P2.cx + dx2, P2.cy + dy2, fx2, fy2, P2, _push);
+          if (v > bl) {
+            bl = v;
+            best = [_push[0], _push[1]];
+          }
         }
-        c.mx = clamp(l[k] + u * ca2 - v * sa2, 250, L - 250);
-        c.my = wrapY(l[k + 1] + u * sa2 + v * ca2);
-        const into = -(Math.sin(c.hdg) * nx2 + Math.cos(c.hdg) * ny2) * Math.sign(c.v || 1);
+        if (!best) break;
+        c.mx = clamp(c.mx + best[0], 250, L - 250);
+        c.my = wrapY(c.my + best[1]);
+        const nx2 = best[0] / bl, ny2 = best[1] / bl;
+        const into = -(fx2 * nx2 + fy2 * ny2) * Math.sign(c.v || 1);
         if (into > 0) c.v *= 1 - Math.min(1, into * 1.1);
       }
     }
     update(dt, inp) {
       const w = this.game.world, c = this.car, f = this.fly;
       if (this.mode === "drive") {
-        const gh = w.driveH(c.mx, c.my, c.h), g = w.g;
+        const from0 = c.deck ? "deck" : c.tun ? "tunnel" : "ground";
+        const gh = w.driveH(c.mx, c.my, c.h, from0), g = w.g;
         c.deck = g.onDeck;
         c.tun = g.onTunnel;
         c.water = g.water;
@@ -18754,8 +19078,8 @@ void main() {
         const smooth = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
         const vmax = (c.water ? 17 : smooth ? 52 : 27) * (inp.boost ? 1.5 : 1);
         const sx2 = Math.sin(c.hdg), sy2 = Math.cos(c.hdg);
-        const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h);
-        const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h);
+        const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h, from0), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h, from0);
+        const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h, from0), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h, from0);
         const slope = (ha2 - hb) / 4.4;
         let a = 0;
         if (inp.fwd > 0) a = c.v >= -0.2 ? 7.5 * inp.fwd * Math.max(0, 1 - c.v / vmax) : 13;
@@ -18769,34 +19093,52 @@ void main() {
         if (c.v > vmax) c.v = Math.max(vmax, c.v - 9 * dt);
         const maxSteer = 0.55 / (1 + Math.abs(c.v) / 14);
         c.steer += (inp.steer * maxSteer - c.steer) * Math.min(1, dt * 7);
-        c.hdg += c.v * Math.tan(c.steer) / 2.7 * dt;
-        const ds2 = c.v * dt;
-        c.mx = clamp(c.mx + Math.sin(c.hdg) * ds2, 250, L - 250);
-        c.my = wrapY(c.my + Math.cos(c.hdg) * ds2 * R / (R - c.h));
-        this.bump();
-        if (this.game.traffic) this.game.traffic.bump(c);
-        c.odo += Math.abs(ds2);
-        let tgt = w.driveH(c.mx, c.my, c.h);
-        if (w.g.onDeck) {
-          const nd2 = w._nd, over = nd2.d - Math.max(nd2.hw - 1, 0.3);
-          if (over > 0) {
-            c.mx = clamp(c.mx - nd2.ty * nd2.side * over, 250, L - 250);
-            c.my = wrapY(c.my + nd2.tx * nd2.side * over);
-            const into = (Math.sin(c.hdg) * nd2.ty - Math.cos(c.hdg) * nd2.tx) * nd2.side * Math.sign(c.v || 1);
-            if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
-            tgt = w.driveH(c.mx, c.my, c.h);
+        const nSub = Math.max(1, Math.min(60, Math.ceil(Math.abs(c.v * dt) / 0.4)));
+        const dts = dt / nSub;
+        for (let st = 0; st < nSub; st++) {
+          const from = c.deck ? "deck" : c.tun ? "tunnel" : "ground";
+          c.hdg += c.v * Math.tan(c.steer) / 2.7 * dts;
+          const ds2 = c.v * dts;
+          c.mx = clamp(c.mx + Math.sin(c.hdg) * ds2, 250, L - 250);
+          c.my = wrapY(c.my + Math.cos(c.hdg) * ds2 * R / (R - c.h));
+          this.bump();
+          if (this.game.traffic) this.game.traffic.bump(c);
+          c.odo += Math.abs(ds2);
+          let tgt = w.driveH(c.mx, c.my, c.h, from);
+          let onDeck = w.g.onDeck, onTun = w.g.onTunnel;
+          if (!onDeck && from === "deck" && w.nearestDeck(c.mx, c.my, c.h + 1.7) < 3 && w._nd.road === c.wayRoad && w._nd.reg === c.wayReg && Math.abs(w._nd.z - c.h) < 1.5) {
+            onDeck = true;
           }
-        } else if (w.g.onTunnel) {
-          const nt = w._nt, over = nt.d - (nt.hw + WALL_GAP - 1.05);
-          if (over > 0) {
-            c.mx = clamp(c.mx - nt.ty * nt.side * over, 250, L - 250);
-            c.my = wrapY(c.my + nt.tx * nt.side * over);
-            const into = (Math.sin(c.hdg) * nt.ty - Math.cos(c.hdg) * nt.tx) * nt.side * Math.sign(c.v || 1);
-            if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
-            tgt = w.driveH(c.mx, c.my, c.h);
+          if (!onTun && from === "tunnel" && w.nearestTunnel(c.mx, c.my, c.h + 1.7) < 3 && w._nt.road === c.wayRoad && w._nt.reg === c.wayReg && Math.abs(w._nt.z - c.h) < 1.5) {
+            onTun = true;
           }
+          if (onDeck) {
+            if (!w.g.onDeck) w.nearestDeck(c.mx, c.my, c.h + 1.7);
+            const nd2 = w._nd, over = nd2.d - Math.max(nd2.hw - 0.05 - this.across(nd2), 0.3);
+            if (over > 0) {
+              c.mx = clamp(c.mx - nd2.ty * nd2.side * over, 250, L - 250);
+              c.my = wrapY(c.my + nd2.tx * nd2.side * over);
+              const into = (Math.sin(c.hdg) * nd2.ty - Math.cos(c.hdg) * nd2.tx) * nd2.side * Math.sign(c.v || 1);
+              if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
+            }
+            tgt = w.driveH(c.mx, c.my, c.h, "deck");
+          } else if (onTun) {
+            if (!w.g.onTunnel) w.nearestTunnel(c.mx, c.my, c.h + 1.7);
+            const nt = w._nt, over = nt.d - Math.max(nt.hw + WALL_GAP - 0.1 - this.across(nt), 0.3);
+            if (over > 0) {
+              c.mx = clamp(c.mx - nt.ty * nt.side * over, 250, L - 250);
+              c.my = wrapY(c.my + nt.tx * nt.side * over);
+              const into = (Math.sin(c.hdg) * nt.ty - Math.cos(c.hdg) * nt.tx) * nt.side * Math.sign(c.v || 1);
+              if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
+            }
+            tgt = w.driveH(c.mx, c.my, c.h, "tunnel");
+          }
+          c.deck = w.g.onDeck;
+          c.tun = w.g.onTunnel;
+          c.wayRoad = c.deck ? w.g.deckRoad : c.tun ? w.g.road : -1;
+          c.wayReg = c.deck ? w.g.deckReg : c.tun ? w.g.reg : null;
+          c.h += (tgt - c.h) * Math.min(1, dts * 18);
         }
-        c.h += (tgt - c.h) * Math.min(1, dt * 18);
         c.pitch += (Math.atan(slope) - c.pitch) * Math.min(1, dt * 8);
         c.roll += (Math.atan((hl - hr2) / 1.8) - c.roll) * Math.min(1, dt * 8);
         const r = R - c.h, vt = OMEGA * r + c.v * Math.cos(c.hdg);
@@ -18966,9 +19308,10 @@ void main() {
         items.push({ n: t.n, x: t.x, y: t.y, h: 0, cls: big ? "big" : city ? "city" : "", pr: big ? 6 : city ? 4 + Math.min(1, t.p / 25e4) : 1 + Math.min(1, t.p / 6e4), min: big ? 3e3 : 1500, max: big ? 23e4 : city ? 115e3 : 22e3 });
       }
       for (const p of m.peaks) items.push({ n: p.n + " " + Math.round(p.h * 3.28084).toLocaleString() + " ft", x: p.x, y: p.y, h: p.h + 25, cls: "peak", pr: 3.2, min: 400, max: 7e4, fixed: true });
-      for (const l of m.landmarks) if (l.k !== "tower") items.push({ n: l.n, x: l.x, y: l.y, h: 0, cls: "mark", pr: 2.2, min: 150, max: 16e3, lift: l.h + 12 });
+      for (const l of m.landmarks) if (l.k !== "tower" && l.k !== "light") items.push({ n: l.n, x: l.x, y: l.y, h: 0, cls: "mark", pr: 2.2, min: 150, max: 16e3, lift: l.h + 12 });
       for (const it of items) {
         const gh = it.fixed ? 0 : w.groundH(it.x, it.y, false);
+        it.fine = it.fixed || w.g.fine;
         cyl(it.x, it.y, it.fixed ? it.h : gh + (it.lift || 40), p32);
         it.p = [p32[0], p32[1], p32[2]];
       }
@@ -18983,8 +19326,35 @@ void main() {
         this.pool.push({ el: d, text: "", cls: "" });
       }
     }
+    // more names once their data is in (the lighthouses): { n, x, y, top }
+    addMarks(list) {
+      for (const t of list) {
+        cyl(t.x, t.y, t.top + 10, p32);
+        this.items.push({ n: t.n, x: t.x, y: t.y, h: 0, cls: "mark", pr: 2.2, min: 150, max: 16e3, p: [p32[0], p32[1], p32[2]], fine: true });
+      }
+    }
+    // one of those has been set on the LiDAR's ground: its name moves with its top
+    moveMark(n, x, y, top) {
+      const it = this.items.find((i) => i.n === n && i.x === x && i.y === y);
+      if (it) {
+        cyl(x, y, top + 10, p32);
+        it.p = [p32[0], p32[1], p32[2]];
+      }
+    }
     updateLabels() {
       const g = this.g, pool = this.pool;
+      if ((this.lblTick = (this.lblTick || 0) + 1) % 90 === 0) {
+        const w = g.world;
+        for (const it of this.items) {
+          if (it.fine || it.x === void 0) continue;
+          const gh = w.groundH(it.x, it.y, false);
+          if (w.g.fine) {
+            it.fine = true;
+            cyl(it.x, it.y, gh + (it.lift || 40), p32);
+            it.p = [p32[0], p32[1], p32[2]];
+          }
+        }
+      }
       if (!this.labelsOn || !g.started || g.player.camInTunnel) {
         for (const s29 of pool) if (s29.el.style.display !== "none") s29.el.style.display = "none";
         return;
@@ -19091,15 +19461,27 @@ void main() {
     // ------------------------------------------------------------------ input
     bindKeys() {
       const g = this.g;
+      const NATIVE = /^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/;
       window.addEventListener("keydown", (e) => {
+        if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+        const t = e.target, native = !!(t && t !== g.canvas && t !== document.body && (NATIVE.test(t.tagName) || t.isContentEditable));
+        if (native && (e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter")) return;
         if (e.repeat) {
-          if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
+          if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code) && !this.modal) e.preventDefault();
           return;
         }
         if (!g.started) {
           if (e.code === "Enter" && g.ready) g.play();
           return;
         }
+        if (this.modal) {
+          if (e.code === "Escape" || e.code === "KeyM" && this.modal === "map") {
+            e.preventDefault();
+            this.closeModal();
+          }
+          return;
+        }
+        if (/^(INPUT|SELECT|TEXTAREA)$/.test(t && t.tagName)) return;
         g.keys.add(e.code);
         if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
         const p = g.player;
@@ -19158,12 +19540,9 @@ void main() {
             }
             break;
           case "KeyP":
-            g.paused = !g.paused;
-            this.toast(g.paused ? "Paused" : "Go");
-            break;
-          case "Escape":
-            if (!$("mapwrap").classList.contains("hidden")) this.toggleMap();
-            else if (!$("about").classList.contains("hidden")) this.toggleAbout();
+            this.userPaused = !this.userPaused;
+            this.applyPause();
+            this.toast(this.userPaused ? "Paused" : "Go");
             break;
           default:
             if (/^Digit[1-9]$/.test(e.code)) {
@@ -19177,6 +19556,47 @@ void main() {
       });
       window.addEventListener("keyup", (e) => g.keys.delete(e.code));
       window.addEventListener("blur", () => g.keys.clear());
+      document.addEventListener("visibilitychange", () => g.keys.clear());
+    }
+    // ---- the two dialogs, Map and About.  One is open at a time; while it is, the game stands still and nothing behind
+    // it can be reached (inert), and when it closes the keyboard is back where it was.  A pause you asked for (P) is kept
+    // apart from a dialog's, so closing the dialog does not undo it.
+    applyPause() {
+      const g = this.g;
+      if (g.started) g.paused = !!this.userPaused || !!this.modal;
+    }
+    openModal(name) {
+      if (this.modal === name) return;
+      if (this.modal) this.closeModal(true);
+      const el = $(name === "map" ? "mapwrap" : "about");
+      this.opener = document.activeElement;
+      el.classList.remove("hidden");
+      this.modal = name;
+      for (const id2 of ["hud", "touch", "labels"]) {
+        const x = $(id2);
+        if (x) x.inert = true;
+      }
+      this.g.canvas.inert = true;
+      this.g.keys.clear();
+      this.applyPause();
+      if (name === "map") this.drawMap();
+      const first = el.querySelector("button.close") || el.querySelector("button");
+      if (first) first.focus();
+    }
+    closeModal(swap) {
+      if (!this.modal) return;
+      $(this.modal === "map" ? "mapwrap" : "about").classList.add("hidden");
+      this.modal = null;
+      for (const id2 of ["hud", "touch", "labels"]) {
+        const x = $(id2);
+        if (x) x.inert = false;
+      }
+      this.g.canvas.inert = false;
+      this.applyPause();
+      if (!swap) {
+        const o = this.opener;
+        (o && o.isConnected && o !== document.body ? o : this.g.canvas).focus();
+      }
     }
     sayTime() {
       const h = Math.floor(this.g.sky.hours);
@@ -19241,9 +19661,8 @@ void main() {
       }
     }
     toggleAbout() {
-      const a = $("about");
-      a.classList.toggle("hidden");
-      this.g.paused = !a.classList.contains("hidden");
+      if (this.modal === "about") this.closeModal();
+      else this.openModal("about");
     }
     bindPointer() {
       const g = this.g, cv2 = g.canvas;
@@ -19290,7 +19709,8 @@ void main() {
       $("b-dunkin").onclick = () => this.toggleDunkin();
       $("b-haze").onclick = () => this.nextHaze();
       $("b-about").onclick = () => this.toggleAbout();
-      $("about-close").onclick = () => this.toggleAbout();
+      $("about-close").onclick = () => this.closeModal();
+      $("map-close").onclick = () => this.closeModal();
       $("b-full").onclick = () => this.fullscreen();
       for (const b of document.querySelectorAll("#tools button")) b.addEventListener("pointerup", () => g.canvas.focus());
     }
@@ -19380,7 +19800,7 @@ void main() {
         b.textContent = (i < 9 ? i + 1 + "  " : "") + s29.n;
         b.onclick = () => {
           g.goto(s29.x, s29.y, s29.hdg);
-          this.toggleMap();
+          this.closeModal();
           this.toast(s29.n);
         };
         host.appendChild(b);
@@ -19391,17 +19811,13 @@ void main() {
         const mx2 = (e.clientX - r.left) / r.width * L, my2 = (1 - (e.clientY - r.top) / r.height) * C2;
         g.goto(mx2, my2);
         const ti2 = g.world.townAt(mx2, my2);
-        this.toggleMap();
+        this.closeModal();
         this.toast(ti2 ? g.meta.towns[ti2 - 1].n : this.seaName(mx2, my2));
       });
     }
     toggleMap() {
-      const w = $("mapwrap");
-      w.classList.toggle("hidden");
-      const open = !w.classList.contains("hidden");
-      this.g.paused = open;
-      if (open) this.drawMap();
-      else this.g.canvas.focus();
+      if (this.modal === "map") this.closeModal();
+      else this.openModal("map");
     }
     drawMap() {
       const g = this.g, cv2 = $("mapcv"), r = cv2.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -19553,7 +19969,7 @@ void main() {
       if (Math.random() > (cls <= 3 ? 1 : cls <= 5 ? 0.9 : cls <= 7 ? 0.7 : cls <= 9 ? 0.55 : 0.22)) return;
       const a = s0of(reg, ri2), b = s1of(reg, ri2);
       if (b - a < 40) return;
-      const hash = Math.random(), tall = hash * 7.13 % 1;
+      const hash3 = Math.random(), tall = hash3 * 7.13 % 1;
       const c = {
         reg,
         ri: ri2,
@@ -19575,12 +19991,12 @@ void main() {
         dying: false,
         stuck: 0,
         next: void 0,
-        hash,
+        hash: hash3,
         variant: tall > 0.55 ? 1 : 0,
         sx: 0.97 + 0.06 * tall,
-        sy: 0.96 + 0.08 * (hash * 3.7 % 1),
-        sz: 0.94 + 0.11 * (hash * 5.3 % 1),
-        keen: 0.86 + 0.2 * (hash * 11.9 % 1)
+        sy: 0.96 + 0.08 * (hash3 * 3.7 % 1),
+        sz: 0.94 + 0.11 * (hash3 * 5.3 % 1),
+        keen: 0.86 + 0.2 * (hash3 * 11.9 % 1)
       };
       c.off = this.lane(reg, ri2, c.dir, c.pick);
       this.aim(c);
@@ -19731,29 +20147,35 @@ void main() {
       this.inst.needsUpdate = true;
     }
     // The car you drive cannot pass through one of these: it is put back outside it and loses its speed into it.
+    // Cars are solid to each other: two boxes of their own length and width, turned with them.  The player's car is moved
+    // the shortest way out of a traffic car it overlaps (separating-axis test) and loses the speed it had into it.
     bump(pc2) {
+      const HL = 2.3, HW = 0.95;
       for (const c of this.cars) {
         const dx2 = pc2.mx - c.mx, dy2 = wrapD(pc2.my - c.my);
-        if (Math.abs(dx2) > 5 || Math.abs(dy2) > 5 || c.fade < 0.9 || Math.abs(pc2.h - c.h) > 2.5) continue;
-        const fx2 = Math.sin(c.hdg), fy2 = Math.cos(c.hdg);
-        let a = dx2 * fx2 + dy2 * fy2, l = dx2 * fy2 - dy2 * fx2;
-        const ha2 = 2.3 + 1.05, hl = 0.92 + 0.95;
-        if (Math.abs(a) >= ha2 || Math.abs(l) >= hl) continue;
-        let nx2, ny2;
-        if (ha2 - Math.abs(a) < hl - Math.abs(l)) {
-          const sg = a < 0 ? -1 : 1;
-          a = sg * ha2;
-          nx2 = sg * fx2;
-          ny2 = sg * fy2;
-        } else {
-          const sg = l < 0 ? -1 : 1;
-          l = sg * hl;
-          nx2 = sg * fy2;
-          ny2 = -sg * fx2;
+        if (Math.abs(dx2) > 6 || Math.abs(dy2) > 6 || c.fade < 0.9 || Math.abs(pc2.h - c.h) > 2.5) continue;
+        const af2 = [Math.sin(pc2.hdg), Math.cos(pc2.hdg)], bf = [Math.sin(c.hdg), Math.cos(c.hdg)];
+        const axes = [af2, [af2[1], -af2[0]], bf, [bf[1], -bf[0]]];
+        let best = 1e9, bx2 = 0, by2 = 0;
+        for (const [ax2, ay2] of axes) {
+          const ra2 = HL * Math.abs(af2[0] * ax2 + af2[1] * ay2) + HW * Math.abs(af2[1] * ax2 - af2[0] * ay2);
+          const rb = HL * Math.abs(bf[0] * ax2 + bf[1] * ay2) + HW * Math.abs(bf[1] * ax2 - bf[0] * ay2);
+          const sep = dx2 * ax2 + dy2 * ay2, ov2 = ra2 + rb - Math.abs(sep);
+          if (ov2 <= 0) {
+            best = -1;
+            break;
+          }
+          if (ov2 < best) {
+            best = ov2;
+            const sg = sep < 0 ? -1 : 1;
+            bx2 = ax2 * sg;
+            by2 = ay2 * sg;
+          }
         }
-        pc2.mx = clamp(c.mx + a * fx2 + l * fy2, 250, L - 250);
-        pc2.my = wrapY(c.my + a * fy2 - l * fx2);
-        const into = -(Math.sin(pc2.hdg) * nx2 + Math.cos(pc2.hdg) * ny2) * Math.sign(pc2.v || 1);
+        if (best <= 0) continue;
+        pc2.mx = clamp(pc2.mx + bx2 * (best + 0.01), 250, L - 250);
+        pc2.my = wrapY(pc2.my + by2 * (best + 0.01));
+        const into = -(Math.sin(pc2.hdg) * bx2 + Math.cos(pc2.hdg) * by2) * Math.sign(pc2.v || 1);
         if (into > 0) pc2.v *= 1 - Math.min(1, into * 1.1);
         c.v *= 0.5;
       }
@@ -20015,15 +20437,29 @@ void main() {
       }
     }
     // where a ferry is at clock time t: out.x, out.y, out.h (heading), out.v (speed now)
+    // Where a ferry is at time t.  It lies 45 s alongside at each end and between them runs at its speed, easing off
+    // over the last 140 m into each dock (to an eighth of its speed) and up again out of it, so its position follows the
+    // speed it reports: distance run is the integral of that speed over time.
     ferryAt(f, t, out) {
-      const v = this.kinds[f.kind].v, dock = 45 * v, lap = 2 * (f.len + dock);
-      let s29 = ((t * v + f.phase * lap) % lap + lap) % lap, back = false;
-      if (s29 > lap / 2) {
-        s29 = lap - s29;
+      const v = this.kinds[f.kind].v, len = f.len, half = len / 2, E = 140, vmin = 0.12;
+      const x02 = vmin * E;
+      const up2 = (x) => x <= x02 ? x / (vmin * v) : x <= E ? x02 / (vmin * v) + E / v * Math.log(x / x02) : x02 / (vmin * v) + E / v * Math.log(E / x02) + (x - E) / v;
+      const Th = up2(half), trip = 2 * Th, lapT = 2 * (trip + 45);
+      let tt = ((t + f.phase * lapT) % lapT + lapT) % lapT, back = false;
+      if (tt > lapT / 2) {
+        tt = lapT - tt;
         back = true;
       }
-      const moving = s29 > dock / 2 && s29 < f.len + dock / 2;
-      s29 = clamp(s29 - dock / 2, 0, f.len);
+      const tm2 = tt - 22.5, moving = tm2 > 0 && tm2 < trip;
+      const T = (s30) => s30 <= half ? up2(s30) : trip - up2(len - s30);
+      let lo0 = 0, hi0 = len;
+      const want = clamp(tm2, 0, trip);
+      for (let i = 0; i < 26; i++) {
+        const mid = (lo0 + hi0) / 2;
+        if (T(mid) < want) lo0 = mid;
+        else hi0 = mid;
+      }
+      const s29 = (lo0 + hi0) / 2;
       let lo2 = 0, hi2 = f.cum.length - 1;
       while (hi2 - lo2 > 1) {
         const m = lo2 + hi2 >> 1;
@@ -20033,8 +20469,7 @@ void main() {
       const a = f.p[lo2], b = f.p[hi2], u = (s29 - f.cum[lo2]) / Math.max(f.cum[hi2] - f.cum[lo2], 1e-6);
       out.x = a[0] + (b[0] - a[0]) * u;
       out.y = a[1] + (b[1] - a[1]) * u;
-      const ease = clamp(Math.min(s29, f.len - s29) / 140, 0.12, 1);
-      out.v = moving ? v * ease : 0;
+      out.v = moving ? v * clamp(Math.min(s29, len - s29) / E, vmin, 1) : 0;
       out.h = Math.atan2((b[0] - a[0]) * (back ? -1 : 1), (b[1] - a[1]) * (back ? -1 : 1));
       return out;
     }
@@ -20097,18 +20532,18 @@ void main() {
       b.my = wrapY(b.my + fy2 * b.v * dt);
       b.fade = clamp(b.fade + (b.dying ? -dt / 1.5 : dt / 2), 0, 1);
     }
-    place(kind, mx2, my2, hdg, sc2, fade, hash, v, time, heel) {
+    place(kind, mx2, my2, hdg, sc2, fade, hash3, v, time, heel) {
       const K = this.kinds[kind];
       if (K.n >= K.cap) return;
       const w = this.game.world, camC = this.camC, M = this.M;
       const lev = w.levelAt(mx2, my2);
-      cyl(mx2, my2, lev + Math.sin(time * 0.9 + hash * 30) * 0.05 * Math.min(K.len, 20) / 9, p34);
+      cyl(mx2, my2, lev + Math.sin(time * 0.9 + hash3 * 30) * 0.05 * Math.min(K.len, 20) / 9, p34);
       frame(my2, e33, n33, u33);
       const sy2 = Math.sin(hdg), cy2 = Math.cos(hdg);
       const fx2 = sy2 * e33[0] + cy2 * n33[0], fy2 = sy2 * e33[1] + cy2 * n33[1], fz = sy2 * e33[2] + cy2 * n33[2];
       let rx2 = cy2 * e33[0] - sy2 * n33[0], ry2 = cy2 * e33[1] - sy2 * n33[1], rz = cy2 * e33[2] - sy2 * n33[2];
       let ux2 = u33[0], uy2 = u33[1], uz = u33[2];
-      const roll = heel + Math.sin(time * 0.7 + hash * 17) * (K.len < 20 ? 0.035 : 6e-3), cr2 = Math.cos(roll), sr2 = Math.sin(roll);
+      const roll = heel + Math.sin(time * 0.7 + hash3 * 17) * (K.len < 20 ? 0.035 : 6e-3), cr2 = Math.cos(roll), sr2 = Math.sin(roll);
       const r2x = cr2 * rx2 - sr2 * ux2, r2y = cr2 * ry2 - sr2 * uy2, r2z = cr2 * rz - sr2 * uz;
       ux2 = cr2 * ux2 + sr2 * rx2;
       uy2 = cr2 * uy2 + sr2 * ry2;
@@ -20119,7 +20554,7 @@ void main() {
       const s29 = sc2 * (fade * fade * (3 - 2 * fade));
       M.set(rx2 * s29, ux2 * s29, -fx2 * s29, p34[0] - camC[0], ry2 * s29, uy2 * s29, -fy2 * s29, p34[1] - camC[1], rz * s29, uz * s29, -fz * s29, p34[2] - camC[2], 0, 0, 0, 1);
       K.mesh.setMatrixAt(K.n, M);
-      K.inst.array[K.n * 4] = hash;
+      K.inst.array[K.n * 4] = hash3;
       K.inst.array[K.n * 4 + 1] = 0;
       K.n++;
       if (v > 0.6 && this.nWake < this.wakeCap) {
@@ -20277,6 +20712,407 @@ void main() {
     }
   };
 
+  // src/lights.js
+  var COLS = [[1, 0.92, 0.78], [1, 0.13, 0.08], [0.22, 1, 0.38], [1, 0.78, 0.16]];
+  var EDGE = 0.07;
+  var PT_VS = (
+    /* glsl */
+    `
+attribute vec3 aCol;
+attribute vec2 aSize;     // glow across (m) up close; the smallest it gets, in units of uMinPx
+uniform float uScale;
+uniform float uMinPx;
+varying vec3 vCol;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  float lum = max(aCol.r, max(aCol.g, aCol.b));
+  float px = uScale * aSize.x / max(-mv.z, 1.0);
+  float size = clamp(px, uMinPx * aSize.y, 170.0) * (0.45 + 0.55 * min(lum, 1.0));
+  gl_PointSize = lum < 0.003 ? 0.0 : size;
+  vCol = aCol;
+  mv.xyz *= 1.0 - min(1.4 * size / uScale, 0.5);          // drawn a little nearer than the lamp, so the ground cannot cut it
+  gl_Position = projectionMatrix * mv;
+}`
+  );
+  var PT_FS = (
+    /* glsl */
+    `
+varying vec3 vCol;
+void main() {
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(q, q);
+  if (r2 > 1.0) discard;
+  float core = exp(-r2 * 20.0), halo = exp(-r2 * 4.0) * (1.0 - r2);
+  float lum = min(max(vCol.r, max(vCol.g, vCol.b)), 1.0);
+  gl_FragColor = vec4(vCol * (0.7 * halo + 1.6 * core) + vec3(1.0) * core * 0.45 * lum, 1.0);
+}`
+  );
+  var BEAM_VS = (
+    /* glsl */
+    `
+attribute vec3 aApex;     // camera-relative
+attribute vec3 aDir;      // along the beam, its length
+attribute float aWide;    // tangent of the half-angle
+attribute vec3 aCol;
+varying vec2 vUV;
+varying vec3 vC;
+void main() {
+  float u = position.x, v = position.y;
+  vec3 P0 = aApex + aDir * u;
+  vec3 A = normalize(aDir);
+  vec3 W = cross(A, normalize(-P0 + 1e-3));
+  float wl = length(W);
+  W = wl > 1e-4 ? W / wl : vec3(0.0, 1.0, 0.0);
+  float wd = 0.6 + u * length(aDir) * aWide;
+  vUV = vec2(u, v); vC = aCol;
+  gl_Position = projectionMatrix * viewMatrix * vec4(P0 + W * v * wd, 1.0);
+}`
+  );
+  var BEAM_FS = (
+    /* glsl */
+    `
+varying vec2 vUV;
+varying vec3 vC;
+void main() {
+  float u = vUV.x, v = vUV.y;
+  float across = 1.0 - v * v; across *= across;
+  float along = exp(-2.4 * u) * (1.0 - u) * smoothstep(0.0, 0.015, u);
+  gl_FragColor = vec4(vC * across * along, 1.0);
+}`
+  );
+  function hash(x, y) {
+    const s29 = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    return s29 - Math.floor(s29);
+  }
+  var Lights = class {
+    constructor(game2) {
+      this.game = game2;
+      this.list = [];
+      this.towers = [];
+      this.ready = false;
+      this.loading = null;
+      this.t0 = 0;
+      this.onT = 0;
+    }
+    load() {
+      if (this.loading) return this.loading;
+      this.loading = fetch(vurl("data/lights.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
+        if (!d || !d.lights) return false;
+        this.build(d);
+        return true;
+      });
+      return this.loading;
+    }
+    build(d) {
+      const g = this.game, w = g.world;
+      const e = [0, 0, 0], n = [0, 0, 0], u = [0, 0, 0], p = new Float64Array(3);
+      const lights = this.list = d.lights.map(([mx2, my2, kind, z, P2, rot, rng2, seq], i) => {
+        const lev = w.levelAt(mx2, my2), gh = w.groundH(mx2, my2, false), wet = w.g.water;
+        const base = wet ? lev : gh;
+        let fz = Math.max(lev + z, base + (kind === 0 ? 1.6 : 3));
+        cyl(mx2, my2, fz, p);
+        frame(my2, e, n, u);
+        return {
+          mx: mx2,
+          my: my2,
+          kind,
+          z,
+          P: P2,
+          rot,
+          rng: rng2,
+          seq,
+          base,
+          fz,
+          lev,
+          wet,
+          pos: [p[0], p[1], p[2]],
+          e: e.slice(),
+          n: n.slice(),
+          u: u.slice(),
+          phase: hash(mx2, my2) * P2,
+          on: 0,
+          name: d.names ? d.names[i] : "",
+          tower: null,
+          fine: wet
+        };
+      });
+      const T = [], Gl2 = [];
+      const paint = d.paint || {};
+      for (const t of d.towers) {
+        const L02 = t.light >= 0 ? lights[t.light] : null;
+        const gh = w.groundH(t.x, t.y, false), wet = w.g.water, lev = w.levelAt(t.x, t.y);
+        const base = wet ? lev - 0.5 : gh - 0.3;
+        let top = t.h ? base + 0.5 + t.h : L02 ? L02.fz + 1.9 : base + 12;
+        top = Math.max(top, base + 5);
+        const H = top - base, frameLook = t.taper < 0.5;
+        const glassH = Math.min(2.2, H * 0.12), roofH = glassH * 0.55, gallery = top - glassH - roofH;
+        const r02 = frameLook ? Math.min(Math.max(0.07 * H, 0.9), 2.6) : Math.min(Math.max(0.13 * H, 1.5), 4.6);
+        const r1 = r02 * t.taper;
+        let z02 = base;
+        frame(t.y, e, n, u);
+        const P02 = cyl(t.x, t.y, 0, new Float64Array(3));
+        const put = (arr, x, y, zN) => {
+          arr.push(P02[0] + x * e[0] + zN * n[0] + y * u[0], P02[1] + x * e[1] + zN * n[1] + y * u[1], P02[2] + x * e[2] + zN * n[2] + y * u[2]);
+        };
+        const dir = (arr, x, y, zN) => {
+          const l = Math.hypot(x, y, zN) || 1;
+          arr.push((x * e[0] + zN * n[0] + y * u[0]) / l, (x * e[1] + zN * n[1] + y * u[1]) / l, (x * e[2] + zN * n[2] + y * u[2]) / l);
+        };
+        const frustum = (out, sides, a, ra2, b, rb, c, cap) => {
+          const slope = (ra2 - rb) / Math.max(b - a, 0.01);
+          for (let k = 0; k < sides; k++) {
+            const a02 = k / sides * 2 * Math.PI + (sides === 4 ? Math.PI / 4 : 0), a1 = (k + 1) / sides * 2 * Math.PI + (sides === 4 ? Math.PI / 4 : 0);
+            const am2 = (a02 + a1) / 2, flat = sides <= 8;
+            const quad = [[a02, a, ra2], [a1, a, ra2], [a1, b, rb], [a02, a, ra2], [a1, b, rb], [a02, b, rb]];
+            for (const [ang, hh, rr2] of quad) {
+              const nAng = flat ? am2 : ang;
+              put(out.pos, Math.cos(ang) * rr2, hh, Math.sin(ang) * rr2);
+              dir(out.nor, Math.cos(nAng), slope, Math.sin(nAng));
+              out.col.push(c[0], c[1], c[2]);
+            }
+            if (cap) {
+              for (const [ang, rr2, hh] of [[a02, rb, b], [a1, rb, b], [0, 0, b + cap]]) {
+                put(out.pos, Math.cos(ang) * rr2, hh, Math.sin(ang) * rr2);
+                dir(out.nor, 0, 1, 0);
+                out.col.push(c[0], c[1], c[2]);
+              }
+            }
+          }
+        };
+        const body = { pos: [], nor: [], col: [] }, glass = { pos: [], nor: [], col: [] };
+        const pc2 = (k) => paint[k] || [0.88, 0.88, 0.85];
+        if (t.pier) {
+          const ph2 = Math.max(3, 0.3 * H);
+          frustum(body, 20, base - 3, r02 * 1.7, base + ph2, r02 * 1.6, pc2(t.pier), 0);
+          frustum(body, 20, base + ph2, r02 * 1.6, base + ph2 + 0.4, r02 * 1.6, pc2(t.pier), 0.01);
+          z02 = base + ph2;
+        }
+        const bodyTop = gallery;
+        frustum(body, t.sides, z02 - 12, r02, z02, r02, pc2(t.bands[0][2]), 0);
+        for (const [f02, f1, c] of t.bands) {
+          const a = z02 + (bodyTop - z02) * f02, b = z02 + (bodyTop - z02) * f1;
+          const ra2 = r02 + (r1 - r02) * f02, rb = r02 + (r1 - r02) * f1;
+          frustum(body, t.sides, a, ra2, b, rb, pc2(c), 0);
+        }
+        const black = [0.06, 0.06, 0.06];
+        frustum(body, 16, gallery, r1 + 0.7, gallery + 0.25, r1 + 0.7, black, 1e-3);
+        frustum(body, 16, gallery - 0.25, r1, gallery, r1 + 0.7, black, 0);
+        const lr2 = Math.max(0.8, r1 * 0.72);
+        const lit = L02 ? COLS[(L02.seq[0] || [0, 0, 0])[2]] : null;
+        frustum(lit ? glass : body, 12, gallery + 0.25, lr2, gallery + 0.25 + glassH, lr2, lit ? lit.map((v) => v * 0.32) : [0.1, 0.12, 0.13], 0);
+        frustum(body, 12, gallery + 0.25 + glassH, lr2 * 1.1, top, 0.15, black, 0);
+        T.push(body);
+        if (lit) Gl2.push(glass);
+        if (L02) {
+          L02.tower = { top, gallery };
+          L02.fz = gallery + 0.25 + glassH * 0.5;
+          cyl(L02.mx, L02.my, L02.fz, p);
+          L02.pos = [p[0], p[1], p[2]];
+        }
+        this.towers.push({ n: t.n, x: t.x, y: t.y, top, light: t.light, base, wet, u: u.slice(), body: T.length - 1, glass: lit ? Gl2.length - 1 : -1, fine: false });
+      }
+      const mergeOut = (parts) => {
+        const pos2 = [], nor = [], col = [];
+        for (const q of parts) {
+          q.at = pos2.length;
+          pos2.push(...q.pos);
+          nor.push(...q.nor);
+          col.push(...q.col);
+        }
+        const geo = new Yt();
+        geo.setAttribute("position", new me(new Float32Array(pos2), 3));
+        geo.setAttribute("normal", new me(new Float32Array(nor), 3));
+        geo.setAttribute("aCol", new me(new Float32Array(col), 3));
+        return geo;
+      };
+      const mk = (geo, kind) => {
+        const m = new Ce(geo, new Rn({ vertexShader: LIT_VS, fragmentShader: LIT_FS, defines: g.defs(3, 4), side: Bn, uniforms: Object.assign({}, g.U, { uKind: { value: kind } }) }));
+        m.matrixAutoUpdate = false;
+        m.frustumCulled = false;
+        g.scene.add(m);
+        return m;
+      };
+      this.towerMesh = mk(mergeOut(T), 0);
+      this.glassMesh = Gl2.length ? mk(mergeOut(Gl2), 4) : null;
+      for (const tw of this.towers) {
+        tw.body = { at: T[tw.body].at, n: T[tw.body].pos.length };
+        tw.glass = tw.glass >= 0 ? { at: Gl2[tw.glass].at, n: Gl2[tw.glass].pos.length } : null;
+      }
+      const N = lights.length, pos = new Float32Array(N * 3), size = new Float32Array(N * 2);
+      lights.forEach((L2, i) => {
+        pos.set(L2.pos, i * 3);
+        size[i * 2] = L2.kind === 2 ? 10 + L2.rng * 0.9 : L2.kind === 1 ? 6 : 4;
+        size[i * 2 + 1] = L2.kind === 2 ? 0.8 + Math.min(L2.rng, 27) / 12 : L2.kind === 1 ? 0.55 : 0.42;
+      });
+      const pg = new Yt();
+      pg.setAttribute("position", new me(pos, 3));
+      pg.setAttribute("aSize", new me(size, 2));
+      this.colArr = new Float32Array(N * 3);
+      pg.setAttribute("aCol", new me(this.colArr, 3).setUsage(Zm));
+      this.PU = { uScale: { value: 1e3 }, uMinPx: { value: 4 } };
+      const pts = new Ro(pg, new Rn({ vertexShader: PT_VS, fragmentShader: PT_FS, uniforms: this.PU, transparent: true, depthWrite: false, depthTest: true, blending: yu, toneMapped: false }));
+      pts.frustumCulled = false;
+      pts.matrixAutoUpdate = false;
+      pts.renderOrder = 5;
+      g.scene.add(pts);
+      this.points = pts;
+      this.beams = [];
+      lights.forEach((L2, i) => {
+        if (L2.rot) for (const s29 of L2.seq) this.beams.push({ li: i, t0: s29[0], d: s29[1], c: s29[2] });
+      });
+      const nb = Math.max(1, this.beams.length);
+      const bg = new gl();
+      bg.setAttribute("position", new me(new Float32Array([0, -1, 0, 1, -1, 0, 1, 1, 0, 0, -1, 0, 1, 1, 0, 0, 1, 0]), 3));
+      this.bApex = new vi(new Float32Array(nb * 3), 3).setUsage(Zm);
+      this.bDir = new vi(new Float32Array(nb * 3), 3).setUsage(Zm);
+      this.bWide = new vi(new Float32Array(nb), 1).setUsage(Zm);
+      this.bCol = new vi(new Float32Array(nb * 3), 3).setUsage(Zm);
+      bg.setAttribute("aApex", this.bApex);
+      bg.setAttribute("aDir", this.bDir);
+      bg.setAttribute("aWide", this.bWide);
+      bg.setAttribute("aCol", this.bCol);
+      bg.instanceCount = 0;
+      const bm = new Ce(bg, new Rn({ vertexShader: BEAM_VS, fragmentShader: BEAM_FS, transparent: true, depthWrite: false, depthTest: true, blending: yu, side: Bn, toneMapped: false }));
+      bm.frustumCulled = false;
+      bm.matrixAutoUpdate = false;
+      bm.renderOrder = 6;
+      g.scene.add(bm);
+      this.beamMesh = bm;
+      this.beamGeo = bg;
+      if (g.ui && g.ui.addMarks) g.ui.addMarks(this.towers.filter((t) => t.n).map((t) => ({ n: t.n, x: t.x, y: t.y, top: t.top })));
+      this.ready = true;
+    }
+    // how lit a light is at time s into its period: its pattern, with the lamp taking EDGE to come up and go down
+    level(L2, s29) {
+      if (L2.seq.length === 1 && L2.seq[0][1] >= L2.P) return [1, L2.seq[0][2]];
+      let best = 0, c = L2.seq[0][2];
+      for (const [t02, d, ci] of L2.seq) {
+        let x = s29 - t02;
+        if (x < -EDGE) x += L2.P;
+        const a = Math.min(Math.max((x + EDGE) / EDGE, 0), 1) * Math.min(Math.max((d + EDGE - x) / EDGE, 0), 1);
+        if (a > best) {
+          best = a;
+          c = ci;
+        }
+      }
+      return [best, c];
+    }
+    // The towers and lamps were stood on the ground as it was known when they loaded, which far from you is the coarse
+    // 46 m grid.  Once the LiDAR's ground is in where one stands, it is moved up or down onto that, so a lighthouse neither
+    // hovers over its point nor sinks into it.
+    reanchor() {
+      const w = this.game.world, P2 = this.points.geometry.attributes.position;
+      let moved = false;
+      const shift = (mesh, r, dz, u) => {
+        if (!mesh || !r) return;
+        const a = mesh.geometry.attributes.position.array;
+        for (let i = r.at; i < r.at + r.n; i += 3) {
+          a[i] += u[0] * dz;
+          a[i + 1] += u[1] * dz;
+          a[i + 2] += u[2] * dz;
+        }
+        mesh.geometry.attributes.position.needsUpdate = true;
+      };
+      for (const tw of this.towers) {
+        if (tw.fine) continue;
+        const gh = w.groundH(tw.x, tw.y, false);
+        if (!w.g.fine) continue;
+        tw.fine = true;
+        const wet = w.g.water, base = wet ? w.levelAt(tw.x, tw.y) - 0.5 : gh - 0.3, dz = base - tw.base;
+        if (Math.abs(dz) < 0.05) continue;
+        shift(this.towerMesh, tw.body, dz, tw.u);
+        shift(this.glassMesh, tw.glass, dz, tw.u);
+        tw.base = base;
+        tw.top += dz;
+        const L2 = tw.light >= 0 ? this.list[tw.light] : null;
+        if (L2) {
+          L2.fz += dz;
+          L2.fine = true;
+          for (let k = 0; k < 3; k++) L2.pos[k] += L2.u[k] * dz;
+          P2.array.set(L2.pos, tw.light * 3);
+          moved = true;
+        }
+        if (this.game.ui && this.game.ui.moveMark) this.game.ui.moveMark(tw.n, tw.x, tw.y, tw.top);
+      }
+      for (let i = 0; i < this.list.length; i++) {
+        const L2 = this.list[i];
+        if (L2.fine || L2.tower) continue;
+        const gh = w.groundH(L2.mx, L2.my, false);
+        if (!w.g.fine) continue;
+        L2.fine = true;
+        const base = w.g.water ? L2.lev : gh, fz = Math.max(L2.lev + L2.z, base + (L2.kind === 0 ? 1.6 : 3)), dz = fz - L2.fz;
+        if (Math.abs(dz) < 0.05) continue;
+        L2.fz = fz;
+        for (let k = 0; k < 3; k++) L2.pos[k] += L2.u[k] * dz;
+        P2.array.set(L2.pos, i * 3);
+        moved = true;
+      }
+      if (moved) P2.needsUpdate = true;
+    }
+    update(camC) {
+      if (!this.ready) return;
+      if ((this.tick = (this.tick || 0) + 1) % 60 === 0) this.reanchor();
+      const g = this.game, sky = g.sky, t = g.time, cam = g.camera, col = this.colArr;
+      const now = performance.now() / 1e3, dt = Math.min(0.5, now - (this.onT || now));
+      this.onT = now;
+      const H = g.renderer.domElement.height;
+      this.PU.uScale.value = H / (2 * Math.tan(cam.fov * Math.PI / 360));
+      this.PU.uMinPx.value = Math.max(3, H * 6e-3);
+      const anyNight = sky.isNight || sky.dayness < 0.5;
+      let nb = 0;
+      const B = this.beams;
+      for (let i = 0; i < this.list.length; i++) {
+        const L2 = this.list[i];
+        const want = anyNight || sky.lampFrom(L2.mx, 0).elev < 9 ? 1 : 0;
+        L2.on += Math.max(-dt, Math.min(dt, want - L2.on)) * 0.6;
+        if (L2.on <= 0) {
+          col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0;
+          continue;
+        }
+        let s29 = t + L2.phase;
+        if (L2.rot) {
+          const dx2 = camC[0] - L2.pos[0], dy2 = camC[1] - L2.pos[1], dz = camC[2] - L2.pos[2];
+          const az = Math.atan2(dx2 * L2.n[0] + dy2 * L2.n[1] + dz * L2.n[2], dx2 * L2.e[0] + dy2 * L2.e[1] + dz * L2.e[2]);
+          s29 -= az / (2 * Math.PI) * L2.P;
+        }
+        s29 = (s29 % L2.P + L2.P) % L2.P;
+        const [a, ci] = this.level(L2, s29), k = a * L2.on, c = COLS[ci];
+        const gain = L2.kind === 2 ? 1.6 : L2.kind === 1 ? 0.95 : 0.8;
+        col[i * 3] = c[0] * k * gain;
+        col[i * 3 + 1] = c[1] * k * gain;
+        col[i * 3 + 2] = c[2] * k * gain;
+      }
+      for (const b of B) {
+        const L2 = this.list[b.li];
+        if (L2.on <= 0.01) continue;
+        const dx2 = L2.pos[0] - camC[0], dy2 = L2.pos[1] - camC[1], dz = L2.pos[2] - camC[2];
+        if (dx2 * dx2 + dy2 * dy2 + dz * dz > 22e3 * 22e3) continue;
+        const th = 2 * Math.PI * ((t + L2.phase - b.t0 - b.d / 2) / L2.P);
+        const len = L2.rng >= 20 ? 1900 : 1500;
+        const ce2 = Math.cos(th), sn2 = Math.sin(th);
+        this.bApex.array.set([dx2, dy2, dz], nb * 3);
+        this.bDir.array.set([(ce2 * L2.e[0] + sn2 * L2.n[0]) * len, (ce2 * L2.e[1] + sn2 * L2.n[1]) * len, (ce2 * L2.e[2] + sn2 * L2.n[2]) * len], nb * 3);
+        this.bWide.array[nb] = Math.min(Math.tan(Math.PI * b.d / L2.P), 0.05);
+        const c = COLS[b.c], k = 0.1 * L2.on;
+        this.bCol.array.set([c[0] * k, c[1] * k, c[2] * k], nb * 3);
+        nb++;
+      }
+      this.beamGeo.instanceCount = nb;
+      if (nb) {
+        this.bApex.needsUpdate = this.bDir.needsUpdate = this.bWide.needsUpdate = this.bCol.needsUpdate = true;
+      }
+      this.beamMesh.visible = nb > 0;
+      this.points.geometry.attributes.aCol.needsUpdate = true;
+      for (const m of [this.points, this.towerMesh, this.glassMesh]) {
+        if (!m) continue;
+        m.matrix.makeTranslation(-camC[0], -camC[1], -camC[2]);
+        m.matrixWorld.copy(m.matrix);
+      }
+      this.beamMesh.matrix.identity();
+      this.beamMesh.matrixWorld.identity();
+    }
+  };
+
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
@@ -20284,7 +21120,29 @@ void main() {
     med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2 },
     high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2 }
   };
+  var GAME = null;
   function fatal(msg) {
+    console.error(msg);
+    if (GAME && GAME.started) {
+      const panel = $2("runerr");
+      if (!panel) return;
+      $2("runerr-msg").textContent = String(msg);
+      panel.classList.remove("hidden");
+      GAME.paused = true;
+      GAME.keys.clear();
+      try {
+        GAME.savePlace();
+      } catch (e) {
+      }
+      $2("runerr-reload").onclick = () => location.reload();
+      $2("runerr-go").onclick = () => {
+        panel.classList.add("hidden");
+        if (GAME.ui) GAME.ui.applyPause();
+        GAME.canvas.focus();
+      };
+      $2("runerr-reload").focus();
+      return;
+    }
     const el = $2("fatal");
     if (el) el.textContent = "Something went wrong: " + msg;
     const p = $2("play");
@@ -20292,16 +21150,17 @@ void main() {
       p.disabled = true;
       p.textContent = "Stopped";
     }
-    console.error(msg);
   }
   window.addEventListener("error", (e) => fatal(e.message || String(e.error)));
   window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason && e.reason.message || e.reason)));
   var params = new URLSearchParams(location.search);
+  var _lp = new Float64Array(3);
   var Game = class {
     constructor() {
       this.canvas = $2("view");
       this.paused = true;
       this.started = false;
+      GAME = this;
       this.inp = { fwd: 0, steer: 0, strafe: 0, rise: 0, brake: false, boost: false };
       this.keys = /* @__PURE__ */ new Set();
       this.camMap = [0, 0, 0];
@@ -20329,16 +21188,16 @@ void main() {
       } catch (err) {
         throw new Error("this browser could not start WebGL 2, which the game needs.");
       }
-      const gl = renderer.getContext();
-      if (!(typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext)) throw new Error("WebGL 2 is not available here.");
+      const gl2 = renderer.getContext();
+      if (!(typeof WebGL2RenderingContext !== "undefined" && gl2 instanceof WebGL2RenderingContext)) throw new Error("WebGL 2 is not available here.");
       this.renderer = renderer;
-      const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-      const gpu = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+      const dbg = gl2.getExtension("WEBGL_debug_renderer_info");
+      const gpu = dbg ? String(gl2.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
       this.software = /swiftshader|llvmpipe|software/i.test(gpu);
       this.forceLeaves = params.get("leaves") !== null;
       this.gpu = gpu;
       const coarse = matchMedia("(pointer: coarse)").matches;
-      const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      const maxTex = gl2.getParameter(gl2.MAX_TEXTURE_SIZE);
       let qn2 = params.get("q");
       try {
         qn2 = qn2 || localStorage.getItem("oneill-quality");
@@ -20347,12 +21206,23 @@ void main() {
       if (!QUAL[qn2]) qn2 = coarse || maxTex < 8192 || this.software ? "low" : "med";
       this.qualityName = qn2;
       this.quality = Object.assign({}, QUAL[qn2]);
+      if (params.get("qo")) for (const kv2 of params.get("qo").split(",")) {
+        const [k, v] = kv2.split(":");
+        if (k in this.quality && !isNaN(+v)) this.quality[k] = +v;
+      }
       if (maxTex < 7168) this.quality.sdf = "sdfLo";
       if ((navigator.deviceMemory || 8) < 4) this.quality.height = "heightLo";
       this.touch = coarse;
       if (coarse) {
         const k = document.querySelector("#cover .keys");
-        if (k) k.innerHTML = "<b>stick</b><span>steer and drive, or move while flying</span><b>drag</b><span>look around, and up</span><b>Fly</b><span>jetpack on and off; Up and Down rise and sink</span><b>Cruise</b><span>holds your speed so you can let go of the stick</span><b>Map</b><span>tap anywhere to go there</span>";
+        if (k) {
+          k.classList.add("touchkeys");
+          k.innerHTML = "<b>stick</b><span>steer and drive, or move while flying</span><b>drag</b><span>look around, and up</span><b>Fly / Drive</b><span>jetpack on and off</span><b>Cruise</b><span>while driving: holds your speed so you can let go of the stick (flying, the same button reads Up and rises)</span><b>Down</b><span>sinks while flying</span><b>Boost, Brake</b><span>hold for speed, or to stop</span><b>Map</b><span>tap a place to go there, or Close to come back</span>";
+        }
+      }
+      {
+        const ak = document.getElementById("about-keys"), ck = document.querySelector("#cover .keys");
+        if (ak && ck) ak.innerHTML = ck.innerHTML;
       }
       renderer.toneMapping = Ru;
       renderer.autoClear = false;
@@ -20379,6 +21249,8 @@ void main() {
       }
       if (params.get("ground") === "0" && meta.tiles) delete meta.tiles.ground;
       this.groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
+      this.measuredFiles = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
+      this.regionFails = /* @__PURE__ */ new Map();
       if (params.get("decks") === "0" && meta.tiles) delete meta.tiles.decks;
       setDecks(meta.tiles && meta.tiles.decks);
       this.meta = meta;
@@ -20518,10 +21390,11 @@ void main() {
       this.webster = { state: "idle", meshes: [] };
       this.landmarks = this.buildLandmarks();
       this.dunkin = new Dunkin(this);
+      this.lights = new Lights(this);
       let start = meta.starts[0], named = false;
-      const hash = (location.hash || "").replace("#", "").toLowerCase();
-      if (hash) {
-        const s29 = meta.starts.find((s30) => slug(s30.n).startsWith(hash));
+      const hash3 = (location.hash || "").replace("#", "").toLowerCase();
+      if (hash3) {
+        const s29 = meta.starts.find((s30) => slug(s30.n).startsWith(hash3));
         if (s29) {
           start = s29;
           named = true;
@@ -20533,11 +21406,13 @@ void main() {
         named = true;
       }
       const saved = named || params.get("fresh") ? null : this.loadSaved();
-      if (saved) start = { n: "", x: saved.cx, y: saved.cy, hdg: saved.hdg };
+      if (saved) start = { n: "", x: saved.cx, y: saved.cy, hdg: saved.hdg, h: saved.ch };
       this.startName = start.n.split(",")[0];
       setLoad("Reading the local streets", 0.69);
       await this.loadRegion(Math.floor(start.x / RS2), Math.floor(wrapY(start.y) / RS2));
-      this.player.place(start.x, start.y, start.hdg);
+      if (saved) this.player.place(start.x, start.y, start.hdg, false, start.h);
+      else this.player.place(start.x, start.y, start.hdg, true);
+      if (params.get("lights") !== "0") this.lights.load();
       if (saved) {
         this.resume = saved;
         this.sky.hours = saved.hours;
@@ -20781,45 +21656,84 @@ void main() {
         old.dispose();
       })().catch((err) => console.warn("tree and ground textures unavailable:", err));
     }
-    // Roads and buildings for one 11.8 km region (the main thread needs them for driving and the HUD).
+    // Roads and buildings for one 11.8 km region (the main thread needs them for driving and the HUD), with the LiDAR's
+    // ground and the measured buildings' outlines (the car collides with the buildings you see).  A region that could not
+    // be read is tried again after 2, 4, 8 ... 60 s, and given up as empty after six failures; an optional part that
+    // failed (ground, outlines) is read again the same way while the region is in use.
     loadRegion(rx2, ry2) {
       const w = this.world, k = regionKey(rx2, ry2);
-      if (w.regions.has(k) || !w.have.has(k)) return Promise.resolve();
+      if (!w.have.has(k)) return Promise.resolve();
+      const have = w.regions.get(k);
+      if (have) return have.partial && performance.now() >= have.partial.next ? this.readRegionParts(have, rx2, ry2, have.partial.which) : Promise.resolve();
+      const fail = this.regionFails.get(k);
+      if (fail && performance.now() < fail.next) return Promise.resolve();
       let pr2 = this.regionLoads.get(k);
       if (!pr2) {
         pr2 = (async () => {
-          const pG = this.groundFiles.has(k) ? fetch(vurl("data/g3/" + rx2 + "_" + ry2 + ".png")).then((r) => {
-            if (!r.ok) throw new Error("ground " + r.status);
-            return r.arrayBuffer();
-          }).then(decodePNG).then((p) => parseGround(p.data)).catch((err) => {
-            console.warn(err);
-            return null;
-          }) : null;
           try {
             const res = await fetch(vurl("data/r2/" + rx2 + "_" + ry2 + ".png"));
             if (!res.ok) throw new Error("region " + rx2 + "_" + ry2 + " " + res.status);
             const png = await decodePNG(await res.arrayBuffer());
             const d = png.data;
             const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx2, ry2);
-            if (pG) {
-              const e = await pG;
-              if (e) reg.ground = e;
-            }
+            const parts = [];
+            if (this.groundFiles.has(k)) parts.push("g3");
+            if (this.measuredFiles.has(k)) parts.push("b3");
+            await this.readRegionParts(reg, rx2, ry2, parts);
             w.addRegion(rx2, ry2, reg);
+            this.regionFails.delete(k);
           } catch (err) {
             console.warn(err);
-            w.addRegion(rx2, ry2, EMPTY_REGION);
+            const n = (fail ? fail.n : 0) + 1;
+            if (n >= 6) {
+              w.addRegion(rx2, ry2, EMPTY_REGION);
+              if (!this.warnedData) {
+                this.warnedData = true;
+                this.ui.toast("Part of the map could not be loaded. Reload the page to try again.");
+              }
+            } else this.regionFails.set(k, { n, next: performance.now() + 1e3 * Math.min(60, 2 ** n) });
           }
           this.regionLoads.delete(k);
           w.trimRegions(9);
           const sp = this.snapPending;
-          if (sp && Math.floor(sp.x / RS2) === rx2 && Math.floor(wrapY(sp.y) / RS2) === ry2) {
+          if (sp && Math.floor(sp.x / RS2) === rx2 && Math.floor(wrapY(sp.y) / RS2) === ry2 && w.regions.has(k)) {
             this.snapPending = null;
-            if (this.player.mode === "drive" && Math.hypot(this.player.car.mx - sp.x, this.player.car.my - sp.y) < 60 && Math.abs(this.player.car.v) < 3) this.player.place(sp.x, sp.y, sp.hdg, !!sp.snap);
+            if (this.player.mode === "drive" && Math.hypot(this.player.car.mx - sp.x, this.player.car.my - sp.y) < 60 && Math.abs(this.player.car.v) < 3) this.player.place(sp.x, sp.y, sp.hdg, !!sp.snap, sp.level);
           }
         })();
         this.regionLoads.set(k, pr2);
       }
+      return pr2;
+    }
+    // the optional parts of a region: the ground the LiDAR saw (g3) and the measured buildings' outlines and roofs (b3)
+    async readRegionParts(reg, rx2, ry2, which) {
+      const key2 = "p" + rx2 + "_" + ry2;
+      if (this.regionLoads.get(key2)) return this.regionLoads.get(key2);
+      const pr2 = (async () => {
+        const missing = [];
+        for (const dir of which) {
+          try {
+            const r = await fetch(vurl("data/" + dir + "/" + rx2 + "_" + ry2 + ".png"));
+            if (!r.ok) throw new Error(dir + " " + rx2 + "_" + ry2 + " " + r.status);
+            const p = await decodePNG(await r.arrayBuffer());
+            if (dir === "g3") reg.ground = parseGround(p.data);
+            else {
+              const e = p.data;
+              reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
+            }
+          } catch (err) {
+            console.warn(err);
+            missing.push(dir);
+          }
+        }
+        if (missing.length) {
+          const n = reg.partial ? reg.partial.n + 1 : 1;
+          reg.partial = n >= 6 ? null : { which: missing, n, next: performance.now() + 1e3 * Math.min(60, 2 ** n) };
+        } else reg.partial = null;
+        this.player.bCache = null;
+        this.regionLoads.delete(key2);
+      })();
+      this.regionLoads.set(key2, pr2);
       return pr2;
     }
     // test hook: park a free camera somewhere (map metres, altitude above sea level, degrees)
@@ -20869,7 +21783,7 @@ void main() {
       this.title = false;
       this.player.mode = "drive";
       const c = this.player.car;
-      this.player.place(c.mx, c.my, c.hdg * 180 / Math.PI);
+      this.player.place(c.mx, c.my, c.hdg * 180 / Math.PI, false, c.h);
       $2("cover").classList.add("hidden");
       $2("hud").classList.remove("hidden");
       if (this.touch) $2("touch").classList.remove("hidden");
@@ -20896,6 +21810,7 @@ void main() {
         if (!s29 || s29.v !== 1 || !ok(s29.cx, 0, L) || !ok(s29.cy, 0, C2) || !ok(s29.hdg, -1e5, 1e5) || !ok(s29.hours, 0, 24)) return null;
         s29.fly = !!s29.fly && ok(s29.fx, 0, L) && ok(s29.fy, 0, C2) && ok(s29.alt, -100, R - 1800) && ok(s29.yaw, -1e6, 1e6) && ok(s29.pitch, -1.6, 1.6);
         s29.run = s29.run !== false;
+        if (!ok(s29.ch, -200, 2e3)) s29.ch = void 0;
         return s29;
       } catch (e) {
         return null;
@@ -20909,6 +21824,8 @@ void main() {
           v: 1,
           cx: r1(c.mx),
           cy: r1(c.my),
+          ch: r1(c.h),
+          surf: c.deck ? "deck" : c.tun ? "tunnel" : "ground",
           hdg: r1(c.hdg * 180 / Math.PI % 360),
           fly: p.mode === "fly",
           fx: r1(f.mx),
@@ -20962,6 +21879,7 @@ void main() {
       };
       const e = [0, 0, 0], n = [0, 0, 0], u = [0, 0, 0], p = new Float64Array(3);
       for (const lm2 of this.meta.landmarks) {
+        if (lm2.k === "light") continue;
         const gh = this.world.groundH(lm2.x, lm2.y, false);
         let geo, kind = 0, beacon = null;
         const H = lm2.h;
@@ -20995,7 +21913,7 @@ void main() {
         cyl(lm2.x, lm2.y, gh - 0.5, p);
         frame(lm2.y, e, n, u);
         const basis = new Ht().set(e[0], u[0], -n[0], 0, e[1], u[1], -n[1], 0, e[2], u[2], -n[2], 0, 0, 0, 0, 1);
-        const item = { lm: lm2, mesh, basis, pos: [p[0], p[1], p[2]], top: gh + H, beacon: null };
+        const item = { lm: lm2, mesh, basis, pos: [p[0], p[1], p[2]], top: gh + H, beacon: null, gh, fine: this.world.g.fine };
         if (beacon) {
           const bg = colored(new zr(lm2.k === "light" ? 1.6 : 2.2, 10, 8), beacon);
           bg.translate(0, H + 1.2, 0);
@@ -21007,7 +21925,18 @@ void main() {
       return out;
     }
     updateLandmarks(camC) {
+      const reanchor = (this.lmTick = (this.lmTick || 0) + 1) % 60 === 0;
       for (const it of this.landmarks) {
+        if (reanchor && !it.fine) {
+          const gh = this.world.groundH(it.lm.x, it.lm.y, false);
+          if (this.world.g.fine) {
+            it.fine = true;
+            it.gh = gh;
+            it.top = gh + it.lm.h;
+            cyl(it.lm.x, it.lm.y, gh - 0.5, _lp);
+            it.pos = [_lp[0], _lp[1], _lp[2]];
+          }
+        }
         const dx2 = it.pos[0] - camC[0], dy2 = it.pos[1] - camC[1], dz = it.pos[2] - camC[2];
         const d = Math.hypot(dx2, dy2, dz), vis = d < 9e4;
         it.mesh.visible = vis;
@@ -21207,6 +22136,10 @@ void main() {
       this.updateWebster(camC);
       this.updateLandmarks(camC);
       if (this.dunkin) this.dunkin.update(camC);
+      if ((this.frameN = (this.frameN || 0) + 1) % 120 === 0) {
+        for (const reg of this.world.regions.values()) if (reg.partial && performance.now() >= reg.partial.next) this.readRegionParts(reg, reg.rx, reg.ry, reg.partial.which);
+      }
+      if (this.lights) this.lights.update(camC);
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
       const split = clamp(agl * 0.5, (this.quality.treeR + 160) / 1.5, 4e3), nearFar = split * 1.5;
@@ -21252,23 +22185,29 @@ void main() {
         const n = this.terrain.pendingCount;
         $2("loadline").textContent = "Laying out the neighborhood" + (n ? " (" + n + " tiles to go)" : "");
       }
-      this.adaptQuality(dt);
+      this.adaptQuality(dt, raw);
       this.cpuMs += (performance.now() - t02 - this.cpuMs) * 0.05;
     }
     // Hold the display's frame rate by trading resolution: the picture is fill-rate bound in built-up places (Boston
     // at 1.25x ran at 43 fps on an M4 and at 60 at 0.6x).  Every two seconds: if the frames are running long, take
     // the resolution down by what a fill-bound frame needs; if they have kept time for ten seconds, try a step back up,
     // and wait longer before the next try if that step proves too much.
-    adaptQuality(dt) {
+    adaptQuality(dt, rawMs) {
       if (!this.started || this.software || params.get("res")) return;
-      const raw = dt * 1e3, A = this.aq || (this.aq = { t: 0, sum: 0, n: 0, good: 0, hold: 0, wait: 10, probe: 0 });
-      if (raw > 3 && raw < 100) {
+      const raw = rawMs === void 0 ? dt * 1e3 : rawMs, A = this.aq || (this.aq = { t: 0, sum: 0, n: 0, good: 0, hold: 0, wait: 10, probe: 0 });
+      if (raw > 3 && raw < 1e3 && !document.hidden) {
         A.sum += raw;
         A.n++;
       }
-      A.t += dt;
+      A.t += Math.min(raw, 1e3) / 1e3;
       if (A.t < 2) return;
-      const avg = A.n ? A.sum / A.n : 16.7;
+      if (A.n < 4) {
+        A.t = 0;
+        A.sum = 0;
+        A.n = 0;
+        return;
+      }
+      const avg = A.sum / A.n;
       A.t = 0;
       A.sum = 0;
       A.n = 0;

@@ -714,10 +714,14 @@
     // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
     // A car down at a tunnel's floor (from 1.2 m above it to 1.7 m below) is in the tunnel, whatever the ground overhead:
     // g.onTunnel, and this._nt is the tunnel.
-    driveH(mx, my, href) {
+    // from: what the car is on now ('deck', 'tunnel' or 'ground').  A car on a deck follows it up its grade (a deck up
+    // to 1.7 m over it); one on the ground or in a tunnel gets onto a deck only where the deck meets its own level (a rim,
+    // within 0.45 m), so a road passing under a bridge never jumps up onto it.
+    driveH(mx, my, href, from) {
       const h = this.groundH(mx, my), g = this.g;
       g.onTunnel = false;
-      if (g.deck > -1e8 && this.nearestDeck(mx, my, href + 1.7) < 0.35) {
+      const reach = from === void 0 || from === "deck" ? 1.7 : 0.45;
+      if (g.deck > -1e8 && this.nearestDeck(mx, my, href + reach) < 0.35) {
         const nd = this._nd;
         if (nd.z > h) {
           g.onDeck = true;
@@ -740,6 +744,26 @@
         }
       }
       return h;
+    }
+    // Every surface a car could stand on at (mx, my), highest first: the decks the point is on, the ground, and the
+    // floors of the tunnels under it.  Each is { z, kind: 'deck' | 'ground' | 'tunnel' }.
+    surfaces(mx, my) {
+      const out = [];
+      const h = this.groundH(mx, my), water = this.g.water;
+      let zmax = 1e9;
+      for (let t = 0; t < 6 && this.nearestDeck(mx, my, zmax) < 0.35; t++) {
+        const z = this._nd.z;
+        if (z > h + 0.2) out.push({ z, kind: "deck" });
+        zmax = z - 0.8;
+      }
+      out.push({ z: h, kind: "ground", water });
+      zmax = h - 1.5;
+      for (let t = 0; t < 4 && this.nearestTunnel(mx, my, zmax) < 0; t++) {
+        const z = this._nt.z;
+        out.push({ z, kind: "tunnel" });
+        zmax = z - 3;
+      }
+      return out;
     }
     // surface normal in local (east, north, up) from central differences
     groundNormal(mx, my, d, out) {
@@ -1452,29 +1476,50 @@
     return s / 2;
   }
   function ears(P2, tri) {
-    const n = P2.length / 3, idx = [];
-    for (let i = 0; i < n; i++) idx.push(i);
+    const n0 = P2.length / 3;
+    if (n0 < 3) return;
+    let area = 0;
+    for (let i = 0; i < n0; i++) {
+      const j = (i + 1) % n0;
+      area += P2[i * 3] * P2[j * 3 + 1] - P2[j * 3] * P2[i * 3 + 1];
+    }
+    const sg = area >= 0 ? 1 : -1;
+    const idx = [];
+    for (let i = 0; i < n0; i++) {
+      const j = idx.length ? idx[idx.length - 1] : -1;
+      if (j >= 0 && Math.abs(P2[i * 3] - P2[j * 3]) < 1e-6 && Math.abs(P2[i * 3 + 1] - P2[j * 3 + 1]) < 1e-6) continue;
+      idx.push(i);
+    }
+    while (idx.length > 3 && Math.abs(P2[idx[0] * 3] - P2[idx[idx.length - 1] * 3]) < 1e-6 && Math.abs(P2[idx[0] * 3 + 1] - P2[idx[idx.length - 1] * 3 + 1]) < 1e-6) idx.pop();
+    const X = (i) => P2[i * 3], Y = (i) => P2[i * 3 + 1];
+    const cross = (a, b, c) => sg * ((X(b) - X(a)) * (Y(c) - Y(a)) - (Y(b) - Y(a)) * (X(c) - X(a)));
+    const same = (a, b) => Math.abs(X(a) - X(b)) < 1e-6 && Math.abs(Y(a) - Y(b)) < 1e-6;
+    const inside = (x, y) => {
+      let c = false;
+      for (let i = 0, j = n0 - 1; i < n0; j = i++) {
+        const xi = P2[i * 3], yi = P2[i * 3 + 1], xj = P2[j * 3], yj = P2[j * 3 + 1];
+        if (yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+      }
+      return c;
+    };
+    const eps = 1e-7;
     let guard = 0;
-    while (idx.length > 3 && guard++ < 400) {
+    while (idx.length > 3 && guard++ < 4 * n0 + 50) {
       let cut = false;
       for (let k = 0; k < idx.length; k++) {
         const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
-        const ax = P2[i0 * 3], ay = P2[i0 * 3 + 1], bx = P2[i1 * 3], by = P2[i1 * 3 + 1], cx = P2[i2 * 3], cy = P2[i2 * 3 + 1];
-        const cr = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
-        if (cr <= 1e-9) {
-          if (cr > -1e-9) {
-            idx.splice(k, 1);
-            cut = true;
-            break;
-          }
-          continue;
+        const cr = cross(i0, i1, i2);
+        if (Math.abs(cr) <= 1e-9) {
+          idx.splice(k, 1);
+          cut = true;
+          break;
         }
+        if (cr < 0) continue;
         let ok = true;
         for (const q of idx) {
-          if (q === i0 || q === i1 || q === i2) continue;
-          const px = P2[q * 3], py = P2[q * 3 + 1];
-          const d0 = (bx - ax) * (py - ay) - (by - ay) * (px - ax), d1 = (cx - bx) * (py - by) - (cy - by) * (px - bx), d2 = (ax - cx) * (py - cy) - (ay - cy) * (px - cx);
-          if (d0 > 1e-9 && d1 > 1e-9 && d2 > 1e-9) {
+          if (q === i0 || q === i1 || q === i2 || same(q, i0) || same(q, i1) || same(q, i2)) continue;
+          const d0 = cross(i0, i1, q), d1 = cross(i1, i2, q), d2 = cross(i2, i0, q);
+          if (d0 >= -eps && d1 >= -eps && d2 >= -eps) {
             ok = false;
             break;
           }
@@ -1487,7 +1532,15 @@
       }
       if (!cut) break;
     }
-    for (let k = 1; k + 1 < idx.length; k++) tri(idx[0], idx[k], idx[k + 1]);
+    if (idx.length === 3) {
+      if (cross(idx[0], idx[1], idx[2]) > 1e-9) tri(idx[0], idx[1], idx[2]);
+      return;
+    }
+    for (let k = 1; k + 1 < idx.length; k++) {
+      const a = idx[0], b = idx[k], c = idx[k + 1];
+      if (cross(a, b, c) <= 1e-9) continue;
+      if (inside((X(a) + X(b) + X(c)) / 3, (Y(a) + Y(b) + Y(c)) / 3)) tri(a, b, c);
+    }
   }
   var _A = [];
   var _B = [];
@@ -1851,6 +1904,100 @@
       }
     }
   }
+  var _sec = [];
+  function farBoxes(world2, list, k, reg, cx, cy, cz, out, minSize = 0) {
+    const real = reg && reg.real ? reg.real : null;
+    let mx = list[k], my = list[k + 1], a = list[k + 4];
+    const w = list[k + 2], d = list[k + 3], id = list[k + 14], cls = list[k + 6], seed = list[k + 13], mat = list[k + 12], rc = list[k + 15];
+    let measured2 = false;
+    if (real && id < real.n && real.off[id + 1] > real.off[id]) {
+      const o = real.base + real.off[id];
+      mx = reg.x0 + real.dv.getInt32(o + 4, true) * 0.01;
+      my = reg.y0 + real.dv.getInt32(o + 8, true) * 0.01;
+      a = real.dv.getInt16(o + 12, true) / 1e4;
+      measured2 = true;
+    }
+    const g = world2.groundH(mx, my, true), wg = world2.g;
+    if (wg.water && !measured2) return 0;
+    let cap = 1e9;
+    if (wg.deck > -1e8) {
+      cap = wg.deck - DECK_T - 0.8 - g;
+      if (cap < 2.6) return 0;
+    }
+    const ca = Math.cos(a), sa = Math.sin(a);
+    let gmin = g, gmax = g;
+    for (const [su, sv] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const hh = world2.groundH(mx + (ca * su * w - sa * sv * d) / 2, my + (sa * su * w + ca * sv * d) / 2, false);
+      if (hh < gmin) gmin = hh;
+      if (hh > gmax) gmax = hh;
+    }
+    gmax = Math.min(gmax, g + 2.5);
+    gmin = Math.max(gmin, g - 12);
+    const yb = Math.min(gmin - g, 0) - 0.6, y0 = clamp(gmax - g, 0, 2.5);
+    const boxes = _sec;
+    boxes.length = 0;
+    let parsed = false;
+    if (measured2 && cap > 1e8) {
+      const dv = real.dv, o = real.base + real.off[id];
+      const nv = dv.getUint8(o), ns = dv.getUint8(o + 1);
+      if (ns && nv >= 3) {
+        let p = o + 16 + nv * 4;
+        for (let s = 0; s < ns; s++) {
+          const x0 = dv.getInt16(p, true) * 0.025, v0 = dv.getInt16(p + 2, true) * 0.025, x1 = dv.getInt16(p + 4, true) * 0.025, v1 = dv.getInt16(p + 6, true) * 0.025;
+          const npl = dv.getUint8(p + 9);
+          p += 10;
+          const pl = [];
+          for (let q = 0; q < npl; q++, p += 6) pl.push(dv.getInt16(p, true) / 8192, dv.getInt16(p + 2, true) / 8192, dv.getInt16(p + 4, true) * 0.02);
+          if (x1 - x0 < 0.8 || v1 - v0 < 0.8 || !npl) continue;
+          const z = (u, v) => {
+            let h = Infinity;
+            for (let q = 0; q < pl.length; q += 3) h = Math.min(h, pl[q] * u + pl[q + 1] * v + pl[q + 2]);
+            return h;
+          };
+          const um = (x0 + x1) / 2, vm = (v0 + v1) / 2;
+          const zc = z(um, vm), zu0 = z(x0, vm), zu1 = z(x1, vm), zv0 = z(um, v0), zv1 = z(um, v1);
+          const corners = [z(x0, v0), z(x1, v0), z(x1, v1), z(x0, v1)];
+          const eave = Math.max(Math.min(...corners), 2);
+          const top = Math.max(zc, zu0, zu1, zv0, zv1, ...corners);
+          let rise = top - eave, along2 = 1;
+          if (rise < 1) {
+            boxes.push([um, vm, x1 - x0, v1 - v0, top, 0, 0]);
+            continue;
+          }
+          along2 = Math.abs(zc - (zu0 + zu1) / 2) >= Math.abs(zc - (zv0 + zv1) / 2) ? 1 : 0;
+          boxes.push([um, vm, x1 - x0, v1 - v0, eave, rise, along2 ? 0 : 1]);
+        }
+        parsed = boxes.length > 0;
+      }
+    }
+    if (!parsed) {
+      const roof = cap < 1e8 ? ROOF.FLAT : list[k + 7], wallH = cap < 1e8 ? Math.min(list[k + 5], cap - 0.6) : list[k + 5];
+      const r1 = h1(id, seed * 7 + 1);
+      const flat = roof === ROOF.FLAT;
+      const pitch = PITCH[cls] * (0.9 + 0.25 * r1) * (roof === ROOF.HIP ? 0.8 : 1);
+      const He = y0 + wallH;
+      if (cls === CLS.CANOPY) boxes.push([0, 0, w, d, He, 0, 0, He - 0.45]);
+      else boxes.push([0, 0, w, d, He, flat ? 0 : w / 2 * pitch, 0]);
+    }
+    if (minSize > 0) {
+      let big = 0;
+      for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
+      if (big < minSize) return 0;
+    }
+    const P2 = _p3a, B = _p3b;
+    cyl(mx, my, g, B);
+    for (const b of boxes) {
+      const [u, v, bw, bd, eave, rise, turn] = b;
+      const foot = b.length > 7 ? b[7] : yb;
+      const fx = mx + ca * u - sa * v, fy = my + sa * u + ca * v;
+      cyl(fx, fy, g + foot, P2);
+      const yaw = turn ? a + Math.PI / 2 : a, W = turn ? bd : bw, D2 = turn ? bw : bd;
+      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz);
+    }
+    return boxes.length;
+  }
+  var _p3a = new Float64Array(3);
+  var _p3b = new Float64Array(3);
   function buildHouseTile(world2, list, sel, cx, cy, cz, th, reg) {
     const real = reg && reg.real ? reg.real : null;
     const M = new Mesh();
@@ -2959,6 +3106,12 @@
   var tmp = new Float64Array(3);
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
+  var regionFails = /* @__PURE__ */ new Map();
+  var jobDegraded = false;
+  var postMessage = (m, t) => {
+    if (jobDegraded && m && (m.type === "chunk" || m.type === "scatter")) m.degraded = true;
+    self.postMessage(m, t || []);
+  };
   var NBI = null;
   var nbiReady = null;
   function init(m) {
@@ -3074,57 +3227,61 @@
     }
     return out;
   }
+  var fetchPart = (dir, rx, ry) => fetch(vurl("data/" + dir + "/" + rx + "_" + ry + ".png")).then((r) => {
+    if (!r.ok) throw new Error(dir + " " + rx + "_" + ry + " " + r.status);
+    return r.arrayBuffer();
+  }).then(decodePNG).then((p) => p.data);
+  async function readParts(reg, rx, ry, which) {
+    const missing = [];
+    for (const dir of which) {
+      try {
+        const e = await fetchPart(dir, rx, ry);
+        if (dir === "b3") reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
+        else if (dir === "g3") reg.ground = parseGround(e);
+        else if (dir === "t3") {
+          const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
+          const magic = dv.getUint32(0, true);
+          if (magic !== 860181076 && magic !== 876958292) throw new Error("bad tree file");
+          const T = dv.getUint32(4, true), n = dv.getUint32(8, true), cn = dv.getUint32(12, true), o1 = 16 + (T * T + 1) * 4, o2 = o1 + T * T + 3 & ~3, o3 = o2 + n * 4;
+          reg.trees = { T, off: new Uint32Array(e.buffer.slice(e.byteOffset + 16, e.byteOffset + o1)), mode: e.subarray(o1, o1 + T * T), rec: e.subarray(o2, o3), kinds: magic === 876958292 };
+          if (cn && e.length >= o3 + 2 * cn * cn) {
+            reg.trees.cn = cn;
+            reg.trees.cov = e.subarray(o3, o3 + cn * cn);
+            reg.trees.ch = e.subarray(o3 + cn * cn, o3 + 2 * cn * cn);
+          }
+        }
+      } catch (err) {
+        missing.push(dir);
+        postMessage({ type: "warn", message: dir + " " + rx + "_" + ry + ": " + String(err && err.message || err) });
+      }
+    }
+    if (missing.length) {
+      const n = reg.partial ? reg.partial.n + 1 : 1;
+      reg.partial = n >= 6 ? null : { which: missing, n, next: Date.now() + 1e3 * Math.min(60, 2 ** n) };
+    } else reg.partial = null;
+  }
   function ensureRegion(rx, ry) {
     const k = regionKey(rx, ry);
     if (world.regions.has(k) || !world.have.has(k)) return null;
+    const f = regionFails.get(k);
+    if (f && Date.now() < f.next) return null;
     let pr = pending.get(k);
     if (!pr) {
       pr = (async () => {
         try {
-          const name = rx + "_" + ry + ".png";
-          const get = (dir) => fetch(vurl("data/" + dir + "/" + name)).then((r) => {
-            if (!r.ok) throw new Error(dir + " " + name + " " + r.status);
-            return r.arrayBuffer();
-          }).then(decodePNG).then((p) => p.data);
-          const quiet = (dir, what) => get(dir).catch((err) => {
-            postMessage({ type: "warn", message: what + " " + rx + "_" + ry + ": " + String(err && err.message || err) });
-            return null;
-          });
-          const pB = measured.has(k) ? quiet("b3", "measured buildings") : null, pT = treeFiles.has(k) ? quiet("t3", "trees") : null, pG = groundFiles.has(k) ? quiet("g3", "ground") : null;
-          const d = await get("r2");
+          const d = await fetchPart("r2", rx, ry);
           const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry);
-          try {
-            const e = pB && await pB;
-            if (e) reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
-          } catch (err) {
-            postMessage({ type: "warn", message: "measured buildings " + rx + "_" + ry + ": " + String(err && err.message || err) });
-          }
-          try {
-            const e = pT && await pT;
-            if (e) {
-              const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
-              const magic = dv.getUint32(0, true);
-              if (magic !== 860181076 && magic !== 876958292) throw new Error("bad tree file");
-              const T = dv.getUint32(4, true), n = dv.getUint32(8, true), cn = dv.getUint32(12, true), o1 = 16 + (T * T + 1) * 4, o2 = o1 + T * T + 3 & ~3, o3 = o2 + n * 4;
-              reg.trees = { T, off: new Uint32Array(e.buffer.slice(e.byteOffset + 16, e.byteOffset + o1)), mode: e.subarray(o1, o1 + T * T), rec: e.subarray(o2, o3), kinds: magic === 876958292 };
-              if (cn && e.length >= o3 + 2 * cn * cn) {
-                reg.trees.cn = cn;
-                reg.trees.cov = e.subarray(o3, o3 + cn * cn);
-                reg.trees.ch = e.subarray(o3 + cn * cn, o3 + 2 * cn * cn);
-              }
-            }
-          } catch (err) {
-            postMessage({ type: "warn", message: "trees " + rx + "_" + ry + ": " + String(err && err.message || err) });
-          }
-          try {
-            const e = pG && await pG;
-            if (e) reg.ground = parseGround(e);
-          } catch (err) {
-            postMessage({ type: "warn", message: "ground " + rx + "_" + ry + ": " + String(err && err.message || err) });
-          }
+          const parts = [];
+          if (measured.has(k)) parts.push("b3");
+          if (treeFiles.has(k)) parts.push("t3");
+          if (groundFiles.has(k)) parts.push("g3");
+          await readParts(reg, rx, ry, parts);
           world.addRegion(rx, ry, reg);
+          regionFails.delete(k);
         } catch (err) {
-          world.addRegion(rx, ry, EMPTY_REGION);
+          const n = (f ? f.n : 0) + 1;
+          if (n >= 6) world.addRegion(rx, ry, EMPTY_REGION);
+          else regionFails.set(k, { n, next: Date.now() + 1e3 * Math.min(60, 2 ** n) });
           postMessage({ type: "warn", message: String(err && err.message || err) });
         }
         pending.delete(k);
@@ -3482,22 +3639,9 @@
     if (realBuildings) {
       const cs = RS / 32;
       const list = reg ? cellBuildings(reg, Math.round((mx0 - reg.x0) / cs), Math.round((my0 - reg.y0) / cs)) : null;
-      if (list) for (let k = 0; k < list.length; k += 16) {
-        const mx = list[k], my = list[k + 1];
-        const h = world.groundH(mx, my, true), g = world.g;
-        if (g.water) continue;
-        let wh = list[k + 5], pitched = list[k + 7] > 0 ? 1 : 0;
-        if (g.deck > -1e8) {
-          const cap = g.deck - DECK_T - 0.8 - h;
-          if (cap < 2.6) continue;
-          wh = Math.min(wh, cap - 0.6);
-          pitched = 0;
-        }
-        cyl(mx, my, h - 0.5, p32);
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, list[k + 4], list[k + 2], list[k + 3], wh + 0.5, pitched, list[k + 13], list[k + 6], list[k + 12], list[k + 15]);
-      }
+      if (list) for (let k = 0; k < list.length; k += 16) farBoxes(world, list, k, reg, cx, cy, cz, out);
       const arr2 = new Float32Array(out);
-      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 12 }, [arr2.buffer]);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 15 }, [arr2.buffer]);
       return;
     }
     const sp = 27, n = Math.round(s / sp), cell = s / n;
@@ -3608,10 +3752,15 @@
         return;
       }
       world.tick++;
+      jobDegraded = false;
       if (m.type === "scatter" || m.level >= 5) {
         const s2 = ROOT / (1 << m.level);
-        const pr = ensureRegion(Math.floor((m.ix + 0.5) * s2 / RS), Math.floor((m.iy + 0.5) * s2 / RS));
+        const rx = Math.floor((m.ix + 0.5) * s2 / RS), ry = Math.floor((m.iy + 0.5) * s2 / RS), k = regionKey(rx, ry);
+        const pr = ensureRegion(rx, ry);
         if (pr) await pr;
+        const reg = world.regions.get(k);
+        if (reg && reg.partial && Date.now() >= reg.partial.next) await readParts(reg, rx, ry, reg.partial.which);
+        jobDegraded = world.have.has(k) && (!reg || !!reg.partial);
       }
       const s = ROOT / (1 << m.level);
       if (m.type === "chunk" && m.level >= 6 && lcPacks.size) {
