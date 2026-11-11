@@ -47,3 +47,6 @@ data/source/GLHYMPS*
 
 # Python bytecode from the bake scripts
 __pycache__/
+
+# The O'Neill cylinder's 1 m land cover packs come from a fixed release before builds (scripts/prepare-oneill-assets.mjs).
+/public/games/oneill-massachusetts/data/lcp/

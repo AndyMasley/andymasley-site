@@ -15694,6 +15694,8 @@ uniform sampler2D uRoad;
 uniform sampler2D uRoadK;
 uniform sampler2D uCover2;
 uniform float uHasCover2;    // 1 when measured crop / evergreen / pasture shares are loaded
+uniform sampler2D uLc;       // NOAA C-CAP 2016 land cover, one ground kind per square metre (bake/c11_landcover.py)
+uniform float uHasLc;
 uniform float uRealRoads;    // 1 when every street is in the road data (no invented street pattern on distant towns)
 uniform sampler2D uWebMask;
 uniform float uHasRoad;
@@ -15851,12 +15853,39 @@ void main() {
   float marsh = smoothstep(0.3, 0.7, cov.a + (nB - 0.5) * 0.4);
   float steep = smoothstep(0.80, 0.62, dot(normalize(vNor), up));
 
+  // ---- the 1 m land cover, where this chunk has it: 1 paving, 2 lawn, 3 crops, 4 hay, 5 meadow, 6 broadleaf woods,
+  // 7 conifers, 8 mixed woods, 9 scrub, 10 wooded swamp, 11 shrub swamp, 12 marsh, 13 beach, 14 bare ground, 15 water,
+  // 16 and 17 lawn under a yard's broadleaf trees or conifers
+  float kLc = uHasLc * (1.0 - smoothstep(1500.0, 2600.0, dist));
+  int lc = 0;
+  if (kLc > 0.0) {
+    // a nudge of up to half a metre breaks the square metres into ragged edges close up
+    vec2 jit = (vec2(vnoise(m * 0.83 + 17.3), vnoise(m * 0.83 + 71.1)) - 0.5) * 1.1 * (1.0 - smoothstep(0.8, 2.5, fp));
+    lc = int(texture2D(uLc, (vLoc + jit) / uSize).r * 255.0 + 0.5);
+    if (lc == 0) kLc = 0.0;
+  }
+  float lcPave = 0.0, lcSoil = 0.0, lcWater = 0.0, lcConc = 0.0;
+  if (kLc > 0.0) {
+    float fF = (lc >= 6 && lc <= 8) || lc == 10 ? 1.0 : (lc == 9 || lc == 11) ? 0.55 : 0.0;
+    forest = mix(forest, fF, kLc);
+    sand = mix(sand, lc == 13 ? 1.0 : 0.0, kLc);
+    marsh = mix(marsh, (lc == 11 || lc == 12) ? 1.0 : 0.0, kLc);
+    lcPave = lc == 1 ? kLc : 0.0;
+    lcSoil = (lc == 14 ? 1.0 : 0.0) * kLc;
+    lcWater = lc == 15 ? kLc : 0.0;
+    lcConc = smoothstep(0.42, 0.62, vnoise(m / 9.0 + 5.1)) * 0.6;          // some lots and walks are concrete
+  }
+
   // forest: canopy seen from afar, leaf litter underfoot (the trees themselves are geometry nearby)
   float conif = uHasCover2 > 0.5 ? cov2.g : clamp(0.22 + 0.4 * smoothstep(380.0, 850.0, h) + 0.45 * cov.b, 0.0, 1.0);
+  if (kLc > 0.0) conif = mix(conif, lc == 7 ? 0.95 : lc == 8 ? 0.5 : lc == 10 ? 0.35 : 0.04, kLc);
   float cmix = smoothstep(conif - 0.25, conif + 0.25, mix(0.5, vnoise(m / 37.0), 1.0 - smoothstep(14.0, 37.0, fp)));
   vec3 canopy = mix(vec3(0.016, 0.036, 0.018), vec3(0.030, 0.064, 0.018), cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
   vec3 litter = mix(vec3(0.060, 0.047, 0.027), vec3(0.045, 0.058, 0.022), nB) * (0.8 + 0.4 * nC);
-  vec3 forestCol = mix(litter, canopy, smoothstep(350.0, 2200.0, dist));
+  if (kLc > 0.0) litter = mix(litter, mix(vec3(0.050, 0.036, 0.022), vec3(0.040, 0.044, 0.020), nB) * (0.8 + 0.4 * nC), (lc == 7 ? 1.0 : lc == 8 ? 0.5 : 0.0) * kLc);   // needles under pines
+  // from above the treetops the woods are their canopy, with shade in its gaps, not the litter under it
+  float overTrees = smoothstep(18.0, 60.0, -dot(vRel, up));
+  vec3 forestCol = mix(litter, canopy, max(smoothstep(350.0, 2200.0, dist), 0.9 * overTrees));
 
   // open land: lawns and pasture, with field parcels in the valleys
   vec2 pc = m / 190.0 + vec2(vnoise(m / 400.0), vnoise(m / 400.0 + 31.7)) * 1.4;
@@ -15886,11 +15915,30 @@ void main() {
   vec3 devCol = mix(devNear, devFar, farDev);
   float devMask = smoothstep(0.12, 0.5, dev + (nB - 0.5) * 0.25);
 
+  if (kLc > 0.0) {
+    vec3 lawnC = mix(vec3(0.052, 0.098, 0.024), vec3(0.072, 0.116, 0.030), nB) * (0.88 + 0.24 * nC);
+    vec3 hayC = mix(vec3(0.082, 0.118, 0.032), vec3(0.112, 0.128, 0.040), nB) * (0.88 + 0.24 * nC);
+    vec3 meadowC = mix(vec3(0.098, 0.112, 0.040), vec3(0.130, 0.126, 0.050), nB) * (0.88 + 0.24 * nC);
+    // summer cropland: most fields green with their crop, some tilled or cut, a few ripe (by a hash, not by field)
+    vec3 cropC = parcel < 0.62 ? mix(vec3(0.056, 0.104, 0.026), vec3(0.078, 0.122, 0.030), nB)
+               : parcel < 0.86 ? mix(vec3(0.100, 0.076, 0.046), vec3(0.122, 0.094, 0.055), nB)
+               : mix(vec3(0.165, 0.140, 0.066), vec3(0.185, 0.155, 0.075), nB);
+    vec3 fc = lc == 2 ? lawnC : lc == 16 ? lawnC * vec3(0.80, 0.82, 0.78) : lc == 17 ? lawnC * vec3(0.84, 0.78, 0.70) : lc == 3 ? cropC * (0.9 + 0.2 * nC) : lc == 4 ? hayC : lc == 5 ? meadowC : fieldCol;
+    fieldCol = mix(fieldCol, fc, kLc);
+    devMask *= 1.0 - kLc;                      // the 1 m data says where the paving is
+  }
   vec3 land = mix(fieldCol, forestCol, forest);
   land = mix(land, devCol, devMask * (1.0 - 0.55 * forest * (1.0 - dev)));
   land = mix(land, vec3(0.115, 0.125, 0.045) * (0.8 + 0.4 * nB), marsh * (1.0 - devMask));
   land = mix(land, vec3(0.50, 0.43, 0.29) * (0.9 + 0.2 * nC), sand);
   land = mix(land, vec3(0.15, 0.14, 0.13) * (0.8 + 0.4 * nB), steep * 0.8);
+  if (kLc > 0.0) {
+    vec3 lotC = mix(vec3(0.060, 0.060, 0.062), vec3(0.185, 0.180, 0.170), lcConc) * (0.85 + 0.3 * nB);
+    land = mix(land, lotC, lcPave);
+    land = mix(land, vec3(0.16, 0.13, 0.085) * (0.85 + 0.3 * nB), lcSoil);
+    // ponds and brooks too small for the water map, where the ground is level
+    water = max(water, lcWater * smoothstep(0.965, 0.992, dot(normalize(vNor), up)) * (1.0 - clamp(onRoadGeom * 3.0, 0.0, 1.0)));
+  }
   // wet margin and a pale strand right at the waterline
   land = mix(land, vec3(0.30, 0.27, 0.20), (1.0 - smoothstep(0.0, 14.0, sdf)) * 0.55);
 
@@ -15917,6 +15965,8 @@ void main() {
     vec3 det = mix(dG, dF, forest * (1.0 - 0.6 * devMask));
     det = mix(det, vec3(1.0), max(sand, steep * 0.8));
     det = mix(det, dS, max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
+    det = mix(det, dS, lcSoil);
+    det = mix(det, mix(dA, dC, lcConc), lcPave);
     det = mix(det, dA, paved * (1.0 - dirt));
     det = mix(det, dC, max(walk, kerb));
     det = mix(det, vec3(1.0), mark);
@@ -15933,7 +15983,7 @@ void main() {
   // ---- light
   vec3 N = normalize(vNor);
   if (forest > 0.3 && paved < 0.5) {      // canopy texture: bumpy from afar
-    float bs = smoothstep(300.0, 1500.0, dist) * forest * (1.0 - devMask);
+    float bs = max(smoothstep(300.0, 1500.0, dist), 0.7 * overTrees) * forest * (1.0 - devMask);
     vec2 g = (vec2(vnoise(m / 14.0 + 3.3) - 0.5, vnoise(m / 14.0 + 71.9) - 0.5) * (1.0 - smoothstep(5.0, 14.0, fp))
             + 0.6 * vec2(vnoise(m / 55.0) - 0.5, vnoise(m / 55.0 + 9.1) - 0.5) * (1.0 - smoothstep(20.0, 55.0, fp)));
     N = normalize(N + (east * g.x + north * g.y) * (1.1 * bs));
@@ -17334,6 +17384,14 @@ void main() {
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
       }
+      let lcTex = null;
+      if (m.lc) {
+        lcTex = new an(m.lc, m.lcN, m.lcN, Rl, cn);
+        lcTex.magFilter = lcTex.minFilter = Te;
+        lcTex.wrapS = lcTex.wrapT = rn;
+        lcTex.unpackAlignment = 1;
+        lcTex.needsUpdate = true;
+      }
       const U = this.U;
       const mat = new Rn({
         vertexShader: TERRAIN_VS,
@@ -17348,7 +17406,9 @@ void main() {
           uHasRoad: { value: roadTex ? 1 : 0 },
           uRoad: { value: roadTex || this.dummyRoad },
           uRoadK: { value: roadKTex || this.dummyK },
-          uRoadT: { value: m.roadT }
+          uRoadT: { value: m.roadT },
+          uHasLc: { value: lcTex ? 1 : 0 },
+          uLc: { value: lcTex || this.dummyK }
         })
       });
       const mesh = new Ce(g, mat);
@@ -17360,6 +17420,7 @@ void main() {
       c.center = m.center;
       c.roadTex = roadTex;
       c.roadKTex = roadKTex;
+      c.lcTex = lcTex;
       c.hmin = m.hmin;
       c.hmax = m.hmax;
       c.sea = m.sea;
@@ -17480,6 +17541,7 @@ void main() {
         c.mesh.material.dispose();
         if (c.roadTex) c.roadTex.dispose();
         if (c.roadKTex) c.roadKTex.dispose();
+        if (c.lcTex) c.lcTex.dispose();
         this.chunks.delete(k);
       }
     }

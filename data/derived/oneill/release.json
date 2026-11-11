@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "tag": "oneill-lcp-2026-11-10-f557fc6f60b8",
+  "directory": "lcp",
+  "manifestSha256": "f557fc6f60b8b32fe82359ca0eb8ddf982c357000493c926165ba3297c7de504",
+  "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lcp-2026-11-10-f557fc6f60b8/oneill-lcp-f557fc6f60b8.tar",
+  "archiveSha256": "6ad0e66a0bfbb975b700b8298e82aa544b9aa816b1526b5d8e54c616ab416cd8",
+  "archiveBytes": 1257922560,
+  "files": 415,
+  "expandedBytes": 1257561507
+}

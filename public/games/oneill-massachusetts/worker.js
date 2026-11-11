@@ -2255,6 +2255,15 @@
   var measured = /* @__PURE__ */ new Set();
   var treeFiles = /* @__PURE__ */ new Set();
   var groundFiles = /* @__PURE__ */ new Set();
+  var lcPacks = /* @__PURE__ */ new Set();
+  var LCP = 8192;
+  var LCQ = 2048;
+  var packCache = /* @__PURE__ */ new Map();
+  var packPending = /* @__PURE__ */ new Map();
+  var quadCache = [/* @__PURE__ */ new Map(), /* @__PURE__ */ new Map()];
+  var quadPending = /* @__PURE__ */ new Map();
+  var PACK_KEEP = 6;
+  var QUAD_KEEP = [8, 5];
   var tmp = new Float64Array(3);
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
@@ -2271,7 +2280,92 @@
     treeFiles = new Set(meta.tiles && meta.tiles.trees ? meta.tiles.trees : []);
     groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
     setDecks(meta.tiles && meta.tiles.decks);
+    lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
+    LCP = meta.lcPack || 8192;
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
+  }
+  function trim(map, keep) {
+    if (map.size <= keep) return;
+    const old = [...map.entries()].sort((a, b) => a[1].last - b[1].last);
+    for (let n = 0; n < old.length - keep; n++) map.delete(old[n][0]);
+  }
+  function ensurePack(I, J) {
+    const k = J * 1024 + I;
+    const c = packCache.get(k);
+    if (c) {
+      c.last = world.tick;
+      return Promise.resolve(c);
+    }
+    let pr = packPending.get(k);
+    if (!pr) {
+      pr = fetch("data/lcp/" + I + "_" + J + ".bin").then((r) => {
+        if (!r.ok) throw new Error("lcp " + I + "_" + J + " " + r.status);
+        return r.arrayBuffer();
+      }).then((buf) => {
+        const dv = new DataView(buf);
+        if (dv.getUint32(0, true) !== 827343692 || dv.getUint32(4, true) !== 2 || dv.getUint32(8, true) !== LCQ) throw new Error("lcp " + I + "_" + J + " is not a land cover pack");
+        const n = dv.getUint32(12, true), off = new Uint32Array(n), len = new Uint32Array(n);
+        for (let q = 0; q < n; q++) {
+          off[q] = dv.getUint32(16 + q * 8, true);
+          len[q] = dv.getUint32(20 + q * 8, true);
+        }
+        const p = { buf, off, len, last: world.tick };
+        packCache.set(k, p);
+        trim(packCache, PACK_KEEP);
+        return p;
+      }).finally(() => packPending.delete(k));
+      packPending.set(k, pr);
+    }
+    return pr;
+  }
+  function ensureQuad(t, I, J, q) {
+    const k = (J * 1024 + I) * 32 + q;
+    const c = quadCache[t].get(k);
+    if (c) {
+      c.last = world.tick;
+      return null;
+    }
+    let pr = quadPending.get(k);
+    if (!pr) {
+      pr = ensurePack(I, J).then((p) => p.len[q] ? decodePNG(p.buf.slice(p.off[q], p.off[q] + p.len[q])).then((img) => img.data) : null).then((data) => {
+        quadCache[t].set(k, { data, last: world.tick });
+      }).catch((err) => {
+        quadCache[t].set(k, { data: null, last: world.tick });
+        postMessage({ type: "warn", message: "land cover: " + String(err && err.message || err) });
+      }).finally(() => {
+        quadPending.delete(k);
+        trim(quadCache[t], QUAD_KEEP[t]);
+      });
+      quadPending.set(k, pr);
+    }
+    return pr;
+  }
+  function quadKey(mx, my, t) {
+    const side = t ? 4096 : 2048, per = LCP / side;
+    const gx = Math.floor(mx / side), gy = Math.floor(my / side), I = Math.floor(gx / per), J = Math.floor(gy / per);
+    if (!lcPacks.has(J * 1024 + I)) return -1;
+    const qx = gx - I * per, qy = gy - J * per;
+    return (J * 1024 + I) * 32 + (t ? 16 + qx + 2 * qy : qx + 4 * qy);
+  }
+  function lcAt(mx, my, t = 0) {
+    const k = quadKey(mx, my, t);
+    if (k < 0) return -1;
+    const c = quadCache[t].get(k);
+    if (!c || !c.data) return -1;
+    const side = t ? 4096 : 2048, res = side / LCQ;
+    const x0 = Math.floor(mx / side) * side, y0 = Math.floor(my / side) * side;
+    return c.data[Math.floor((my - y0) / res) * LCQ + Math.floor((mx - x0) / res)];
+  }
+  function lcPromises(mx0, my0, s, t) {
+    const out = [], side = t ? 4096 : 2048, per = LCP / side;
+    for (let gy = Math.floor(my0 / side); gy <= Math.floor((my0 + s - 1e-6) / side); gy++) for (let gx = Math.floor(mx0 / side); gx <= Math.floor((mx0 + s - 1e-6) / side); gx++) {
+      const I = Math.floor(gx / per), J = Math.floor(gy / per);
+      if (!lcPacks.has(J * 1024 + I)) continue;
+      const qx = gx - I * per, qy = gy - J * per;
+      const pr = ensureQuad(t, I, J, t ? 16 + qx + 2 * qy : qx + 4 * qy);
+      if (pr) out.push(pr);
+    }
+    return out;
   }
   function ensureRegion(rx, ry) {
     const k = regionKey(rx, ry);
@@ -2302,9 +2396,10 @@
             const e = pT && await pT;
             if (e) {
               const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
-              if (dv.getUint32(0, true) !== 860181076) throw new Error("bad tree file");
+              const magic = dv.getUint32(0, true);
+              if (magic !== 860181076 && magic !== 876958292) throw new Error("bad tree file");
               const T = dv.getUint32(4, true), n = dv.getUint32(8, true), cn = dv.getUint32(12, true), o1 = 16 + (T * T + 1) * 4, o2 = o1 + T * T + 3 & ~3, o3 = o2 + n * 4;
-              reg.trees = { T, off: new Uint32Array(e.buffer.slice(e.byteOffset + 16, e.byteOffset + o1)), mode: e.subarray(o1, o1 + T * T), rec: e.subarray(o2, o3) };
+              reg.trees = { T, off: new Uint32Array(e.buffer.slice(e.byteOffset + 16, e.byteOffset + o1)), mode: e.subarray(o1, o1 + T * T), rec: e.subarray(o2, o3), kinds: magic === 876958292 };
               if (cn && e.length >= o3 + 2 * cn * cn) {
                 reg.trees.cn = cn;
                 reg.trees.cov = e.subarray(o3, o3 + cn * cn);
@@ -2462,9 +2557,41 @@
         roadK = kind;
       }
     }
-    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, size: s, mx0, my0 };
+    let lc = null, lcN = 0;
+    if (lcPacks.size && level >= 6 && !sea) {
+      const t = level >= 7 ? 0 : 1, side = t ? 4096 : 2048, res2 = side / LCQ;
+      lcN = level >= 7 ? Math.min(368, Math.round(s)) : 368;
+      const px = s / lcN;
+      lc = new Uint8Array(lcN * lcN);
+      let any = false, tk = -2, td = null, x0 = 0, y0 = 0;
+      for (let b = 0; b < lcN; b++) {
+        const my = my0 + (b + 0.5) * px;
+        for (let a = 0; a < lcN; a++) {
+          const mx = mx0 + (a + 0.5) * px, k = quadKey(mx, my, t);
+          if (k !== tk) {
+            tk = k;
+            const c = k >= 0 ? quadCache[t].get(k) : null;
+            td = c ? c.data : null;
+            x0 = Math.floor(mx / side) * side;
+            y0 = Math.floor(my / side) * side;
+          }
+          if (!td) continue;
+          const v2 = td[Math.floor((my - y0) / res2) * LCQ + Math.floor((mx - x0) / res2)];
+          if (v2) {
+            lc[b * lcN + a] = v2;
+            any = true;
+          }
+        }
+      }
+      if (!any) {
+        lc = null;
+        lcN = 0;
+      }
+    }
+    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, lc, lcN, size: s, mx0, my0 };
     const tr = [pos.buffer, nor.buffer, loc.buffer];
     if (road) tr.push(road.buffer, roadK.buffer);
+    if (lc) tr.push(lc.buffer);
     postMessage(res, tr);
   }
   function genScatter(q) {
@@ -2516,6 +2643,10 @@
         let p;
         if (kind === "trees") p = world.cover2 || seen ? forest * 0.95 : forest * 0.9 + (1 - forest) * (0.03 + 0.1 * dev);
         else p = smoothstep(0.35, 0.8, forest);
+        const lcv = kind === "trees" ? lcAt(mx, my) : -1;
+        if (lcv >= 0) {
+          p = lcv >= 6 && lcv <= 8 || lcv === 10 ? 0.92 : lcv === 9 || lcv === 11 || lcv === 16 || lcv === 17 ? 0.45 : 0;
+        }
         if (r3 > p) continue;
         if (seen && tall < 2.5) continue;
         if (world.sdfAt(mx, my) < (kind === "trees" ? 5 : 22)) continue;
@@ -2537,7 +2668,8 @@
           }
           if (hit) continue;
         }
-        const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
+        let pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
+        if (lcv >= 0) pc = lcv === 7 || lcv === 17 ? 0.97 : lcv === 8 ? 0.5 : lcv === 10 ? 0.35 : lcv === 6 || lcv === 16 ? 0.03 : pc;
         const conifer = r4 < pc ? 1 : 0;
         cyl(mx, my, h, p32);
         const sc = seen && kind === "trees" ? clamp(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / TREE_H[conifer], 0.25, 2.9) : 0.75 + 0.65 * hash2(gi + 3, gj + 29);
@@ -2559,7 +2691,7 @@
           const gi = Math.round(mx * 2), gj = Math.round(my * 2);
           const sand = world.coverBilinear(mx, my, 2);
           const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
-          const conifer = hash2(gi + 91, gj + 17) < pc ? 1 : 0;
+          const conifer = tr.kinds ? tr.rec[q2 * 4 + 3] >> 7 : hash2(gi + 91, gj + 17) < pc ? 1 : 0;
           cyl(mx, my, h, p32);
           out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, clamp(tall / (conifer ? TREE_H[1] : TREE_H[0]), 0.22, 2.9), hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832, conifer, hash2(gi + 57, gj + 5));
           order.push(hash2(gi * 13 + 1, gj * 17 + 5));
@@ -2725,6 +2857,13 @@
         if (pr) await pr;
       }
       const s = ROOT / (1 << m.level);
+      if (m.type === "chunk" && m.level >= 6 && lcPacks.size) {
+        for (let tries = 0; tries < 4; tries++) {
+          const prs = lcPromises(m.ix * s, m.iy * s, s, m.level >= 7 ? 0 : 1);
+          if (!prs.length) break;
+          await Promise.all(prs);
+        }
+      }
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);
