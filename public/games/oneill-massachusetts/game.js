@@ -14833,6 +14833,7 @@ void main() {
   var RCELL = 128;
   var RREG = 72;
   var DECK_T = 0.95;
+  var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -15209,7 +15210,8 @@ void main() {
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
       if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 1e9;
       const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
-      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9;
+      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9, bpr = 99;
+      const rCls = reg.rCls;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi2 = items[q], ri3 = segR[pi2], en2 = rEnd[ri3];
         if (rTun[ri3] ? !tun : tun || en2 !== 0 !== deck) continue;
@@ -15228,7 +15230,11 @@ void main() {
           if (on2 ? bon && (zz < bz - 1 || zz <= bz + 1 && edge >= best) : bon || edge >= best) continue;
           bon = on2;
           bz = zz;
-        } else if (edge >= best) continue;
+        } else {
+          const pr2 = edge < 0 ? ROAD_RANK[rCls[ri3]] : 99;
+          if (pr2 > bpr || pr2 === bpr && edge >= best) continue;
+          bpr = pr2;
+        }
         best = edge;
         bi2 = pi2;
         bt2 = t;
@@ -15246,6 +15252,28 @@ void main() {
       o.s = reg.cum[bi2] + len * bt2;
       o.tx = dx2 * il;
       o.ty = dy2 * il;
+      return best;
+    }
+    // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
+    // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
+    outrankedBy(mx2, my2) {
+      const nr2 = this._nr, reg = nr2.reg;
+      if (!reg || nr2.road < 0) return 1e9;
+      const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
+      const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+      if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 1e9;
+      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const mine = ROAD_RANK[rCls[nr2.road]];
+      let best = 1e9;
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi2 = items[q], ri2 = segR[pi2];
+        if (ri2 === nr2.road || reg.rEnd[ri2] || reg.rTun[ri2] || ROAD_RANK[rCls[ri2]] >= mine) continue;
+        const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+        let t = l2 > 0 ? ((lx2 - ax2) * dx2 + (ly2 - ay2) * dy2) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const edge = Math.hypot(lx2 - ax2 - dx2 * t, ly2 - ay2 - dy2 * t) - rHw[ri2];
+        if (edge < best) best = edge;
+      }
       return best;
     }
     // Every road passing within rad of (mx,my), from that point's region: out gets [road, distance along it, tx, ty, d]
@@ -15985,12 +16013,24 @@ void main() {
   const vec3 yellow = vec3(0.78, 0.55, 0.06), white = vec3(0.82);
   if (uHasRoad > 0.5) {
     vec2 ruv = vLoc / uSize * ((uRoadT - 1.0) / uRoadT) + 0.5 / uRoadT;
-    vec4 rf = texture2D(uRoad, ruv);
+    // filtered by hand: of the four texels round the point only those of the same road as the nearest one count, so
+    // where one road gives way to another (a ramp at its gore, a side street at a main road) nothing is made up
+    // between them (blending one road's distances with another's drew false lines along the join)
+    vec2 rst = ruv * uRoadT - 0.5;
+    vec2 rf0 = floor(rst), rfr = rst - rf0;
+    ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
+    vec4 r00 = texelFetch(uRoad, clamp(rb, ivec2(0), rmx), 0), r10 = texelFetch(uRoad, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0);
+    vec4 r01 = texelFetch(uRoad, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0), r11 = texelFetch(uRoad, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0);
+    vec4 rref = rfr.y < 0.5 ? (rfr.x < 0.5 ? r00 : r10) : (rfr.x < 0.5 ? r01 : r11);
+    vec4 rw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+    rw *= vec4(step(abs(r00.g - rref.g), 0.004), step(abs(r10.g - rref.g), 0.004), step(abs(r01.g - rref.g), 0.004), step(abs(r11.g - rref.g), 0.004));
+    vec4 rf = (r00 * rw.x + r10 * rw.y + r01 * rw.z + r11 * rw.w) / max(rw.x + rw.y + rw.z + rw.w, 1e-4);
     float ts = rf.r, dc = abs(ts), hw = rf.g;          // ts: metres right (+) or left (-) of the centre line
     if (hw > 0.5) {
       int kd = int(texture2D(uRoadK, ruv).r * 255.0 + 0.5);
       int style = kd & 3;
       float nl = float((kd >> 2) & 7);
+      float keepEdge = 1.0 - float((kd >> 7) & 1);      // 0 where this road gives way to a bigger one beside it
       dirt = float((kd >> 5) & 1);
       float aa = max(fwidth(dc), 0.03);
       float edge = dc - hw;
@@ -16020,7 +16060,7 @@ void main() {
         // two-way: double yellow down the middle, white edge lines, dashes between lanes going the same way
         float sh = clamp(hw - nl * 3.5, 0.25, 3.0);     // 3.5 m lanes; what is left over is shoulder
         float yl = max(band(dc, 0.0, 0.26, la) - band(dc, 0.0, 0.085, la), 0.0);
-        float wl = band(dc, hw - sh, lw, la);
+        float wl = band(dc, hw - sh, lw, la) * keepEdge;
         float dl = 0.0;
         for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl) dl = max(dl, band(dc, 3.5 * k, lw, la)); }
         dl *= dash;
@@ -16029,8 +16069,8 @@ void main() {
       } else if (style == 2) {
         // one carriageway: yellow on its left edge, white on its right, dashes between lanes
         float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
-        float yl = band(ts, -(hw - sh), lw, la);
-        float wl = band(ts, hw - sh, lw, la);
+        float yl = band(ts, -(hw - sh), lw, la) * keepEdge;
+        float wl = band(ts, hw - sh, lw, la) * keepEdge;
         float dl = 0.0;
         for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl) dl = max(dl, band(ts, 3.5 * k - (hw - sh), lw, la)); }
         dl *= dash;

@@ -95,6 +95,7 @@
   var RCELL = 128;
   var RREG = 72;
   var DECK_T = 0.95;
+  var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -497,7 +498,8 @@
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
       const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
-      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9;
+      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99;
+      const rCls = reg.rCls;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
         if (rTun[ri2] ? !tun : tun || en !== 0 !== deck) continue;
@@ -516,7 +518,11 @@
           if (on ? bon && (zz < bz - 1 || zz <= bz + 1 && edge >= best) : bon || edge >= best) continue;
           bon = on;
           bz = zz;
-        } else if (edge >= best) continue;
+        } else {
+          const pr = edge < 0 ? ROAD_RANK[rCls[ri2]] : 99;
+          if (pr > bpr || pr === bpr && edge >= best) continue;
+          bpr = pr;
+        }
         best = edge;
         bi = pi;
         bt = t;
@@ -534,6 +540,28 @@
       o.s = reg.cum[bi] + len * bt;
       o.tx = dx * il;
       o.ty = dy * il;
+      return best;
+    }
+    // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
+    // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
+    outrankedBy(mx, my) {
+      const nr = this._nr, reg = nr.reg;
+      if (!reg || nr.road < 0) return 1e9;
+      const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
+      const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+      if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
+      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const mine = ROAD_RANK[rCls[nr.road]];
+      let best = 1e9;
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi = items[q], ri = segR[pi];
+        if (ri === nr.road || reg.rEnd[ri] || reg.rTun[ri] || ROAD_RANK[rCls[ri]] >= mine) continue;
+        const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+        let t = l2 > 0 ? ((lx - ax) * dx + (ly - ay) * dy) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const edge = Math.hypot(lx - ax - dx * t, ly - ay - dy * t) - rHw[ri];
+        if (edge < best) best = edge;
+      }
       return best;
     }
     // Every road passing within rad of (mx,my), from that point's region: out gets [road, distance along it, tx, ty, d]
@@ -3238,6 +3266,7 @@
             data[k + 2] = toHalf(Math.cos(ph));
             data[k + 3] = toHalf(Math.sin(ph));
             kind[b * T + a] = roadKind(nr.reg, nr.road);
+            if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[b * T + a] |= 128;
             any = true;
           } else {
             data[k] = far;
