@@ -1979,11 +1979,10 @@
       if (cls === CLS.CANOPY) boxes.push([0, 0, w, d, He, 0, 0, He - 0.45]);
       else boxes.push([0, 0, w, d, He, flat ? 0 : w / 2 * pitch, 0]);
     }
-    if (minSize > 0) {
-      let big = 0;
-      for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
-      if (big < minSize) return 0;
-    }
+    let big = 0;
+    for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
+    if (minSize > 0 && big < minSize) return 0;
+    const mul = clamp(0.3 + big * 0.025, 0.45, 1);
     const P2 = _p3a, B = _p3b;
     cyl(mx, my, g, B);
     for (const b of boxes) {
@@ -1992,7 +1991,7 @@
       const fx = mx + ca * u - sa * v, fy = my + sa * u + ca * v;
       cyl(fx, fy, g + foot, P2);
       const yaw = turn ? a + Math.PI / 2 : a, W = turn ? bd : bw, D2 = turn ? bw : bd;
-      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz);
+      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul);
     }
     return boxes.length;
   }
@@ -3641,7 +3640,7 @@
       const list = reg ? cellBuildings(reg, Math.round((mx0 - reg.x0) / cs), Math.round((my0 - reg.y0) / cs)) : null;
       if (list) for (let k = 0; k < list.length; k += 16) farBoxes(world, list, k, reg, cx, cy, cz, out);
       const arr2 = new Float32Array(out);
-      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 15 }, [arr2.buffer]);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 16 }, [arr2.buffer]);
       return;
     }
     const sp = 27, n = Math.round(s / sp), cell = s / n;

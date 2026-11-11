@@ -16494,8 +16494,14 @@ void main() {
       float wall = 1.0 - abs(dot(N, up));
       vec2 q = vec2(dot(vObj, vec3(1.0, 0.0, 1.0)) * 0.5, vObj.y) ;
       vec2 cell = vec2(vAux * 0.31 + 0.9, 1.0);
-      vec2 g = fract(vec2(q.x / 3.1, q.y / 3.3) * cell);
+      vec2 gq = vec2(q.x / 3.1, q.y / 3.3) * cell;
+      vec2 g = fract(gq);
       float win = step(0.22, g.x) * step(g.x, 0.78) * step(0.28, g.y) * step(g.y, 0.78) * wall;
+      // far off, where a window is smaller than a pixel, the grid gives way to its average: a lit wall glows evenly
+      // instead of shimmering
+      vec2 fw = fwidth(gq);
+      float aa = smoothstep(0.3, 0.8, max(fw.x, fw.y));
+      win = mix(win, 0.28 * wall, aa);
       if (vStyle > -0.5) {
         // real footprints: the colours of the detailed house (vCol), a tar or membrane top on flat roofs (vCol2)
         win *= (1.0 - vStyle) * smoothstep(0.5, 0.8, wall);
@@ -16504,7 +16510,7 @@ void main() {
       alb = mix(alb, vec3(0.03, 0.04, 0.05), win * 0.75);
       float lum = dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6;
       float dark = (1.0 - smoothstep(0.035, 0.16, lum)) * uLights;
-      float lit = step(0.55, hash2(ivec2(floor(vec2(q.x / 3.1, q.y / 3.3) * cell)) + ivec2(int(vAux * 977.0), 3)));
+      float lit = mix(step(0.55, hash2(ivec2(floor(gq)) + ivec2(int(vAux * 977.0), 3))), 0.45, aa);
       emis = vec3(1.0, 0.72, 0.38) * win * lit * dark * 0.9;
     }
     if (uKind > 3.5) emis = vCol * (0.6 + 2.2 * (1.0 - smoothstep(0.03, 0.2, dot(sunE, vec3(0.33)) * max(dot(up, Ld), 0.0))));
@@ -18210,7 +18216,6 @@ void main() {
           if (t.show) {
             t.d = Math.hypot(t.mid[0] - camC[0], t.mid[1] - camC[1], t.mid[2] - camC[2]);
             vis.push(t);
-            if (t.sorted) t.mesh.count = Math.max(1, Math.ceil(t.n * clamp(1.45 - t.d / 1100, 0.3, 1)));
             if (t.kind === "trees") {
               const near2 = !!t.geoNear && t.d < this.leafR + (t.near ? 14 : 0);
               if (t.geoNear && near2 !== t.near) {
@@ -18315,7 +18320,7 @@ void main() {
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
-      const cenA = m.kind === "buildings" && st >= 15 ? new Float32Array(n * 3) : null;
+      const cenA = m.kind === "buildings" && st >= 15 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S = new C(), Y = new C(0, 1, 0);
       let rad = 0;
       const lp2 = new Float32Array(n * 3), mid = new C();
@@ -18342,9 +18347,10 @@ void main() {
           }
           if (cenA) {
             const C3 = new C(d[o + 12], d[o + 13], d[o + 14]).applyMatrix4(inv);
-            cenA[i * 3] = C3.x;
-            cenA[i * 3 + 1] = C3.y;
-            cenA[i * 3 + 2] = C3.z;
+            cenA[i * 4] = C3.x;
+            cenA[i * 4 + 1] = C3.y;
+            cenA[i * 4 + 2] = C3.z;
+            cenA[i * 4 + 3] = st >= 16 ? d[o + 15] : 1;
           }
         } else if (m.kind === "poles") {
           Q.setFromAxisAngle(Y, d[o + 3]);
@@ -18373,7 +18379,7 @@ void main() {
       const ia2 = new vi(inst, 4);
       g2.setAttribute("aInst", ia2);
       if (roofA) g2.setAttribute("aRoof", new vi(roofA, 4));
-      if (cenA) g2.setAttribute("aCen", new vi(cenA, 3));
+      if (cenA) g2.setAttribute("aCen", new vi(cenA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
       if (m.kind === "trees" && this.leafGeo) {
@@ -18414,7 +18420,12 @@ attribute float aPart;
 attribute vec4 aInst;      // trees: tint, species.  buildings: seed, roof rise (m), cladding, class
 #ifdef BLD
 attribute vec4 aRoof;      // the roof's colour from the aerial (sRGB), w 2 where there is one
-attribute vec3 aCen;       // the building's origin (tile frame): a box and the detailed model switch at its distance
+attribute vec4 aCen;       // the building's origin (tile frame): a box and the detailed model switch at its distance;
+                           // w: the share of the tiles' reach it shows to (its size)
+#ifdef SKY
+attribute float aFar;      // the skyline (skyline.js): how far off the building still shows, by its height
+uniform vec2 uSky;         // where the skyline's near band ends (0: none), and a scale on aFar
+#endif
 #endif
 uniform vec2 uFade;
 uniform vec2 uFadeIn;
@@ -18434,8 +18445,9 @@ void main() {
   vec3 nl = normal;
   #ifdef BLD
     float keep = (aPart > 1.5 || aInst.y > 0.3) ? 1.0 : 0.0;
-    vec4 wc = modelMatrix * vec4(aCen, 1.0);
+    vec4 wc = modelMatrix * vec4(aCen.xyz, 1.0);
     float jit = aInst.x / 255.0;
+    float reach = aCen.w;
     if (aPart > 0.5 && aPart < 1.5) {
       // the roof piece rises aInst.y metres over the eave, whatever the box's height (its slopes' normals follow)
       float k = aInst.y / max(sc.y, 0.3) / 0.42;
@@ -18446,10 +18458,19 @@ void main() {
     float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
     vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
     float jit = fract(aInst.x * 7.77 + 0.31);
+    float reach = 1.0;
   #endif
   float dc = length(wc.xyz);
-  // an instance is there or not: it switches at its own distance inside each band, and never grows or shrinks
-  float f = step(mix(uFadeIn.x, uFadeIn.y, jit), dc) * step(dc, mix(uFade.x, uFade.y, jit));
+  // an instance is there or not: it switches at its own distance inside each band (a building's reach depends on its
+  // size), and never grows or shrinks.  The skyline takes a big building over where the box tiles leave it: all its
+  // boxes out to uSky.x (SKY1), then its tallest and widest (SKY2)
+  #if defined(SKY1)
+    float f = step(mix(uFade.x, uFade.y, jit) * reach, dc) * step(dc, uSky.x * (0.9 + 0.1 * jit));
+  #elif defined(SKY2)
+    float f = step(max(mix(uFade.x, uFade.y, jit) * reach, uSky.x * (0.9 + 0.1 * jit)), dc) * step(dc, aFar * uSky.y * (0.92 + 0.08 * jit));
+  #else
+    float f = step(mix(uFadeIn.x, uFadeIn.y, jit), dc) * step(dc, mix(uFade.x, uFade.y, jit) * reach);
+  #endif
   pos *= keep * f;
   vObj = pos * sc;
   vec4 wp = modelMatrix * (instanceMatrix * vec4(pos, 1.0));
@@ -21113,12 +21134,179 @@ void main() {
     }
   };
 
+  // src/skyline.js
+  var Skyline = class {
+    constructor(game2) {
+      this.game = game2;
+      this.chunks = [];
+      this.ready = false;
+      this.loading = null;
+    }
+    load() {
+      const g = this.game, q = g.quality;
+      if (this.loading) return this.loading;
+      if (!q.skyFar || !g.realBuildings || !g.terrain.bldGeo) return this.loading = Promise.resolve(false);
+      this.loading = fetch(vurl("data/skyline.png")).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((p) => {
+        if (!p) return false;
+        this.build(p.data);
+        return true;
+      }).catch((e) => {
+        console.warn("skyline unavailable:", e);
+        return false;
+      });
+      return this.loading;
+    }
+    build(u8) {
+      const g = this.game, t = g.terrain, q = g.quality;
+      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      if (dv2.getUint32(0, true) !== 844712787) return;
+      const nReg = dv2.getUint32(4, true), nB = dv2.getUint32(8, true);
+      const oR = 16, oB = oR + nReg * 20, oX = oB + nB * 16;
+      this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
+      const mat = (band) => {
+        const m = new Rn({
+          vertexShader: SCATTER_VS,
+          fragmentShader: LIT_FS,
+          side: Mi,
+          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
+          // the tiles' own reach (it follows the camera's height) and the same lighting
+          uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
+        });
+        return m;
+      };
+      this.mat1 = q.skyNear ? mat(1) : null;
+      this.mat2 = mat(2);
+      const Cc2 = new Float64Array(3), P2 = new Float64Array(3);
+      const M = new Ht(), V2 = new C(), Q = new ke(), Qx2 = new ke(), S = new C();
+      const Y = new C(0, 1, 0), X = new C(1, 0, 0);
+      const groups = /* @__PURE__ */ new Map();
+      const group = (band, rx2, ry2, sub) => {
+        const key2 = band + "/" + rx2 + "/" + ry2 + "/" + sub;
+        let G = groups.get(key2);
+        if (!G) {
+          const n = band === 1 ? 4 : 1, sx2 = band === 1 ? sub % 4 : 0, sy2 = band === 1 ? sub >> 2 : 0;
+          const cx2 = rx2 * RS2 + (sx2 + 0.5) * RS2 / n, cy2 = ry2 * RS2 + (sy2 + 0.5) * RS2 / n;
+          G = { band, cx: cx2, cy: cy2, half: RS2 / n * 0.71 + 300, idx: [], far: 0 };
+          groups.set(key2, G);
+        }
+        return G;
+      };
+      const bl = [];
+      for (let r = 0; r < nReg; r++) {
+        const o = oR + r * 20, rx2 = dv2.getUint8(o), ry2 = dv2.getUint8(o + 1);
+        const b02 = dv2.getUint32(o + 4, true), nb = dv2.getUint32(o + 8, true);
+        let xi2 = dv2.getUint32(o + 12, true);
+        for (let i = 0; i < nb; i++) {
+          const ob = oB + (b02 + i) * 16;
+          const bx2 = (rx2 + 0.5) * RS2 + dv2.getInt16(ob, true) / 4, by2 = (ry2 + 0.5) * RS2 + dv2.getInt16(ob + 2, true) / 4;
+          const nbx = dv2.getUint8(ob + 14), nfar = dv2.getUint8(ob + 15), far = dv2.getUint16(ob + 12, true) * 4;
+          const sx2 = Math.min(3, Math.max(0, Math.floor((bx2 - rx2 * RS2) / (RS2 / 4)))), sy2 = Math.min(3, Math.max(0, Math.floor((by2 - ry2 * RS2) / (RS2 / 4))));
+          if (this.mat1) group(1, rx2, ry2, sy2 * 4 + sx2).idx.push([ob, xi2, nbx, rx2, ry2]);
+          const G2 = group(2, rx2, ry2, far * q.skyFar > 25e3 ? 1 : 0);
+          G2.idx.push([ob, xi2, nfar, rx2, ry2]);
+          G2.far = Math.max(G2.far, far);
+          xi2 += nbx;
+        }
+      }
+      for (const G of groups.values()) {
+        let n = 0;
+        for (const e of G.idx) n += e[2];
+        if (!n) continue;
+        cyl(G.cx, G.cy, 0, Cc2);
+        const thc = G.cy / R, c = Math.cos(thc), s29 = Math.sin(thc);
+        const basis = new Ht().set(1, 0, 0, 0, 0, c, -s29, 0, 0, s29, c, 0, 0, 0, 0, 1);
+        const inv = basis.clone().transpose();
+        const mesh = new bo(t.bldGeo, G.band === 1 ? this.mat1 : this.mat2, n);
+        const inst = new Float32Array(n * 4), roofA = new Float32Array(n * 4), cenA = new Float32Array(n * 4), farA = new Float32Array(n);
+        let k = 0;
+        for (const [ob, x02, use, rx2, ry2] of G.idx) {
+          const rcx = (rx2 + 0.5) * RS2, rcy = (ry2 + 0.5) * RS2;
+          const bx2 = rcx + dv2.getInt16(ob, true) / 4, by2 = rcy + dv2.getInt16(ob + 2, true) / 4, bz = dv2.getInt16(ob + 4, true) / 10;
+          const seed = dv2.getUint8(ob + 6), cls = dv2.getUint8(ob + 7), clad = dv2.getUint8(ob + 8), reach = dv2.getUint8(ob + 9) / 255;
+          const rc2 = dv2.getUint16(ob + 10, true), far = dv2.getUint16(ob + 12, true) * 4;
+          cyl(bx2, by2, bz, P2);
+          V2.set(P2[0] - Cc2[0], P2[1] - Cc2[1], P2[2] - Cc2[2]).applyMatrix4(inv);
+          const cenX = V2.x, cenY = V2.y, cenZ = V2.z;
+          Qx2.setFromAxisAngle(X, by2 / R - thc);
+          for (let j = 0; j < use; j++) {
+            const ox2 = oX + (x02 + j) * 16;
+            const mx2 = rcx + dv2.getInt16(ox2, true) / 4, my2 = rcy + dv2.getInt16(ox2 + 2, true) / 4, mz = dv2.getInt16(ox2 + 4, true) / 10;
+            const yaw = dv2.getUint16(ox2 + 6, true) / 65535 * 2 * Math.PI;
+            const W = dv2.getUint16(ox2 + 8, true) / 20, D = dv2.getUint16(ox2 + 10, true) / 20, H = dv2.getUint16(ox2 + 12, true) / 20, rise = dv2.getUint8(ox2 + 14) / 4;
+            cyl(mx2, my2, mz, P2);
+            V2.set(P2[0] - Cc2[0], P2[1] - Cc2[1], P2[2] - Cc2[2]).applyMatrix4(inv);
+            Q.setFromAxisAngle(Y, yaw).premultiply(Qx2);
+            S.set(W, Math.max(H, 0.3), D);
+            M.compose(V2, Q, S);
+            mesh.setMatrixAt(k, M);
+            inst[k * 4] = seed;
+            inst[k * 4 + 1] = rise;
+            inst[k * 4 + 2] = clad;
+            inst[k * 4 + 3] = cls;
+            if (rc2 > 0) {
+              roofA[k * 4] = (rc2 >> 11 & 31) / 31;
+              roofA[k * 4 + 1] = (rc2 >> 5 & 63) / 63;
+              roofA[k * 4 + 2] = (rc2 & 31) / 31;
+              roofA[k * 4 + 3] = 2;
+            }
+            cenA[k * 4] = cenX;
+            cenA[k * 4 + 1] = cenY;
+            cenA[k * 4 + 2] = cenZ;
+            cenA[k * 4 + 3] = reach;
+            farA[k] = far;
+            k++;
+          }
+        }
+        const g2 = new Yt();
+        g2.setIndex(t.bldGeo.index);
+        for (const name in t.bldGeo.attributes) g2.setAttribute(name, t.bldGeo.attributes[name]);
+        g2.setAttribute("aInst", new vi(inst, 4));
+        g2.setAttribute("aRoof", new vi(roofA, 4));
+        g2.setAttribute("aCen", new vi(cenA, 4));
+        g2.setAttribute("aFar", new vi(farA, 1));
+        mesh.geometry = g2;
+        mesh.boundingSphere = new Ie(new C(0, 150, 0), G.half);
+        g2.boundingSphere = new Ie(new C(0, 8, 0), 60);
+        mesh.frustumCulled = true;
+        mesh.matrixAutoUpdate = false;
+        mesh.visible = false;
+        g.scene.add(mesh);
+        this.chunks.push({ mesh, basis, C: [Cc2[0], Cc2[1], Cc2[2]], band: G.band, far: G.far, half: G.half, d: 0, on: false });
+      }
+      this.ready = true;
+    }
+    // which regions' boxes can show from here, and where they are relative to the camera
+    update(camC) {
+      if (!this.ready) return;
+      const near2 = this.U.uSky.value.x, sc2 = this.U.uSky.value.y;
+      for (const ch of this.chunks) {
+        const dx2 = ch.C[0] - camC[0], dy2 = ch.C[1] - camC[1], dz = ch.C[2] - camC[2];
+        ch.d = Math.hypot(dx2, dy2, dz);
+        ch.on = ch.band === 1 ? ch.d - ch.half < near2 : ch.d - ch.half < ch.far * sc2;
+        ch.mesh.visible = ch.on;
+        if (ch.on) {
+          const m = ch.mesh.matrix;
+          m.copy(ch.basis);
+          m.elements[12] = dx2;
+          m.elements[13] = dy2;
+          m.elements[14] = dz;
+          ch.mesh.matrixWorld.copy(m);
+        }
+      }
+    }
+    // the frame's two depth ranges: nothing of a region beyond the near range is drawn in it
+    passVisibility(nearPass, nearFar) {
+      if (!this.ready) return;
+      for (const ch of this.chunks) ch.mesh.visible = ch.on && (!nearPass || ch.d - ch.half < nearFar);
+    }
+  };
+
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
-    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1 },
-    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2 },
-    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2 }
+    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5 },
+    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1 },
+    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2 }
   };
   var GAME = null;
   function fatal(msg) {
@@ -21391,6 +21579,7 @@ void main() {
       this.landmarks = this.buildLandmarks();
       this.dunkin = new Dunkin(this);
       this.lights = new Lights(this);
+      this.skyline = new Skyline(this);
       let start = meta.starts[0], named = false;
       const hash3 = (location.hash || "").replace("#", "").toLowerCase();
       if (hash3) {
@@ -21413,6 +21602,7 @@ void main() {
       if (saved) this.player.place(start.x, start.y, start.hdg, false, start.h);
       else this.player.place(start.x, start.y, start.hdg, true);
       if (params.get("lights") !== "0") this.lights.load();
+      if (params.get("sky") !== "0") this.skyline.load();
       if (saved) {
         this.resume = saved;
         this.sky.hours = saved.hours;
@@ -22140,6 +22330,7 @@ void main() {
         for (const reg of this.world.regions.values()) if (reg.partial && performance.now() >= reg.partial.next) this.readRegionParts(reg, reg.rx, reg.ry, reg.partial.which);
       }
       if (this.lights) this.lights.update(camC);
+      if (this.skyline) this.skyline.update(camC);
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
       const split = clamp(agl * 0.5, (this.quality.treeR + 160) / 1.5, 4e3), nearFar = split * 1.5;
@@ -22151,6 +22342,7 @@ void main() {
         cam.far = 46e4;
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(false, nearFar);
+        if (this.skyline) this.skyline.passVisibility(false, nearFar);
         r.render(this.scene, cam);
         const calls = r.info.render.calls, tris = r.info.render.triangles;
         r.clearDepth();
@@ -22158,6 +22350,7 @@ void main() {
         cam.far = nearFar;
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(true, nearFar);
+        if (this.skyline) this.skyline.passVisibility(true, nearFar);
         r.render(this.scene, cam);
         this.drawCalls = calls + r.info.render.calls;
         this.drawTris = tris + r.info.render.triangles;
