@@ -20450,7 +20450,7 @@ void main() {
       const t = game2.terrain, M = models();
       this.kinds = {};
       for (const k in M) {
-        const [geo, len, v] = M[k], cap = k === "ferry" || k === "launch" ? 24 : Math.max(8, max);
+        const [geo, len, v] = M[k], cap = k === "launch" ? 64 : k === "ferry" ? 24 : Math.max(8, max);
         const inst = new vi(new Float32Array(cap * 4), 4);
         inst.setUsage(Zm);
         geo.setAttribute("aInst", inst);
@@ -20465,7 +20465,7 @@ void main() {
       }
       const wg = new Yt();
       wg.setAttribute("position", new me(new Float32Array([-1, 0, 0, 1, 0, 0, 1, 0, 1, -1, 0, 0, 1, 0, 1, -1, 0, 1]), 3));
-      this.wakeCap = max + 48;
+      this.wakeCap = max + 96;
       this.wakeK = new vi(new Float32Array(this.wakeCap), 1);
       this.wakeK.setUsage(Zm);
       wg.setAttribute("aK", this.wakeK);
@@ -20482,7 +20482,7 @@ void main() {
       for (const r of routes || []) {
         const p = r.pts, cum = [0];
         for (let i = 1; i < p.length; i++) cum.push(cum[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
-        const len = cum[cum.length - 1], kind = len > 9e3 ? "ferry" : "launch", n = clamp(Math.round(len / 16e3), 1, 3);
+        const len = cum[cum.length - 1], kind = this.kinds[r.kind] ? r.kind : len > 9e3 ? "ferry" : "launch", n = r.n ? clamp(r.n, 1, 3) : clamp(Math.round(len / 16e3), 1, 3);
         for (let k = 0; k < n; k++) this.ferries.push({ r, p, cum, len, kind, phase: (k + 0.37 * this.ferries.length) / n, hash: this.ferries.length * 0.6180339 % 1, hdg: 0, set: false });
       }
     }
@@ -20491,7 +20491,7 @@ void main() {
     // over the last 140 m into each dock (to an eighth of its speed) and up again out of it, so its position follows the
     // speed it reports: distance run is the integral of that speed over time.
     ferryAt(f, t, out) {
-      const v = this.kinds[f.kind].v, len = f.len, half = len / 2, E = 140, vmin = 0.12;
+      const v = f.r.v || this.kinds[f.kind].v, len = f.len, half = len / 2, E = 140, vmin = 0.12;
       const x02 = vmin * E;
       const up2 = (x) => x <= x02 ? x / (vmin * v) : x <= E ? x02 / (vmin * v) + E / v * Math.log(x / x02) : x02 / (vmin * v) + E / v * Math.log(E / x02) + (x - E) / v;
       const Th = up2(half), trip = 2 * Th, lapT = 2 * (trip + 45);
@@ -20521,6 +20521,10 @@ void main() {
       out.y = a[1] + (b[1] - a[1]) * u;
       out.v = moving ? v * clamp(Math.min(s29, len - s29) / E, vmin, 1) : 0;
       out.h = Math.atan2((b[0] - a[0]) * (back ? -1 : 1), (b[1] - a[1]) * (back ? -1 : 1));
+      const keep = f.kind === "ferry" ? 16 : 8, room = -this.game.world.sdfAt(out.x, out.y) - (f.kind === "ferry" ? 11 : 6);
+      const off = Math.min(keep * clamp(0.35 + 0.65 * Math.min(s29, len - s29) / E, 0, 1), Math.max(0, room));
+      out.x += Math.cos(out.h) * off;
+      out.y -= Math.sin(out.h) * off;
       return out;
     }
     spawn(cx2, cy2) {
