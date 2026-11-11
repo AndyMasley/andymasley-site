@@ -20529,7 +20529,7 @@ void main() {
       }
       if (params.get("at")) {
         const a = params.get("at").split(",").map(Number);
-        start = { n: "Test", x: a[0], y: a[1], hdg: a[2] || 0 };
+        start = { n: "", x: a[0], y: a[1], hdg: a[2] || 0 };
         named = true;
       }
       const saved = named || params.get("fresh") ? null : this.loadSaved();
@@ -21240,7 +21240,12 @@ void main() {
         b.disabled = false;
         b.textContent = "Play";
         const rs2 = this.resume, at = rs2 ? this.world.townAt(rs2.fly ? rs2.fx : rs2.cx, rs2.fly ? rs2.fy : rs2.cy) : 0;
-        $2("loadline").textContent = rs2 ? "Ready. You left off " + (at ? "in " + this.meta.towns[at - 1].n : "over open water") + "." : "Ready. " + this.startName + " is below you.";
+        let below = this.startName;
+        if (!rs2 && !below) {
+          const ti2 = this.world.townAt(this.player.car.mx, this.player.car.my);
+          below = ti2 ? this.meta.towns[ti2 - 1].n : "";
+        }
+        $2("loadline").textContent = rs2 ? "Ready. You left off " + (at ? "in " + this.meta.towns[at - 1].n : "over open water") + "." : below ? "Ready. " + below + " is below you." : "Ready.";
         $2("bar").firstElementChild.style.width = "100%";
         if (this.autoPlay) this.play();
       } else if (!this.ready) {
