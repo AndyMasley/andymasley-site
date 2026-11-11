@@ -3834,10 +3834,68 @@
       return this;
     }
   };
+  var Ar = class extends Pe {
+    constructor(t) {
+      super(), this.isPointsMaterial = true, this.type = "PointsMaterial", this.color = new bt(16777215), this.map = null, this.alphaMap = null, this.size = 1, this.sizeAttenuation = true, this.fog = true, this.setValues(t);
+    }
+    copy(t) {
+      return super.copy(t), this.color.copy(t.color), this.map = t.map, this.alphaMap = t.alphaMap, this.size = t.size, this.sizeAttenuation = t.sizeAttenuation, this.fog = t.fog, this;
+    }
+  };
   var Kd = new Ht();
   var ph = new xi();
   var Va = new Ie();
   var Ha = new C();
+  var Ro = class extends le {
+    constructor(t = new Yt(), e = new Ar()) {
+      super(), this.isPoints = true, this.type = "Points", this.geometry = t, this.material = e, this.morphTargetDictionary = void 0, this.morphTargetInfluences = void 0, this.updateMorphTargets();
+    }
+    copy(t, e) {
+      return super.copy(t, e), t.morphTargetInfluences !== void 0 ? this.morphTargetInfluences = t.morphTargetInfluences.slice() : this.morphTargetInfluences = void 0, t.morphTargetDictionary !== void 0 ? this.morphTargetDictionary = Object.assign({}, t.morphTargetDictionary) : this.morphTargetDictionary = void 0, this.material = Array.isArray(t.material) ? t.material.slice() : t.material, this.geometry = t.geometry, this;
+    }
+    intersectsFrustum(t) {
+      return t.intersectsObject(this);
+    }
+    raycast(t, e) {
+      let n = this.geometry, i = this.matrixWorld, r = t.params.Points.threshold, a = n.drawRange;
+      if (n.boundingSphere === null && n.computeBoundingSphere(), Va.copy(n.boundingSphere), Va.applyMatrix4(i), Va.radius += r, t.ray.intersectsSphere(Va) === false) return;
+      Kd.copy(i).invert(), ph.copy(t.ray).applyMatrix4(Kd);
+      let o = r / ((this.scale.x + this.scale.y + this.scale.z) / 3), l = o * o, c = n.index, d = n.attributes.position;
+      if (c !== null) {
+        let u = Math.max(0, a.start), f = Math.min(c.count, a.start + a.count);
+        for (let p = u, _ = f; p < _; p++) {
+          let m = c.getX(p);
+          Ha.fromBufferAttribute(d, m), Qd(Ha, m, l, i, t, e, this);
+        }
+      } else {
+        let u = Math.max(0, a.start), f = Math.min(d.count, a.start + a.count);
+        for (let p = u, _ = f; p < _; p++) Ha.fromBufferAttribute(d, p), Qd(Ha, p, l, i, t, e, this);
+      }
+    }
+    updateMorphTargets() {
+      let e = this.geometry.morphAttributes, n = Object.keys(e);
+      if (n.length > 0) {
+        let i = e[n[0]];
+        if (i !== void 0) {
+          this.morphTargetInfluences = [], this.morphTargetDictionary = {};
+          for (let r = 0, a = i.length; r < a; r++) {
+            let o = i[r].name || String(r);
+            this.morphTargetInfluences.push(0), this.morphTargetDictionary[o] = r;
+          }
+        }
+      }
+    }
+  };
+  function Qd(s29, t, e, n, i, r, a) {
+    let o = ph.distanceSqToPoint(s29);
+    if (o < e) {
+      let l = new C();
+      ph.closestPointToPoint(s29, l), l.applyMatrix4(n);
+      let c = i.ray.origin.distanceTo(l);
+      if (c < i.near || c > i.far) return;
+      r.push({ distance: c, distanceToRay: Math.sqrt(o), point: l, index: t, face: null, faceIndex: null, barycoord: null, object: a });
+    }
+  }
   var Xi = class extends Ae {
     constructor(t = [], e = si, n, i, r, a, o, l, c, h) {
       super(t, e, n, i, r, a, o, l, c, h), this.isCubeTexture = true, this.flipY = false;
@@ -14845,6 +14903,7 @@ void main() {
     reg.bCell = new Uint32Array(buf.slice(p, p + nc2 * 4));
     p += nc2 * 4;
     reg.b = new Uint8Array(buf.slice(p, p + nB * 12));
+    reg.roof = dv2.getUint32(20, true) & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
     const gw = reg.gw = Math.ceil((RS2 + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill) => {
@@ -15351,6 +15410,146 @@ void main() {
   }
   var _f32 = new Float32Array(1);
   var _u32 = new Uint32Array(_f32.buffer);
+
+  // src/palette_webster.js
+  var WEBSTER_PALETTE = (
+    /* glsl */
+    `
+const vec3 W_SIDING[64] = vec3[64](
+  vec3(0.698, 0.712, 0.726),
+  vec3(0.726, 0.733, 0.712),
+  vec3(0.741, 0.748, 0.733),
+  vec3(0.769, 0.748, 0.691),
+  vec3(0.755, 0.762, 0.748),
+  vec3(0.755, 0.769, 0.777),
+  vec3(0.769, 0.769, 0.748),
+  vec3(0.769, 0.769, 0.755),
+  vec3(0.769, 0.769, 0.755),
+  vec3(0.769, 0.769, 0.769),
+  vec3(0.755, 0.777, 0.769),
+  vec3(0.777, 0.777, 0.755),
+  vec3(0.777, 0.777, 0.762),
+  vec3(0.777, 0.777, 0.762),
+  vec3(0.741, 0.784, 0.822),
+  vec3(0.777, 0.784, 0.748),
+  vec3(0.784, 0.784, 0.769),
+  vec3(0.784, 0.784, 0.769),
+  vec3(0.784, 0.784, 0.784),
+  vec3(0.784, 0.792, 0.755),
+  vec3(0.777, 0.799, 0.792),
+  vec3(0.671, 0.618, 0.474),
+  vec3(0.741, 0.644, 0.568),
+  vec3(0.748, 0.684, 0.514),
+  vec3(0.618, 0.568, 0.316),
+  vec3(0.712, 0.651, 0.352),
+  vec3(0.755, 0.671, 0.431),
+  vec3(0.777, 0.691, 0.406),
+  vec3(0.644, 0.537, 0.062),
+  vec3(0.469, 0.401, 0.299),
+  vec3(0.537, 0.431, 0.279),
+  vec3(0.549, 0.458, 0.312),
+  vec3(0.562, 0.491, 0.339),
+  vec3(0.580, 0.532, 0.431),
+  vec3(0.599, 0.555, 0.458),
+  vec3(0.671, 0.605, 0.453),
+  vec3(0.362, 0.308, 0.236),
+  vec3(0.458, 0.357, 0.229),
+  vec3(0.381, 0.411, 0.447),
+  vec3(0.416, 0.453, 0.503),
+  vec3(0.491, 0.480, 0.458),
+  vec3(0.491, 0.514, 0.532),
+  vec3(0.508, 0.532, 0.549),
+  vec3(0.580, 0.537, 0.486),
+  vec3(0.568, 0.574, 0.574),
+  vec3(0.612, 0.631, 0.624),
+  vec3(0.211, 0.229, 0.259),
+  vec3(0.236, 0.259, 0.274),
+  vec3(0.279, 0.308, 0.334),
+  vec3(0.074, 0.092, 0.127),
+  vec3(0.135, 0.181, 0.240),
+  vec3(0.218, 0.263, 0.308),
+  vec3(0.357, 0.411, 0.486),
+  vec3(0.362, 0.453, 0.520),
+  vec3(0.431, 0.497, 0.593),
+  vec3(0.491, 0.593, 0.719),
+  vec3(0.157, 0.215, 0.308),
+  vec3(0.503, 0.549, 0.391),
+  vec3(0.247, 0.255, 0.194),
+  vec3(0.357, 0.362, 0.267),
+  vec3(0.062, 0.094, 0.065),
+  vec3(0.236, 0.039, 0.026),
+  vec3(0.103, 0.065, 0.041),
+  vec3(0.043, 0.025, 0.019));
+const vec3 W_BRICK[16] = vec3[16](
+  vec3(0.140, 0.025, 0.025),
+  vec3(0.188, 0.046, 0.031),
+  vec3(0.201, 0.055, 0.037),
+  vec3(0.229, 0.054, 0.036),
+  vec3(0.229, 0.062, 0.041),
+  vec3(0.229, 0.062, 0.046),
+  vec3(0.240, 0.062, 0.041),
+  vec3(0.232, 0.065, 0.046),
+  vec3(0.232, 0.067, 0.041),
+  vec3(0.229, 0.070, 0.046),
+  vec3(0.291, 0.062, 0.038),
+  vec3(0.295, 0.063, 0.041),
+  vec3(0.236, 0.086, 0.055),
+  vec3(0.291, 0.092, 0.065),
+  vec3(0.140, 0.062, 0.041),
+  vec3(0.157, 0.135, 0.103));
+const vec3 W_SHINGLE[16] = vec3[16](
+  vec3(0.283, 0.222, 0.172),
+  vec3(0.447, 0.426, 0.376),
+  vec3(0.178, 0.154, 0.132),
+  vec3(0.229, 0.211, 0.169),
+  vec3(0.247, 0.259, 0.229),
+  vec3(0.312, 0.325, 0.321),
+  vec3(0.169, 0.215, 0.263),
+  vec3(0.076, 0.117, 0.208),
+  vec3(0.316, 0.599, 0.497),
+  vec3(0.103, 0.062, 0.038),
+  vec3(0.181, 0.092, 0.057),
+  vec3(0.229, 0.130, 0.072),
+  vec3(0.291, 0.130, 0.058),
+  vec3(0.229, 0.175, 0.105),
+  vec3(0.032, 0.034, 0.029),
+  vec3(0.094, 0.062, 0.045));
+const vec3 W_TRIM[16] = vec3[16](
+  vec3(0.712, 0.726, 0.741),
+  vec3(0.777, 0.769, 0.741),
+  vec3(0.784, 0.784, 0.755),
+  vec3(0.784, 0.784, 0.769),
+  vec3(0.799, 0.799, 0.769),
+  vec3(0.799, 0.799, 0.769),
+  vec3(0.799, 0.799, 0.777),
+  vec3(0.799, 0.799, 0.784),
+  vec3(0.799, 0.799, 0.784),
+  vec3(0.799, 0.799, 0.784),
+  vec3(0.807, 0.799, 0.769),
+  vec3(0.807, 0.807, 0.784),
+  vec3(0.814, 0.814, 0.799),
+  vec3(0.814, 0.814, 0.799),
+  vec3(0.814, 0.814, 0.799),
+  vec3(0.822, 0.822, 0.807));
+const vec3 W_ACCENT[16] = vec3[16](
+  vec3(0.010, 0.010, 0.012),
+  vec3(0.012, 0.012, 0.013),
+  vec3(0.012, 0.013, 0.016),
+  vec3(0.012, 0.014, 0.017),
+  vec3(0.014, 0.019, 0.021),
+  vec3(0.021, 0.023, 0.027),
+  vec3(0.023, 0.027, 0.033),
+  vec3(0.023, 0.038, 0.024),
+  vec3(0.130, 0.017, 0.028),
+  vec3(0.140, 0.021, 0.025),
+  vec3(0.041, 0.055, 0.084),
+  vec3(0.229, 0.021, 0.025),
+  vec3(0.291, 0.021, 0.021),
+  vec3(0.045, 0.092, 0.215),
+  vec3(0.103, 0.151, 0.225),
+  vec3(0.769, 0.769, 0.741));
+`
+  );
 
   // src/shaders.js
   var ATMOS = (
@@ -16355,6 +16554,7 @@ void main() {
   var PALETTE = (
     /* glsl */
     `
+${WEBSTER_PALETTE}
 // the colours parked cars come in, most of them the greys that most cars are
 vec3 carPaint(float h) {
   if (h < 0.22) return vec3(0.50, 0.51, 0.52);
@@ -16374,21 +16574,9 @@ vec3 claddingColor(float clad, float cls, float seed) {
   int c = int(clad + 0.5), k = int(cls + 0.5);
   if (k == 9 && c == 0) return vec3(0.80, 0.80, 0.77);                       // the white clapboard church
   if (k == 5) return r < 0.6 ? vec3(0.30, 0.065, 0.05) : (r < 0.85 ? vec3(0.33, 0.30, 0.26) : vec3(0.74, 0.74, 0.70));
-  if (c == 0) {                                                              // painted clapboard and vinyl
-    if (r < 0.22) return vec3(0.78, 0.78, 0.74);
-    if (r < 0.32) return vec3(0.74, 0.66, 0.44);
-    if (r < 0.40) return vec3(0.78, 0.68, 0.36);
-    if (r < 0.52) return vec3(0.52, 0.44, 0.31);
-    if (r < 0.66) return vec3(0.52, 0.53, 0.53);
-    if (r < 0.74) return vec3(0.30, 0.38, 0.45);
-    if (r < 0.80) return vec3(0.33, 0.075, 0.055);
-    if (r < 0.86) return vec3(0.34, 0.40, 0.28);
-    if (r < 0.91) return vec3(0.24, 0.16, 0.10);
-    if (r < 0.96) return vec3(0.47, 0.57, 0.65);
-    return vec3(0.16, 0.18, 0.20);
-  }
+  if (c == 0) return W_SIDING[int(r * 63.999)];                            // painted clapboard and vinyl: the Webster drive's photographed mix
   if (c == 5) return r < 0.45 ? vec3(0.27, 0.26, 0.24) : (r < 0.7 ? vec3(0.35, 0.34, 0.31) : (r < 0.88 ? vec3(0.26, 0.19, 0.12) : vec3(0.17, 0.14, 0.11)));
-  if (c == 1) return r < 0.5 ? vec3(0.33, 0.12, 0.085) : (r < 0.78 ? vec3(0.25, 0.085, 0.065) : (r < 0.93 ? vec3(0.34, 0.165, 0.105) : vec3(0.47, 0.39, 0.28)));
+  if (c == 1) return W_BRICK[int(r * 15.999)];
   if (c == 2) return r < 0.35 ? vec3(0.50, 0.49, 0.46) : (r < 0.6 ? vec3(0.42, 0.40, 0.37) : (r < 0.82 ? vec3(0.58, 0.55, 0.50) : vec3(0.60, 0.54, 0.44)));
   if (c == 6) return r < 0.6 ? vec3(0.70, 0.66, 0.56) : vec3(0.62, 0.58, 0.52);
   if (c == 4) return r < 0.3 ? vec3(0.55, 0.57, 0.58) : (r < 0.5 ? vec3(0.42, 0.46, 0.50) : (r < 0.68 ? vec3(0.56, 0.52, 0.42) : (r < 0.8 ? vec3(0.25, 0.36, 0.30) : (r < 0.9 ? vec3(0.22, 0.32, 0.45) : vec3(0.75, 0.75, 0.74)))));
@@ -16409,21 +16597,20 @@ vec3 roofColor(float cls, float pitched, float seed) {
   if (r < 0.97) return vec3(0.170, 0.085, 0.060);
   return vec3(0.090, 0.120, 0.090);
 }
+// a roof's colour from the 2025 aerial, mapped in the bake to roofing albedo as the Webster drive maps it (sRGB)
+vec3 aerialRoof(vec3 s) {
+  return pow(s, vec3(2.2));
+}
 vec3 trimColor(float clad, float cls, float seed) {
   float r = sr3(seed);
   int c = int(clad + 0.5);
   if (c == 1 || c == 2) return r < 0.6 ? vec3(0.62, 0.60, 0.55) : vec3(0.78, 0.78, 0.75);       // stone lintels, painted wood
   if (c == 3 || c == 4) return vec3(0.20, 0.21, 0.22);
-  return r < 0.82 ? vec3(0.82, 0.82, 0.79) : (r < 0.92 ? vec3(0.74, 0.70, 0.58) : vec3(0.10, 0.11, 0.12));
+  return W_TRIM[int(r * 15.999)];
 }
 vec3 accentColor(float seed) {            // doors and shutters
   float r = fract(seed * 0.3819660 + 0.251);
-  if (r < 0.22) return vec3(0.030, 0.030, 0.035);
-  if (r < 0.40) return vec3(0.38, 0.055, 0.045);
-  if (r < 0.56) return vec3(0.06, 0.14, 0.09);
-  if (r < 0.70) return vec3(0.055, 0.09, 0.19);
-  if (r < 0.84) return vec3(0.30, 0.17, 0.08);
-  return vec3(0.75, 0.75, 0.72);
+  return W_ACCENT[int(r * 15.999)];
 }
 `
   );
@@ -16434,6 +16621,7 @@ attribute vec2 aUV;
 attribute vec4 aW;      // wall length, wall height, storeys + 64 * flags, door position along the wall (-1: none)
 attribute vec4 aM;      // material id, cladding, class, seed
 attribute vec3 aC;      // the building's centre in the tile frame
+attribute vec4 aK;      // the building's roof colour from the aerial (sRGB), alpha 1 where there is one
 uniform vec2 uHouseFade;
 ${PALETTE}
 varying vec3 vRel;
@@ -16457,9 +16645,9 @@ void main() {
   vColB = trimColor(clad, cls, seed);
   vColC = accentColor(seed);
   if (mat < 0.5) vColA = claddingColor(clad, cls, seed);
-  else if (mat < 1.5) vColA = roofColor(cls, 1.0, seed);
+  else if (mat < 1.5) vColA = aK.w > 0.5 ? aerialRoof(aK.rgb) : roofColor(cls, 1.0, seed);
   else if (mat < 2.5) vColA = vColB;
-  else if (mat < 3.5) vColA = roofColor(cls, 0.0, seed);
+  else if (mat < 3.5) vColA = aK.w > 0.5 ? aerialRoof(aK.rgb) : roofColor(cls, 0.0, seed);
   else if (mat < 4.5) vColA = vec3(0.33, 0.12, 0.085);
   else if (mat < 5.5) vColA = vec3(0.46, 0.45, 0.42);
   else if (mat < 6.5) vColA = vec3(0.34, 0.31, 0.27);
@@ -17884,6 +18072,7 @@ void main() {
         g.setAttribute("aW", new me(h.w, 4));
         g.setAttribute("aM", new me(h.m, 4));
         g.setAttribute("aC", new me(h.c, 3));
+        g.setAttribute("aK", new me(h.k, 4, true));
         g.setIndex(new me(h.idx, 1));
         const mid2 = new C();
         let rad2 = 0;
@@ -17946,6 +18135,7 @@ void main() {
       const mat = m.kind === "trees" ? this.treeMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
+      const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S = new C(), Y = new C(0, 1, 0);
       let rad = 0;
       const lp2 = new Float32Array(n * 3), mid = new C();
@@ -17963,6 +18153,13 @@ void main() {
           inst[i * 4 + 1] = d[o + 7];
           inst[i * 4 + 2] = d[o + 10];
           inst[i * 4 + 3] = d[o + 9];
+          const rc2 = roofA ? d[o + 11] : 0;
+          if (rc2 > 0) {
+            roofA[i * 4] = (rc2 >> 11 & 31) / 31;
+            roofA[i * 4 + 1] = (rc2 >> 5 & 63) / 63;
+            roofA[i * 4 + 2] = (rc2 & 31) / 31;
+            roofA[i * 4 + 3] = 2;
+          }
         } else if (m.kind === "poles") {
           Q.setFromAxisAngle(Y, d[o + 3]);
           S.set(1, 0.92 + 0.16 * d[o + 4], 1);
@@ -17989,6 +18186,7 @@ void main() {
       for (const name in geo.attributes) g2.setAttribute(name, geo.attributes[name]);
       const ia2 = new vi(inst, 4);
       g2.setAttribute("aInst", ia2);
+      if (roofA) g2.setAttribute("aRoof", new vi(roofA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
       if (m.kind === "trees" && this.leafGeo) {
@@ -18027,6 +18225,9 @@ void main() {
 attribute vec3 aCol;
 attribute float aPart;
 attribute vec4 aInst;      // trees: tint, species.  buildings: seed, pitched roof, cladding, class
+#ifdef BLD
+attribute vec4 aRoof;      // the roof's colour from the aerial (sRGB), w 2 where there is one
+#endif
 uniform vec2 uFade;
 uniform vec2 uFadeIn;
 ${PALETTE}
@@ -18065,6 +18266,11 @@ void main() {
     vStyle = aPart < 1.5 ? 1.0 : 0.0;
     vCol = aPart < 1.5 ? roofColor(aInst.w, 1.0, aInst.x) : claddingColor(aInst.z, aInst.w, aInst.x);
     vCol2 = roofColor(aInst.w, 0.0, aInst.x);
+    if (aRoof.w > 1.5) {
+      vec3 rc = aerialRoof(aRoof.rgb);
+      if (aPart < 1.5) vCol = rc;
+      vCol2 = rc;
+    }
     vAux = aInst.x / 255.0;
   #endif
   gl_Position = projectionMatrix * viewMatrix * wp;
@@ -18234,6 +18440,7 @@ void main() {
       out[k + 12] = b[o + 10] & 7;
       out[k + 13] = b[o + 11];
       out[k + 14] = a + i;
+      out[k + 15] = reg.roof ? reg.roof[a + i] : 0;
     }
     return out;
   }
@@ -18751,6 +18958,9 @@ void main() {
           case "KeyB":
             this.toggleLines();
             break;
+          case "KeyG":
+            this.toggleDunkin();
+            break;
           case "KeyH":
             this.nextHaze();
             break;
@@ -18845,6 +19055,12 @@ void main() {
       this.labelsOn = !this.labelsOn;
       $("b-labels").setAttribute("aria-pressed", String(this.labelsOn));
     }
+    async toggleDunkin() {
+      const d = this.g.dunkin, on2 = await d.toggle();
+      $("b-dunkin").setAttribute("aria-pressed", String(!!on2));
+      if (on2 === null) this.toast("The Dunkin' map did not load");
+      else this.toast(on2 ? "All " + d.n.toLocaleString() + " Dunkin' in the state, lit pink. Look up." : "Dunkin' lights off");
+    }
     toggleLines() {
       const u = this.g.U.uBorders;
       u.value = u.value ? 0 : 1;
@@ -18910,6 +19126,7 @@ void main() {
       };
       $("b-labels").onclick = () => this.toggleLabels();
       $("b-lines").onclick = () => this.toggleLines();
+      $("b-dunkin").onclick = () => this.toggleDunkin();
       $("b-haze").onclick = () => this.nextHaze();
       $("b-about").onclick = () => this.toggleAbout();
       $("about-close").onclick = () => this.toggleAbout();
@@ -19808,6 +20025,94 @@ void main() {
     }
   };
 
+  // src/dunkin.js
+  var VS2 = (
+    /* glsl */
+    `
+attribute float aSeed;
+uniform float uScale;     // device pixels per metre at one metre away
+uniform float uMinPx;     // the smallest a light gets: a star with a bright core and a halo
+uniform float uTime;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  float px = uScale * 26.0 / max(-mv.z, 1.0);              // a glow 26 m across up close
+  float tw = 0.9 + 0.1 * sin(uTime * (1.1 + aSeed * 1.9) + aSeed * 47.0);
+  float size = clamp(px, uMinPx, 140.0) * tw;
+  gl_PointSize = size;
+  // the sprite has one depth, its centre's: drawn a little nearer than the shop, the ground around it cannot cut it
+  mv.xyz *= 1.0 - min(1.6 * size / uScale, 0.5);
+  gl_Position = projectionMatrix * mv;
+}`
+  );
+  var FS2 = (
+    /* glsl */
+    `
+void main() {
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(q, q);
+  if (r2 > 1.0) discard;
+  float core = exp(-r2 * 18.0), halo = exp(-r2 * 3.5) * (1.0 - r2);
+  vec3 pink = vec3(0.855, 0.094, 0.518);                    // Dunkin' pink, #DA1884
+  gl_FragColor = vec4(pink * (0.75 * halo + 1.4 * core) + vec3(1.0, 0.80, 0.92) * core * 0.65, 1.0);
+}`
+  );
+  var Dunkin = class {
+    constructor(game2) {
+      this.game = game2;
+      this.on = false;
+      this.points = null;
+      this.n = 0;
+      this.loading = null;
+    }
+    load() {
+      if (this.loading) return this.loading;
+      this.loading = fetch("data/dunkin.json").then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
+        if (!d || !d.pts || !d.pts.length) return false;
+        const w = this.game.world, n = d.pts.length, pos = new Float32Array(n * 3), seed = new Float32Array(n), p = new Float64Array(3);
+        d.pts.forEach(([mx2, my2], i) => {
+          cyl(mx2, my2, w.groundH(mx2, my2, false) + 12, p);
+          pos[i * 3] = p[0];
+          pos[i * 3 + 1] = p[1];
+          pos[i * 3 + 2] = p[2];
+          seed[i] = Math.sin(mx2 * 12.9898 + my2 * 78.233) * 43758.5453 % 1;
+        });
+        const g = new Yt();
+        g.setAttribute("position", new me(pos, 3));
+        g.setAttribute("aSeed", new me(seed, 1));
+        this.U = { uScale: { value: 1e3 }, uMinPx: { value: 4 }, uTime: this.game.U.uTime };
+        const m = new Rn({ vertexShader: VS2, fragmentShader: FS2, uniforms: this.U, transparent: true, depthWrite: false, depthTest: true, blending: yu, toneMapped: false });
+        const pts = new Ro(g, m);
+        pts.frustumCulled = false;
+        pts.matrixAutoUpdate = false;
+        pts.renderOrder = 5;
+        pts.visible = this.on;
+        this.game.scene.add(pts);
+        this.points = pts;
+        this.n = n;
+        return true;
+      });
+      return this.loading;
+    }
+    async toggle() {
+      this.on = !this.on;
+      if (this.on && !this.points && !await this.load()) {
+        this.on = false;
+        return null;
+      }
+      if (this.points) this.points.visible = this.on;
+      return this.on;
+    }
+    update(camC) {
+      const pts = this.points;
+      if (!pts || !this.on) return;
+      const g = this.game, cam = g.camera;
+      this.U.uScale.value = g.renderer.domElement.height / (2 * Math.tan(cam.fov * Math.PI / 360));
+      this.U.uMinPx.value = Math.max(10, g.renderer.domElement.height * 0.032);
+      pts.matrix.makeTranslation(-camC[0], -camC[1], -camC[2]);
+      pts.matrixWorld.copy(pts.matrix);
+    }
+  };
+
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
@@ -20040,6 +20345,7 @@ void main() {
       });
       this.webster = { state: "idle", meshes: [] };
       this.landmarks = this.buildLandmarks();
+      this.dunkin = new Dunkin(this);
       let start = meta.starts[0], named = false;
       const hash = (location.hash || "").replace("#", "").toLowerCase();
       if (hash) {
@@ -20728,6 +21034,7 @@ void main() {
       if (this.boats) this.boats.update(this.title || this.paused ? 0 : dt, p.camMap, camC, p.camMap[2] - this.groundUnderCam, this.time);
       this.updateWebster(camC);
       this.updateLandmarks(camC);
+      if (this.dunkin) this.dunkin.update(camC);
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
       const split = clamp(agl * 0.5, (this.quality.treeR + 160) / 1.5, 4e3), nearFar = split * 1.5;

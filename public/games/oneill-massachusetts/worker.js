@@ -165,6 +165,7 @@
     reg.bCell = new Uint32Array(buf.slice(p, p + nc * 4));
     p += nc * 4;
     reg.b = new Uint8Array(buf.slice(p, p + nB * 12));
+    reg.roof = dv.getUint32(20, true) & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
     const gw = reg.gw = Math.ceil((RS + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill) => {
@@ -648,10 +649,10 @@
           gi.deckReg = reg;
         }
         const sAt = cum[pi] + Math.sqrt(l2) * t;
-        let along = 1e9;
-        if (en & 1) along = sAt - cum[a0];
-        if (en & 2) along = Math.min(along, cum[b0] - sAt);
-        const lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along) + smoothstep(0.9, 2.6, ed) * 3;
+        let along2 = 1e9;
+        if (en & 1) along2 = sAt - cum[a0];
+        if (en & 2) along2 = Math.min(along2, cum[b0] - sAt);
+        const lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along2) + smoothstep(0.9, 2.6, ed) * 3;
         if (!water && h > lim) h = lim;
       }
       return h;
@@ -828,8 +829,8 @@
     const live = (i, k) => st[i + 1] - st[i] > 1e-6 && k !== 5 && k !== 12;
     for (let i = 0; i < ns - 1; i++) for (let k = 0; k < RN; k++) {
       if (!live(i, k)) continue;
-      const k1 = (k + 1) % RN, A = G[i][k], B = G[i][k1], C2 = G[i + 1][k1], D = G[i + 1][k];
-      const ux = C2[0] - A[0], uy = C2[1] - A[1], uz = C2[2] - A[2], vx = D[0] - B[0], vy = D[1] - B[1], vz = D[2] - B[2];
+      const k1 = (k + 1) % RN, A = G[i][k], B = G[i][k1], C2 = G[i + 1][k1], D2 = G[i + 1][k];
+      const ux = C2[0] - A[0], uy = C2[1] - A[1], uz = C2[2] - A[2], vx = D2[0] - B[0], vy = D2[1] - B[1], vz = D2[2] - B[2];
       const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
       for (const q of [nrm[i][k], nrm[i][k1], nrm[i + 1][k1], nrm[i + 1][k]]) {
         q[0] += nx;
@@ -946,6 +947,7 @@
       out[k + 12] = b[o + 10] & 7;
       out[k + 13] = b[o + 11];
       out[k + 14] = a + i;
+      out[k + 15] = reg.roof ? reg.roof[a + i] : 0;
     }
     return out;
   }
@@ -961,10 +963,12 @@
       this.w = new Float32Array(this.cap * 4);
       this.m = new Uint8Array(this.cap * 4);
       this.c = new Float32Array(this.cap * 3);
+      this.k = new Uint8Array(this.cap * 4);
       this.idx = new Uint32Array(this.icap);
       this.W = [0, 0, 0, -1];
       this.M = [0, 0, 0, 0];
       this.C = [0, 0, 0];
+      this.K = [0, 0, 0, 0];
       this.ox = 0;
       this.oy = 0;
       this.oz = 0;
@@ -985,6 +989,7 @@
       this.w = g(this.w, 4);
       this.m = g(this.m, 4);
       this.c = g(this.c, 3);
+      this.k = g(this.k, 4);
       this.cap *= 2;
     }
     // a vertex given in the building's frame (u along the footprint's yaw, y up, v across), with its normal there
@@ -1002,6 +1007,7 @@
       this.w.set(this.W, i * 4);
       this.m.set(this.M, i * 4);
       this.c.set(this.C, i * 3);
+      this.k.set(this.K, i * 4);
       return i;
     }
     tri(a, b, c) {
@@ -1644,10 +1650,10 @@
           for (const q of pl) h = Math.min(h, q[0] * u + q[1] * v + q[2]);
           return h;
         };
-        const along = x1 - x0 >= yy1 - yy0, t = 0.5 + (r2 - 0.5) * 0.5;
+        const along2 = x1 - x0 >= yy1 - yy0, t = 0.5 + (r2 - 0.5) * 0.5;
         let ru = 0, rv = 0, rh = -Infinity;
         for (let i = 1; i < 16; i++) {
-          const u = along ? x0 + (x1 - x0) * t : x0 + (x1 - x0) * i / 16, v = along ? yy0 + (yy1 - yy0) * i / 16 : yy0 + (yy1 - yy0) * t;
+          const u = along2 ? x0 + (x1 - x0) * t : x0 + (x1 - x0) * i / 16, v = along2 ? yy0 + (yy1 - yy0) * i / 16 : yy0 + (yy1 - yy0) * t;
           const h = env2(u, v);
           if (h > rh) {
             rh = h;
@@ -1655,7 +1661,7 @@
             rv = v;
           }
         }
-        const off = (r3 < 0.5 ? -1 : 1) * 0.55, cu = along ? ru : ru + off, cv = along ? rv + off : rv;
+        const off = (r3 < 0.5 ? -1 : 1) * 0.55, cu = along2 ? ru : ru + off, cv = along2 ? rv + off : rv;
         let inside = false;
         for (let i = 0, j = nv - 1; i < nv; j = i++) {
           const ui = P2[i * 3], vi = P2[i * 3 + 1], uj = P2[j * 3], vj = P2[j * 3 + 1];
@@ -1752,10 +1758,10 @@
       M.W[3] = -1;
       const f0 = found + 0.72;
       const A = V(sm - hw, ta, hb, -tu, 0, -tv, 0, f0), B = V(sm + hw, ta, hb, -tu, 0, -tv, D_W, f0), C2 = V(sm + hw, ta, top, -tu, 0, -tv, D_W, f0 + D_HE);
-      const D = V(sm, ta, peak, -tu, 0, -tv, hw, f0 + peakUp), E = V(sm - hw, ta, top, -tu, 0, -tv, 0, f0 + D_HE);
+      const D2 = V(sm, ta, peak, -tu, 0, -tv, hw, f0 + peakUp), E = V(sm - hw, ta, top, -tu, 0, -tv, 0, f0 + D_HE);
       M.tri(A, B, C2);
       M.tri(A, C2, E);
-      M.tri(E, C2, D);
+      M.tri(E, C2, D2);
       M.W[0] = D_HE / m;
       M.W[1] = 12;
       M.W[2] = 1;
@@ -1866,10 +1872,17 @@
       env.ca = ca;
       env.sa = sa;
       env.g = g;
+      const rc = list[k + 15];
+      if (rc > 0) {
+        M.K[0] = (rc >> 11 & 31) * 255 / 31;
+        M.K[1] = (rc >> 5 & 63) * 255 / 63;
+        M.K[2] = (rc & 31) * 255 / 31;
+        M.K[3] = 255;
+      } else M.K[0] = M.K[1] = M.K[2] = M.K[3] = 0;
       if (!(measured2 && realBuilding(M, real, id, list, k, g, gmin, gmax, env, a))) building(M, list, k, g, gmin, gmax, env);
       count++;
     }
-    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), idx: M.idx.slice(0, M.ni) };
+    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
   }
 
   // src/street.js
@@ -1995,6 +2008,307 @@
     return new Float32Array(out);
   }
 
+  // src/spans.js
+  var D = { SLAB: 1, GIRDER: 2, DECK_TRUSS: 3, TRUSS: 4, DECK_ARCH: 5, ARCH: 6, SUSPENSION: 7, STAYED: 8, LIFT: 9, BASCULE: 10, SWING: 11, FRAME: 12 };
+  var STEEL = (mat) => mat === 2 || mat === 6;
+  var _e1 = [0, 0, 0];
+  var _e2 = [0, 0, 0];
+  function beam(M, a, b, w, h, up) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L2 = Math.hypot(dx, dy, dz);
+    if (L2 < 0.05) return;
+    const d0 = dx / L2, d1 = dy / L2, d2 = dz / L2;
+    let x = d1 * up[2] - d2 * up[1], y = d2 * up[0] - d0 * up[2], z = d0 * up[1] - d1 * up[0];
+    let l = Math.hypot(x, y, z);
+    if (l < 0.15) {
+      x = 0;
+      y = -d2;
+      z = d1;
+      l = Math.hypot(x, y, z);
+      if (l < 0.15) {
+        x = d2;
+        y = 0;
+        z = -d0;
+        l = Math.hypot(x, y, z);
+      }
+    }
+    _e1[0] = x / l;
+    _e1[1] = y / l;
+    _e1[2] = z / l;
+    _e2[0] = _e1[1] * d2 - _e1[2] * d1;
+    _e2[1] = _e1[2] * d0 - _e1[0] * d2;
+    _e2[2] = _e1[0] * d1 - _e1[1] * d0;
+    const side = (s1, s2, n) => {
+      const c = (p, t1, t2) => M.v(
+        p[0] + _e1[0] * w * t1 + _e2[0] * h * t2,
+        p[1] + _e1[1] * w * t1 + _e2[1] * h * t2,
+        p[2] + _e1[2] * w * t1 + _e2[2] * h * t2,
+        n[0],
+        n[1],
+        n[2],
+        p === a ? 0 : L2,
+        (t1 + t2) * 0.5 + 0.5
+      );
+      let i0, i1, i2, i3;
+      if (s1 !== 0) {
+        i0 = c(a, s1, -1);
+        i1 = c(b, s1, -1);
+        i2 = c(b, s1, 1);
+        i3 = c(a, s1, 1);
+      } else {
+        i0 = c(a, -1, s2);
+        i1 = c(b, -1, s2);
+        i2 = c(b, 1, s2);
+        i3 = c(a, 1, s2);
+      }
+      M.quad(i0, i1, i2, i3);
+    };
+    side(1, 0, _e1);
+    side(-1, 0, [-_e1[0], -_e1[1], -_e1[2]]);
+    side(0, 1, _e2);
+    side(0, -1, [-_e2[0], -_e2[1], -_e2[2]]);
+  }
+  function along(reg, ri, s, out) {
+    const a = reg.rStart[ri], n = reg.rCount[ri], cum = reg.cum, base = cum[a];
+    let lo = a, hi = a + n - 1;
+    const t = base + s;
+    if (t <= cum[lo]) hi = lo + 1;
+    else if (t >= cum[hi]) lo = hi - 1;
+    else while (hi - lo > 1) {
+      const mid = lo + hi >> 1;
+      if (cum[mid] <= t) lo = mid;
+      else hi = mid;
+    }
+    const L2 = Math.max(cum[hi] - cum[lo], 1e-6), f = clamp((t - cum[lo]) / L2, 0, 1);
+    const px = reg.px, py = reg.py, pz = reg.pz;
+    const dx = px[hi] - px[lo], dy = py[hi] - py[lo], dl = Math.hypot(dx, dy) || 1;
+    out[0] = reg.x0 + px[lo] + dx * f;
+    out[1] = reg.y0 + py[lo] + dy * f;
+    out[2] = pz[lo] + (pz[hi] - pz[lo]) * f;
+    out[3] = dx / dl;
+    out[4] = dy / dl;
+    return out;
+  }
+  function spanLayout(len, rec, rim0, rim1, panel) {
+    const spans = rec[3] || 1, longest = (rec[4] || 0) / 10;
+    let cuts;
+    if (rim0 && rim1 && spans > 1) {
+      const n = Math.max(1, Math.min(spans, Math.round(len / Math.max(longest * 0.6, 12))));
+      cuts = Array.from({ length: n + 1 }, (_, k) => len * k / n);
+    } else cuts = [0, len];
+    return cuts.slice(0, -1).map((c, k) => {
+      const L2 = cuts[k + 1] - c;
+      return [c, cuts[k + 1], Math.max(2, Math.round(L2 / panel))];
+    });
+  }
+  function wayStructure(M, P2, world2, reg, ri, rec, segs, setM, cls, PW, DT) {
+    const des = rec[1], mat = rec[2];
+    const a0 = reg.rStart[ri], n = reg.rCount[ri], len = reg.cum[a0 + n - 1] - reg.cum[a0];
+    if (len < 4) return;
+    const hw = reg.rHw[ri], en = reg.rEnd[ri], rim0 = (en & 1) > 0, rim1 = (en & 2) > 0;
+    const mine = (s) => segs.some(([u, v]) => s >= u - 1e-6 && s < v);
+    const g = [0, 0, 0, 0, 0], q = [0, 0, 0];
+    const at = (s, o, y) => {
+      along(reg, ri, clamp(s, 0, len), g);
+      const r = P2(g[0] + g[4] * o, g[1] - g[3] * o, g[2] + y);
+      return [r[0], r[1], r[2]];
+    };
+    const upAt = (s) => {
+      const p0 = at(s, 0, 0), p1 = at(s, 0, 10);
+      q[0] = (p1[0] - p0[0]) / 10;
+      q[1] = (p1[1] - p0[1]) / 10;
+      q[2] = (p1[2] - p0[2]) / 10;
+      return q;
+    };
+    const longest = clamp((rec[4] || 0) / 10 || len, 8, 400);
+    const rail = cls >= 14;
+    if (des === D.GIRDER || des === D.FRAME || des === D.SLAB && STEEL(mat)) {
+      const gd = STEEL(mat) ? clamp(longest / 20, 0.8, 3.2) : clamp(longest / 18, 0.7, 2.8);
+      setM(STEEL(mat) ? MAT.METAL : MAT.CONCRETE);
+      const step = 6;
+      for (let s = 0; s < len; s += step) {
+        if (!mine(s)) continue;
+        const s1 = Math.min(s + step, len), up = upAt((s + s1) / 2);
+        for (const side of [-1, 1]) {
+          const o = side * (hw + PW - 0.25);
+          beam(M, at(s, o, -DT - gd / 2), at(s1, o, -DT - gd / 2), 0.22, gd / 2, up);
+        }
+      }
+      return;
+    }
+    if (des === D.TRUSS || des === D.DECK_TRUSS || des === D.SWING) {
+      const deck = des === D.DECK_TRUSS;
+      const H = deck ? clamp(longest * 0.12, 3.5, 14) : clamp(longest * 0.14, 5, 16);
+      const P0 = clamp(H * 0.85, 4, 8.5);
+      const off = deck ? hw * 0.8 : hw + PW + 0.4;
+      const y0 = deck ? -DT : -0.25, y1 = deck ? -DT - H : H;
+      const cw = rail ? 0.32 : 0.28, ch = rail ? 0.42 : 0.36;
+      setM(MAT.METAL);
+      for (const [S0, S1, np] of spanLayout(len, rec, rim0, rim1, P0)) {
+        const pl = (S1 - S0) / np, pt = (j) => S0 + j * pl;
+        const end0 = S0 > 0.5 || rim0, end1 = S1 < len - 0.5 || rim1;
+        for (let j = 0; j < np; j++) {
+          const s = pt(j), sN = pt(j + 1);
+          if (!mine(s)) continue;
+          const up = upAt((s + sN) / 2);
+          for (const side of [-1, 1]) {
+            const o = side * off;
+            beam(M, at(s, o, y0), at(sN, o, y0), cw, ch, up);
+            const first = j === 0 && end0, last = j === np - 1 && end1;
+            if (first) beam(M, at(s, o, y0), at(sN, o, y1), cw, ch, up);
+            else if (last) beam(M, at(s, o, y1), at(sN, o, y0), cw, ch, up);
+            else beam(M, at(s, o, y1), at(sN, o, y1), cw, ch, up);
+            if (j > 0) beam(M, at(s, o, y0), at(s, o, y1), cw * 0.7, ch * 0.7, up);
+            if (!first && !last) {
+              if (s + pl / 2 < (S0 + S1) / 2) beam(M, at(s, o, y1), at(sN, o, y0), cw * 0.6, ch * 0.6, up);
+              else beam(M, at(s, o, y0), at(sN, o, y1), cw * 0.6, ch * 0.6, up);
+            }
+          }
+          if (j > 0) beam(M, at(s, -off, y1), at(s, off, y1), 0.18, 0.25, up);
+          if (!deck && j === 0 && end0) beam(M, at(sN, -off, y1 - 1), at(sN, off, y1 - 1), 0.22, 0.45, up);
+          if (!deck && j === np - 1 && end1) beam(M, at(s, -off, y1 - 1), at(s, off, y1 - 1), 0.22, 0.45, up);
+        }
+      }
+      return;
+    }
+    if (des === D.DECK_ARCH) {
+      const stone = mat === 5;
+      setM(MAT.CONCRETE);
+      for (const [S0, S1] of spanLayout(len, rec, rim0, rim1, 6)) {
+        const L2 = S1 - S0, mid = (S0 + S1) / 2;
+        along(reg, ri, mid, g);
+        const ground = world2.groundH(g[0], g[1], false);
+        const clear = g[2] - DT - ground;
+        if (clear < 3 || L2 < 6) continue;
+        const f = Math.min(clamp(L2 * 0.28, 2, 30), clear - 0.5);
+        const N = clamp(Math.round(L2 / 4), 6, 24);
+        const yAt = (u) => -DT - 0.3 - f * (2 * (u - mid) / L2) ** 2;
+        for (let k = 0; k < N; k++) {
+          const u0 = S0 + L2 * k / N, u1 = S0 + L2 * (k + 1) / N;
+          if (!mine(u0)) continue;
+          const up = upAt((u0 + u1) / 2);
+          if (stone) {
+            const w2 = hw + PW;
+            beam(M, at(u0, 0, yAt(u0) - 0.5), at(u1, 0, yAt(u1) - 0.5), w2, 0.5, up);
+            for (const side of [-1, 1]) {
+              const ym0 = (yAt(u0) - DT) / 2, ym1 = (yAt(u1) - DT) / 2;
+              const hh = Math.max(0.2, (-DT - yAt((u0 + u1) / 2)) / 2);
+              beam(M, at(u0, side * (w2 - 0.3), ym0), at(u1, side * (w2 - 0.3), ym1), 0.3, hh, up);
+            }
+          } else {
+            for (const side of [-1, 1]) {
+              const o = side * hw * 0.7;
+              beam(M, at(u0, o, yAt(u0)), at(u1, o, yAt(u1)), 0.45, 0.55, up);
+              if (k > 0 && yAt(u0) < -DT - 1) beam(M, at(u0, o, yAt(u0)), at(u0, o, -DT), 0.3, 0.3, up);
+            }
+          }
+        }
+      }
+    }
+  }
+  function bigStructure(M, P2, world2, st, setM, PW) {
+    const des = st[0], Ls = clamp(st[3] / 10, 12, 400), W = Math.max(st[6] / 10, 7), cx = st[7] / 10, cy = st[8] / 10;
+    let tx = st[9] / 1e3, ty = st[10] / 1e3;
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl;
+    ty /= tl;
+    const nx = ty, ny = -tx;
+    const z0 = world2.nearestDeck(cx, cy) < 30 ? world2._nd.z : world2.groundH(cx, cy, true);
+    const zAt = (s) => {
+      const x = cx + tx * s, y = cy + ty * s;
+      return world2.nearestDeck(x, y) < 12 ? world2._nd.z : z0;
+    };
+    const at = (s, o, y, z) => {
+      const r = P2(cx + tx * s + nx * o, cy + ty * s + ny * o, (z === void 0 ? zAt(s) : z) + y);
+      return [r[0], r[1], r[2]];
+    };
+    const up = (() => {
+      const a = at(0, 0, 0, z0), b = at(0, 0, 10, z0);
+      return [(b[0] - a[0]) / 10, (b[1] - a[1]) / 10, (b[2] - a[2]) / 10];
+    })();
+    const hw = W / 2;
+    setM(MAT.METAL);
+    if (des === D.ARCH) {
+      const f = clamp(Ls * 0.22, 8, 48), N = clamp(Math.round(Ls / 6), 10, 40), off = hw + 0.6;
+      const yR = (s) => f * (1 - (2 * s / Ls) ** 2) - 3;
+      const depth = clamp(Ls * 0.012, 0.8, 2.6);
+      for (let k = 0; k < N; k++) {
+        const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
+        for (const side of [-1, 1]) {
+          const o = side * off;
+          beam(M, at(s0, o, yR(s0)), at(s1, o, yR(s1)), 0.55, depth, up);
+          if (k > 0 && yR(s0) > 1.5) beam(M, at(s0, o, yR(s0)), at(s0, o, 0), 0.08, 0.08, up);
+        }
+        if (k % 2 === 0 && yR(s0) > 6.5) beam(M, at(s0, -off, yR(s0) + depth * 0.5), at(s0, off, yR(s0) + depth * 0.5), 0.25, 0.4, up);
+      }
+      return;
+    }
+    if (des === D.STAYED) {
+      const Ht = clamp(Ls * 0.28, 25, 75), fork = Ht * 0.62, legs = hw + 1.2;
+      for (const st0 of [-Ls / 2, Ls / 2]) {
+        const zt = zAt(st0);
+        for (const side of [-1, 1]) beam(M, at(st0, side * legs, -8, zt), at(st0, side * 1.6, fork, zt), 1.1, 1.4, up);
+        beam(M, at(st0, 0, fork - 2, zt), at(st0, 0, Ht, zt), 1.4, 1.6, up);
+        beam(M, at(st0, -legs * 0.8, -0.5, zt), at(st0, legs * 0.8, -0.5, zt), 0.8, 0.9, up);
+        const toward = st0 < 0 ? 1 : -1, back = Math.min(Ls * 0.45, 140);
+        const nC = clamp(Math.round((Ls / 2 - 12) / 9), 4, 16);
+        for (let k = 1; k <= nC; k++) {
+          const yk = fork + 2 + (Ht - fork - 4) * (k / nC);
+          for (const dir of [toward, -toward]) {
+            const reach = dir === toward ? 12 + (Ls / 2 - 14) * (k / nC) : 12 + (back - 14) * (k / nC);
+            const sd = st0 + dir * reach;
+            for (const side of [-1, 1]) beam(M, at(st0, 0, yk, zt), at(sd, side * (hw - 0.6), 0.6), 0.09, 0.09, up);
+          }
+        }
+      }
+      return;
+    }
+    if (des === D.SUSPENSION) {
+      const Ht = clamp(Ls * 0.16 + 6, 10, 60), sag = Ht * 0.85, off = hw + 0.4;
+      for (const st0 of [-Ls / 2, Ls / 2]) for (const side of [-1, 1]) beam(M, at(st0, side * off, -2), at(st0, side * off, Ht), 0.7, 0.7, up);
+      for (const st0 of [-Ls / 2, Ls / 2]) beam(M, at(st0, -off, Ht - 1), at(st0, off, Ht - 1), 0.5, 0.6, up);
+      const N = clamp(Math.round(Ls / 5), 8, 60), yC = (s) => Ht - sag * (1 - (2 * s / Ls) ** 2);
+      for (let k = 0; k < N; k++) {
+        const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
+        for (const side of [-1, 1]) {
+          const o = side * off;
+          beam(M, at(s0, o, yC(s0)), at(s1, o, yC(s1)), 0.18, 0.18, up);
+          if (k > 0) beam(M, at(s0, o, yC(s0)), at(s0, o, 0.8), 0.04, 0.04, up);
+        }
+      }
+      return;
+    }
+    if (des === D.LIFT) {
+      const Hl = clamp(Ls * 0.33, 25, 55), off = hw + 1;
+      for (const st0 of [-Ls / 2, Ls / 2]) {
+        const zt = zAt(st0);
+        for (const ds of [-1.8, 1.8]) for (const side of [-1, 1]) beam(M, at(st0 + ds, side * off, -6, zt), at(st0 + ds, side * off, Hl, zt), 0.6, 0.6, up);
+        for (const yb of [Hl * 0.35, Hl * 0.7]) for (const side of [-1, 1]) beam(M, at(st0 - 1.8, side * off, yb, zt), at(st0 + 1.8, side * off, yb, zt), 0.3, 0.3, up);
+        setM(MAT.CONCRETE);
+        beam(M, at(st0, -off - 0.8, Hl + 1.6, zt), at(st0, off + 0.8, Hl + 1.6, zt), 2.4, 1.6, up);
+        beam(M, at(st0, -off + 1, Hl * 0.78, zt), at(st0, off - 1, Hl * 0.78, zt), 1.4, 1.8, up);
+        setM(MAT.METAL);
+      }
+      const H = 6, N = clamp(Math.round(Ls / 7), 6, 30);
+      for (let k = 0; k < N; k++) {
+        const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
+        for (const side of [-1, 1]) {
+          const o = side * (hw + 0.3);
+          beam(M, at(s0, o, H), at(s1, o, H), 0.25, 0.3, up);
+          beam(M, at(s0, o, 0), at(s0, o, H), 0.2, 0.2, up);
+          beam(M, at(s0, o, k % 2 ? H : 0), at(s1, o, k % 2 ? 0 : H), 0.15, 0.15, up);
+        }
+      }
+      return;
+    }
+    if (des === D.BASCULE) {
+      setM(MAT.CONCRETE);
+      const s0 = Ls / 2 + 4, o = hw + 3.2;
+      beam(M, at(s0, o, -0.5), at(s0, o, 4.2), 2.2, 2.6, up);
+      setM(MAT.ROOF || MAT.CONCRETE);
+      beam(M, at(s0, o, 4.2), at(s0, o, 4.8), 2.6, 3, up);
+    }
+  }
+
   // src/decks.js
   var PIER_GAP = 30;
   var EDGE_STEP = 1.5;
@@ -2045,7 +2359,7 @@
     }
     return m;
   }
-  function buildDeckTile(world2, reg, ix, iy, s, cx, cy, cz, th) {
+  function buildDeckTile(world2, reg, ix, iy, s, cx, cy, cz, th, nbi) {
     if (!reg || !reg.nDeck) return null;
     const list = index(reg, s).get(iy * 65536 + ix);
     if (!list) return null;
@@ -2087,6 +2401,18 @@
     };
     const n0 = [0, 0], n1 = [0, 0];
     let count = 0;
+    const spanSts = nbi ? nbi.structures.get(reg.ry * 28 + reg.rx) : null;
+    const underMainSpan = (X, Y) => {
+      for (const st of spanSts) {
+        const Ls = clamp(st[3] / 10, 12, 400), W = Math.max(st[6] / 10, 7), dx = X - st[7] / 10, dy = Y - st[8] / 10;
+        let tx = st[9] / 1e3, ty = st[10] / 1e3;
+        const tl = Math.hypot(tx, ty) || 1;
+        tx /= tl;
+        ty /= tl;
+        if (Math.abs(dx * tx + dy * ty) < Ls / 2 - 4 && Math.abs(dx * ty - dy * tx) < W / 2 + 20) return true;
+      }
+      return false;
+    };
     for (const q of list) {
       const ri = segR[q], cls = reg.rCls[ri], rail = cls >= 14, hw = reg.rHw[ri];
       const ax = reg.x0 + px[q], ay = reg.y0 + py[q], bx = reg.x0 + px[q + 1], by = reg.y0 + py[q + 1], az = pz[q], bz = pz[q + 1];
@@ -2201,6 +2527,7 @@
       setM(MAT.CONCRETE);
       for (let k = Math.ceil(s0 / PIER_GAP); k * PIER_GAP < s1; k++) {
         const f = (k * PIER_GAP - s0) / (s1 - s0), X = ax + (bx - ax) * f, Y = ay + (by - ay) * f, Z = az + (bz - az) * f;
+        if (spanSts && underMainSpan(X, Y)) continue;
         const half = clamp(hw * 0.62, 0.6, 5), nx = ty, ny = -tx;
         let low = 1e9, ok = true;
         for (const o of [-half, 0, half]) {
@@ -2243,8 +2570,50 @@
       }
       count++;
     }
+    if (nbi) {
+      const key2 = reg.ry * 28 + reg.rx;
+      const recs = nbi.ways.get(key2), sts = nbi.structures.get(key2);
+      const setW = (cls, seed) => (m) => {
+        M.M[0] = m;
+        M.M[1] = 0;
+        M.M[2] = cls;
+        M.M[3] = seed;
+      };
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      if (recs) {
+        const segs = /* @__PURE__ */ new Map();
+        for (const q of list) {
+          const ri = segR[q];
+          if (!recs.has(ri)) continue;
+          const a = cum[reg.rStart[ri]];
+          let l = segs.get(ri);
+          if (!l) segs.set(ri, l = []);
+          l.push([cum[q] - a, cum[q + 1] - a]);
+        }
+        for (const [ri, l] of segs) {
+          const cls = reg.rCls[ri], rail = cls >= 14;
+          const a = reg.rStart[ri], mid = P2(reg.x0 + px[a], reg.y0 + py[a], pz[a]);
+          M.C[0] = mid[0];
+          M.C[1] = mid[1];
+          M.C[2] = mid[2];
+          wayStructure(M, P2, world2, reg, ri, recs.get(ri), l, setW(cls, ri * 37 + 11 & 255), cls, rail ? 0.34 : 0.42, rail ? 1.5 : DECK_T - 0.05);
+        }
+      }
+      if (sts) for (const st of sts) {
+        const sx = st[7] / 10, sy = st[8] / 10;
+        if (Math.floor(sx / s) !== ix || Math.floor(sy / s) !== iy) continue;
+        const mid = P2(sx, sy, world2.groundH(sx, sy, true));
+        M.C[0] = mid[0];
+        M.C[1] = mid[1];
+        M.C[2] = mid[2];
+        bigStructure(M, P2, world2, st, setW(0, 7), 0.42);
+      }
+    }
     if (!M.n) return null;
-    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), idx: M.idx.slice(0, M.ni) };
+    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
   }
 
   // src/worker.js
@@ -2267,6 +2636,8 @@
   var tmp = new Float64Array(3);
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
+  var NBI = null;
+  var nbiReady = null;
   function init(m) {
     const meta = m.meta;
     const parts = { sdf: new Uint8Array(m.sdf), sdfW: m.sdfW, sdfH: m.sdfH, cover: new Uint8Array(m.cover), aux: new Uint8Array(m.aux) };
@@ -2283,6 +2654,18 @@
     lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
     LCP = meta.lcPack || 8192;
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
+    const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
+    const bf = meta.files && meta.files.bridges;
+    nbiReady = bf ? fetch("data/" + bf.file).then((r) => r.ok ? r.json() : null).then((j) => {
+      NBI = empty();
+      if (!j) return;
+      for (const [k, v] of Object.entries(j.ways || {})) NBI.ways.set(+k, new Map(v.map((r) => [r[0], r])));
+      for (const [k, v] of Object.entries(j.structures || {})) NBI.structures.set(+k, v);
+    }).catch(() => {
+      NBI = empty();
+    }) : Promise.resolve().then(() => {
+      NBI = empty();
+    });
   }
   function trim(map, keep) {
     if (map.size <= keep) return;
@@ -2704,9 +3087,9 @@
       return;
     }
     if (kind === "decks") {
-      const t = buildDeckTile(world, reg, ix, iy, s, cx, cy, cz, (my0 + s / 2) / R);
+      const t = buildDeckTile(world, reg, ix, iy, s, cx, cy, cz, (my0 + s / 2) / R, NBI);
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.idx.buffer] : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer] : []);
       return;
     }
     if (kind === "houses") {
@@ -2719,7 +3102,7 @@
       }
       const t = sel.length ? buildHouseTile(world, list, sel, cx, cy, cz, (my0 + s / 2) / R, reg) : null;
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.idx.buffer] : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer] : []);
       return;
     }
     if (realBuildings) {
@@ -2737,10 +3120,10 @@
           pitched = 0;
         }
         cyl(mx, my, h - 0.5, p32);
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, list[k + 4], list[k + 2], list[k + 3], wh + 0.5, pitched, list[k + 13], list[k + 6], list[k + 12]);
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, list[k + 4], list[k + 2], list[k + 3], wh + 0.5, pitched, list[k + 13], list[k + 6], list[k + 12], list[k + 15]);
       }
       const arr2 = new Float32Array(out);
-      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 11 }, [arr2.buffer]);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 12 }, [arr2.buffer]);
       return;
     }
     const sp = 27, n = Math.round(s / sp), cell = s / n;
@@ -2864,6 +3247,7 @@
           await Promise.all(prs);
         }
       }
+      if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);
