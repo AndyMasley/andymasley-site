@@ -18712,17 +18712,35 @@ void main() {
   var _push = [0, 0];
   function footprintPolygon(reg, l, k) {
     const real = reg.real, id2 = l[k + 14];
-    let pts = null;
+    let pts = null, rings = null;
     if (real && id2 < real.n && real.off[id2 + 1] > real.off[id2]) {
       const dv2 = real.dv, o = real.base + real.off[id2], nv2 = dv2.getUint8(o);
       if (nv2 >= 3) {
         const mx2 = reg.x0 + dv2.getInt32(o + 4, true) * 0.01, my2 = reg.y0 + dv2.getInt32(o + 8, true) * 0.01, a = dv2.getInt16(o + 12, true) / 1e4;
-        const ca2 = Math.cos(a), sa2 = Math.sin(a);
-        pts = new Float64Array(nv2 * 2);
-        for (let i = 0; i < nv2; i++) {
-          const u = dv2.getInt16(o + 16 + i * 4, true) * 0.025, v = dv2.getInt16(o + 18 + i * 4, true) * 0.025;
-          pts[i * 2] = mx2 + ca2 * u - sa2 * v;
-          pts[i * 2 + 1] = my2 + sa2 * u + ca2 * v;
+        const ca2 = Math.cos(a), sa2 = Math.sin(a), nh2 = dv2.getUint8(o + 3);
+        const all = [], at = [0];
+        for (let i = 0; i < nv2; i++) all.push(dv2.getInt16(o + 16 + i * 4, true) * 0.025, dv2.getInt16(o + 18 + i * 4, true) * 0.025);
+        if (nh2) {
+          let p = o + 16 + nv2 * 4;
+          for (let s29 = 0, ns2 = dv2.getUint8(o + 1); s29 < ns2; s29++) p += 10 + dv2.getUint8(p + 9) * 6;
+          for (let h = 0; h < nh2; h++) {
+            const m = dv2.getUint8(p);
+            p += 1;
+            if (m >= 3) {
+              at.push(all.length / 2);
+              for (let i = 0; i < m; i++) all.push(dv2.getInt16(p + i * 4, true) * 0.025, dv2.getInt16(p + 2 + i * 4, true) * 0.025);
+            }
+            p += m * 4;
+          }
+        }
+        pts = new Float64Array(all.length);
+        for (let i = 0; i < all.length; i += 2) {
+          pts[i] = mx2 + ca2 * all[i] - sa2 * all[i + 1];
+          pts[i + 1] = my2 + sa2 * all[i] + ca2 * all[i + 1];
+        }
+        if (at.length > 1) {
+          at.push(all.length / 2);
+          rings = at;
         }
       }
     }
@@ -18734,17 +18752,17 @@ void main() {
         pts[i * 2 + 1] = my2 + sa2 * su * hu + ca2 * sv2 * hv2;
       });
     }
-    const n = pts.length / 2;
+    const n = pts.length / 2, no2 = rings ? rings[1] : n;
     let area = 0, cx2 = 0, cy2 = 0;
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
+    for (let i = 0; i < no2; i++) {
+      const j = (i + 1) % no2;
       area += pts[i * 2] * pts[j * 2 + 1] - pts[j * 2] * pts[i * 2 + 1];
       cx2 += pts[i * 2];
       cy2 += pts[i * 2 + 1];
     }
     if (Math.abs(area) < 0.5) return null;
     if (area < 0) {
-      for (let i = 0, j = n - 1; i < j; i++, j--) {
+      for (let i = 0, j = no2 - 1; i < j; i++, j--) {
         const tx2 = pts[i * 2], ty2 = pts[i * 2 + 1];
         pts[i * 2] = pts[j * 2];
         pts[i * 2 + 1] = pts[j * 2 + 1];
@@ -18752,19 +18770,30 @@ void main() {
         pts[j * 2 + 1] = ty2;
       }
     }
-    cx2 /= n;
-    cy2 /= n;
+    cx2 /= no2;
+    cy2 /= no2;
     let rad = 0;
-    for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(pts[i * 2] - cx2, pts[i * 2 + 1] - cy2));
-    return { pts, n, cx: cx2, cy: cy2, rad };
+    for (let i = 0; i < no2; i++) rad = Math.max(rad, Math.hypot(pts[i * 2] - cx2, pts[i * 2 + 1] - cy2));
+    return { pts, n, cx: cx2, cy: cy2, rad, rings };
+  }
+  function eachEdge(P2, f) {
+    const R2 = P2.rings;
+    if (!R2) {
+      for (let i = 0, n = P2.n; i < n; i++) f(i, (i + 1) % n);
+      return;
+    }
+    for (let r = 0; r + 1 < R2.length; r++) {
+      const s29 = R2[r], e = R2[r + 1];
+      for (let i = s29; i < e; i++) f(i, i + 1 < e ? i + 1 : s29);
+    }
   }
   function inPolygon(x, y, P2) {
-    const p = P2.pts, n = P2.n;
+    const p = P2.pts;
     let inside = false;
-    for (let i = 0, j = n - 1; i < n; j = i++) {
+    eachEdge(P2, (j, i) => {
       const xi2 = p[i * 2], yi2 = p[i * 2 + 1], xj = p[j * 2], yj = p[j * 2 + 1];
       if (yi2 > y !== yj > y && x < (xj - xi2) * (y - yi2) / (yj - yi2) + xi2) inside = !inside;
-    }
+    });
     return inside;
   }
   function boxOutOfPolygon(cx2, cy2, fx2, fy2, P2, out) {
@@ -18774,8 +18803,8 @@ void main() {
       const x = cx2 + fx2 * CAR_HL * sa2 + rx2 * CAR_HW * sl2, y = cy2 + fy2 * CAR_HL * sa2 + ry2 * CAR_HW * sl2;
       if (!inPolygon(x, y, P2)) continue;
       let bd2 = 1e9, bx2 = 0, by2 = 0;
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n, ax2 = p[i * 2], ay2 = p[i * 2 + 1], dx2 = p[j * 2] - ax2, dy2 = p[j * 2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+      eachEdge(P2, (i, j) => {
+        const ax2 = p[i * 2], ay2 = p[i * 2 + 1], dx2 = p[j * 2] - ax2, dy2 = p[j * 2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
         let t = l2 > 0 ? ((x - ax2) * dx2 + (y - ay2) * dy2) / l2 : 0;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const qx2 = ax2 + dx2 * t - x, qy2 = ay2 + dy2 * t - y, d = Math.hypot(qx2, qy2);
@@ -18784,7 +18813,7 @@ void main() {
           bx2 = qx2;
           by2 = qy2;
         }
-      }
+      });
       if (bd2 < 1e9 && bd2 + 0.02 > best) {
         const k = (bd2 + 0.02) / Math.max(bd2, 1e-6);
         best = bd2 + 0.02;

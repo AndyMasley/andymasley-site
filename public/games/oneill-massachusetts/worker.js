@@ -1579,6 +1579,166 @@
       ears(F, (i0, i1, i2) => M.tri(ids[i0], ids[i1], ids[i2]));
     }
   }
+  function inRing(R2, x, y) {
+    let c = false;
+    for (let i = 0, n = R2.length / 3, j = n - 1; i < n; j = i++) {
+      const xi = R2[i * 3], yi = R2[i * 3 + 1], xj = R2[j * 3], yj = R2[j * 3 + 1];
+      if (yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  }
+  var orient = (ax, ay, bx, by, cx, cy) => (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+  function onOpen(px, py, ax, ay, bx, by) {
+    if (Math.abs(orient(ax, ay, bx, by, px, py)) > 1e-9) return false;
+    const d = (px - ax) * (bx - ax) + (py - ay) * (by - ay), l2 = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+    return d > 1e-12 && d < l2 - 1e-12;
+  }
+  function stops(ax, ay, bx, by, cx, cy, dx, dy) {
+    const ca = cx === ax && cy === ay || cx === bx && cy === by, da = dx === ax && dy === ay || dx === bx && dy === by;
+    if (ca && da) return true;
+    if (ca) return onOpen(dx, dy, ax, ay, bx, by);
+    if (da) return onOpen(cx, cy, ax, ay, bx, by);
+    const E = 1e-9, d1 = orient(ax, ay, bx, by, cx, cy), d2 = orient(ax, ay, bx, by, dx, dy), d3 = orient(cx, cy, dx, dy, ax, ay), d4 = orient(cx, cy, dx, dy, bx, by);
+    if ((d1 > E && d2 < -E || d1 < -E && d2 > E) && (d3 > E && d4 < -E || d3 < -E && d4 > E)) return true;
+    const on = (px, py, qx, qy, rx, ry) => Math.min(qx, rx) - 1e-9 <= px && px <= Math.max(qx, rx) + 1e-9 && Math.min(qy, ry) - 1e-9 <= py && py <= Math.max(qy, ry) + 1e-9;
+    return Math.abs(d1) <= E && on(cx, cy, ax, ay, bx, by) || Math.abs(d2) <= E && on(dx, dy, ax, ay, bx, by) || Math.abs(d3) <= E && on(ax, ay, cx, cy, dx, dy) || Math.abs(d4) <= E && on(bx, by, cx, cy, dx, dy);
+  }
+  function clearCut(ax, ay, bx, by, rings) {
+    for (const R2 of rings) {
+      const n = R2.length / 3;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        if (stops(ax, ay, bx, by, R2[i * 3], R2[i * 3 + 1], R2[j * 3], R2[j * 3 + 1])) return false;
+      }
+    }
+    return true;
+  }
+  function planTriangles(P2, holes) {
+    let Q = P2.slice(), ends = new Uint8Array(Q.length / 3);
+    const kept = [], left = holes.slice();
+    while (left.length) {
+      const H = left.shift(), nh = H.length / 3, nq = Q.length / 3;
+      const D2 = [];
+      for (let i2 = 0; i2 < nh; i2++) for (let j2 = 0; j2 < nq; j2++) {
+        if (ends[j2]) continue;
+        const du = H[i2 * 3] - Q[j2 * 3], dv = H[i2 * 3 + 1] - Q[j2 * 3 + 1];
+        D2.push([du * du + dv * dv, i2, j2]);
+      }
+      D2.sort((x, y) => x[0] - y[0]);
+      let hit = null;
+      for (let k = 0; k < D2.length && k < 600; k++) {
+        const [, i2, j2] = D2[k];
+        if (clearCut(H[i2 * 3], H[i2 * 3 + 1], Q[j2 * 3], Q[j2 * 3 + 1], [Q, H, ...left])) {
+          hit = D2[k];
+          break;
+        }
+      }
+      if (!hit) continue;
+      const [, i, j] = hit, ins = [];
+      for (let t = 0; t <= nh; t++) {
+        const q = (i + t) % nh;
+        ins.push(H[q * 3], H[q * 3 + 1], 0);
+      }
+      ins.push(Q[j * 3], Q[j * 3 + 1], Q[j * 3 + 2]);
+      Q = Q.slice(0, (j + 1) * 3).concat(ins, Q.slice((j + 1) * 3));
+      const e2 = new Uint8Array(Q.length / 3);
+      e2.set(ends.subarray(0, j + 1), 0);
+      e2.set(ends.subarray(j + 1), j + nh + 3);
+      e2[j] = 1;
+      e2[j + 1] = 1;
+      e2[j + 1 + nh] = 1;
+      e2[j + 2 + nh] = 1;
+      ends = e2;
+      kept.push(H);
+    }
+    holes.length = 0;
+    if (!kept.length) return null;
+    const T = [];
+    let sum = 0;
+    ears(Q, (a, b, c) => {
+      T.push(Q[a * 3], Q[a * 3 + 1], Q[b * 3], Q[b * 3 + 1], Q[c * 3], Q[c * 3 + 1]);
+      sum += orient(Q[a * 3], Q[a * 3 + 1], Q[b * 3], Q[b * 3 + 1], Q[c * 3], Q[c * 3 + 1]) / 2;
+    });
+    let want = polyArea(P2);
+    for (const H of kept) want += polyArea(H);
+    if (!(want > 0) || Math.abs(sum - want) > 0.01 * want + 0.05) return null;
+    for (const H of kept) holes.push(H);
+    return T;
+  }
+  var _K = [];
+  function roofOfTris(M, setM, T, K, pl, lift) {
+    const np = pl.length;
+    for (let q = 0; q < np; q++) {
+      _K.length = 0;
+      for (const h of K) _K.push(h);
+      let empty = false;
+      for (let r = 0; r < np; r++) {
+        if (r === q) continue;
+        const a2 = pl[r][0] - pl[q][0], b2 = pl[r][1] - pl[q][1], c2 = pl[r][2] - pl[q][2];
+        if (Math.abs(a2) < 1e-6 && Math.abs(b2) < 1e-6) {
+          if (c2 < 0 || c2 === 0 && r < q) {
+            empty = true;
+            break;
+          }
+          continue;
+        }
+        _K.push([a2, b2, c2]);
+      }
+      if (empty) continue;
+      const a = pl[q][0], b = pl[q][1], c = pl[q][2] + lift, gl = Math.hypot(a, b), sl = Math.hypot(1, gl);
+      const flat = gl < 0.14;
+      setM(flat ? MAT.FLATROOF : MAT.ROOF);
+      for (let t = 0; t < T.length; t += 6) {
+        const F = _F;
+        F.length = 0;
+        F.push(T[t], T[t + 1], 0, T[t + 2], T[t + 3], 0, T[t + 4], T[t + 5], 0);
+        for (const h of _K) {
+          clipPoly(F, h[0], h[1], h[2], _G);
+          F.length = 0;
+          for (let i = 0; i < _G.length; i++) F.push(_G[i]);
+          if (F.length < 9) break;
+        }
+        if (F.length < 9 || polyArea(F) < 1e-4) continue;
+        const ids = [];
+        for (let i = 0; i < F.length / 3; i++) {
+          const u = F[i * 3], v = F[i * 3 + 1];
+          const tu = flat ? u : (-b * u + a * v) / gl, tv = flat ? v : (a * u + b * v) / gl * sl;
+          ids.push(M.v(u, a * u + b * v + c, v, -a / sl, 1 / sl, -b / sl, tu, tv));
+        }
+        for (let i = 1; i + 1 < F.length / 3; i++) {
+          if (orient(F[0], F[1], F[i * 3], F[i * 3 + 1], F[i * 3 + 3], F[i * 3 + 4]) > 1e-9) M.tri(ids[0], ids[i], ids[i + 1]);
+        }
+      }
+    }
+  }
+  function outsideHoles(u0, v0, u1, v1, holes) {
+    const ts = [0, 1], ex = u1 - u0, ey = v1 - v0;
+    for (const H of holes) {
+      const n = H.length / 3;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n, cu = H[i * 3], cv = H[i * 3 + 1], du = H[j * 3] - cu, dv = H[j * 3 + 1] - cv, den = ex * dv - ey * du;
+        if (Math.abs(den) < 1e-12) continue;
+        const t = ((cu - u0) * dv - (cv - v0) * du) / den, s = ((cu - u0) * ey - (cv - v0) * ex) / den;
+        if (t > 0 && t < 1 && s >= 0 && s <= 1) ts.push(t);
+      }
+    }
+    ts.sort((x, y) => x - y);
+    const out = [];
+    for (let k = 0; k + 1 < ts.length; k++) {
+      const ta = ts[k], tb = ts[k + 1];
+      if (tb - ta < 1e-4) continue;
+      const tm = (ta + tb) / 2, um = u0 + ex * tm, vm = v0 + ey * tm;
+      let open = false;
+      for (const H of holes) if (inRing(H, um, vm)) {
+        open = true;
+        break;
+      }
+      if (open) continue;
+      if (out.length && out[out.length - 1][1] >= ta - 1e-4) out[out.length - 1][1] = tb;
+      else out.push([ta, tb]);
+    }
+    return out;
+  }
   var _T = [];
   function wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, info) {
     const nu = (v1 - v0) / len, nv = -(u1 - u0) / len;
@@ -1674,6 +1834,21 @@
         if (h < low) low = h;
       }
     }
+    const holes = [];
+    for (let h = 0, nh = dv.getUint8(o + 3); h < nh; h++) {
+      const n = dv.getUint8(p);
+      p += 1;
+      const H = [];
+      for (let i = 0; i < n; i++, p += 4) H.push(dv.getInt16(p, true) * 0.025, dv.getInt16(p + 2, true) * 0.025, 0);
+      if (n < 3 || Math.abs(polyArea(H)) < 1) continue;
+      if (polyArea(H) > 0) for (let a = 0, b = n - 1; a < b; a++, b--) for (let c = 0; c < 3; c++) {
+        const t = H[a * 3 + c];
+        H[a * 3 + c] = H[b * 3 + c];
+        H[b * 3 + c] = t;
+      }
+      holes.push(H);
+    }
+    const T = holes.length ? planTriangles(P2, holes) : null;
     const basePl = [[0, 0, clamp(low - 0.15, 2.2, 400)]];
     const fa = yawOld + side * Math.PI / 2 - theta, fu = Math.cos(fa), fv = Math.sin(fa);
     let front = -1, fl = 2.5;
@@ -1686,45 +1861,50 @@
     }
     const cuts = [];
     let frontWall = null;
-    for (let i = 0; i < nv; i++) {
-      const j = (i + 1) % nv, u0 = P2[i * 3], v0 = P2[i * 3 + 1], u1 = P2[j * 3], v1 = P2[j * 3 + 1], len = Math.hypot(u1 - u0, v1 - v0);
-      if (len < 0.05) continue;
-      cuts.length = 0;
-      cuts.push(0, 1);
-      for (const sc of secs) {
-        if (Math.abs(u1 - u0) > 1e-6) for (const x of [sc[0], sc[2]]) {
-          const t = (x - u0) / (u1 - u0);
-          if (t > 0.01 && t < 0.99) cuts.push(t);
-        }
-        if (Math.abs(v1 - v0) > 1e-6) for (const y of [sc[1], sc[3]]) {
-          const t = (y - v0) / (v1 - v0);
-          if (t > 0.01 && t < 0.99) cuts.push(t);
-        }
-      }
-      cuts.sort((x, y) => x - y);
-      const isFront = i === front, door = isFront ? doorAt(len, cls, seed) : -1;
-      if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
-      setM(MAT.WALL);
-      for (let c = 0; c + 1 < cuts.length; c++) {
-        const ta = cuts[c], tb = cuts[c + 1];
-        if (tb - ta < 1e-4) continue;
-        const tm = (ta + tb) / 2, um = u0 + (u1 - u0) * tm, vm = v0 + (v1 - v0) * tm;
-        const over = [];
-        for (const sc of secs) if (um > sc[0] - 0.03 && um < sc[2] + 0.03 && vm > sc[1] - 0.03 && vm < sc[3] + 0.03) over.push(sc[4]);
-        if (!over.length) over.push(basePl);
-        wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, (lo, varies, plen) => {
-          if (plen < 1.2) return null;
-          const eave = Math.max(lo - y0, 0.3);
-          let flags = varies && plen > 3 ? 1 : 0;
-          if (isFront) {
-            flags |= 2;
-            if (cls === CLS.GARAGE || cls === CLS.BARN) flags |= 4;
-            if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
+    const ringWalls = (R2, front2) => {
+      const nr = R2.length / 3;
+      for (let i = 0; i < nr; i++) {
+        const j = (i + 1) % nr, u0 = R2[i * 3], v0 = R2[i * 3 + 1], u1 = R2[j * 3], v1 = R2[j * 3 + 1], len = Math.hypot(u1 - u0, v1 - v0);
+        if (len < 0.05) continue;
+        cuts.length = 0;
+        cuts.push(0, 1);
+        for (const sc of secs) {
+          if (Math.abs(u1 - u0) > 1e-6) for (const x of [sc[0], sc[2]]) {
+            const t = (x - u0) / (u1 - u0);
+            if (t > 0.01 && t < 0.99) cuts.push(t);
           }
-          return [eave, clamp(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * flags, door, y0];
-        });
+          if (Math.abs(v1 - v0) > 1e-6) for (const y of [sc[1], sc[3]]) {
+            const t = (y - v0) / (v1 - v0);
+            if (t > 0.01 && t < 0.99) cuts.push(t);
+          }
+        }
+        cuts.sort((x, y) => x - y);
+        const isFront = i === front2, door = isFront ? doorAt(len, cls, seed) : -1;
+        if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
+        setM(MAT.WALL);
+        for (let c = 0; c + 1 < cuts.length; c++) {
+          const ta = cuts[c], tb = cuts[c + 1];
+          if (tb - ta < 1e-4) continue;
+          const tm = (ta + tb) / 2, um = u0 + (u1 - u0) * tm, vm = v0 + (v1 - v0) * tm;
+          const over = [];
+          for (const sc of secs) if (um > sc[0] - 0.03 && um < sc[2] + 0.03 && vm > sc[1] - 0.03 && vm < sc[3] + 0.03) over.push(sc[4]);
+          if (!over.length) over.push(basePl);
+          wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, (lo, varies, plen) => {
+            if (plen < 1.2) return null;
+            const eave = Math.max(lo - y0, 0.3);
+            let flags = varies && plen > 3 ? 1 : 0;
+            if (isFront) {
+              flags |= 2;
+              if (cls === CLS.GARAGE || cls === CLS.BARN) flags |= 4;
+              if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
+            }
+            return [eave, clamp(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * flags, door, y0];
+          });
+        }
       }
-    }
+    };
+    ringWalls(P2, front);
+    for (const H of holes) ringWalls(H, -1);
     M.W[0] = 0;
     M.W[1] = 0;
     M.W[2] = 0;
@@ -1736,17 +1916,21 @@
       Q = clipPoly(Q, 0, 1, -yy0, _B).slice();
       Q = clipPoly(Q, 0, -1, yy1, _B).slice();
       if (Q.length < 9 || polyArea(Q) < 0.5) continue;
-      roofOf(M, setM, Q, pl, lift);
+      if (T) roofOfTris(M, setM, T, [[1, 0, -x0], [-1, 0, x1], [0, 1, -yy0], [0, -1, yy1]], pl, lift);
+      else roofOf(M, setM, Q, pl, lift);
       clipped.push([Q, pl]);
     }
-    roofOf(M, setM, P2, basePl, lift);
+    if (T) roofOfTris(M, setM, T, [], basePl, lift);
+    else roofOf(M, setM, P2, basePl, lift);
     setM(MAT.WALL);
     for (const [Q, pl] of clipped) {
       const n = Q.length / 3;
       for (let i = 0; i < n; i++) {
         if (Q[i * 3 + 2] !== CUT) continue;
         const j = (i + 1) % n, len = Math.hypot(Q[j * 3] - Q[i * 3], Q[j * 3 + 1] - Q[i * 3 + 1]);
-        if (len > 0.05) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], 0, 1, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
+        if (len <= 0.05) continue;
+        if (!holes.length) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], 0, 1, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
+        else for (const [ta, tb] of outsideHoles(Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], holes)) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], ta, tb, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
       }
     }
     M.W[0] = 0;
@@ -1786,6 +1970,7 @@
           const ui = P2[i * 3], vi = P2[i * 3 + 1], uj = P2[j * 3], vj = P2[j * 3 + 1];
           if (vi > cv !== vj > cv && cu < (uj - ui) * (cv - vi) / (vj - vi) + ui) inside = !inside;
         }
+        for (const H of holes) if (inRing(H, cu, cv)) inside = false;
         if (inside && rh > 2.5) {
           setM(MAT.BRICK);
           M.box(cu - 0.32, cu + 0.32, env2(cu, cv) - 0.8 + lift, rh + 0.8 + lift, cv - 0.42, cv + 0.42, 55);
