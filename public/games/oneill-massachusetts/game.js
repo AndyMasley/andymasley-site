@@ -14774,6 +14774,11 @@ void main() {
   var RM = 160;
   var RCELL = 128;
   var RREG = 72;
+  var DECK_T = 0.95;
+  var DECKS = false;
+  function setDecks(on2) {
+    DECKS = !!on2;
+  }
   var regionKey = (rx2, ry2) => ry2 * RNX + rx2;
   var EMPTY_REGION = { nRoads: 0, nBld: 0, empty: true };
   function parseRegion(buf, rx2, ry2) {
@@ -14828,6 +14833,14 @@ void main() {
       }
       nSeg += Math.max(0, n - 1);
     }
+    const rEnd = reg.rEnd = new Uint8Array(nR);
+    let nDeck = 0;
+    for (let i = 0; i < nR; i++) {
+      if (!DECKS || !(reg.rFlags[i] & 2) || reg.rCls[i] > 15 || rCount[i] < 2) continue;
+      rEnd[i] = 4;
+      nDeck++;
+    }
+    reg.nDeck = nDeck;
     const nc2 = cells * cells + 1;
     reg.bCell = new Uint32Array(buf.slice(p, p + nc2 * 4));
     p += nc2 * 4;
@@ -14856,7 +14869,49 @@ void main() {
     });
     reg.gstart = counts;
     reg.gitems = items;
+    for (let i = 0; i < nR; i++) {
+      if (!rEnd[i]) continue;
+      const a = rStart[i], b = a + rCount[i] - 1;
+      if (!onOtherWay(reg, px2[a], py2[a], pz[a], i, true)) rEnd[i] |= 1;
+      if (!onOtherWay(reg, px2[b], py2[b], pz[b], i, true)) rEnd[i] |= 2;
+    }
     return reg;
+  }
+  function onOtherWay(reg, lx2, ly2, z, ri2, deckOnly) {
+    const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+    if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return false;
+    const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rCls = reg.rCls;
+    for (let q = reg.gstart[c]; q < e; q++) {
+      const pi2 = items[q], rj = segR[pi2];
+      if (rj === ri2 || rCls[rj] > 15 || deckOnly && !rEnd[rj]) continue;
+      const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+      if (l2 < 1e-6) continue;
+      const ux2 = lx2 - ax2, uy2 = ly2 - ay2, t = (ux2 * dx2 + uy2 * dy2) / l2, tol = 0.3 / Math.sqrt(l2);
+      if (t < -tol || t > 1 + tol) continue;
+      const tc2 = t < 0 ? 0 : t > 1 ? 1 : t, ex2 = ux2 - dx2 * tc2, ey2 = uy2 - dy2 * tc2, w = rHw[rj] - 0.05;
+      if (ex2 * ex2 + ey2 * ey2 >= w * w) continue;
+      if (Math.abs(pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * tc2 - z) < 1) return true;
+    }
+    return false;
+  }
+  var GSEG = 1472;
+  var GS2 = RS2 / GSEG;
+  function parseGround(u8) {
+    const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    if (dv2.getUint32(0, true) !== 860114503) throw new Error("bad ground file");
+    const n = dv2.getUint32(4, true), m = dv2.getUint32(8, true), seg = dv2.getUint32(12, true), steps = dv2.getUint32(16, true), off = dv2.getUint32(20, true);
+    if (seg !== GSEG || u8.length < 32 + 2 * n * n) throw new Error("bad ground file");
+    const d = new Uint16Array(n * n), hi2 = n * n;
+    const b = u8.subarray(32);
+    for (let j = 0, o = 0; j < n; j++) {
+      let acc = 0;
+      for (let i = 0; i < n; i++, o++) {
+        const zz = b[o] | b[hi2 + o] << 8;
+        acc = acc + (zz >>> 1 ^ -(zz & 1)) & 65535;
+        d[o] = j ? acc + d[o - n] & 65535 : acc;
+      }
+    }
+    return { n, m, d, inv: 1 / steps, off };
   }
   var World = class {
     // parts: decoded arrays (see loader).  Regions arrive later through addRegion().
@@ -14905,6 +14960,7 @@ void main() {
       this.pinned = null;
       this.tick = 0;
       this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
+      this._nd = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
     }
     baseH(mx2, my2) {
       const g = this.bg, W = this.bw, H = this.bh, b = this.base;
@@ -15018,6 +15074,17 @@ void main() {
       if (i < 0 || j < 0 || i >= n || j >= n) return false;
       return this.webFoot[j * n + i] > 127;
     }
+    // The LiDAR's ground at (mx, my) from a region's tile; NaN where the tile has nothing to say.
+    fineH(reg, mx2, my2) {
+      const g = reg.ground;
+      if (!g) return NaN;
+      const n = g.n, fx2 = (mx2 - reg.x0) / GS2 + g.m, fy2 = (my2 - reg.y0) / GS2 + g.m;
+      if (!(fx2 >= 0 && fy2 >= 0 && fx2 < n - 1 && fy2 < n - 1)) return NaN;
+      const i = fx2 | 0, j = fy2 | 0, tx2 = fx2 - i, ty2 = fy2 - j, o = j * n + i, d = g.d;
+      const a = d[o], b = d[o + 1], c = d[o + n], e = d[o + n + 1];
+      if (!a || !b || !c || !e) return NaN;
+      return (a + (b - a) * tx2 + (c - a) * ty2 + (a - b - c + e) * tx2 * ty2) * g.inv - g.off;
+    }
     // -------------------------------------------------------------- regions
     addRegion(rx2, ry2, reg) {
       reg.used = this.tick;
@@ -15046,34 +15113,52 @@ void main() {
       const all = [...this.regions.entries()].sort((a, b) => a[1].used - b[1].used);
       for (let i = 0; i < all.length - keep; i++) this.regions.delete(all[i][0]);
     }
-    // Nearest road to (mx,my) within ~60 m.  Result in this._nr; returns edge distance (centre distance - half width).
+    // Nearest road on the ground to (mx,my) within ~60 m (bridge decks are not counted: see nearestDeck).  Result in
+    // this._nr; returns edge distance (centre distance - half width).
     nearestRoad(mx2, my2) {
-      const o = this._nr;
+      return this._near(mx2, my2, false, this._nr);
+    }
+    // Nearest bridge deck over (mx,my): the same, in this._nd.  Past a rim (where the deck meets the ground) there is
+    // no deck, so the approach is not taken for part of the bridge.
+    // zmax: only decks at or below this height here.  Of the decks the point is on, the highest is taken (the one a car
+    // coming down to zmax would land on); if it is on none, the nearest.
+    nearestDeck(mx2, my2, zmax = 1e9) {
+      return this._near(mx2, my2, true, this._nd, zmax);
+    }
+    _near(mx2, my2, deck, o, zmax = 1e9) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
       const reg = this.regionAt(mx2, my2);
-      if (!reg || !reg.nRoads) return 1e9;
+      if (!reg || !reg.nRoads || deck && !reg.nDeck) return 1e9;
       const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
       if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 1e9;
-      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw;
-      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1;
+      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd;
+      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9;
       for (let q = reg.gstart[c]; q < e; q++) {
-        const pi2 = items[q];
+        const pi2 = items[q], ri3 = segR[pi2], en2 = rEnd[ri3];
+        if (en2 !== 0 !== deck) continue;
         const ax2 = px2[pi2], ay2 = py2[pi2], dx3 = px2[pi2 + 1] - ax2, dy3 = py2[pi2 + 1] - ay2, l2 = dx3 * dx3 + dy3 * dy3;
         const ux2 = lx2 - ax2, uy2 = ly2 - ay2;
         let t = l2 > 0 ? (ux2 * dx3 + uy2 * dy3) / l2 : 0;
+        if (deck && (t < 0 && en2 & 1 && pi2 === reg.rStart[ri3] || t > 1 && en2 & 2 && pi2 + 2 === reg.rStart[ri3] + reg.rCount[ri3])) continue;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex2 = ux2 - dx3 * t, ey2 = uy2 - dy3 * t;
-        const d = Math.sqrt(ex2 * ex2 + ey2 * ey2), edge = d - rHw[segR[pi2]];
-        if (edge < best) {
-          best = edge;
-          bi2 = pi2;
-          bt2 = t;
-          bd2 = d;
-          bside = ux2 * dy3 - uy2 * dx3 >= 0 ? 1 : -1;
-        }
+        const d = Math.sqrt(ex2 * ex2 + ey2 * ey2), edge = d - rHw[ri3];
+        if (deck) {
+          const zz = reg.pz[pi2] + (reg.pz[pi2 + 1] - reg.pz[pi2]) * t;
+          if (zz > zmax) continue;
+          const on2 = edge < 0.35;
+          if (on2 ? bon && zz <= bz : bon || edge >= best) continue;
+          bon = on2;
+          bz = zz;
+        } else if (edge >= best) continue;
+        best = edge;
+        bi2 = pi2;
+        bt2 = t;
+        bd2 = d;
+        bside = ux2 * dy3 - uy2 * dx3 >= 0 ? 1 : -1;
       }
       if (bi2 < 0) return 1e9;
       const dx2 = px2[bi2 + 1] - px2[bi2], dy2 = py2[bi2 + 1] - py2[bi2], len = Math.hypot(dx2, dy2), il = len > 0 ? 1 / len : 0, ri2 = segR[bi2];
@@ -15116,7 +15201,7 @@ void main() {
     // Returns ground (or water surface) height; details in this.g
     // sink: render-only, drops the surface under the Webster sim's own terrain mesh
     groundH(mx2, my2, carve = true, sink = false) {
-      const gi2 = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false });
+      const gi2 = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false });
       mx2 = clamp(mx2, 0, L);
       my2 = wrapY(my2);
       const s29 = this.sdfAt(mx2, my2), lev = this.levelAt(mx2, my2);
@@ -15125,6 +15210,11 @@ void main() {
       gi2.reg = null;
       gi2.edge = 1e9;
       gi2.web = 0;
+      gi2.fine = false;
+      gi2.deck = -1e9;
+      gi2.deckRoad = -1;
+      gi2.deckReg = null;
+      gi2.onDeck = false;
       let h, water = s29 <= 0;
       gi2.glass = false;
       if (water) {
@@ -15134,8 +15224,20 @@ void main() {
           gi2.glass = true;
         }
       } else {
-        let terr = this.baseH(mx2, my2);
-        terr += ((vnoise(mx2 / 140, my2 / 140) - 0.5) * 2.4 + (vnoise(mx2 / 47 + 13.1, my2 / 47 + 7.7) - 0.5) * 0.9) * smoothstep(0, 60, s29);
+        let terr = NaN, rg = this.pinned;
+        if (!rg) {
+          const rx2 = Math.floor(mx2 / RS2);
+          if (rx2 < RNX) rg = this.regions.get(Math.floor(my2 / RS2) * RNX + rx2);
+        }
+        if (rg && rg.ground) {
+          terr = this.fineH(rg, mx2, my2);
+          rg.used = this.tick;
+        }
+        gi2.fine = terr === terr;
+        if (!gi2.fine) {
+          terr = this.baseH(mx2, my2);
+          terr += ((vnoise(mx2 / 140, my2 / 140) - 0.5) * 2.4 + (vnoise(mx2 / 47 + 13.1, my2 / 47 + 7.7) - 0.5) * 0.9) * smoothstep(0, 60, s29);
+        }
         const bank = clamp(30 + 0.6 * (terr - lev), 30, 400);
         const A = lev + 0.3 + Math.max(terr - lev - 0.3, 0) * smoothstep(0, bank, s29);
         h = s29 < bank ? A : A + (terr - A) * smoothstep(bank, 2 * bank, s29);
@@ -15168,8 +15270,62 @@ void main() {
             gi2.edge = edge;
           }
         }
+        const dreg = this.regionAt(mx2, my2);
+        if (dreg && dreg.nDeck) h = this._underDecks(dreg, mx2, my2, h, water, gi2);
       }
       gi2.water = water;
+      return h;
+    }
+    // Every deck within 2.6 m of the point: the ground keeps under the lowest of them, and gi.deck is the highest one
+    // the point lies under.  Just inside a rim the ground only has to keep under the road surface (it is the abutment,
+    // inside the slab); the full depth comes over the next metres, so the terrain mesh never has to step down at the joint.
+    _underDecks(reg, mx2, my2, h, water, gi2) {
+      const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
+      const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+      if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return h;
+      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, cum = reg.cum;
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi2 = items[q], ri2 = segR[pi2], en2 = rEnd[ri2];
+        if (!en2) continue;
+        const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+        const ux2 = lx2 - ax2, uy2 = ly2 - ay2;
+        let t = l2 > 0 ? (ux2 * dx2 + uy2 * dy2) / l2 : 0;
+        const a02 = reg.rStart[ri2], b02 = a02 + reg.rCount[ri2] - 1;
+        if (t < 0 && en2 & 1 && pi2 === a02 || t > 1 && en2 & 2 && pi2 + 1 === b02) continue;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = ux2 - dx2 * t, ey2 = uy2 - dy2 * t, ed2 = Math.sqrt(ex2 * ex2 + ey2 * ey2) - rHw[ri2];
+        if (ed2 >= 2.6) continue;
+        const z = pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t;
+        if (ed2 < 0.35 && z > gi2.deck) {
+          gi2.deck = z;
+          gi2.deckRoad = ri2;
+          gi2.deckReg = reg;
+        }
+        const sAt = cum[pi2] + Math.sqrt(l2) * t;
+        let along = 1e9;
+        if (en2 & 1) along = sAt - cum[a02];
+        if (en2 & 2) along = Math.min(along, cum[b02] - sAt);
+        const lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along) + smoothstep(0.9, 2.6, ed2) * 3;
+        if (!water && h > lim) h = lim;
+      }
+      return h;
+    }
+    // What a car that is at height href stands on at (mx, my): the ground, or a bridge deck when it is up at the deck's
+    // level (it came onto it from the road at a rim) and not passing underneath: the highest deck here that is not out
+    // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
+    driveH(mx2, my2, href) {
+      const h = this.groundH(mx2, my2), g = this.g;
+      if (g.deck > -1e8 && this.nearestDeck(mx2, my2, href + 1.7) < 0.35) {
+        const nd2 = this._nd;
+        if (nd2.z > h) {
+          g.onDeck = true;
+          g.water = false;
+          g.deck = nd2.z;
+          g.deckRoad = nd2.road;
+          g.deckReg = nd2.reg;
+          return nd2.z;
+        }
+      }
       return h;
     }
     // surface normal in local (east, north, up) from central differences
@@ -16258,13 +16414,14 @@ void main() {
   else if (mat < 5.5) vColA = vec3(0.46, 0.45, 0.42);
   else if (mat < 6.5) vColA = vec3(0.34, 0.31, 0.27);
   else if (mat < 7.5) vColA = vColB;
-  else if (mat < 9.5) vColA = vec3(0.40, 0.42, 0.43);
+  else if (mat < 9.5) vColA = (cls > 13.5 && cls < 15.5 && mat < 8.5) ? vec3(0.085, 0.075, 0.068) : vec3(0.40, 0.42, 0.43);      // the girders of a railway bridge are dark painted steel
   else if (mat < 10.5) vColA = vec3(0.050, 0.050, 0.053);          // a driveway
   else if (mat < 11.5) vColA = carPaint(fract(seed * 0.618 + 0.31));  // a car on it: paint,
   else if (mat < 12.5) vColA = vec3(0.020, 0.020, 0.023);             // tyres and trim,
   else if (mat < 13.5) vColA = vec3(0.03, 0.045, 0.06);               // glass,
   else if (mat < 14.5) vColA = vec3(0.42, 0.42, 0.42);                // hubs, plate and head lamps,
-  else vColA = vec3(0.30, 0.02, 0.02);                                // tail lamps
+  else if (mat < 15.5) vColA = vec3(0.30, 0.02, 0.02);                // tail lamps
+  else vColA = vec3(0.040, 0.040, 0.043);                             // a bridge's roadway or track bed
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `
@@ -16302,6 +16459,7 @@ vec3 surf(int layer, vec2 uvm) { return texture(uMatTex, vec3(uvm / TILE[layer],
 // 1 inside [a, b], antialiased by the pixel footprint w
 float seg(float x, float a, float b, float w) { return clamp((x - a) / w + 0.5, 0.0, 1.0) * clamp((b - x) / w + 0.5, 0.0, 1.0); }
 float box2(vec2 p, vec2 lo, vec2 hi, vec2 w) { return seg(p.x, lo.x, hi.x, w.x) * seg(p.y, lo.y, hi.y, w.y); }
+float bandf(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
 
 void main() {
   vec3 P = uCam + vRel;
@@ -16472,6 +16630,61 @@ void main() {
     alb = vColA * (0.9 + 0.1 * step(0.5, fract(uv.y / 0.4)));
   } else if (mat == 10) {
     alb = vColA * surf(2, uv);
+  } else if (mat == 16) {
+    // a bridge's roadway: the asphalt and paint of the street it carries, by the rules of the terrain shader
+    // (uv = distance along the way, metres to the right of its centre line; vW = half width, marking style, and
+    // which edge lines are left out because another roadway joins there: 1 the left, 2 the right)
+    float hw = vW.x, ts = uv.y, dc = abs(ts);
+    float noR = step(1.5, vW.z), noL = step(0.5, vW.z - 2.0 * noR);
+    int kd = int(vW.y + 0.5), style = kd & 3;
+    float nl = float((kd >> 2) & 7), dirt = float((kd >> 5) & 1);
+    float aa = max(px.y, 0.03), la = max(aa, 0.02), lw = 0.075;
+    float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);
+    alb = mix(vec3(0.040, 0.040, 0.043), vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * vnoise(uv / 9.0));
+    alb *= mix(vec3(1.0), mix(vec3(1.0), surf(2, uv), 0.55), (1.0 - smoothstep(45.0, 130.0, dist)) * (1.0 - dirt));
+    float ph = fract(uv.x / 12.192), pw = max(px.x / 12.192, 1e-4);
+    float dash = seg(ph, 0.5, 0.75, pw) * step(px.x, 3.2);
+    float mark = 0.0; vec3 markCol = vec3(0.82);
+    if (style == 1) {
+      float sh = clamp(hw - nl * 3.5, 0.25, 3.0);
+      float yl = max(bandf(dc, 0.0, 0.26, la) - bandf(dc, 0.0, 0.085, la), 0.0);
+      float wl = bandf(dc, hw - sh, lw, la) * (1.0 - (ts < 0.0 ? noL : noR));
+      float dl = 0.0;
+      for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl) dl = max(dl, bandf(dc, 3.5 * k, lw, la)); }
+      dl *= dash;
+      mark = max(max(yl, wl), dl) * vis;
+      if (yl > wl && yl > dl) markCol = vec3(0.78, 0.55, 0.06);
+    } else if (style == 2) {
+      float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
+      float yl = bandf(ts, -(hw - sh), lw, la) * (1.0 - noL);
+      float wl = bandf(ts, hw - sh, lw, la) * (1.0 - noR);
+      float dl = 0.0;
+      for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl) dl = max(dl, bandf(ts, 3.5 * k - (hw - sh), lw, la)); }
+      dl *= dash;
+      mark = max(max(yl, wl), dl) * vis;
+      if (yl > wl && yl > dl) markCol = vec3(0.78, 0.55, 0.06);
+    }
+    alb = mix(alb, markCol, mark);
+    // after dark a bridge is lit like the streets: a lamp every 36 m on alternate sides, a point of light from far
+    // off and a pool of light on the roadway close by
+    if (dark > 0.001 && dirt < 0.5) {
+      const float cs = 36.0;
+      float sl = uv.x / cs, kl = floor(sl + 0.5), fpn = max(px.x, px.y);
+      vec2 lp = vec2(sl - kl, (ts - (mod(kl, 2.0) < 0.5 ? -1.0 : 1.0) * max(hw - 0.8, 0.0)) / cs);
+      float rad = max(0.065, fpn / cs * 0.9), nearK = 1.0 - smoothstep(140.0, 800.0, dist);
+      float dotI = (1.0 - smoothstep(rad * 0.4, rad, length(lp))) * 0.011 / (rad * rad);
+      float I = mix(dotI * (1.0 - nearK), 0.010, clamp(fpn / (cs * 0.8), 0.0, 1.0));
+      const vec3 lcol = vec3(1.0, 0.60, 0.24);
+      emis += lcol * I * dark * 9.0 + alb * lcol * (exp(-dot(lp, lp) * 115.0) * nearK * dark * 0.42);
+    }
+  } else if (mat == 17) {
+    // a railway bridge's deck: ballast, sleepers every 0.61 m and two rails at standard gauge
+    float dc = abs(uv.y), aa = max(px.y, 0.03), la = max(aa, 0.02);
+    float tp = abs(fract(uv.x / 0.6096) - 0.5);
+    float tie = mix(0.36, 1.0 - smoothstep(0.16, 0.20, tp), clamp((0.20 - px.x / 0.6096) / 0.10, 0.0, 1.0)) * (1.0 - smoothstep(1.30 - la, 1.30 + la, dc));
+    float rail = bandf(dc, 0.7175, 0.05, la) * clamp(0.05 / (aa * 0.6), 0.0, 1.0);
+    alb = mix(vec3(0.20, 0.19, 0.175), vec3(0.075, 0.058, 0.045), tie * 0.9);
+    alb = mix(alb, vec3(0.30, 0.29, 0.29), rail) * (0.85 + 0.3 * vnoise(uv / 9.0));
   } else if (mat >= 11) {
     glass = mat == 13 ? 1.0 : (mat == 12 ? 0.0 : 0.45);
   }
@@ -17498,6 +17711,13 @@ void main() {
         side: Bn,
         uniforms: Object.assign({}, this.U, { uHouseFade: { value: new et(this.houseR - 16, this.houseR) } })
       });
+      this.deckMat = this.game.meta.tiles && this.game.meta.tiles.decks && q.deckR ? new Rn({
+        vertexShader: HOUSE_VS,
+        fragmentShader: HOUSE_FS,
+        defines: Object.assign({}, this.defines),
+        side: Bn,
+        uniforms: Object.assign({}, this.U, { uHouseFade: { value: new et(q.deckR - 40, q.deckR) } })
+      }) : null;
     }
     updateScatter(camC) {
       const g = this.game, q = g.quality;
@@ -17507,6 +17727,11 @@ void main() {
       const bldR = clamp(Math.max(q.bldR, alt * 2.4 + 300), q.bldR, q.bldR * 3);
       this.bldMat.uniforms.uFade.value.set(bldR * 0.85, bldR * 0.98);
       const kinds = [["trees", 8, q.treeR], ["clumps", 6, q.clumpR], ["buildings", 7, bldR]];
+      if (this.deckMat) {
+        const deckR = clamp(Math.max(q.deckR, alt * 2.4 + 300), q.deckR, q.deckR * 2);
+        this.deckMat.uniforms.uHouseFade.value.set(deckR - 40, deckR);
+        kinds.push(["decks", 7, deckR]);
+      }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
       for (const [kind, level, rad] of kinds) {
@@ -17587,7 +17812,7 @@ void main() {
       t.state = "ready";
       const th = m.my / R, c = Math.cos(th), s29 = Math.sin(th);
       const basis = new Ht().set(1, 0, 0, 0, 0, c, -s29, 0, 0, s29, c, 0, 0, 0, 0, 1);
-      if (m.kind === "houses") {
+      if (m.kind === "houses" || m.kind === "decks") {
         const h = m.house;
         if (!h || !h.n) return;
         const g = new Yt();
@@ -17608,7 +17833,7 @@ void main() {
         mid2.multiplyScalar(3 / h.c.length);
         for (let i = 0; i < h.c.length; i += 3) rad2 = Math.max(rad2, Math.hypot(h.c[i] - mid2.x, h.c[i + 1] - mid2.y, h.c[i + 2] - mid2.z));
         g.boundingSphere = new Ie(mid2.clone(), rad2 + 140);
-        const mesh2 = new Ce(g, this.houseMat);
+        const mesh2 = new Ce(g, m.kind === "decks" ? this.deckMat : this.houseMat);
         mesh2.matrixAutoUpdate = false;
         mesh2.visible = false;
         mid2.applyMatrix4(basis);
@@ -17619,7 +17844,7 @@ void main() {
         t.n = h.count;
         t.own = true;
         t.rad = rad2 + 140;
-        t.kind = "houses";
+        t.kind = m.kind;
         this.scene.add(mesh2);
         return;
       }
@@ -17921,7 +18146,7 @@ void main() {
 
   // src/houses.js
   var CLS = { HOUSE: 0, CAPE: 1, RANCH: 2, TRIPLE: 3, GARAGE: 4, BARN: 5, APART: 6, COMM: 7, INDUS: 8, CHURCH: 9, CIVIC: 10, TOWER: 11, CANOPY: 12, RETAIL: 13, ROW: 14, MULTI: 15 };
-  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15 };
+  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17 };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {
     if (!reg || !reg.nBld || cx2 < 0 || cy2 < 0 || cx2 >= reg.cells || cy2 >= reg.cells) return null;
@@ -18078,6 +18303,7 @@ void main() {
     // the nearest wall, and loses the part of its speed that was going into that wall.
     bump() {
       const w = this.game.world, c = this.car, cs2 = RS2 / 32, rad = 1.25;
+      if (c.deck) return;
       const reg = w.regionAt(c.mx, c.my);
       if (!reg || !reg.nBld) return;
       const cx2 = Math.floor((c.mx - reg.x0) / cs2), cy2 = Math.floor((c.my - reg.y0) / cs2);
@@ -18123,15 +18349,16 @@ void main() {
     update(dt, inp) {
       const w = this.game.world, c = this.car, f = this.fly;
       if (this.mode === "drive") {
-        const gh = w.groundH(c.mx, c.my), g = w.g;
+        const gh = w.driveH(c.mx, c.my, c.h), g = w.g;
+        c.deck = g.onDeck;
         c.water = g.water;
-        c.road = g.edge < 0.8 ? g.road : -1;
-        c.reg = g.reg;
+        c.road = g.onDeck ? g.deckRoad : g.edge < 0.8 ? g.road : -1;
+        c.reg = g.onDeck ? g.deckReg : g.reg;
         const smooth = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
         const vmax = (c.water ? 17 : smooth ? 52 : 27) * (inp.boost ? 1.5 : 1);
         const sx2 = Math.sin(c.hdg), sy2 = Math.cos(c.hdg);
-        const ha2 = w.groundH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2), hb = w.groundH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2);
-        const hl = w.groundH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9), hr2 = w.groundH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9);
+        const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h);
+        const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h);
         const slope = (ha2 - hb) / 4.4;
         let a = 0;
         if (inp.fwd > 0) a = c.v >= -0.2 ? 7.5 * inp.fwd * Math.max(0, 1 - c.v / vmax) : 13;
@@ -18152,7 +18379,17 @@ void main() {
         this.bump();
         if (this.game.traffic) this.game.traffic.bump(c);
         c.odo += Math.abs(ds2);
-        const tgt = w.groundH(c.mx, c.my);
+        let tgt = w.driveH(c.mx, c.my, c.h);
+        if (w.g.onDeck) {
+          const nd2 = w._nd, over = nd2.d - Math.max(nd2.hw - 1, 0.3);
+          if (over > 0) {
+            c.mx = clamp(c.mx - nd2.ty * nd2.side * over, 250, L - 250);
+            c.my = wrapY(c.my + nd2.tx * nd2.side * over);
+            const into = (Math.sin(c.hdg) * nd2.ty - Math.cos(c.hdg) * nd2.tx) * nd2.side * Math.sign(c.v || 1);
+            if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
+            tgt = w.driveH(c.mx, c.my, c.h);
+          }
+        }
         c.h += (tgt - c.h) * Math.min(1, dt * 18);
         c.pitch += (Math.atan(slope) - c.pitch) * Math.min(1, dt * 8);
         c.roll += (Math.atan((hl - hr2) / 1.8) - c.roll) * Math.min(1, dt * 8);
@@ -18972,8 +19209,8 @@ void main() {
         if (a2 <= 0.5 || a2 > look || Math.abs(dx2 * fy2 - dy2 * fx2) > 1.85 + a2 * 0.03) return;
         vt = Math.min(vt, Math.max(0, (a2 - 6.6) / 1.7));
       };
-      for (const o of this.cars) if (o !== c) ahead(o.mx, o.my);
-      ahead(pc2.mx, pc2.my);
+      for (const o of this.cars) if (o !== c && Math.abs(o.h - c.h) < 3) ahead(o.mx, o.my);
+      if (Math.abs(pc2.h - c.h) < 3) ahead(pc2.mx, pc2.my);
       const a = s0of(reg, c.ri), b = s1of(reg, c.ri), left = c.dir > 0 ? b - c.s : c.s - a;
       if (left < 32) {
         if (c.next === void 0) c.next = this.choose(c);
@@ -18991,8 +19228,9 @@ void main() {
       }
       this.aim(c);
       const r2 = w.regionAt(clamp(c.cx, 1, L - 1), wrapY(c.cy));
-      if (r2 && r2 !== c.reg && r2.nRoads && w.nearestRoad(c.cx, wrapY(c.cy)) < 0 && w._nr.d < 2) {
-        const nr2 = w._nr, dot = nr2.tx * c.tx + nr2.ty * c.ty;
+      const deck = (c.reg.rFlags[c.ri] & 2) !== 0;
+      if (r2 && r2 !== c.reg && r2.nRoads && (deck ? w.nearestDeck(c.cx, wrapY(c.cy), c.gz + 2.5) : w.nearestRoad(c.cx, wrapY(c.cy))) < 0 && (deck ? w._nd : w._nr).d < 2) {
+        const nr2 = deck ? w._nd : w._nr, dot = nr2.tx * c.tx + nr2.ty * c.ty;
         if (Math.abs(dot) > 0.8 && carries(r2, nr2.road)) {
           c.reg = r2;
           c.ri = nr2.road;
@@ -19009,7 +19247,7 @@ void main() {
       c.mx = c.gx + c.ox;
       c.my = wrapY(c.gy + c.oy);
       c.hdg = Math.atan2(c.tx, c.ty) + c.oh;
-      const gh = w.groundH(clamp(c.mx, 300, L - 300), c.my);
+      const gh = c.reg.rFlags[c.ri] & 2 ? c.gz : w.groundH(clamp(c.mx, 300, L - 300), c.my);
       c.h += (gh - c.h) * Math.min(1, dt * 14);
       const zA = pointAt(c.reg, c.ri, c.s + 2.2 * c.dir).z, zB = pointAt(c.reg, c.ri, c.s - 2.2 * c.dir).z;
       c.pitch += (Math.atan((zA - zB) / 4.4) - c.pitch) * Math.min(1, dt * 6);
@@ -19053,7 +19291,7 @@ void main() {
     bump(pc2) {
       for (const c of this.cars) {
         const dx2 = pc2.mx - c.mx, dy2 = wrapD(pc2.my - c.my);
-        if (Math.abs(dx2) > 5 || Math.abs(dy2) > 5 || c.fade < 0.9) continue;
+        if (Math.abs(dx2) > 5 || Math.abs(dy2) > 5 || c.fade < 0.9 || Math.abs(pc2.h - c.h) > 2.5) continue;
         const fx2 = Math.sin(c.hdg), fy2 = Math.cos(c.hdg);
         let a = dx2 * fx2 + dy2 * fy2, l = dx2 * fy2 - dy2 * fx2;
         const ha2 = 2.3 + 1.05, hl = 0.92 + 0.95;
@@ -19511,9 +19749,9 @@ void main() {
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
-    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1 },
-    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2 },
-    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2 }
+    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1 },
+    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2 },
+    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2 }
   };
   function fatal(msg) {
     const el = $2("fatal");
@@ -19600,6 +19838,10 @@ void main() {
         delete meta.tiles.measured;
         delete meta.tiles.trees;
       }
+      if (params.get("ground") === "0" && meta.tiles) delete meta.tiles.ground;
+      this.groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
+      if (params.get("decks") === "0" && meta.tiles) delete meta.tiles.decks;
+      setDecks(meta.tiles && meta.tiles.decks);
       this.meta = meta;
       const F = meta.files;
       const hk = F[this.quality.height] ? this.quality.height : "heightLo";
@@ -19818,6 +20060,7 @@ void main() {
       const mk = (vs2) => new Rn({ vertexShader: vs2, fragmentShader: DEPTH_FS, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
       this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
+      this.depthMat.decks = this.depthMat.houses;
       this.depthMat.leaves = new Rn({ vertexShader: DEPTH_TREE_VS, fragmentShader: DEPTH_TREE_FS, uniforms: { uLeafTex: this.U.uLeafTex }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
@@ -19863,7 +20106,7 @@ void main() {
       const reach = Rs2 * 1.45;
       for (const t of this.terrain.visScatter) {
         const m = t.mesh;
-        if (t.kind !== "houses" && t.kind !== "trees" && t.kind !== "poles" && t.kind !== "cars" || Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) > reach + t.rad) {
+        if (t.kind !== "houses" && t.kind !== "decks" && t.kind !== "trees" && t.kind !== "poles" && t.kind !== "cars" || Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) > reach + t.rad) {
           m.layers.disable(1);
           continue;
         }
@@ -20005,12 +20248,24 @@ void main() {
       let pr2 = this.regionLoads.get(k);
       if (!pr2) {
         pr2 = (async () => {
+          const pG = this.groundFiles.has(k) ? fetch("data/g3/" + rx2 + "_" + ry2 + ".png").then((r) => {
+            if (!r.ok) throw new Error("ground " + r.status);
+            return r.arrayBuffer();
+          }).then(decodePNG).then((p) => parseGround(p.data)).catch((err) => {
+            console.warn(err);
+            return null;
+          }) : null;
           try {
             const res = await fetch("data/r2/" + rx2 + "_" + ry2 + ".png");
             if (!res.ok) throw new Error("region " + rx2 + "_" + ry2 + " " + res.status);
             const png = await decodePNG(await res.arrayBuffer());
             const d = png.data;
-            w.addRegion(rx2, ry2, parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx2, ry2));
+            const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx2, ry2);
+            if (pG) {
+              const e = await pG;
+              if (e) reg.ground = e;
+            }
+            w.addRegion(rx2, ry2, reg);
           } catch (err) {
             console.warn(err);
             w.addRegion(rx2, ry2, EMPTY_REGION);
@@ -20454,20 +20709,52 @@ void main() {
       this.adaptQuality(dt);
       this.cpuMs += (performance.now() - t02 - this.cpuMs) * 0.05;
     }
-    // drop resolution if the machine is struggling; climb back if it has room
+    // Hold the display's frame rate by trading resolution: the picture is fill-rate bound in built-up places (Boston
+    // at 1.25x ran at 43 fps on an M4 and at 60 at 0.6x).  Every two seconds: if the frames are running long, take
+    // the resolution down by what a fill-bound frame needs; if they have kept time for ten seconds, try a step back up,
+    // and wait longer before the next try if that step proves too much.
     adaptQuality(dt) {
-      if (!this.started || this.software) return;
-      this.qT = (this.qT || 0) + dt;
-      if (this.qT < 3) return;
-      this.qT = 0;
-      const base = Math.min(window.devicePixelRatio || 1, this.quality.pr);
-      if (this.frameMs > 30 && this.pixelRatio > 0.6) {
-        this.pixelRatio = Math.max(0.6, this.pixelRatio * 0.85);
-        this.resize();
-      } else if (this.frameMs < 13 && this.pixelRatio < base) {
-        this.pixelRatio = Math.min(base, this.pixelRatio * 1.1);
-        this.resize();
+      if (!this.started || this.software || params.get("res")) return;
+      const raw = dt * 1e3, A = this.aq || (this.aq = { t: 0, sum: 0, n: 0, good: 0, hold: 0, wait: 10, probe: 0 });
+      if (raw > 3 && raw < 100) {
+        A.sum += raw;
+        A.n++;
       }
+      A.t += dt;
+      if (A.t < 2) return;
+      const avg = A.n ? A.sum / A.n : 16.7;
+      A.t = 0;
+      A.sum = 0;
+      A.n = 0;
+      const target = 16.7;
+      const base = Math.min(window.devicePixelRatio || 1, this.quality.pr), floor = Math.max(0.6, base * 0.55);
+      A.hold = Math.max(0, A.hold - 2);
+      if (avg > target * 1.18) {
+        A.good = 0;
+        if (A.probe) {
+          this.pixelRatio = A.probe;
+          A.probe = 0;
+          A.wait = Math.min(A.wait * 2, 120);
+          A.hold = A.wait;
+          this.resize();
+          return;
+        }
+        if (this.pixelRatio > floor) {
+          this.pixelRatio = Math.max(floor, this.pixelRatio * Math.max(0.8, Math.sqrt(target / avg) * 0.98));
+          A.hold = A.wait;
+          this.resize();
+        }
+      } else if (avg < target * 1.07) {
+        if (A.probe && ++A.good >= 2) {
+          A.probe = 0;
+          A.wait = 10;
+        } else if (!A.probe && ++A.good >= 5 && A.hold <= 0 && this.pixelRatio < base) {
+          A.probe = this.pixelRatio;
+          A.good = 0;
+          this.pixelRatio = Math.min(base, this.pixelRatio * 1.08);
+          this.resize();
+        }
+      } else A.good = 0;
     }
   };
   function slug(s29) {
