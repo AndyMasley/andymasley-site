@@ -63,3 +63,6 @@
 
 /town-finish/v1/ground-preview/*
   Cache-Control: public, max-age=31536000, immutable
+
+/games/oneill-massachusetts/*
+  Cache-Control: public, max-age=0, must-revalidate
