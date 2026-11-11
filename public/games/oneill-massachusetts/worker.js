@@ -645,7 +645,7 @@
         const edge = this.nearestRoad(mx, my);
         if (edge < 40) {
           const nr = this._nr;
-          const shoulder = nr.hw < 5 ? 3 : 4 + nr.hw * 0.5;
+          const shoulder = Math.max(nr.hw < 5 ? 3 : 4 + nr.hw * 0.5, Math.min(h - nr.z, 14));
           const wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
           if (wgt > 0 && nr.reg.rCls[nr.road] === 18) {
             if (!water) {
@@ -704,7 +704,7 @@
     // What a car that is at height href stands on at (mx, my): the ground, or a bridge deck when it is up at the deck's
     // level (it came onto it from the road at a rim) and not passing underneath: the highest deck here that is not out
     // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
-    // A car down at a tunnel's floor (within 3 m below it to 1.7 m above) is in the tunnel, whatever the ground overhead:
+    // A car down at a tunnel's floor (from 1.2 m above it to 1.7 m below) is in the tunnel, whatever the ground overhead:
     // g.onTunnel, and this._nt is the tunnel.
     driveH(mx, my, href) {
       const h = this.groundH(mx, my), g = this.g;
@@ -722,7 +722,7 @@
       }
       if (this.nearestTunnel(mx, my, href + 1.7) < 0) {
         const nt = this._nt;
-        if (nt.z > href - 3 && nt.z < h - 0.3) {
+        if (nt.z > href - 1.2) {
           g.onTunnel = true;
           g.water = false;
           g.road = nt.road;
