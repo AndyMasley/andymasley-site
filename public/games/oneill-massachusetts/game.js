@@ -14834,6 +14834,14 @@ void main() {
   var RREG = 72;
   var DECK_T = 0.95;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
+  var VERSIONS = null;
+  function setVersions(v) {
+    VERSIONS = v || null;
+  }
+  function vurl(path) {
+    const h = VERSIONS && VERSIONS[path];
+    return h ? path + "?h=" + h : path;
+  }
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -19366,7 +19374,7 @@ void main() {
       this.mapImg.onload = () => {
         this.mapReady = true;
       };
-      this.mapImg.src = "data/" + g.meta.files.map.file;
+      this.mapImg.src = vurl("data/" + g.meta.files.map.file);
       g.meta.starts.forEach((s29, i) => {
         const b = document.createElement("button");
         b.textContent = (i < 9 ? i + 1 + "  " : "") + s29.n;
@@ -20222,7 +20230,7 @@ void main() {
     }
     load() {
       if (this.loading) return this.loading;
-      this.loading = fetch("data/dunkin.json").then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
+      this.loading = fetch(vurl("data/dunkin.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
         if (!d || !d.pts || !d.pts.length) return false;
         const w = this.game.world, n = d.pts.length, pos = new Float32Array(n * 3), seed = new Float32Array(n), p = new Float64Array(3);
         d.pts.forEach(([mx2, my2], i) => {
@@ -20356,7 +20364,15 @@ void main() {
       this.resize();
       window.addEventListener("resize", () => this.resize());
       setLoad("Fetching the Commonwealth", 0.02);
-      const meta = await (await fetch("data/world.json")).json();
+      let versions = null;
+      try {
+        const mr2 = await fetch("data/manifest.json", { cache: "no-cache" });
+        if (mr2.ok) versions = await mr2.json();
+      } catch (e) {
+      }
+      setVersions(versions);
+      const meta = await (await fetch(vurl("data/world.json"))).json();
+      meta.versions = versions;
       if (params.get("measured") === "0" && meta.tiles) {
         delete meta.tiles.measured;
         delete meta.tiles.trees;
@@ -20375,7 +20391,7 @@ void main() {
       let got = 0;
       const png = {};
       await Promise.all(want.map(async (k) => {
-        const res = await fetch("data/" + F[k].file);
+        const res = await fetch(vurl("data/" + F[k].file));
         if (!res.ok) throw new Error("could not load " + F[k].file + " (" + res.status + ")");
         const buf = await res.arrayBuffer();
         got += F[k].bytes;
@@ -20398,7 +20414,7 @@ void main() {
         this.loadRegion(rx2, ry2);
       };
       this.names = null;
-      if (F.names) fetch("data/" + F.names.file).then((r) => r.json()).then((j) => {
+      if (F.names) fetch(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
         this.names = j;
       }).catch(() => {
       });
@@ -20453,7 +20469,7 @@ void main() {
       const nW = this.software ? 1 : Math.min(this.quality.workers, Math.max(1, (navigator.hardwareConcurrency || 4) - 1));
       this.workers = [];
       await Promise.all(Array.from({ length: nW }, () => new Promise((resolve, reject) => {
-        const w = new Worker("worker.js");
+        const w = new Worker(vurl("worker.js"));
         const first = (ev2) => {
           if (ev2.data.type === "ready") {
             w.removeEventListener("message", first);
@@ -20496,7 +20512,7 @@ void main() {
       const nTraffic = params.has("traffic") ? +params.get("traffic") : this.quality.traffic || 0;
       this.traffic = this.world.have.size && nTraffic > 0 ? new Traffic(this, nTraffic) : null;
       const nBoats = params.has("boats") ? +params.get("boats") : this.quality.boats || 0;
-      if (nBoats > 0) fetch("data/ferries.json").then((r) => r.ok ? r.json() : []).catch(() => []).then((routes) => {
+      if (nBoats > 0) fetch(vurl("data/ferries.json")).then((r) => r.ok ? r.json() : []).catch(() => []).then((routes) => {
         this.boats = new Boats(this, nBoats, routes);
       });
       this.webster = { state: "idle", meshes: [] };
@@ -20694,7 +20710,7 @@ void main() {
         const ctx = cv2.getContext("2d", { willReadFrequently: true });
         const data = new Uint8Array(S * S * 4 * names.length);
         for (let i = 0; i < names.length; i++) {
-          const res = await fetch("data/mat/" + names[i] + ".webp");
+          const res = await fetch(vurl("data/mat/" + names[i] + ".webp"));
           if (!res.ok) throw new Error(names[i] + " " + res.status);
           const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
           ctx.clearRect(0, 0, S, S);
@@ -20736,7 +20752,7 @@ void main() {
       };
       this.U.uGndTex = { value: mkG(gph, 1) };
       (async () => {
-        let res = await fetch("data/mat/foliage.webp");
+        let res = await fetch(vurl("data/mat/foliage.webp"));
         if (!res.ok) throw new Error("foliage " + res.status);
         const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
         const t = new Ae(bmp);
@@ -20750,7 +20766,7 @@ void main() {
         t.needsUpdate = true;
         this.U.uLeafTex.value = t;
         this.leafReady = true;
-        res = await fetch("data/mat/ground.png");
+        res = await fetch(vurl("data/mat/ground.png"));
         if (!res.ok) throw new Error("ground " + res.status);
         const gb = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
         const G = gb.height, cv2 = document.createElement("canvas");
@@ -20772,7 +20788,7 @@ void main() {
       let pr2 = this.regionLoads.get(k);
       if (!pr2) {
         pr2 = (async () => {
-          const pG = this.groundFiles.has(k) ? fetch("data/g3/" + rx2 + "_" + ry2 + ".png").then((r) => {
+          const pG = this.groundFiles.has(k) ? fetch(vurl("data/g3/" + rx2 + "_" + ry2 + ".png")).then((r) => {
             if (!r.ok) throw new Error("ground " + r.status);
             return r.arrayBuffer();
           }).then(decodePNG).then((p) => parseGround(p.data)).catch((err) => {
@@ -20780,7 +20796,7 @@ void main() {
             return null;
           }) : null;
           try {
-            const res = await fetch("data/r2/" + rx2 + "_" + ry2 + ".png");
+            const res = await fetch(vurl("data/r2/" + rx2 + "_" + ry2 + ".png"));
             if (!res.ok) throw new Error("region " + rx2 + "_" + ry2 + " " + res.status);
             const png = await decodePNG(await res.arrayBuffer());
             const d = png.data;
@@ -21026,7 +21042,7 @@ void main() {
       wbs.state = "loading";
       try {
         const F = this.meta.files.websterOverview;
-        const res = await fetch("data/" + F.file);
+        const res = await fetch(vurl("data/" + F.file));
         if (!res.ok) throw new Error("webster overview " + res.status);
         const png = await decodePNG(await res.arrayBuffer());
         const raw = png.data.buffer.slice(0, F.length);

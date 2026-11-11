@@ -96,6 +96,14 @@
   var RREG = 72;
   var DECK_T = 0.95;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
+  var VERSIONS = null;
+  function setVersions(v) {
+    VERSIONS = v || null;
+  }
+  function vurl(path) {
+    const h = VERSIONS && VERSIONS[path];
+    return h ? path + "?h=" + h : path;
+  }
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -2960,6 +2968,7 @@
     Object.assign(parts, { base: new Uint16Array(m.base), bw: m.bw, bh: m.bh, bScale: m.bScale, level: new Uint16Array(m.level), lw: m.lw, lh: m.lh });
     Object.assign(parts, { webH: new Float32Array(m.webH), webW: new Uint8Array(m.webW), webWater: new Uint8Array(m.webWater), webFoot: new Uint8Array(m.webFoot) });
     if (m.zone) Object.assign(parts, { zone: new Uint8Array(m.zone), zoneW: m.zoneW, zoneH: m.zoneH, zoneRange: m.zoneRange });
+    setVersions(meta.versions);
     world = new World(meta, parts);
     realBuildings = !!(meta.tiles && meta.tiles.buildings);
     measured = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
@@ -2971,7 +2980,7 @@
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
     const bf = meta.files && meta.files.bridges;
-    nbiReady = bf ? fetch("data/" + bf.file).then((r) => r.ok ? r.json() : null).then((j) => {
+    nbiReady = bf ? fetch(vurl("data/" + bf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       NBI = empty();
       if (!j) return;
       for (const [k, v] of Object.entries(j.ways || {})) NBI.ways.set(+k, new Map(v.map((r) => [r[0], r])));
@@ -2996,7 +3005,7 @@
     }
     let pr = packPending.get(k);
     if (!pr) {
-      pr = fetch("data/lcp/" + I + "_" + J + ".bin").then((r) => {
+      pr = fetch(vurl("data/lcp/" + I + "_" + J + ".bin")).then((r) => {
         if (!r.ok) throw new Error("lcp " + I + "_" + J + " " + r.status);
         return r.arrayBuffer();
       }).then((buf) => {
@@ -3073,7 +3082,7 @@
       pr = (async () => {
         try {
           const name = rx + "_" + ry + ".png";
-          const get = (dir) => fetch("data/" + dir + "/" + name).then((r) => {
+          const get = (dir) => fetch(vurl("data/" + dir + "/" + name)).then((r) => {
             if (!r.ok) throw new Error(dir + " " + name + " " + r.status);
             return r.arrayBuffer();
           }).then(decodePNG).then((p) => p.data);
