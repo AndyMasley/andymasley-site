@@ -95,6 +95,8 @@
   var RCELL = 128;
   var RREG = 72;
   var DECK_T = 0.95;
+  var WALL_GAP = 0.9;
+  var TUN_H = 5.6;
   var DECKS = false;
   function setDecks(on) {
     DECKS = !!on;
@@ -161,6 +163,13 @@
       nDeck++;
     }
     reg.nDeck = nDeck;
+    const rTun = reg.rTun = new Uint8Array(nR);
+    let nTun = 0;
+    for (let i = 0; i < nR; i++) if (reg.rFlags[i] & 4 && !rEnd[i] && reg.rCls[i] < 14 && rCount[i] >= 2) {
+      rTun[i] = 1;
+      nTun++;
+    }
+    reg.nTun = nTun;
     const nc = cells * cells + 1;
     reg.bCell = new Uint32Array(buf.slice(p, p + nc * 4));
     p += nc * 4;
@@ -308,6 +317,7 @@
       this.tick = 0;
       this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
       this._nd = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
+      this._nt = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
     }
     baseH(mx, my) {
       const g = this.bg, W = this.bw, H = this.bh, b = this.base;
@@ -472,32 +482,38 @@
     nearestDeck(mx, my, zmax = 1e9) {
       return this._near(mx, my, true, this._nd, zmax);
     }
-    _near(mx, my, deck, o, zmax = 1e9) {
+    // Nearest tunnel floor under (mx, my), in this._nt, by the rule of nearestDeck (the highest at or below zmax that the
+    // point is on, else the nearest).  A tunnel's floor runs the full width between its walls (half width + WALL_GAP).
+    nearestTunnel(mx, my, zmax = 1e9) {
+      return this._near(mx, my, true, this._nt, zmax, true);
+    }
+    _near(mx, my, deck, o, zmax = 1e9, tun = false) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
       const reg = this.regionAt(mx, my);
-      if (!reg || !reg.nRoads || deck && !reg.nDeck) return 1e9;
+      if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
-      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd;
+      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
       let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
-        if (en !== 0 !== deck) continue;
+        if (rTun[ri2] ? !tun : tun || en !== 0 !== deck) continue;
         const ax = px[pi], ay = py[pi], dx2 = px[pi + 1] - ax, dy2 = py[pi + 1] - ay, l2 = dx2 * dx2 + dy2 * dy2;
         const ux = lx - ax, uy = ly - ay;
         let t = l2 > 0 ? (ux * dx2 + uy * dy2) / l2 : 0;
-        if (deck && (t < 0 && en & 1 && pi === reg.rStart[ri2] || t > 1 && en & 2 && pi + 2 === reg.rStart[ri2] + reg.rCount[ri2])) continue;
+        if (deck && !tun && (t < 0 && en & 1 && pi === reg.rStart[ri2] || t > 1 && en & 2 && pi + 2 === reg.rStart[ri2] + reg.rCount[ri2])) continue;
+        if (tun && (t < 0 && pi === reg.rStart[ri2] || t > 1 && pi + 2 === reg.rStart[ri2] + reg.rCount[ri2])) continue;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex = ux - dx2 * t, ey = uy - dy2 * t;
-        const d = Math.sqrt(ex * ex + ey * ey), edge = d - rHw[ri2];
+        const d = Math.sqrt(ex * ex + ey * ey), edge = d - rHw[ri2] - (tun ? WALL_GAP : 0);
         if (deck) {
           const zz = reg.pz[pi] + (reg.pz[pi + 1] - reg.pz[pi]) * t;
           if (zz > zmax) continue;
           const on = edge < 0.35;
-          if (on ? bon && zz <= bz : bon || edge >= best) continue;
+          if (on ? bon && (zz < bz - 1 || zz <= bz + 1 && edge >= best) : bon || edge >= best) continue;
           bon = on;
           bz = zz;
         } else if (edge >= best) continue;
@@ -548,7 +564,7 @@
     // Returns ground (or water surface) height; details in this.g
     // sink: render-only, drops the surface under the Webster sim's own terrain mesh
     groundH(mx, my, carve = true, sink = false) {
-      const gi = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false });
+      const gi = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false, onTunnel: false });
       mx = clamp(mx, 0, L);
       my = wrapY(my);
       const s = this.sdfAt(mx, my), lev = this.levelAt(mx, my);
@@ -660,8 +676,11 @@
     // What a car that is at height href stands on at (mx, my): the ground, or a bridge deck when it is up at the deck's
     // level (it came onto it from the road at a rim) and not passing underneath: the highest deck here that is not out
     // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
+    // A car down at a tunnel's floor (within 3 m below it to 1.7 m above) is in the tunnel, whatever the ground overhead:
+    // g.onTunnel, and this._nt is the tunnel.
     driveH(mx, my, href) {
       const h = this.groundH(mx, my), g = this.g;
+      g.onTunnel = false;
       if (g.deck > -1e8 && this.nearestDeck(mx, my, href + 1.7) < 0.35) {
         const nd = this._nd;
         if (nd.z > h) {
@@ -671,6 +690,17 @@
           g.deckRoad = nd.road;
           g.deckReg = nd.reg;
           return nd.z;
+        }
+      }
+      if (this.nearestTunnel(mx, my, href + 1.7) < 0) {
+        const nt = this._nt;
+        if (nt.z > href - 3 && nt.z < h - 0.3) {
+          g.onTunnel = true;
+          g.water = false;
+          g.road = nt.road;
+          g.reg = nt.reg;
+          g.edge = nt.d - nt.hw;
+          return nt.z;
         }
       }
       return h;
@@ -913,7 +943,7 @@
   // src/houses.js
   var CLS = { HOUSE: 0, CAPE: 1, RANCH: 2, TRIPLE: 3, GARAGE: 4, BARN: 5, APART: 6, COMM: 7, INDUS: 8, CHURCH: 9, CIVIC: 10, TOWER: 11, CANOPY: 12, RETAIL: 13, ROW: 14, MULTI: 15 };
   var ROOF = { FLAT: 0, GABLE: 1, HIP: 2, GAMBREL: 3 };
-  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17 };
+  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17, TUNROAD: 18, TUNWALL: 19 };
   var FLOOR = [2.75, 2.6, 2.7, 3, 2.6, 5, 3, 3.7, 7, 8, 3.9, 3.9, 4.6, 6, 3.1, 2.8];
   var FOUND = [0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0, 0.15, 0.7, 0.6];
   var PITCH = [0.62, 0.95, 0.38, 0.22, 0.5, 0.75, 0, 0.55, 0.25, 1.15, 0.45, 0, 0, 0, 0.5, 0.68];
@@ -2309,6 +2339,261 @@
     }
   }
 
+  // src/tunnels.js
+  var SHELL = 0.6;
+  var KERB = 0.22;
+  var STEP = 1.5;
+  function onTube(reg, lx, ly, z, ri) {
+    const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+    if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return false;
+    const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rTun = reg.rTun;
+    for (let q = reg.gstart[c]; q < e; q++) {
+      const pi = items[q], rj = segR[pi];
+      if (rj === ri || !rTun[rj]) continue;
+      const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+      if (l2 < 1e-6) continue;
+      const ux = lx - ax, uy = ly - ay, t = clamp((ux * dx + uy * dy) / l2, 0, 1), ex = ux - dx * t, ey = uy - dy * t, w = rHw[rj] + WALL_GAP - 0.05;
+      if (ex * ex + ey * ey >= w * w) continue;
+      if (Math.abs(pz[pi] + (pz[pi + 1] - pz[pi]) * t - z) < 1.6) return true;
+    }
+    return false;
+  }
+  function tunnelInfo(reg) {
+    if (reg.tunInfo) return reg.tunInfo;
+    const nR = reg.nRoads, end = new Uint8Array(nR), d = new Float32Array(reg.px.length).fill(1e9);
+    const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, rTun = reg.rTun, rHw = reg.rHw;
+    const gw = reg.gw;
+    const onKind = (lx, ly, z, ri, wantTun) => {
+      const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+      if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return null;
+      const c = cy * gw + cx, e = reg.gstart[c + 1];
+      let best = null, bd = 1e9;
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi = reg.gitems[q], rj = reg.segR[pi];
+        if (rj === ri || reg.rCls[rj] >= 14 || !!rTun[rj] !== wantTun) continue;
+        const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+        if (l2 < 1e-6) continue;
+        const t = clamp(((lx - ax) * dx + (ly - ay) * dy) / l2, 0, 1), ex = lx - ax - dx * t, ey = ly - ay - dy * t, dd = Math.hypot(ex, ey);
+        if (dd > rHw[rj] + 0.3 || Math.abs(pz[pi] + (pz[pi + 1] - pz[pi]) * t - z) > 1.2 || dd >= bd) continue;
+        bd = dd;
+        best = [pi, t];
+      }
+      return best;
+    };
+    const joins = [];
+    for (let ri = 0; ri < nR; ri++) {
+      if (!rTun[ri]) continue;
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1;
+      for (const [q, bit] of [[a, 1], [b, 2]]) {
+        if (onKind(px[q], py[q], pz[q], ri, false)) {
+          end[ri] |= bit;
+          d[q] = 0;
+          continue;
+        }
+        const j = onKind(px[q], py[q], pz[q], ri, true);
+        if (j) joins.push(q, j[0], j[1]);
+      }
+    }
+    for (let it = 0; it < 12; it++) {
+      let moved = false;
+      for (let ri = 0; ri < nR; ri++) {
+        if (!rTun[ri]) continue;
+        const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1;
+        for (let q = a; q < b; q++) {
+          const v = d[q] + cum[q + 1] - cum[q];
+          if (v < d[q + 1] - 0.01) {
+            d[q + 1] = v;
+            moved = true;
+          }
+        }
+        for (let q = b; q > a; q--) {
+          const v = d[q] + cum[q] - cum[q - 1];
+          if (v < d[q - 1] - 0.01) {
+            d[q - 1] = v;
+            moved = true;
+          }
+        }
+      }
+      for (let k = 0; k < joins.length; k += 3) {
+        const q = joins[k], s0 = joins[k + 1], t = joins[k + 2], len = cum[s0 + 1] - cum[s0];
+        const at = Math.min(d[s0] + t * len, d[s0 + 1] + (1 - t) * len);
+        if (at < d[q] - 0.01) {
+          d[q] = at;
+          moved = true;
+        }
+        if (d[q] + t * len < d[s0] - 0.01) {
+          d[s0] = d[q] + t * len;
+          moved = true;
+        }
+        if (d[q] + (1 - t) * len < d[s0 + 1] - 0.01) {
+          d[s0 + 1] = d[q] + (1 - t) * len;
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    return reg.tunInfo = { end, d };
+  }
+  function index(reg, s) {
+    if (reg.tunIdx && reg.tunIdxS === s) return reg.tunIdx;
+    const m = reg.tunIdx = /* @__PURE__ */ new Map();
+    reg.tunIdxS = s;
+    for (let ri = 0; ri < reg.nRoads; ri++) {
+      if (!reg.rTun[ri]) continue;
+      const a = reg.rStart[ri], n = reg.rCount[ri];
+      for (let q = a; q < a + n - 1; q++) {
+        const key2 = Math.floor((reg.y0 + (reg.py[q] + reg.py[q + 1]) / 2) / s) * 65536 + Math.floor((reg.x0 + (reg.px[q] + reg.px[q + 1]) / 2) / s);
+        let l = m.get(key2);
+        if (!l) m.set(key2, l = []);
+        l.push(q);
+      }
+    }
+    return m;
+  }
+  function addTunnels(M, world2, reg, ix, iy, s, P2) {
+    if (!reg || !reg.nTun) return 0;
+    const list = index(reg, s).get(iy * 65536 + ix);
+    if (!list) return 0;
+    const info = tunnelInfo(reg), D2 = info.d;
+    const px = reg.px, py = reg.py, pz = reg.pz, segR = reg.segR;
+    const cross = (ri, q, out) => {
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1;
+      let tx = 0, ty = 0;
+      if (q > a) {
+        const dx = px[q] - px[q - 1], dy = py[q] - py[q - 1], l2 = Math.hypot(dx, dy) || 1;
+        tx += dx / l2;
+        ty += dy / l2;
+      }
+      if (q < b) {
+        const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = Math.hypot(dx, dy) || 1;
+        tx += dx / l2;
+        ty += dy / l2;
+      }
+      const l = Math.hypot(tx, ty) || 1;
+      tx /= l;
+      ty /= l;
+      let k = 1;
+      if (q > a && q < b) {
+        const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = Math.hypot(dx, dy) || 1;
+        k = 1 / Math.max(0.75, (tx * dx + ty * dy) / l2);
+      }
+      out[0] = ty * k;
+      out[1] = -tx * k;
+    };
+    const n0 = [0, 0], n1 = [0, 0];
+    let count = 0;
+    for (const q of list) {
+      const ri = segR[q], hw = reg.rHw[ri], Wl = hw + WALL_GAP, Wo = Wl + SHELL, cls = reg.rCls[ri];
+      const ax = reg.x0 + px[q], ay = reg.y0 + py[q], bx = reg.x0 + px[q + 1], by = reg.y0 + py[q + 1], az = pz[q], bz = pz[q + 1];
+      const len = Math.hypot(bx - ax, by - ay);
+      if (len < 0.05) continue;
+      const tx = (bx - ax) / len, ty = (by - ay) / len;
+      cross(ri, q, n0);
+      cross(ri, q + 1, n1);
+      const dA = Math.min(D2[q], 999), dB = Math.min(D2[q + 1], 999);
+      const mid = P2((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
+      M.C[0] = mid[0];
+      M.C[1] = mid[1];
+      M.C[2] = mid[2];
+      const seed = ri * 37 + 11 & 255;
+      const setM = (m) => {
+        M.M[0] = m;
+        M.M[1] = 0;
+        M.M[2] = cls;
+        M.M[3] = seed;
+      };
+      const strip = (f0, f1, o0, y0, o1, y1, nl, nu, tv0, tv1) => {
+        const cxA = n0[0] + (n1[0] - n0[0]) * f0, cyA = n0[1] + (n1[1] - n0[1]) * f0, cxB = n0[0] + (n1[0] - n0[0]) * f1, cyB = n0[1] + (n1[1] - n0[1]) * f1;
+        const xA = ax + (bx - ax) * f0, yA = ay + (by - ay) * f0, zA = az + (bz - az) * f0, xB = ax + (bx - ax) * f1, yB = ay + (by - ay) * f1, zB = az + (bz - az) * f1;
+        const uA = dA + (dB - dA) * f0, uB = dA + (dB - dA) * f1;
+        let t = P2(xA + cxA * o0, yA + cyA * o0, zA + y0);
+        const i0 = M.v(t[0], t[1], t[2], cxA * nl, nu, -cyA * nl, uA, tv0);
+        t = P2(xA + cxA * o1, yA + cyA * o1, zA + y1);
+        const i1 = M.v(t[0], t[1], t[2], cxA * nl, nu, -cyA * nl, uA, tv1);
+        t = P2(xB + cxB * o1, yB + cyB * o1, zB + y1);
+        const i2 = M.v(t[0], t[1], t[2], cxB * nl, nu, -cyB * nl, uB, tv1);
+        t = P2(xB + cxB * o0, yB + cyB * o0, zB + y0);
+        const i3 = M.v(t[0], t[1], t[2], cxB * nl, nu, -cyB * nl, uB, tv0);
+        M.quad(i0, i1, i2, i3);
+      };
+      const n = Math.max(1, Math.ceil(len / STEP));
+      const open = (sg) => {
+        const out = [];
+        let start = -1;
+        for (let k = 0; k < n; k++) {
+          const f = (k + 0.5) / n, cx = n0[0] + (n1[0] - n0[0]) * f, cy = n0[1] + (n1[1] - n0[1]) * f, o = sg * (Wl + 0.3);
+          const covered = onTube(reg, px[q] + (px[q + 1] - px[q]) * f + cx * o, py[q] + (py[q + 1] - py[q]) * f + cy * o, az + (bz - az) * f, ri);
+          if (!covered && start < 0) start = k;
+          if ((covered || k === n - 1) && start >= 0) {
+            out.push(start / n, covered ? k / n : 1);
+            start = -1;
+          }
+        }
+        return out;
+      };
+      const runL = open(-1), runR = open(1);
+      setM(MAT.TUNROAD);
+      M.W[0] = hw;
+      M.W[1] = roadKind(reg, ri);
+      M.W[2] = (runL.length ? 0 : 1) + (runR.length ? 0 : 2);
+      M.W[3] = -1;
+      strip(0, 1, -hw, 0, hw, 0, 0, 1, -hw, hw);
+      setM(MAT.TUNWALL);
+      M.W[1] = Wl;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      for (const [sg, runs] of [[-1, runL], [1, runR]]) {
+        for (let i = 0; i < runs.length; i += 2) {
+          const f0 = runs[i], f1 = runs[i + 1];
+          M.W[0] = 0;
+          strip(f0, f1, sg * hw, 0, sg * hw, KERB, -sg, 0, 0, KERB);
+          strip(f0, f1, sg * hw, KERB, sg * Wl, KERB, 0, 1, hw, Wl);
+          M.W[0] = 1;
+          strip(f0, f1, sg * Wl, KERB, sg * Wl, TUN_H, -sg, 0, KERB, TUN_H);
+        }
+      }
+      M.W[0] = 2;
+      strip(0, 1, -Wl, TUN_H, Wl, TUN_H, 0, -1, -Wl, Wl);
+      {
+        setM(MAT.CONCRETE);
+        M.W[0] = 0;
+        M.W[1] = 0;
+        M.W[2] = 0;
+        M.W[3] = -1;
+        for (const [sg, runs] of [[-1, runL], [1, runR]]) {
+          for (let i = 0; i < runs.length; i += 2) strip(runs[i], runs[i + 1], sg * Wo, -0.8, sg * Wo, TUN_H + SHELL, sg, 0, -0.8, TUN_H + SHELL);
+        }
+        strip(0, 1, -Wo, TUN_H + SHELL, Wo, TUN_H + SHELL, 0, 1, -Wo, Wo);
+      }
+      const en = info.end[ri], a0 = reg.rStart[ri], b0 = a0 + reg.rCount[ri] - 1;
+      for (const [atEnd, X, Y, Z, nn, dir] of [[q === a0 && en & 1, ax, ay, az, n0, -1], [q + 1 === b0 && en & 2, bx, by, bz, n1, 1]]) {
+        if (!atEnd) continue;
+        setM(MAT.CONCRETE);
+        const base = P2(X, Y, 0);
+        M.ox = base[0];
+        M.oy = base[1];
+        M.oz = base[2];
+        M.ux = tx * dir;
+        M.uz = -ty * dir;
+        M.vx = nn[0];
+        M.vz = -nn[1];
+        const u0 = -0.9, u1 = 0.25, top = Z + TUN_H + SHELL + 1.2, wide = Wo + 1.6;
+        M.box(u0, u1, Z - 0.8, top, Wl, wide, 63);
+        M.box(u0, u1, Z - 0.8, top, -wide, -Wl, 63);
+        M.box(u0, u1, Z + TUN_H, top, -Wl, Wl, 1 | 2 | 4 | 8);
+        M.ox = 0;
+        M.oy = 0;
+        M.oz = 0;
+        M.ux = 1;
+        M.uz = 0;
+        M.vx = 0;
+        M.vz = 1;
+      }
+      count++;
+    }
+    return count;
+  }
+
   // src/decks.js
   var PIER_GAP = 30;
   var EDGE_STEP = 1.5;
@@ -2343,7 +2628,7 @@
     }
     return 1 - open;
   }
-  function index(reg, s) {
+  function index2(reg, s) {
     if (reg.deckIdx && reg.deckIdxS === s) return reg.deckIdx;
     const m = reg.deckIdx = /* @__PURE__ */ new Map();
     reg.deckIdxS = s;
@@ -2360,9 +2645,9 @@
     return m;
   }
   function buildDeckTile(world2, reg, ix, iy, s, cx, cy, cz, th, nbi) {
-    if (!reg || !reg.nDeck) return null;
-    const list = index(reg, s).get(iy * 65536 + ix);
-    if (!list) return null;
+    if (!reg || !(reg.nDeck || reg.nTun)) return null;
+    const list = reg.nDeck && index2(reg, s).get(iy * 65536 + ix) || [];
+    if (!list.length && !reg.nTun) return null;
     const M = new Mesh();
     const c = Math.cos(th), sn = Math.sin(th);
     const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, segR = reg.segR;
@@ -2612,11 +2897,13 @@
         bigStructure(M, P2, world2, st, setW(0, 7), 0.42);
       }
     }
+    count += addTunnels(M, world2, reg, ix, iy, s, P2);
     if (!M.n) return null;
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
   }
 
   // src/worker.js
+  var TUN_SHELL = 0.6;
   var TREE_H = [12.8, 14.4];
   var world = null;
   var towers = [];
@@ -2811,6 +3098,31 @@
     }
     return pr;
   }
+  function overMouth(reg, mx, my, h) {
+    return !!(reg && reg.nTun && world.nearestTunnel(mx, my) < 3 + TUN_SHELL && world._nt.z + TUN_H + TUN_SHELL + 1.5 > h);
+  }
+  function tunnelsNear(reg, mx0, my0, s) {
+    if (!reg.tunBox) {
+      const out = [];
+      for (let ri = 0; ri < reg.nRoads; ri++) {
+        if (!reg.rTun[ri]) continue;
+        const a = reg.rStart[ri], n = reg.rCount[ri];
+        let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+        for (let q = a; q < a + n; q++) {
+          x0 = Math.min(x0, reg.px[q]);
+          x1 = Math.max(x1, reg.px[q]);
+          y0 = Math.min(y0, reg.py[q]);
+          y1 = Math.max(y1, reg.py[q]);
+        }
+        const m = reg.rHw[ri] + 20;
+        out.push(reg.x0 + x0 - m, reg.y0 + y0 - m, reg.x0 + x1 + m, reg.y0 + y1 + m);
+      }
+      reg.tunBox = out;
+    }
+    const b = reg.tunBox;
+    for (let i = 0; i < b.length; i += 4) if (b[i] < mx0 + s && b[i + 2] > mx0 && b[i + 1] < my0 + s && b[i + 3] > my0) return true;
+    return false;
+  }
   function roadsNear(reg, lx0, ly0, lx1, ly1) {
     if (!reg || !reg.nRoads) return false;
     const gw = reg.gw, f = (v) => clamp(Math.floor((v + 160) / 128), 0, gw - 1);
@@ -2940,6 +3252,28 @@
         roadK = kind;
       }
     }
+    let tun = null;
+    if (reg && reg.nTun && level >= 6 && tunnelsNear(reg, mx0, my0, s)) {
+      const data = new Uint16Array(T * T * 2);
+      let any = false;
+      const far = toHalf(30), none = toHalf(-1e3);
+      for (let b = 0; b < T; b++) {
+        const my = my0 + b / (T - 1) * s;
+        for (let a = 0; a < T; a++) {
+          const mx = mx0 + a / (T - 1) * s, k = (b * T + a) * 2;
+          const e = world.nearestTunnel(mx, my);
+          if (e < 12) {
+            data[k] = toHalf(e - TUN_SHELL);
+            data[k + 1] = toHalf(world._nt.z + TUN_H + TUN_SHELL);
+            any = true;
+          } else {
+            data[k] = far;
+            data[k + 1] = none;
+          }
+        }
+      }
+      if (any) tun = data;
+    }
     let lc = null, lcN = 0;
     if (lcPacks.size && level >= 6 && !sea) {
       const t = level >= 7 ? 0 : 1, side = t ? 4096 : 2048, res2 = side / LCQ;
@@ -2971,9 +3305,10 @@
         lcN = 0;
       }
     }
-    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, lc, lcN, size: s, mx0, my0 };
+    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, tun, lc, lcN, size: s, mx0, my0 };
     const tr = [pos.buffer, nor.buffer, loc.buffer];
     if (road) tr.push(road.buffer, roadK.buffer);
+    if (tun) tr.push(tun.buffer);
     if (lc) tr.push(lc.buffer);
     postMessage(res, tr);
   }
@@ -3037,6 +3372,7 @@
         const g = world.g;
         if (g.water || g.edge < (kind === "trees" ? 2.5 : 16) || g.deck > -1e8) continue;
         if (seen && byBridge(mx, my, h, kind === "trees" ? 7 : 14)) continue;
+        if (overMouth(reg, mx, my, h)) continue;
         const sand = world.coverBilinear(mx, my, 2);
         if (sand > 0.5) continue;
         if (tI >= 0 && world.nearestRoad(mx, my) < 28 && world._nr.reg.rCls[world._nr.road] < 14) continue;
@@ -3070,7 +3406,7 @@
             my -= nr.tx * k;
           }
           const h = world.groundH(mx, my, true);
-          if (world.g.water || world.g.deck > -1e8 || byBridge(mx, my, h, 7)) continue;
+          if (world.g.water || world.g.deck > -1e8 || byBridge(mx, my, h, 7) || overMouth(reg, mx, my, h)) continue;
           const gi = Math.round(mx * 2), gj = Math.round(my * 2);
           const sand = world.coverBilinear(mx, my, 2);
           const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;

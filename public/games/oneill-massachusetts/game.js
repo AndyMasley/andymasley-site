@@ -14833,6 +14833,8 @@ void main() {
   var RCELL = 128;
   var RREG = 72;
   var DECK_T = 0.95;
+  var WALL_GAP = 0.9;
+  var TUN_H = 5.6;
   var DECKS = false;
   function setDecks(on2) {
     DECKS = !!on2;
@@ -14899,6 +14901,13 @@ void main() {
       nDeck++;
     }
     reg.nDeck = nDeck;
+    const rTun = reg.rTun = new Uint8Array(nR);
+    let nTun = 0;
+    for (let i = 0; i < nR; i++) if (reg.rFlags[i] & 4 && !rEnd[i] && reg.rCls[i] < 14 && rCount[i] >= 2) {
+      rTun[i] = 1;
+      nTun++;
+    }
+    reg.nTun = nTun;
     const nc2 = cells * cells + 1;
     reg.bCell = new Uint32Array(buf.slice(p, p + nc2 * 4));
     p += nc2 * 4;
@@ -15020,6 +15029,7 @@ void main() {
       this.tick = 0;
       this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
       this._nd = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
+      this._nt = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
     }
     baseH(mx2, my2) {
       const g = this.bg, W = this.bw, H = this.bh, b = this.base;
@@ -15184,32 +15194,38 @@ void main() {
     nearestDeck(mx2, my2, zmax = 1e9) {
       return this._near(mx2, my2, true, this._nd, zmax);
     }
-    _near(mx2, my2, deck, o, zmax = 1e9) {
+    // Nearest tunnel floor under (mx, my), in this._nt, by the rule of nearestDeck (the highest at or below zmax that the
+    // point is on, else the nearest).  A tunnel's floor runs the full width between its walls (half width + WALL_GAP).
+    nearestTunnel(mx2, my2, zmax = 1e9) {
+      return this._near(mx2, my2, true, this._nt, zmax, true);
+    }
+    _near(mx2, my2, deck, o, zmax = 1e9, tun = false) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
       const reg = this.regionAt(mx2, my2);
-      if (!reg || !reg.nRoads || deck && !reg.nDeck) return 1e9;
+      if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
       if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 1e9;
-      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd;
+      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
       let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi2 = items[q], ri3 = segR[pi2], en2 = rEnd[ri3];
-        if (en2 !== 0 !== deck) continue;
+        if (rTun[ri3] ? !tun : tun || en2 !== 0 !== deck) continue;
         const ax2 = px2[pi2], ay2 = py2[pi2], dx3 = px2[pi2 + 1] - ax2, dy3 = py2[pi2 + 1] - ay2, l2 = dx3 * dx3 + dy3 * dy3;
         const ux2 = lx2 - ax2, uy2 = ly2 - ay2;
         let t = l2 > 0 ? (ux2 * dx3 + uy2 * dy3) / l2 : 0;
-        if (deck && (t < 0 && en2 & 1 && pi2 === reg.rStart[ri3] || t > 1 && en2 & 2 && pi2 + 2 === reg.rStart[ri3] + reg.rCount[ri3])) continue;
+        if (deck && !tun && (t < 0 && en2 & 1 && pi2 === reg.rStart[ri3] || t > 1 && en2 & 2 && pi2 + 2 === reg.rStart[ri3] + reg.rCount[ri3])) continue;
+        if (tun && (t < 0 && pi2 === reg.rStart[ri3] || t > 1 && pi2 + 2 === reg.rStart[ri3] + reg.rCount[ri3])) continue;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex2 = ux2 - dx3 * t, ey2 = uy2 - dy3 * t;
-        const d = Math.sqrt(ex2 * ex2 + ey2 * ey2), edge = d - rHw[ri3];
+        const d = Math.sqrt(ex2 * ex2 + ey2 * ey2), edge = d - rHw[ri3] - (tun ? WALL_GAP : 0);
         if (deck) {
           const zz = reg.pz[pi2] + (reg.pz[pi2 + 1] - reg.pz[pi2]) * t;
           if (zz > zmax) continue;
           const on2 = edge < 0.35;
-          if (on2 ? bon && zz <= bz : bon || edge >= best) continue;
+          if (on2 ? bon && (zz < bz - 1 || zz <= bz + 1 && edge >= best) : bon || edge >= best) continue;
           bon = on2;
           bz = zz;
         } else if (edge >= best) continue;
@@ -15260,7 +15276,7 @@ void main() {
     // Returns ground (or water surface) height; details in this.g
     // sink: render-only, drops the surface under the Webster sim's own terrain mesh
     groundH(mx2, my2, carve = true, sink = false) {
-      const gi2 = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false });
+      const gi2 = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false, onTunnel: false });
       mx2 = clamp(mx2, 0, L);
       my2 = wrapY(my2);
       const s29 = this.sdfAt(mx2, my2), lev = this.levelAt(mx2, my2);
@@ -15372,8 +15388,11 @@ void main() {
     // What a car that is at height href stands on at (mx, my): the ground, or a bridge deck when it is up at the deck's
     // level (it came onto it from the road at a rim) and not passing underneath: the highest deck here that is not out
     // of its reach above.  this.g.onDeck says which, and this._nd is then that deck.
+    // A car down at a tunnel's floor (within 3 m below it to 1.7 m above) is in the tunnel, whatever the ground overhead:
+    // g.onTunnel, and this._nt is the tunnel.
     driveH(mx2, my2, href) {
       const h = this.groundH(mx2, my2), g = this.g;
+      g.onTunnel = false;
       if (g.deck > -1e8 && this.nearestDeck(mx2, my2, href + 1.7) < 0.35) {
         const nd2 = this._nd;
         if (nd2.z > h) {
@@ -15383,6 +15402,17 @@ void main() {
           g.deckRoad = nd2.road;
           g.deckReg = nd2.reg;
           return nd2.z;
+        }
+      }
+      if (this.nearestTunnel(mx2, my2, href + 1.7) < 0) {
+        const nt = this._nt;
+        if (nt.z > href - 3 && nt.z < h - 0.3) {
+          g.onTunnel = true;
+          g.water = false;
+          g.road = nt.road;
+          g.reg = nt.reg;
+          g.edge = nt.d - nt.hw;
+          return nt.z;
         }
       }
       return h;
@@ -15891,6 +15921,8 @@ uniform sampler2D uCover;
 uniform sampler2D uAux;
 uniform sampler2D uRoad;
 uniform sampler2D uRoadK;
+uniform sampler2D uTun;       // a tunnel's mouth: metres outside the tube's outline, the height of its top
+uniform float uHasTun;
 uniform sampler2D uCover2;
 uniform float uHasCover2;    // 1 when measured crop / evergreen / pasture shares are loaded
 uniform sampler2D uLc;       // NOAA C-CAP 2016 land cover, one ground kind per square metre (bake/c11_landcover.py)
@@ -15929,6 +15961,12 @@ void main() {
   if (uWebRect.w > 0.5) {
     vec2 wuv = (m - uWebRect.xy) * uWebRect.z;
     if (wuv.x > 0.0 && wuv.y > 0.0 && wuv.x < 1.0 && wuv.y < 1.0 && texture2D(uWebMask, wuv).r > 0.5) discard;
+  }
+
+  if (uHasTun > 0.5) {
+    // at a tunnel's mouth the ground over the tube is lower than its top: cut it away there, and the tube shows
+    vec2 tt = texture2D(uTun, vLoc / uSize * ((uRoadT - 1.0) / uRoadT) + 0.5 / uRoadT).rg;
+    if (tt.r < 0.0 && h < tt.g) discard;
   }
 
   float sdf = (texture2D(uSdf, vUv).r * 2.0 - 1.0) * uSdfRange;
@@ -16868,8 +16906,8 @@ void main() {
     alb = vColA * (0.9 + 0.1 * step(0.5, fract(uv.y / 0.4)));
   } else if (mat == 10) {
     alb = vColA * surf(2, uv);
-  } else if (mat == 16) {
-    // a bridge's roadway: the asphalt and paint of the street it carries, by the rules of the terrain shader
+  } else if (mat == 16 || mat == 18) {
+    // a bridge's roadway (18: a tunnel's): the asphalt and paint of the street it carries, by the rules of the terrain shader
     // (uv = distance along the way, metres to the right of its centre line; vW = half width, marking style, and
     // which edge lines are left out because another roadway joins there: 1 the left, 2 the right)
     float hw = vW.x, ts = uv.y, dc = abs(ts);
@@ -16905,7 +16943,7 @@ void main() {
     alb = mix(alb, markCol, mark);
     // after dark a bridge is lit like the streets: a lamp every 36 m on alternate sides, a point of light from far
     // off and a pool of light on the roadway close by
-    if (dark > 0.001 && dirt < 0.5) {
+    if (dark > 0.001 && dirt < 0.5 && mat == 16) {
       const float cs = 36.0;
       float sl = uv.x / cs, kl = floor(sl + 0.5), fpn = max(px.x, px.y);
       vec2 lp = vec2(sl - kl, (ts - (mod(kl, 2.0) < 0.5 ? -1.0 : 1.0) * max(hw - 0.8, 0.0)) / cs);
@@ -16914,6 +16952,28 @@ void main() {
       float I = mix(dotI * (1.0 - nearK), 0.010, clamp(fpn / (cs * 0.8), 0.0, 1.0));
       const vec3 lcol = vec3(1.0, 0.60, 0.24);
       emis += lcol * I * dark * 9.0 + alb * lcol * (exp(-dot(lp, lp) * 115.0) * nearK * dark * 0.42);
+    }
+  } else if (mat == 19) {
+    // a tunnel's lining (tunnels.js): vW.x 0 the walkway and its kerb, 1 the walls, 2 the ceiling; uv = (metres to the
+    // nearest portal, height on the wall or metres across); vW.y the walls' distance from the centre line
+    int kind = int(vW.x + 0.5);
+    float aa = max(max(px.x, px.y), 0.02);
+    if (kind == 0) {
+      alb = vec3(0.30, 0.29, 0.27) * (0.85 + 0.3 * vnoise(uv * 1.7));
+    } else if (kind == 1) {
+      // pale enamelled panels, 1.5 m by 0.75 m, over a band of grime along the foot of the wall
+      vec2 pnl = vec2(uv.x / 1.5, (uv.y - 0.22) / 0.75);
+      vec2 f = abs(fract(pnl) - 0.5);
+      float joint = max(smoothstep(0.47, 0.49, f.x), smoothstep(0.46, 0.49, f.y)) * clamp(0.02 / aa, 0.0, 1.0);
+      alb = vec3(0.70, 0.69, 0.64) * (1.0 - 0.2 * joint) * (0.93 + 0.07 * vnoise(pnl * 3.1));
+      alb = mix(vec3(0.15, 0.145, 0.14), alb, smoothstep(0.8, 1.3, uv.y));
+    } else {
+      // the ceiling: dark, with a line of lamps 0.8 m in from each wall, one every 4 m
+      float edgeIn = vW.y - abs(uv.y);
+      alb = vec3(0.12, 0.12, 0.125);
+      float line = 1.0 - smoothstep(0.16, 0.16 + aa, abs(edgeIn - 0.8));
+      float lamp = 1.0 - smoothstep(0.22, 0.30, abs(fract(uv.x / 4.0) - 0.5));
+      emis += vec3(1.0, 0.92, 0.78) * line * mix(0.3, 1.0, lamp) * 2.4;
     }
   } else if (mat == 17) {
     // a railway bridge's deck: ballast, sleepers every 0.61 m and two rails at standard gauge
@@ -16930,6 +16990,14 @@ void main() {
   float ndl = max(dot(N, Ld), 0.0);
   float sh = sunShadow(vRel, N, Ld);
   vec3 E = sunE0 * ndl * sh + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)) * occ;
+  if (mat >= 18) {
+    // inside a tunnel the daylight from the nearest portal (uv.x: metres to it along the tunnels) dies away within a few
+    // tens of metres, and the lamps light the rest, day and night (less after dark, when eyes have adapted)
+    // (by day the lamps give about a sixth of the light outside, so a tunnel's mouth looks dark from the road)
+    float day = exp(-max(uv.x, 0.0) / 9.0);
+    float lamps = 0.16 * dot(sunE0 + uAmbIrr, vec3(0.333)) * (1.0 - dark) + 0.30 * dark;
+    E = E * day + vec3(1.0, 0.91, 0.76) * lamps * (mat == 19 && int(vW.x + 0.5) == 2 ? 0.45 : 1.0);
+  }
   vec3 col = alb * (E + headlamp(vRel, N)) * 1.55 + emis;
   if (glass > 0.0) {
     float fres = 0.04 + 0.96 * pow(1.0 - max(dot(V, N), 0.0), 5.0);
@@ -17572,6 +17640,13 @@ void main() {
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
       }
+      let tunTex = null;
+      if (m.tun) {
+        tunTex = new an(m.tun, m.roadT, m.roadT, bi, Pn);
+        tunTex.magFilter = tunTex.minFilter = ye;
+        tunTex.wrapS = tunTex.wrapT = rn;
+        tunTex.needsUpdate = true;
+      }
       let lcTex = null;
       if (m.lc) {
         lcTex = new an(m.lc, m.lcN, m.lcN, Rl, cn);
@@ -17596,7 +17671,9 @@ void main() {
           uRoadK: { value: roadKTex || this.dummyK },
           uRoadT: { value: m.roadT },
           uHasLc: { value: lcTex ? 1 : 0 },
-          uLc: { value: lcTex || this.dummyK }
+          uLc: { value: lcTex || this.dummyK },
+          uHasTun: { value: tunTex ? 1 : 0 },
+          uTun: { value: tunTex || this.dummyRoad }
         })
       });
       const mesh = new Ce(g, mat);
@@ -17609,6 +17686,7 @@ void main() {
       c.roadTex = roadTex;
       c.roadKTex = roadKTex;
       c.lcTex = lcTex;
+      c.tunTex = tunTex;
       c.hmin = m.hmin;
       c.hmax = m.hmax;
       c.sea = m.sea;
@@ -17730,6 +17808,7 @@ void main() {
         if (c.roadTex) c.roadTex.dispose();
         if (c.roadKTex) c.roadKTex.dispose();
         if (c.lcTex) c.lcTex.dispose();
+        if (c.tunTex) c.tunTex.dispose();
         this.chunks.delete(k);
       }
     }
@@ -18414,7 +18493,7 @@ void main() {
 
   // src/houses.js
   var CLS = { HOUSE: 0, CAPE: 1, RANCH: 2, TRIPLE: 3, GARAGE: 4, BARN: 5, APART: 6, COMM: 7, INDUS: 8, CHURCH: 9, CIVIC: 10, TOWER: 11, CANOPY: 12, RETAIL: 13, ROW: 14, MULTI: 15 };
-  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17 };
+  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17, TUNROAD: 18, TUNWALL: 19 };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {
     if (!reg || !reg.nBld || cx2 < 0 || cy2 < 0 || cx2 >= reg.cells || cy2 >= reg.cells) return null;
@@ -18572,7 +18651,7 @@ void main() {
     // the nearest wall, and loses the part of its speed that was going into that wall.
     bump() {
       const w = this.game.world, c = this.car, cs2 = RS2 / 32, rad = 1.25;
-      if (c.deck) return;
+      if (c.deck || c.tun) return;
       const reg = w.regionAt(c.mx, c.my);
       if (!reg || !reg.nBld) return;
       const cx2 = Math.floor((c.mx - reg.x0) / cs2), cy2 = Math.floor((c.my - reg.y0) / cs2);
@@ -18620,6 +18699,7 @@ void main() {
       if (this.mode === "drive") {
         const gh = w.driveH(c.mx, c.my, c.h), g = w.g;
         c.deck = g.onDeck;
+        c.tun = g.onTunnel;
         c.water = g.water;
         c.road = g.onDeck ? g.deckRoad : g.edge < 0.8 ? g.road : -1;
         c.reg = g.onDeck ? g.deckReg : g.reg;
@@ -18658,6 +18738,15 @@ void main() {
             if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
             tgt = w.driveH(c.mx, c.my, c.h);
           }
+        } else if (w.g.onTunnel) {
+          const nt = w._nt, over = nt.d - (nt.hw + WALL_GAP - 1.05);
+          if (over > 0) {
+            c.mx = clamp(c.mx - nt.ty * nt.side * over, 250, L - 250);
+            c.my = wrapY(c.my + nt.tx * nt.side * over);
+            const into = (Math.sin(c.hdg) * nt.ty - Math.cos(c.hdg) * nt.tx) * nt.side * Math.sign(c.v || 1);
+            if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
+            tgt = w.driveH(c.mx, c.my, c.h);
+          }
         }
         c.h += (tgt - c.h) * Math.min(1, dt * 18);
         c.pitch += (Math.atan(slope) - c.pitch) * Math.min(1, dt * 8);
@@ -18693,6 +18782,7 @@ void main() {
     placeCamera(camera) {
       const w = this.game.world, c = this.car, f = this.fly, cm2 = this.camMap;
       let yaw, pitch;
+      this.camInTunnel = this.mode === "drive" && this.cam.kind === 1 && !!c.tun;
       if (this.mode === "fly") {
         cm2[0] = f.mx;
         cm2[1] = f.my;
@@ -18712,8 +18802,25 @@ void main() {
         const lift = pitch > 0 ? Math.max(0.35, 1 - pitch * 1.3) : 1;
         cm2[0] = clamp(c.mx - Math.sin(yaw) * D, 100, L - 100);
         cm2[1] = wrapY(c.my - Math.cos(yaw) * D);
-        const gh = w.groundH(cm2[0], cm2[1], true);
-        cm2[2] = Math.max(c.h + H * lift, gh + 0.9);
+        if (c.tun) {
+          let k = 1;
+          for (let it = 0; it < 6; it++) {
+            const x = clamp(c.mx - Math.sin(yaw) * D * k, 100, L - 100), y = wrapY(c.my - Math.cos(yaw) * D * k);
+            const inTube = w.nearestTunnel(x, y, c.h + 3) < -0.4 && Math.abs(w._nt.z - c.h) < 4;
+            if (inTube || it === 5 || w.groundH(x, y, true) < c.h + 1.5) {
+              cm2[0] = x;
+              cm2[1] = y;
+              break;
+            }
+            k *= 0.6;
+          }
+          const nt = w.nearestTunnel(cm2[0], cm2[1], c.h + 3) < 0 && Math.abs(w._nt.z - c.h) < 4 ? w._nt : null;
+          cm2[2] = nt ? clamp(c.h + H * lift, nt.z + 0.9, nt.z + TUN_H - 0.6) : Math.max(c.h + H * lift, w.groundH(cm2[0], cm2[1], true) + 0.9);
+          this.camInTunnel = !!nt;
+        } else {
+          const gh = w.groundH(cm2[0], cm2[1], true);
+          cm2[2] = Math.max(c.h + H * lift, gh + 0.9);
+        }
       }
       cyl(cm2[0], cm2[1], cm2[2], this.camC);
       frame(cm2[1], e3, n3, u3);
@@ -18752,7 +18859,7 @@ void main() {
         p3[0] - camC[0] + fx2 * 2.25 + ux2 * 0.66,
         p3[1] - camC[1] + fy2 * 2.25 + uy2 * 0.66,
         p3[2] - camC[2] + fz * 2.25 + uz * 0.66,
-        this.mode === "drive" && !this.game.title ? clamp(1.15 - lum * 9, 0, 1) : 0
+        this.mode === "drive" && !this.game.title ? c.tun ? Math.max(0.55, clamp(1.15 - lum * 9, 0, 1)) : clamp(1.15 - lum * 9, 0, 1) : 0
       );
       const dx2 = fx2 - 0.07 * ux2, dy2 = fy2 - 0.07 * uy2, dz = fz - 0.07 * uz, dl = Math.hypot(dx2, dy2, dz);
       U.uHeadDir.value.set(dx2 / dl, dy2 / dl, dz / dl);
@@ -18824,7 +18931,7 @@ void main() {
     }
     updateLabels() {
       const g = this.g, pool = this.pool;
-      if (!this.labelsOn || !g.started) {
+      if (!this.labelsOn || !g.started || g.player.camInTunnel) {
         for (const s29 of pool) if (s29.el.style.display !== "none") s29.el.style.display = "none";
         return;
       }
@@ -19335,7 +19442,7 @@ void main() {
   };
   var s0of = (reg, ri2) => reg.cum[reg.rStart[ri2]];
   var s1of = (reg, ri2) => reg.cum[reg.rStart[ri2] + reg.rCount[ri2] - 1];
-  var carries = (reg, ri2) => reg.rCls[ri2] <= 12 && !(reg.rFlags[ri2] & 8);
+  var carries = (reg, ri2) => reg.rCls[ri2] <= 12 && !(reg.rFlags[ri2] & 72);
   var Traffic = class {
     constructor(game2, max) {
       this.game = game2;
@@ -19438,12 +19545,13 @@ void main() {
     // the roads to take from the end this car is heading for: the straightest most of the time, any of them otherwise
     choose(c) {
       const w = this.game.world, reg = c.reg, sE = c.dir > 0 ? s1of(reg, c.ri) : s0of(reg, c.ri);
-      const p = pointAt(reg, c.ri, sE), fx2 = p.tx * c.dir, fy2 = p.ty * c.dir;
+      const p = pointAt(reg, c.ri, sE), fx2 = p.tx * c.dir, fy2 = p.ty * c.dir, zE = p.z;
       const r2 = w.roadsNear(reg.x0 + p.x, wrapY(reg.y0 + p.y), 3.2, near);
       const ok = [];
       if (r2) for (const o of near) {
         const rj = o[0];
         if (r2 === reg && rj === c.ri || !carries(r2, rj)) continue;
+        if (Math.abs(pointAt(r2, rj, o[1]).z - zE) > 2) continue;
         const a = s0of(r2, rj), b = s1of(r2, rj);
         for (const d of r2.rFlags[rj] & 1 ? [1] : [1, -1]) {
           if (d > 0 ? b - o[1] < 9 : o[1] - a < 9) continue;
@@ -19507,9 +19615,11 @@ void main() {
       }
       this.aim(c);
       const r2 = w.regionAt(clamp(c.cx, 1, L - 1), wrapY(c.cy));
-      const deck = (c.reg.rFlags[c.ri] & 2) !== 0;
-      if (r2 && r2 !== c.reg && r2.nRoads && (deck ? w.nearestDeck(c.cx, wrapY(c.cy), c.gz + 2.5) : w.nearestRoad(c.cx, wrapY(c.cy))) < 0 && (deck ? w._nd : w._nr).d < 2) {
-        const nr2 = deck ? w._nd : w._nr, dot = nr2.tx * c.tx + nr2.ty * c.ty;
+      const deck = (c.reg.rFlags[c.ri] & 2) !== 0, tun = !deck && (c.reg.rFlags[c.ri] & 4) !== 0;
+      const e2 = r2 && r2 !== c.reg && r2.nRoads ? deck ? w.nearestDeck(c.cx, wrapY(c.cy), c.gz + 2.5) : tun ? w.nearestTunnel(c.cx, wrapY(c.cy), c.gz + 2.5) : w.nearestRoad(c.cx, wrapY(c.cy)) : 1e9;
+      const q2 = deck ? w._nd : tun ? w._nt : w._nr;
+      if (e2 < 0 && q2.d < 2) {
+        const nr2 = q2, dot = nr2.tx * c.tx + nr2.ty * c.ty;
         if (Math.abs(dot) > 0.8 && carries(r2, nr2.road)) {
           c.reg = r2;
           c.ri = nr2.road;
@@ -19526,7 +19636,7 @@ void main() {
       c.mx = c.gx + c.ox;
       c.my = wrapY(c.gy + c.oy);
       c.hdg = Math.atan2(c.tx, c.ty) + c.oh;
-      const gh = c.reg.rFlags[c.ri] & 2 ? c.gz : w.groundH(clamp(c.mx, 300, L - 300), c.my);
+      const gh = c.reg.rFlags[c.ri] & 6 ? c.gz : w.groundH(clamp(c.mx, 300, L - 300), c.my);
       c.h += (gh - c.h) * Math.min(1, dt * 14);
       const zA = pointAt(c.reg, c.ri, c.s + 2.2 * c.dir).z, zB = pointAt(c.reg, c.ri, c.s - 2.2 * c.dir).z;
       c.pitch += (Math.atan((zA - zB) / 4.4) - c.pitch) * Math.min(1, dt * 6);
@@ -21018,7 +21128,7 @@ void main() {
       p.placeCamera(this.camera);
       const camC = p.camC;
       this.camMap = p.camMap;
-      this.groundUnderCam = this.world.groundH(p.camMap[0], p.camMap[1], false);
+      this.groundUnderCam = p.mode === "drive" && p.car.tun ? p.car.h : this.world.groundH(p.camMap[0], p.camMap[1], false);
       U.uCam.value.set(camC[0], camC[1], camC[2]);
       if (!this.paused || this.title) {
         this.time += dt;
