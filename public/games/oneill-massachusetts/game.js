@@ -16042,7 +16042,7 @@ void main() {
       float la = max(aa, 0.02);
       float ang = atan(rf.a, rf.b);
       // built-up streets get a granite kerb and a concrete sidewalk (set back behind a grass strip until the town is dense)
-      float town = smoothstep(0.30, 0.48, cov.r) * float((kd >> 6) & 1) * step(2.4, hw);
+      float town = smoothstep(0.08, 0.22, cov.r) * float((kd >> 6) & 1) * step(2.4, hw);
       if (town > 0.0) {
         float urban = smoothstep(0.62, 0.80, cov.r);
         float w0 = mix(1.25, 0.17, urban), w1 = mix(2.80, 3.40, urban);

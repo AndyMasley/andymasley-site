@@ -245,7 +245,7 @@
             nl = Math.max(1, (lanes || 2) >> 1);
           }
         }
-        const walk = !unp && (cls === 4 || cls === 6 || cls === 8 || cls >= 10 && cls <= 12);
+        const walk = !unp && (fl & 128) !== 0;
         k[i] = style | Math.min(nl, 7) << 2 | (unp ? 32 : 0) | (walk ? 64 : 0);
       }
     }
