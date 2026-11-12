@@ -15279,6 +15279,22 @@ void main() {
       o.ty = dy2 * il;
       return best;
     }
+    // ---- buildings open beneath (bake/c27_lifted.py -> data/lifted.json).  Each entry names its building by its region
+    // (r: ry * RNX + rx) and its record's x and y in 0.2 m steps (b), and says where it is open: c, corridors [x0, y0, x1,
+    // y1, half width] in metres from the region's corner where a street or a railway runs under it, up to the soffit s
+    // (a height, like the roads'); or, with no c, all of it: up to h over its ground, or to t under its top.
+    setLifted(doc) {
+      const m = /* @__PURE__ */ new Map();
+      for (const e of doc && doc.b || []) m.set(e.r * 4294967296 + e.b[1] * 65536 + e.b[0], e);
+      this.lifted = m;
+    }
+    // the entry for building record id of region reg, or null
+    liftOf(reg, id2) {
+      const L2 = this.lifted;
+      if (!L2 || !L2.size || !reg || !reg.b) return null;
+      const o = id2 * 12, b = reg.b;
+      return L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+    }
     // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
     // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
     // concrete, 1 stone, 2 brick).  ws holds five numbers a wall: first point, points, s, m, and the ends that run on into
@@ -18851,6 +18867,72 @@ void main() {
     };
     return [pick(false), pick(true)];
   }
+  function clip2(P2, a, b, c) {
+    const out = [], n = P2.length / 2;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, sx2 = P2[i * 2], sy2 = P2[i * 2 + 1], ex2 = P2[j * 2], ey2 = P2[j * 2 + 1];
+      const ds2 = a * sx2 + b * sy2 + c, de2 = a * ex2 + b * ey2 + c;
+      if (de2 >= 0) {
+        if (ds2 < 0) {
+          const t = ds2 / (ds2 - de2);
+          out.push(sx2 + (ex2 - sx2) * t, sy2 + (ey2 - sy2) * t);
+        }
+        out.push(ex2, ey2);
+      } else if (ds2 >= 0) {
+        const t = ds2 / (ds2 - de2);
+        out.push(sx2 + (ex2 - sx2) * t, sy2 + (ey2 - sy2) * t);
+      }
+    }
+    return out;
+  }
+  function openPieces(poly, L2, reg) {
+    const no2 = poly.rings ? poly.rings[1] : poly.n;
+    let pieces = [Array.from(poly.pts.subarray(0, no2 * 2))];
+    for (const c of L2.c) {
+      const x02 = reg.x0 + c[0], y02 = reg.y0 + c[1], x1 = reg.x0 + c[2], y1 = reg.y0 + c[3], hw = c[4], len = Math.hypot(x1 - x02, y1 - y02);
+      if (len < 0.1) continue;
+      const tx2 = (x1 - x02) / len, ty2 = (y1 - y02) / len, nx2 = -ty2, ny2 = tx2, o = nx2 * x02 + ny2 * y02;
+      const out = [[nx2, ny2, -(o + hw)], [-nx2, -ny2, o - hw], [-tx2, -ty2, tx2 * x02 + ty2 * y02], [tx2, ty2, -(tx2 * x1 + ty2 * y1)]];
+      const next = [];
+      for (const Q of pieces) for (const h of out) {
+        const R2 = clip2(Q, h[0], h[1], h[2]);
+        if (R2.length < 6) continue;
+        let a = 0;
+        for (let i = 0, n = R2.length / 2; i < n; i++) {
+          const j = (i + 1) % n;
+          a += R2[i * 2] * R2[j * 2 + 1] - R2[j * 2] * R2[i * 2 + 1];
+        }
+        if (Math.abs(a) > 0.6) next.push(R2);
+      }
+      pieces = next;
+      if (pieces.length > 48) break;
+    }
+    const res = [];
+    for (const Q of pieces) {
+      const n = Q.length / 2;
+      let a = 0, cx2 = 0, cy2 = 0;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        a += Q[i * 2] * Q[j * 2 + 1] - Q[j * 2] * Q[i * 2 + 1];
+        cx2 += Q[i * 2];
+        cy2 += Q[i * 2 + 1];
+      }
+      const pts = new Float64Array(Q);
+      if (a < 0) for (let i = 0, j = n - 1; i < j; i++, j--) {
+        const tx2 = pts[i * 2], ty2 = pts[i * 2 + 1];
+        pts[i * 2] = pts[j * 2];
+        pts[i * 2 + 1] = pts[j * 2 + 1];
+        pts[j * 2] = tx2;
+        pts[j * 2 + 1] = ty2;
+      }
+      cx2 /= n;
+      cy2 /= n;
+      let rad = 0;
+      for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(pts[i * 2] - cx2, pts[i * 2 + 1] - cy2));
+      res.push({ pts, n, cx: cx2, cy: cy2, rad, rings: null });
+    }
+    return res;
+  }
   var CAR_HL = 2.3;
   var CAR_HW = 0.95;
   var _push = [0, 0];
@@ -18866,7 +18948,7 @@ void main() {
         for (let i = 0; i < nv2; i++) all.push(dv2.getInt16(o + 16 + i * 4, true) * 0.025, dv2.getInt16(o + 18 + i * 4, true) * 0.025);
         if (nh2) {
           let p = o + 16 + nv2 * 4;
-          for (let s29 = 0, ns2 = dv2.getUint8(o + 1); s29 < ns2; s29++) p += 10 + dv2.getUint8(p + 9) * 6;
+          for (let s29 = 0, ns2 = dv2.getUint8(o + 1); s29 < ns2; s29++) p += 10 + dv2.getUint8(p + 9) * 6 + (dv2.getUint8(p + 8) & 64 ? 2 : 0);
           for (let h = 0; h < nh2; h++) {
             const m = dv2.getUint8(p);
             p += 1;
@@ -19245,8 +19327,12 @@ void main() {
         if (!l) continue;
         for (let k = 0; k < l.length; k += 16) {
           if (l[k + 6] === CLS.CANOPY) continue;
+          const L2 = w.liftOf ? w.liftOf(r2, l[k + 14]) : null;
+          if (L2 && !L2.c) continue;
           const poly = footprintPolygon(r2, l, k);
-          if (poly) polys.push(poly);
+          if (!poly) continue;
+          if (L2) for (const q of openPieces(poly, L2, r2)) polys.push(q);
+          else polys.push(poly);
         }
       }
       const W = w.walls;
@@ -21710,6 +21796,11 @@ void main() {
       };
       if (F.walls) fetch(vurl("data/" + F.walls.file)).then((r) => r.json()).then((j) => {
         this.world.setWalls(j);
+        if (this.player) this.player.bCache = null;
+      }).catch(() => {
+      });
+      if (F.lifted) fetch(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
+        this.world.setLifted(j);
         if (this.player) this.player.bCache = null;
       }).catch(() => {
       });

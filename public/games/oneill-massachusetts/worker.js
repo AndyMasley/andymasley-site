@@ -555,6 +555,22 @@
       o.ty = dy * il;
       return best;
     }
+    // ---- buildings open beneath (bake/c27_lifted.py -> data/lifted.json).  Each entry names its building by its region
+    // (r: ry * RNX + rx) and its record's x and y in 0.2 m steps (b), and says where it is open: c, corridors [x0, y0, x1,
+    // y1, half width] in metres from the region's corner where a street or a railway runs under it, up to the soffit s
+    // (a height, like the roads'); or, with no c, all of it: up to h over its ground, or to t under its top.
+    setLifted(doc) {
+      const m = /* @__PURE__ */ new Map();
+      for (const e of doc && doc.b || []) m.set(e.r * 4294967296 + e.b[1] * 65536 + e.b[0], e);
+      this.lifted = m;
+    }
+    // the entry for building record id of region reg, or null
+    liftOf(reg, id) {
+      const L2 = this.lifted;
+      if (!L2 || !L2.size || !reg || !reg.b) return null;
+      const o = id * 12, b = reg.b;
+      return L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+    }
     // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
     // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
     // concrete, 1 stone, 2 brick).  ws holds five numbers a wall: first point, points, s, m, and the ends that run on into
@@ -1303,6 +1319,11 @@
       M.M[2] = cls;
       M.M[3] = seed;
     };
+    let LF = cls === CLS.CANOPY ? null : env.lift;
+    if (LF) {
+      LF.soff = liftSoffit(LF, He);
+      if (!(LF.soff === LF.soff)) LF = null;
+    }
     if (cls === CLS.CANOPY) {
       setM(MAT.METAL);
       M.W[0] = 0;
@@ -1333,9 +1354,24 @@
       M.W[1] = He - y0;
       M.W[2] = levels + 64 * flags;
       M.W[3] = door;
-      const a = M.v(p0u, yb, p0v, nu, 0, nv, 0, yb - y0), b = M.v(p1u, yb, p1v, nu, 0, nv, len, yb - y0);
       const c = M.v(p1u, top, p1v, nu, 0, nv, len, top - y0), e = M.v(p0u, top, p0v, nu, 0, nv, 0, top - y0);
-      M.quad(a, b, c, e);
+      if (!LF) {
+        const a = M.v(p0u, yb, p0v, nu, 0, nv, 0, yb - y0), b = M.v(p1u, yb, p1v, nu, 0, nv, len, yb - y0);
+        M.quad(a, b, c, e);
+      } else {
+        const ts = [0, 1];
+        corrCuts(LF, p0u, p0v, p1u, p1v, ts);
+        ts.sort((x, y) => x - y);
+        for (let q = 0; q + 1 < ts.length; q++) {
+          const ta = ts[q], tb = ts[q + 1];
+          if (tb - ta < 1e-4) continue;
+          const tm = (ta + tb) / 2, foot = inCorr(LF, p0u + (p1u - p0u) * tm, p0v + (p1v - p0v) * tm, 0.02) ? LF.soff : yb;
+          const ua = p0u + (p1u - p0u) * ta, va = p0v + (p1v - p0v) * ta, ub = p0u + (p1u - p0u) * tb, vb = p0v + (p1v - p0v) * tb;
+          const a = M.v(ua, foot, va, nu, 0, nv, len * ta, foot - y0), b = M.v(ub, foot, vb, nu, 0, nv, len * tb, foot - y0);
+          const c2 = M.v(ub, top, vb, nu, 0, nv, len * tb, top - y0), e2 = M.v(ua, top, va, nu, 0, nv, len * ta, top - y0);
+          M.quad(a, b, c2, e2);
+        }
+      }
       if (gableEnd) {
         const t = M.v((p0u + p1u) / 2, Hr, (p0v + p1v) / 2, nu, 0, nv, len / 2, Hr - y0);
         if (roof === ROOF.GAMBREL) {
@@ -1357,6 +1393,18 @@
     }
     M.W[3] = -1;
     M.W[2] = 0;
+    if (LF) {
+      const P2 = [-w / 2, -d / 2, 0, w / 2, -d / 2, 0, w / 2, d / 2, 0, -w / 2, d / 2, 0];
+      if (!LF.R) underside(M, setM, P2, null, [], LF.soff);
+      else {
+        for (const r of LF.R) underside(M, setM, P2, null, r.K, LF.soff);
+        abutments(M, setM, LF, P2, [], yb, LF.soff);
+      }
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+    }
     const ov = cls === CLS.GARAGE ? 0.2 : cls === CLS.RANCH ? 0.5 : 0.36, rk = cls === CLS.GARAGE ? 0.15 : 0.26, th = 0.17;
     if (flat) {
       setM(MAT.FLATROOF);
@@ -1440,7 +1488,7 @@
         M.tri(i0, i1, i2);
       }
     }
-    site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
+    if (!LF) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
   }
   function site(M, setM, wall, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
@@ -1907,6 +1955,148 @@
       M.quad(a, b, c, e);
     }
   }
+  function liftFrame(L2, reg, mx, my, ca, sa, g) {
+    if (!L2) return null;
+    const F = { s: L2.s != null ? L2.s - g : L2.h != null ? L2.h : NaN, t: L2.t || 0, R: null, soff: NaN };
+    if (L2.c) {
+      F.R = [];
+      for (const c of L2.c) {
+        const dx0 = reg.x0 + c[0] - mx, dy0 = reg.y0 + c[1] - my, dx1 = reg.x0 + c[2] - mx, dy1 = reg.y0 + c[3] - my, hw = c[4];
+        const u0 = ca * dx0 + sa * dy0, v0 = -sa * dx0 + ca * dy0, u1 = ca * dx1 + sa * dy1, v1 = -sa * dx1 + ca * dy1;
+        const len = Math.hypot(u1 - u0, v1 - v0);
+        if (len < 0.1) continue;
+        const tu = (u1 - u0) / len, tv = (v1 - v0) / len, nu = -tv, nv = tu, o = nu * u0 + nv * v0;
+        F.R.push({
+          K: [[-nu, -nv, o + hw], [nu, nv, hw - o], [tu, tv, -(tu * u0 + tv * v0)], [-tu, -tv, tu * u1 + tv * v1]],
+          C: [u0 + nu * hw, v0 + nv * hw, u1 + nu * hw, v1 + nv * hw, u1 - nu * hw, v1 - nv * hw, u0 - nu * hw, v0 - nv * hw]
+        });
+      }
+      if (!F.R.length) return null;
+    }
+    return F;
+  }
+  function liftSoffit(F, top) {
+    let s = F.t ? Math.max(top - F.t, Math.min(4.5, top - 1.2)) : F.s;
+    s = Math.min(s, top - 1);
+    return s >= 2.4 ? s : NaN;
+  }
+  function inCorr(F, u, v, e) {
+    if (!F.R) return true;
+    for (const r of F.R) {
+      let ok = true;
+      for (const h of r.K) if (h[0] * u + h[1] * v + h[2] < -e) {
+        ok = false;
+        break;
+      }
+      if (ok) return true;
+    }
+    return false;
+  }
+  function corrCuts(F, u0, v0, u1, v1, ts) {
+    if (!F.R) return;
+    for (const r of F.R) for (const h of r.K) {
+      const d0 = h[0] * u0 + h[1] * v0 + h[2], d1 = h[0] * u1 + h[1] * v1 + h[2];
+      if (d0 < 0 !== d1 < 0 && d0 !== d1) {
+        const t = d0 / (d0 - d1);
+        if (t > 0.01 && t < 0.99) ts.push(t);
+      }
+    }
+  }
+  function underside(M, setM, P2, T, K, y) {
+    setM(MAT.CONCRETE);
+    M.W[0] = 0;
+    M.W[1] = 0;
+    M.W[2] = 0;
+    M.W[3] = -1;
+    const emit = (F) => {
+      const ids = [];
+      for (let i = 0; i < F.length / 3; i++) ids.push(M.v(F[i * 3], y, F[i * 3 + 1], 0, -1, 0, F[i * 3], F[i * 3 + 1]));
+      ears(F, (a, b, c) => M.tri(ids[a], ids[b], ids[c]));
+    };
+    const cut = (F) => {
+      for (const h of K) {
+        F = clipPoly(F, h[0], h[1], h[2], []);
+        if (F.length < 9) return null;
+      }
+      return Math.abs(polyArea(F)) > 1e-3 ? F : null;
+    };
+    if (T) for (let t = 0; t < T.length; t += 6) {
+      const F = cut([T[t], T[t + 1], 0, T[t + 2], T[t + 3], 0, T[t + 4], T[t + 5], 0]);
+      if (F) emit(F);
+    }
+    else {
+      const F = cut(P2.slice());
+      if (F) emit(F);
+    }
+  }
+  function abutments(M, setM, F, P2, holes, yb, soff) {
+    setM(MAT.CONCRETE);
+    M.W[0] = 0;
+    M.W[1] = 0;
+    M.W[2] = 0;
+    M.W[3] = -1;
+    const rings = [P2, ...holes];
+    for (const r of F.R) {
+      const C2 = r.C;
+      for (const [s, a, b] of [[0, 0, 1], [1, 2, 3], [2, 3, 0], [3, 1, 2]]) {
+        const ua = C2[a * 2], va = C2[a * 2 + 1], ub = C2[b * 2], vb = C2[b * 2 + 1], ex = ub - ua, ey = vb - va, len = Math.hypot(ex, ey);
+        if (len < 0.05) continue;
+        const ts = [0, 1];
+        for (const R2 of rings) {
+          const n = R2.length / 3;
+          for (let i = 0; i < n; i++) {
+            const j = (i + 1) % n, cu = R2[i * 3], cv = R2[i * 3 + 1], du = R2[j * 3] - cu, dv = R2[j * 3 + 1] - cv, den = ex * dv - ey * du;
+            if (Math.abs(den) < 1e-12) continue;
+            const t = ((cu - ua) * dv - (cv - va) * du) / den, q = ((cu - ua) * ey - (cv - va) * ex) / den;
+            if (t > 0 && t < 1 && q >= 0 && q <= 1) ts.push(t);
+          }
+        }
+        for (const o of F.R) if (o !== r) for (const h2 of o.K) {
+          const d0 = h2[0] * ua + h2[1] * va + h2[2], d1 = h2[0] * ub + h2[1] * vb + h2[2];
+          if (d0 < 0 !== d1 < 0 && d0 !== d1) {
+            const t = d0 / (d0 - d1);
+            if (t > 0 && t < 1) ts.push(t);
+          }
+        }
+        ts.sort((x, y) => x - y);
+        const h = r.K[s], nl = Math.hypot(h[0], h[1]), nu = h[0] / nl, nv = h[1] / nl;
+        for (let k = 0; k + 1 < ts.length; k++) {
+          const ta = ts[k], tb = ts[k + 1];
+          if (tb - ta < 1e-3) continue;
+          const tm = (ta + tb) / 2, um = ua + ex * tm, vm = va + ey * tm;
+          if (!inRing(P2, um, vm)) continue;
+          let skip = false;
+          for (const H of holes) if (inRing(H, um, vm)) {
+            skip = true;
+            break;
+          }
+          if (!skip) for (const o of F.R) {
+            if (o === r) continue;
+            let inside = true;
+            for (const q of o.K) if (q[0] * um + q[1] * vm + q[2] < 1e-3) {
+              inside = false;
+              break;
+            }
+            if (inside) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) continue;
+          const pa = [ua + ex * ta, yb, va + ey * ta], pb = [ua + ex * tb, yb, va + ey * tb];
+          M.face(pa, pb, [pb[0], soff, pb[2]], [pa[0], soff, pa[2]], [nu, 0, nv], [-nv, 0, nu], [0, 1, 0]);
+        }
+      }
+    }
+  }
+  function inSec(sc, u, v, e) {
+    const qu = sc[5] * u + sc[6] * v, qv = -sc[6] * u + sc[5] * v;
+    return qu > sc[0] - e && qu < sc[2] + e && qv > sc[1] - e && qv < sc[3] + e;
+  }
+  function secK(sc) {
+    const c = sc[5], s = sc[6];
+    return [[c, s, -sc[0]], [-c, -s, sc[2]], [-s, c, -sc[1]], [s, -c, sc[3]]];
+  }
   function realBuilding(M, real, id, B, k, g, gmin, gmax, env, theta) {
     const dv = real.dv, o = real.base + real.off[id];
     const nv = dv.getUint8(o), ns = dv.getUint8(o + 1);
@@ -1933,16 +2123,25 @@
       if (v < minv) minv = v;
       if (v > maxv) maxv = v;
     }
+    const ver = dv.getUint8(o + 2), nch = dv.getUint16(o + 14, true);
     const secs = [];
     let low = Infinity;
     for (let s = 0; s < ns; s++) {
       const x0 = dv.getInt16(p, true) * 0.025, yy0 = dv.getInt16(p + 2, true) * 0.025, x1 = dv.getInt16(p + 4, true) * 0.025, yy1 = dv.getInt16(p + 6, true) * 0.025;
-      const npl = dv.getUint8(p + 9);
+      const mod = dv.getUint8(p + 8), npl = dv.getUint8(p + 9);
       p += 10;
       const pl = [];
       for (let q = 0; q < npl; q++, p += 6) pl.push([dv.getInt16(p, true) / 8192, dv.getInt16(p + 2, true) / 8192, dv.getInt16(p + 4, true) * 0.02]);
-      secs.push([x0, yy0, x1, yy1, pl]);
-      for (const [u, v] of [[x0, yy0], [x1, yy0], [x1, yy1], [x0, yy1]]) {
+      let rc = 1, rs = 0;
+      if (mod & 64) {
+        const r = dv.getInt16(p, true) / 1e4;
+        p += 2;
+        rc = Math.cos(r);
+        rs = Math.sin(r);
+      }
+      secs.push([x0, yy0, x1, yy1, pl, rc, rs]);
+      for (const [qu, qv] of [[x0, yy0], [x1, yy0], [x1, yy1], [x0, yy1]]) {
+        const u = rc * qu - rs * qv, v = rs * qu + rc * qv;
         let h = Infinity;
         for (const q of pl) h = Math.min(h, q[0] * u + q[1] * v + q[2]);
         if (h < low) low = h;
@@ -1964,6 +2163,11 @@
     }
     const T = holes.length ? planTriangles(P2, holes) : null;
     const basePl = [[0, 0, clamp(low - 0.15, 2.2, 400)]];
+    let LF = env.lift;
+    if (LF) {
+      LF.soff = liftSoffit(LF, low + lift);
+      if (!(LF.soff === LF.soff)) LF = null;
+    }
     const fa = yawOld + side * Math.PI / 2 - theta, fu = Math.cos(fa), fv = Math.sin(fa);
     let front = -1, fl = 2.5;
     for (let i = 0; i < nv; i++) {
@@ -1983,15 +2187,18 @@
         cuts.length = 0;
         cuts.push(0, 1);
         for (const sc of secs) {
-          if (Math.abs(u1 - u0) > 1e-6) for (const x of [sc[0], sc[2]]) {
-            const t = (x - u0) / (u1 - u0);
+          const rc = sc[5], rs = sc[6];
+          const qu0 = rc * u0 + rs * v0, dqu = rc * (u1 - u0) + rs * (v1 - v0), qv0 = -rs * u0 + rc * v0, dqv = -rs * (u1 - u0) + rc * (v1 - v0);
+          if (Math.abs(dqu) > 1e-6) for (const x of [sc[0], sc[2]]) {
+            const t = (x - qu0) / dqu;
             if (t > 0.01 && t < 0.99) cuts.push(t);
           }
-          if (Math.abs(v1 - v0) > 1e-6) for (const y of [sc[1], sc[3]]) {
-            const t = (y - v0) / (v1 - v0);
+          if (Math.abs(dqv) > 1e-6) for (const y of [sc[1], sc[3]]) {
+            const t = (y - qv0) / dqv;
             if (t > 0.01 && t < 0.99) cuts.push(t);
           }
         }
+        if (LF) corrCuts(LF, u0, v0, u1, v1, cuts);
         cuts.sort((x, y) => x - y);
         const isFront = i === front2, door = isFront ? doorAt(len, cls, seed) : -1;
         if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
@@ -2001,9 +2208,10 @@
           if (tb - ta < 1e-4) continue;
           const tm = (ta + tb) / 2, um = u0 + (u1 - u0) * tm, vm = v0 + (v1 - v0) * tm;
           const over = [];
-          for (const sc of secs) if (um > sc[0] - 0.03 && um < sc[2] + 0.03 && vm > sc[1] - 0.03 && vm < sc[3] + 0.03) over.push(sc[4]);
+          for (const sc of secs) if (inSec(sc, um, vm, 0.03)) over.push(sc[4]);
           if (!over.length) over.push(basePl);
-          wallOf(M, u0, v0, u1, v1, ta, tb, over, yb, lift, len, (lo, varies, plen) => {
+          const foot = LF && inCorr(LF, um, vm, 0.02) ? LF.soff : yb;
+          wallOf(M, u0, v0, u1, v1, ta, tb, over, foot, lift, len, (lo, varies, plen) => {
             if (plen < 1.2) return null;
             const eave = Math.max(lo - y0, 0.3);
             let flags = varies && plen > 3 ? 1 : 0;
@@ -2023,14 +2231,24 @@
     M.W[1] = 0;
     M.W[2] = 0;
     M.W[3] = -1;
+    if (LF) {
+      if (!LF.R) underside(M, setM, P2, T, [], LF.soff);
+      else {
+        for (const r of LF.R) underside(M, setM, P2, T, r.K, LF.soff);
+        abutments(M, setM, LF, P2, holes, yb, LF.soff);
+      }
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+    }
     const clipped = [];
-    for (const [x0, yy0, x1, yy1, pl] of secs) {
-      let Q = clipPoly(P2, 1, 0, -x0, _B).slice();
-      Q = clipPoly(Q, -1, 0, x1, _B).slice();
-      Q = clipPoly(Q, 0, 1, -yy0, _B).slice();
-      Q = clipPoly(Q, 0, -1, yy1, _B).slice();
+    for (const sc of secs) {
+      const pl = sc[4], K = secK(sc);
+      let Q = P2;
+      for (const k2 of K) Q = clipPoly(Q, k2[0], k2[1], k2[2], _B).slice();
       if (Q.length < 9 || polyArea(Q) < 0.5) continue;
-      if (T) roofOfTris(M, setM, T, [[1, 0, -x0], [-1, 0, x1], [0, 1, -yy0], [0, -1, yy1]], pl, lift);
+      if (T) roofOfTris(M, setM, T, K, pl, lift);
       else roofOf(M, setM, Q, pl, lift);
       clipped.push([Q, pl]);
     }
@@ -2051,7 +2269,27 @@
     M.W[1] = 0;
     M.W[2] = 0;
     M.W[3] = -1;
-    if (B[k + 11] > 0 && (cls <= CLS.TRIPLE || cls >= CLS.ROW)) {
+    if (ver >= 2) {
+      for (let c = 0; c < nch; c++, p += 8) {
+        const cu = dv.getInt16(p, true) * 0.025, cv = dv.getInt16(p + 2, true) * 0.025, su = dv.getUint8(p + 4) * 0.01, sv = dv.getUint8(p + 5) * 0.01, top = dv.getInt16(p + 6, true) * 0.02;
+        let hr = -Infinity;
+        for (const sc of secs) {
+          if (!inSec(sc, cu, cv, 0)) continue;
+          let h = Infinity;
+          for (const q of sc[4]) h = Math.min(h, q[0] * cu + q[1] * cv + q[2]);
+          if (h > hr) hr = h;
+        }
+        if (hr === -Infinity) hr = basePl[0][2];
+        if (top < hr + 0.3) continue;
+        setM(cls <= CLS.TRIPLE || cls >= CLS.ROW ? MAT.BRICK : MAT.CONCRETE);
+        M.box(cu - su / 2, cu + su / 2, hr - 0.6 + lift, top + lift, cv - sv / 2, cv + sv / 2, 55);
+      }
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+    }
+    if (ver < 2 && B[k + 11] > 0 && (cls <= CLS.TRIPLE || cls >= CLS.ROW)) {
       let best = null, ba = 0;
       for (const sc of secs) {
         const a = (sc[2] - sc[0]) * (sc[3] - sc[1]);
@@ -2096,7 +2334,7 @@
     M.W[2] = 0;
     M.W[3] = -1;
     const rD = h1(id * 5 + 3, seed + 29);
-    if (cls === CLS.CAPE && rD < 0.6 || cls === CLS.HOUSE && rD < 0.15) {
+    if (ver < 2 && (cls === CLS.CAPE && rD < 0.6 || cls === CLS.HOUSE && rD < 0.15)) {
       let best = null, ba = 0;
       for (const sc of secs) {
         const a = (sc[2] - sc[0]) * (sc[3] - sc[1]);
@@ -2111,7 +2349,7 @@
       M.W[2] = 0;
       M.W[3] = -1;
     }
-    if (frontWall) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, false, found, y0, yb, r1, r2, r3, env);
+    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, false, found, y0, yb, r1, r2, r3, env);
     return true;
   }
   var D_HE = 1.6;
@@ -2243,28 +2481,35 @@
         let p = o + 16 + nv * 4;
         for (let s = 0; s < ns; s++) {
           const x0 = dv.getInt16(p, true) * 0.025, v0 = dv.getInt16(p + 2, true) * 0.025, x1 = dv.getInt16(p + 4, true) * 0.025, v1 = dv.getInt16(p + 6, true) * 0.025;
-          const npl = dv.getUint8(p + 9);
+          const mod = dv.getUint8(p + 8), npl = dv.getUint8(p + 9);
           p += 10;
           const pl = [];
           for (let q = 0; q < npl; q++, p += 6) pl.push(dv.getInt16(p, true) / 8192, dv.getInt16(p + 2, true) / 8192, dv.getInt16(p + 4, true) * 0.02);
+          let rot = 0;
+          if (mod & 64) {
+            rot = dv.getInt16(p, true) / 1e4;
+            p += 2;
+          }
           if (x1 - x0 < 0.8 || v1 - v0 < 0.8 || !npl) continue;
-          const z = (u, v) => {
+          const rc2 = Math.cos(rot), rs = Math.sin(rot);
+          const z = (qu, qv) => {
+            const u = rc2 * qu - rs * qv, v = rs * qu + rc2 * qv;
             let h = Infinity;
             for (let q = 0; q < pl.length; q += 3) h = Math.min(h, pl[q] * u + pl[q + 1] * v + pl[q + 2]);
             return h;
           };
-          const um = (x0 + x1) / 2, vm = (v0 + v1) / 2;
-          const zc = z(um, vm), zu0 = z(x0, vm), zu1 = z(x1, vm), zv0 = z(um, v0), zv1 = z(um, v1);
+          const qm = (x0 + x1) / 2, vq = (v0 + v1) / 2, um = rc2 * qm - rs * vq, vm = rs * qm + rc2 * vq;
+          const zc = z(qm, vq), zu0 = z(x0, vq), zu1 = z(x1, vq), zv0 = z(qm, v0), zv1 = z(qm, v1);
           const corners = [z(x0, v0), z(x1, v0), z(x1, v1), z(x0, v1)];
           const eave = Math.max(Math.min(...corners), 2);
           const top = Math.max(zc, zu0, zu1, zv0, zv1, ...corners);
           let rise = top - eave, along2 = 1;
           if (rise < 1) {
-            boxes.push([um, vm, x1 - x0, v1 - v0, top, 0, 0]);
+            boxes.push([um, vm, x1 - x0, v1 - v0, top, 0, 0, yb, rot]);
             continue;
           }
           along2 = Math.abs(zc - (zu0 + zu1) / 2) >= Math.abs(zc - (zv0 + zv1) / 2) ? 1 : 0;
-          boxes.push([um, vm, x1 - x0, v1 - v0, eave, rise, along2 ? 0 : 1]);
+          boxes.push([um, vm, x1 - x0, v1 - v0, eave, rise, along2 ? 0 : 1, yb, rot]);
         }
         parsed = boxes.length > 0;
       }
@@ -2278,6 +2523,32 @@
       if (cls === CLS.CANOPY) boxes.push([0, 0, w, d, He, 0, 0, He - 0.45]);
       else boxes.push([0, 0, w, d, He, flat ? 0 : w / 2 * pitch, 0]);
     }
+    const L2 = world2.liftOf ? world2.liftOf(reg, id) : null;
+    if (L2 && cls !== CLS.CANOPY) {
+      const F = liftFrame(L2, reg, mx, my, ca, sa, g);
+      let top = Infinity;
+      for (const b of boxes) top = Math.min(top, b[4]);
+      const s = F ? liftSoffit(F, top) : NaN;
+      let open = 1;
+      if (F && F.R) {
+        const ra = list[k + 4], rca = Math.cos(ra), rsa = Math.sin(ra), G = liftFrame(L2, reg, list[k], list[k + 1], rca, rsa, g);
+        const Pr = [-w / 2, -d / 2, 0, w / 2, -d / 2, 0, w / 2, d / 2, 0, -w / 2, d / 2, 0];
+        open = 0;
+        if (G) for (const r of G.R) {
+          let F2 = Pr.slice();
+          for (const h of r.K) {
+            F2 = clipPoly(F2, h[0], h[1], h[2], []);
+            if (F2.length < 9) break;
+          }
+          if (F2.length >= 9) open += Math.abs(polyArea(F2));
+        }
+        open /= Math.max(w * d, 1);
+      }
+      if (s === s && open >= 0.3) for (const b of boxes) {
+        b[7] = Math.max(b.length > 7 && b[7] !== void 0 ? b[7] : yb, s);
+        if (b.length < 9) b[8] = 0;
+      }
+    }
     let big = 0;
     for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
     if (minSize > 0 && big < minSize) return 0;
@@ -2289,7 +2560,8 @@
       const foot = b.length > 7 ? b[7] : yb;
       const fx = mx + ca * u - sa * v, fy = my + sa * u + ca * v;
       cyl(fx, fy, g + foot, P2);
-      const yaw = turn ? a + Math.PI / 2 : a, W = turn ? bd : bw, D2 = turn ? bw : bd;
+      const a2 = a + (b.length > 8 ? b[8] : 0);
+      const yaw = turn ? a2 + Math.PI / 2 : a2, W = turn ? bd : bw, D2 = turn ? bw : bd;
       out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul);
     }
     return boxes.length;
@@ -2383,6 +2655,7 @@
       env.ca = ca;
       env.sa = sa;
       env.g = g;
+      env.lift = liftFrame(world2.liftOf ? world2.liftOf(reg, id) : null, reg, mx, my, ca, sa, g);
       const rc = list[k + 15];
       if (rc > 0) {
         M.K[0] = (rc >> 11 & 31) * 255 / 31;
@@ -3543,6 +3816,7 @@
   var NBI = null;
   var nbiReady = null;
   var wallsReady = null;
+  var liftedReady = null;
   function init(m) {
     const meta = m.meta;
     const parts = { sdf: new Uint8Array(m.sdf), sdfW: m.sdfW, sdfH: m.sdfH, cover: new Uint8Array(m.cover), aux: new Uint8Array(m.aux) };
@@ -3563,6 +3837,11 @@
     const wf = meta.files && meta.files.walls;
     wallsReady = wf ? fetch(vurl("data/" + wf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (j) world.setWalls(j);
+    }).catch(() => {
+    }) : null;
+    const lf = meta.files && meta.files.lifted;
+    liftedReady = lf ? fetch(vurl("data/" + lf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (j) world.setLifted(j);
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
@@ -4263,6 +4542,7 @@
       }
       if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
       if (wallsReady) await wallsReady;
+      if (liftedReady) await liftedReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);
