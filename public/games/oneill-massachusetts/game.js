@@ -19394,8 +19394,8 @@ void main() {
         c.water = g.water;
         c.road = g.onDeck ? g.deckRoad : g.edge < 0.8 ? g.road : -1;
         c.reg = g.onDeck ? g.deckReg : g.reg;
-        const smooth = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
-        const vmax = (c.water ? 17 : smooth ? 52 : 27) * (inp.boost ? 1.5 : 1);
+        const smooth2 = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
+        const vmax = (c.water ? 17 : smooth2 ? 52 : 27) * (inp.boost ? 1.5 : 1);
         const sx2 = Math.sin(c.hdg), sy2 = Math.cos(c.hdg);
         const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h, from0), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h, from0);
         const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h, from0), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h, from0);
@@ -19863,6 +19863,24 @@ void main() {
             this.applyPause();
             this.toast(this.userPaused ? "Paused" : "Go");
             break;
+          case "KeyO":
+            this.toggleRadio();
+            break;
+          case "Comma":
+            if (g.radio && g.radio.on) {
+              if (e.shiftKey) g.radio.seek(-1);
+              else g.radio.tune(-1);
+            }
+            break;
+          case "Period":
+            if (g.radio && g.radio.on) {
+              if (e.shiftKey) g.radio.seek(1);
+              else g.radio.tune(1);
+            }
+            break;
+          case "Slash":
+            if (g.radio && g.radio.on) g.radio.setBand();
+            break;
           default:
             if (/^Digit[1-9]$/.test(e.code)) {
               const s29 = g.meta.starts[+e.code.slice(5) - 1];
@@ -19983,6 +20001,27 @@ void main() {
       if (this.modal === "about") this.closeModal();
       else this.openModal("about");
     }
+    // the radio (radio.js): its panel shows while it is on
+    async toggleRadio() {
+      const r = this.g.radio;
+      if (!r) return;
+      const on2 = await r.power();
+      if (on2) this.toast(r.band + " " + (r.band === "FM" ? r.freq.FM.toFixed(1) : r.freq.AM) + ". Comma and period tune, with Shift they seek, slash is FM or AM.");
+    }
+    radioPanel(on2) {
+      $("radio").classList.toggle("hidden", !on2);
+      $("b-radio").setAttribute("aria-pressed", String(!!on2));
+    }
+    radioShow(i) {
+      $("r-band").textContent = i.band;
+      $("r-freq").textContent = i.freq;
+      const bars = $("r-bars").children;
+      for (let k = 0; k < bars.length; k++) bars[k].classList.toggle("on", k < i.bars);
+      $("r-st").style.visibility = i.stereo ? "visible" : "hidden";
+      $("r-call").textContent = i.call;
+      $("r-city").textContent = i.city;
+      $("r-note").textContent = i.note;
+    }
     bindPointer() {
       const g = this.g, cv2 = g.canvas;
       let drag = null;
@@ -20031,6 +20070,14 @@ void main() {
       $("about-close").onclick = () => this.closeModal();
       $("map-close").onclick = () => this.closeModal();
       $("b-full").onclick = () => this.fullscreen();
+      $("b-radio").onclick = () => this.toggleRadio();
+      $("r-off").onclick = () => this.toggleRadio();
+      $("r-band").onclick = () => g.radio && g.radio.setBand();
+      $("r-down").onclick = () => g.radio && g.radio.tune(-1);
+      $("r-up").onclick = () => g.radio && g.radio.tune(1);
+      $("r-seekd").onclick = () => g.radio && g.radio.seek(-1);
+      $("r-seeku").onclick = () => g.radio && g.radio.seek(1);
+      for (const b of document.querySelectorAll("#radio button")) b.addEventListener("pointerup", () => g.canvas.focus());
       for (const b of document.querySelectorAll("#tools button")) b.addEventListener("pointerup", () => g.canvas.focus());
     }
     bindTouch() {
@@ -20288,7 +20335,7 @@ void main() {
       if (Math.random() > (cls <= 3 ? 1 : cls <= 5 ? 0.9 : cls <= 7 ? 0.7 : cls <= 9 ? 0.55 : 0.22)) return;
       const a = s0of(reg, ri2), b = s1of(reg, ri2);
       if (b - a < 40) return;
-      const hash3 = Math.random(), tall = hash3 * 7.13 % 1;
+      const hash4 = Math.random(), tall = hash4 * 7.13 % 1;
       const c = {
         reg,
         ri: ri2,
@@ -20310,12 +20357,12 @@ void main() {
         dying: false,
         stuck: 0,
         next: void 0,
-        hash: hash3,
+        hash: hash4,
         variant: tall > 0.55 ? 1 : 0,
         sx: 0.97 + 0.06 * tall,
-        sy: 0.96 + 0.08 * (hash3 * 3.7 % 1),
-        sz: 0.94 + 0.11 * (hash3 * 5.3 % 1),
-        keen: 0.86 + 0.2 * (hash3 * 11.9 % 1)
+        sy: 0.96 + 0.08 * (hash4 * 3.7 % 1),
+        sz: 0.94 + 0.11 * (hash4 * 5.3 % 1),
+        keen: 0.86 + 0.2 * (hash4 * 11.9 % 1)
       };
       c.off = this.lane(reg, ri2, c.dir, c.pick);
       this.aim(c);
@@ -20873,18 +20920,18 @@ void main() {
       b.my = wrapY(b.my + fy2 * b.v * dt);
       b.fade = clamp(b.fade + (b.dying ? -dt / 1.5 : dt / 2), 0, 1);
     }
-    place(kind, mx2, my2, hdg, sc2, fade, hash3, v, time, heel) {
+    place(kind, mx2, my2, hdg, sc2, fade, hash4, v, time, heel) {
       const K = this.kinds[kind];
       if (K.n >= K.cap) return;
       const w = this.game.world, camC = this.camC, M = this.M;
       const lev = w.levelAt(mx2, my2);
-      cyl(mx2, my2, lev + Math.sin(time * 0.9 + hash3 * 30) * 0.05 * Math.min(K.len, 20) / 9, p34);
+      cyl(mx2, my2, lev + Math.sin(time * 0.9 + hash4 * 30) * 0.05 * Math.min(K.len, 20) / 9, p34);
       frame(my2, e33, n33, u33);
       const sy2 = Math.sin(hdg), cy2 = Math.cos(hdg);
       const fx2 = sy2 * e33[0] + cy2 * n33[0], fy2 = sy2 * e33[1] + cy2 * n33[1], fz = sy2 * e33[2] + cy2 * n33[2];
       let rx2 = cy2 * e33[0] - sy2 * n33[0], ry2 = cy2 * e33[1] - sy2 * n33[1], rz = cy2 * e33[2] - sy2 * n33[2];
       let ux2 = u33[0], uy2 = u33[1], uz = u33[2];
-      const roll = heel + Math.sin(time * 0.7 + hash3 * 17) * (K.len < 20 ? 0.035 : 6e-3), cr2 = Math.cos(roll), sr2 = Math.sin(roll);
+      const roll = heel + Math.sin(time * 0.7 + hash4 * 17) * (K.len < 20 ? 0.035 : 6e-3), cr2 = Math.cos(roll), sr2 = Math.sin(roll);
       const r2x = cr2 * rx2 - sr2 * ux2, r2y = cr2 * ry2 - sr2 * uy2, r2z = cr2 * rz - sr2 * uz;
       ux2 = cr2 * ux2 + sr2 * rx2;
       uy2 = cr2 * uy2 + sr2 * ry2;
@@ -20895,7 +20942,7 @@ void main() {
       const s29 = sc2 * (fade * fade * (3 - 2 * fade));
       M.set(rx2 * s29, ux2 * s29, -fx2 * s29, p34[0] - camC[0], ry2 * s29, uy2 * s29, -fy2 * s29, p34[1] - camC[1], rz * s29, uz * s29, -fz * s29, p34[2] - camC[2], 0, 0, 0, 1);
       K.mesh.setMatrixAt(K.n, M);
-      K.inst.array[K.n * 4] = hash3;
+      K.inst.array[K.n * 4] = hash4;
       K.inst.array[K.n * 4 + 1] = 0;
       K.n++;
       if (v > 0.6 && this.nWake < this.wakeCap) {
@@ -21053,6 +21100,560 @@ void main() {
     }
   };
 
+  // src/radio.js
+  var NC = 40;
+  var NA = 8;
+  var FM = { lo: 87.9, hi: 107.9, step: 0.2 };
+  var AM = { lo: 530, hi: 1700, step: 10 };
+  var smooth = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  var hash = (x, y, s29) => {
+    let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s29 | 0, 1442695041) | 0;
+    h = Math.imul(h ^ h >>> 13, 1274126177);
+    return ((h ^ h >>> 16) >>> 0) / 4294967296;
+  };
+  function vnoise2(x, y, s29) {
+    const ix2 = Math.floor(x), iy2 = Math.floor(y), fx2 = x - ix2, fy2 = y - iy2, u = fx2 * fx2 * (3 - 2 * fx2), v = fy2 * fy2 * (3 - 2 * fy2);
+    const a = hash(ix2, iy2, s29), b = hash(ix2 + 1, iy2, s29), c = hash(ix2, iy2 + 1, s29), d = hash(ix2 + 1, iy2 + 1, s29);
+    return 2 * (a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v) - 1;
+  }
+  function rayleigh(x, y, s29) {
+    const a = vnoise2(x, y, s29) + 0.5 * vnoise2(x * 2.1 + 7.3, y * 2.1 - 3.1, s29 + 11), b = vnoise2(x + 31.7, y - 17.3, s29 + 23) + 0.5 * vnoise2(x * 2.1 - 5.9, y * 2.1 + 9.7, s29 + 37);
+    const p = (a * a + b * b) / 0.62;
+    return clamp(10 * Math.log10(Math.max(p, 1e-4)), -32, 6);
+  }
+  var fmText = (f) => f.toFixed(1);
+  var amText = (f) => String(Math.round(f));
+  var Radio = class {
+    constructor(game2) {
+      this.g = game2;
+      this.on = false;
+      this.band = "FM";
+      this.freq = { FM: 90.9, AM: 1030 };
+      this.vol = 0.8;
+      this.data = null;
+      this.loadingData = null;
+      this.tiles = /* @__PURE__ */ new Map();
+      this.tileLoads = /* @__PURE__ */ new Map();
+      this.ctx = null;
+      this.slots = [];
+      this.nextCheck = 0;
+      this.env = { urban: 0, deck: false, tun: false, wired: false, tunDepth: 0, agl: 0 };
+      this.shown = null;
+      this.tShow = 0;
+      this.t = 0;
+      try {
+        const s29 = JSON.parse(localStorage.getItem("oneill-radio") || "null");
+        if (s29 && s29.v === 1) {
+          this.band = s29.band === "AM" ? "AM" : "FM";
+          this.freq.FM = +s29.fm || 90.9;
+          this.freq.AM = +s29.am || 1030;
+        }
+      } catch (e) {
+      }
+    }
+    save() {
+      try {
+        localStorage.setItem("oneill-radio", JSON.stringify({ v: 1, band: this.band, fm: this.freq.FM, am: this.freq.AM }));
+      } catch (e) {
+      }
+    }
+    // ---- data: the station list once, and each region's strengths as the car comes to it
+    load() {
+      if (!this.loadingData) {
+        const F = this.g.meta.files && this.g.meta.files.radio;
+        this.loadingData = !F ? Promise.resolve(null) : fetch(vurl("data/" + F.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+          if (!j) return null;
+          j.tileSet = new Set(j.tiles);
+          j.byFreq = { FM: /* @__PURE__ */ new Map(), AM: /* @__PURE__ */ new Map() };
+          j.s.forEach((s29, i) => {
+            s29.i = i;
+            const m = j.byFreq[s29.b === "A" ? "AM" : "FM"], k = s29.b === "A" ? Math.round(s29.f) : Math.round(s29.f * 10);
+            if (!m.has(k)) m.set(k, []);
+            m.get(k).push(s29);
+          });
+          this.data = j;
+          return j;
+        }).catch(() => null);
+      }
+      return this.loadingData;
+    }
+    tile(rk) {
+      const t = this.tiles.get(rk);
+      if (t) {
+        t.used = this.t;
+        return t;
+      }
+      if (!this.data || !this.data.tileSet.has(rk) || this.tileLoads.has(rk)) return null;
+      const rx2 = rk % RNX, ry2 = Math.floor(rk / RNX);
+      this.tileLoads.set(rk, fetch(vurl("data/radio/" + rx2 + "_" + ry2 + ".png")).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+        if (!img) return;
+        const u8 = img.data, W = img.w, dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+        if (W !== NC || u8[0] !== 82 || u8[1] !== 68 || u8[2] !== 79 || u8[3] !== 51) return;
+        const n40 = dv2.getUint16(4, true), n20 = dv2.getUint16(6, true), na2 = dv2.getUint16(8, true), fm = /* @__PURE__ */ new Map(), am2 = /* @__PURE__ */ new Map();
+        const H = Math.ceil((10 + 2 * (n40 + n20 + na2)) / W), id2 = (k) => dv2.getUint16(10 + k * 2, true);
+        for (let i = 0; i < n40; i++) fm.set(id2(i), 2 * W * (H + NC * i));
+        const c02 = H + NC * n40;
+        for (let i = 0; i < n20; i++) fm.set(id2(n40 + i), 2 * (W * (c02 + 20 * (i >> 1)) + 20 * (i & 1)) + 1);
+        const a02 = c02 + 20 * (n20 + 1 >> 1);
+        for (let i = 0; i < na2; i++) am2.set(id2(n40 + n20 + i), W * (a02 + NA * i));
+        this.tiles.set(rk, { u8, fm, am: am2, used: this.t });
+        if (this.tiles.size > 30) {
+          let old = -1, ot = Infinity;
+          for (const [k, v] of this.tiles) if (k !== rk && v.used < ot) {
+            ot = v.used;
+            old = k;
+          }
+          this.tiles.delete(old);
+          this.tileLoads.delete(old);
+        }
+      }).catch(() => {
+      }));
+      return null;
+    }
+    // the field (dBuV/m) the bake gives station s at (mx, my): bilinear between cell middles; -99 where it has none
+    baked(s29, mx2, my2, night) {
+      const rx2 = Math.floor(mx2 / RS2), ry2 = Math.floor(my2 / RS2), T = this.tile(regionKey(rx2, ry2));
+      if (!T) return -99;
+      const am2 = s29.b === "A";
+      let o = (am2 ? T.am : T.fm).get(s29.i), n = NA;
+      if (o === void 0) return -99;
+      if (!am2) {
+        n = o & 1 ? 20 : NC;
+        o >>= 1;
+      }
+      const cell = RS2 / n;
+      const u = clamp((mx2 - rx2 * RS2) / cell - 0.5, 0, n - 1.001), v = clamp((my2 - ry2 * RS2) / cell - 0.5, 0, n - 1.001);
+      const i = Math.floor(u), j = Math.floor(v), fu = u - i, fv2 = v - j, base = o + (am2 && night ? NA : 0), b = T.u8;
+      const q = b[base + j * NC + i] * (1 - fu) * (1 - fv2) + b[base + j * NC + i + 1] * fu * (1 - fv2) + b[base + (j + 1) * NC + i] * (1 - fu) * fv2 + b[base + (j + 1) * NC + i + 1] * fu * fv2;
+      return q <= 0.5 ? -99 : q - 10;
+    }
+    // ---- where the radio is: the car, or (flying) the jetpack
+    where() {
+      const p = this.g.player;
+      if (p.mode === "drive") return [p.car.mx, p.car.my];
+      return [p.camMap[0], p.camMap[1]];
+    }
+    // what changes slowly round the car: how built up the town is, a bridge overhead, a tunnel and whether it is wired
+    sense(mx2, my2) {
+      const g = this.g, w = g.world, p = g.player, c = p.car, e = this.env;
+      if (this.data) {
+        const rx2 = Math.floor(mx2 / RS2), ry2 = Math.floor(my2 / RS2), fx2 = mx2 / RS2 - rx2, fy2 = my2 / RS2 - ry2, m = 2e3 / RS2;
+        for (let dy2 = -1; dy2 <= 1; dy2++) for (let dx2 = -1; dx2 <= 1; dx2++) {
+          if (dx2 < 0 && fx2 > m || dx2 > 0 && fx2 < 1 - m || dy2 < 0 && fy2 > m || dy2 > 0 && fy2 < 1 - m) continue;
+          this.tile(regionKey(rx2 + dx2, ry2 + dy2));
+        }
+      }
+      const ti2 = w.townAt(mx2, my2), town = ti2 ? g.meta.towns[ti2 - 1] : null;
+      const dens = town && town.a > 0 ? town.p / town.a : 5;
+      e.urban = clamp(Math.log10(Math.max(dens, 1) / 40) / Math.log10(7e3 / 40), 0, 1);
+      e.tun = p.mode === "drive" && !!c.tun;
+      if (e.tun) {
+        const sg = c.v < 0 ? -1 : 1, fx2 = Math.sin(c.hdg) * sg, fy2 = Math.cos(c.hdg) * sg;
+        const portal = (k) => {
+          for (const d of [30, 70, 130, 220, 350]) if (w.nearestTunnel(c.mx + k * fx2 * d, c.my + k * fy2 * d, c.h + 8) > 4) return d;
+          return 500;
+        };
+        if (!this.inTun) {
+          this.inTun = true;
+          this.tunBack = portal(-1);
+        }
+        e.tunDepth = Math.min(this.tunBack, portal(1));
+      } else {
+        this.inTun = false;
+        e.tunDepth = 0;
+      }
+      e.deck = false;
+      if (p.mode === "drive" && !c.tun) {
+        const d = w.nearestDeck(c.mx, c.my, 1e9);
+        e.deck = d < 1 && w._nd.z > c.h + 3;
+      }
+      e.agl = p.mode === "fly" ? Math.max(0, p.camMap[2] - g.groundUnderCam) : 0;
+      const D = this.data, Wd2 = D && D.wired;
+      e.wired = false;
+      if (e.tun && Wd2 && c.wayReg && c.wayRoad >= 0 && mx2 > (D.wiredX || 0) && Wd2.some((z) => Math.hypot(mx2 - z[0], my2 - z[1]) < z[2])) {
+        const nm2 = g.names && g.names[c.wayReg.rName[c.wayRoad]] || "";
+        e.wired = /I-9[03]|US 1\b|Route 3\b/.test(nm2) || !nm2 && c.wayReg.rCls[c.wayRoad] <= 1;
+      }
+    }
+    // the field a station has here and now (dBuV/m), with the car's own fading; fast: with the multipath term
+    field(s29, mx2, my2, fast) {
+      const night = !!this.g.sky.isNight, am2 = s29.b === "A";
+      if (am2 && night && s29.dn) return -99;
+      let E = this.baked(s29, mx2, my2, night);
+      if (am2 && night && s29.sk !== void 0) {
+        const d = Math.hypot(mx2 - s29.x, my2 - s29.y) / 1e3, D = Math.sqrt(4e4 + d * d);
+        const sky = 97.5 - 20 * Math.log10(D) - s29.gk * Math.sqrt(D / 1e3) + s29.sk - 30 * (1 - smooth(60, 250, d)) + rayleigh(this.t / 7, s29.i * 1.7, 101 + s29.i);
+        E = 10 * Math.log10(Math.pow(10, E / 10) + Math.pow(10, sky / 10));
+      }
+      if (E < -50) return E;
+      const env = this.env;
+      if (!am2) {
+        E += 3.5 * vnoise2(mx2 / 70, my2 / 70, 7 + s29.i) - 4 * env.urban;
+        if (fast) E += rayleigh(mx2 / 1.5, my2 / 1.5, 3 + s29.i) * (0.5 + 0.5 * smooth(50, 25, E));
+        if (env.deck) E -= 2;
+      } else {
+        E += 1.5 * vnoise2(mx2 / 300, my2 / 300, 9 + s29.i);
+        if (env.deck) E -= 14;
+      }
+      if (env.tun) E = env.wired && s29.wire ? 60 : E - (am2 ? 30 + Math.min(30, env.tunDepth * 0.6) : Math.min(65, 8 + env.tunDepth * 0.15));
+      if (!am2 && env.agl > 3) E += Math.min(28, 12 * Math.log10(env.agl / 1.5));
+      return E;
+    }
+    // noise floor (dBuV/m) on AM: the electrical noise of where you are, more at night
+    amFloor() {
+      return 24 + 20 * this.env.urban + (this.g.sky.isNight ? 4 : 0);
+    }
+    // every station on a frequency, strongest first: [[E, s], ...]
+    heard(band, f, mx2, my2, fast) {
+      const m = this.data && this.data.byFreq[band].get(band === "AM" ? Math.round(f) : Math.round(f * 10));
+      if (!m) return [];
+      const out = [];
+      for (const s29 of m) {
+        const E = this.field(s29, mx2, my2, fast);
+        if (E > -40) out.push([E, s29]);
+      }
+      out.sort((a, b) => b[0] - a[0]);
+      return out;
+    }
+    // a frequency's quality for seeking (0 none .. 1 clean)
+    quality(band, f, mx2, my2) {
+      const h = this.heard(band, f, mx2, my2, false);
+      if (!h.length) return 0;
+      return band === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
+    }
+    // ---- controls
+    async power(on2 = !this.on) {
+      this.on = on2;
+      if (on2) {
+        this.audio();
+        if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {
+        });
+        const d = await this.load();
+        if (!d) {
+          this.on = false;
+          this.g.ui.toast("The radio did not load");
+          this.g.ui.radioPanel(false);
+          return false;
+        }
+        if (!this.tunedOnce) {
+          this.tunedOnce = true;
+          const [mx2, my2] = this.where();
+          this.sense(mx2, my2);
+          for (let k = 0; k < 40 && !this.tile(regionKey(Math.floor(mx2 / RS2), Math.floor(my2 / RS2))); k++) await new Promise((r) => setTimeout(r, 100));
+          if (this.quality(this.band, this.freq[this.band], mx2, my2) < 0.5) {
+            let best = null, bq = 0.4;
+            for (let f = FM.lo; f <= FM.hi + 1e-6; f += FM.step) {
+              const q = this.quality("FM", f, mx2, my2) + this.heardBest("FM", f, mx2, my2) / 1e3;
+              if (q > bq) {
+                bq = q;
+                best = f;
+              }
+            }
+            if (best !== null) {
+              this.band = "FM";
+              this.freq.FM = Math.round(best * 10) / 10;
+            }
+          }
+        }
+      } else {
+        for (const sl2 of this.slots) this.drop(sl2);
+        if (this.noiseFM) {
+          this.noiseFM.gain.value = 0;
+          this.noiseAM.gain.value = 0;
+        }
+      }
+      this.g.ui.radioPanel(this.on);
+      this.shown = null;
+      return this.on;
+    }
+    heardBest(band, f, mx2, my2) {
+      const h = this.heard(band, f, mx2, my2, false);
+      return h.length ? h[0][0] : 0;
+    }
+    setBand(b = this.band === "FM" ? "AM" : "FM") {
+      this.band = b;
+      this.save();
+      this.shown = null;
+    }
+    tune(dir) {
+      const B = this.band === "FM" ? FM : AM;
+      let f = this.freq[this.band] + dir * B.step;
+      if (f > B.hi + 1e-6) f = B.lo;
+      if (f < B.lo - 1e-6) f = B.hi;
+      this.freq[this.band] = this.band === "FM" ? Math.round(f * 10) / 10 : Math.round(f);
+      this.save();
+      this.shown = null;
+    }
+    seek(dir) {
+      const B = this.band === "FM" ? FM : AM, [mx2, my2] = this.where();
+      const n = Math.round((B.hi - B.lo) / B.step) + 1;
+      let f = this.freq[this.band];
+      for (let k = 1; k < n; k++) {
+        f += dir * B.step;
+        if (f > B.hi + 1e-6) f = B.lo;
+        if (f < B.lo - 1e-6) f = B.hi;
+        if (this.quality(this.band, f, mx2, my2) >= 0.55) {
+          this.freq[this.band] = this.band === "FM" ? Math.round(f * 10) / 10 : Math.round(f);
+          this.save();
+          this.shown = null;
+          return true;
+        }
+      }
+      this.g.ui.toast("Nothing else comes in here on " + this.band);
+      return false;
+    }
+    // ---- sound: two stations at most (a frequency's strongest and the one under it), FM hiss and AM static
+    audio() {
+      if (this.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = this.ctx = new AC();
+      this.master = ctx.createGain();
+      this.master.gain.value = this.vol;
+      this.master.connect(ctx.destination);
+      const sr2 = ctx.sampleRate, len = Math.floor(sr2 * 3.7);
+      const wb = ctx.createBuffer(1, len, sr2), wd2 = wb.getChannelData(0);
+      for (let i = 0; i < len; i++) wd2[i] = Math.random() * 2 - 1;
+      const ab = ctx.createBuffer(1, len, sr2), ad = ab.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) {
+        last = last * 0.96 + (Math.random() * 2 - 1) * 0.28;
+        let v = last;
+        if (Math.random() < 9e-4) {
+          const k = 1 + Math.floor(Math.random() * 40);
+          for (let j = 0; j < k && i + j < len; j++) ad[i + j] += (Math.random() * 2 - 1) * (1 - j / k) * 1.6;
+        }
+        ad[i] += v;
+      }
+      const src = (buf) => {
+        const s29 = ctx.createBufferSource();
+        s29.buffer = buf;
+        s29.loop = true;
+        s29.start();
+        return s29;
+      };
+      const fmHi = ctx.createBiquadFilter();
+      fmHi.type = "highpass";
+      fmHi.frequency.value = 250;
+      const fmLo = ctx.createBiquadFilter();
+      fmLo.type = "lowpass";
+      fmLo.frequency.value = 9500;
+      this.noiseFM = ctx.createGain();
+      this.noiseFM.gain.value = 0;
+      src(wb).connect(fmHi);
+      fmHi.connect(fmLo);
+      fmLo.connect(this.noiseFM);
+      this.noiseFM.connect(this.master);
+      const amLo = ctx.createBiquadFilter();
+      amLo.type = "lowpass";
+      amLo.frequency.value = 3200;
+      this.noiseAM = ctx.createGain();
+      this.noiseAM.gain.value = 0;
+      src(ab).connect(amLo);
+      amLo.connect(this.noiseAM);
+      this.noiseAM.connect(this.master);
+      for (let i = 0; i < 2; i++) this.slots.push({ s: null, want: null, el: null, node: null, filt: null, gain: null, since: 0, state: "idle", web: false });
+    }
+    // start (or switch) a slot's stream
+    play(sl2, s29) {
+      const ctx = this.ctx;
+      this.drop(sl2);
+      sl2.s = s29;
+      sl2.since = this.t;
+      const st = s29.u ? s29 : s29.p >= 0 ? this.data.s[s29.p] : null;
+      if (!st || !st.u) {
+        sl2.state = "nostream";
+        sl2.why = "none";
+        return;
+      }
+      if (st.fail && this.t - st.fail < 30) {
+        sl2.state = "nostream";
+        sl2.why = "failed";
+        return;
+      }
+      if (st.k === "hls" && !document.createElement("audio").canPlayType("application/vnd.apple.mpegurl")) {
+        sl2.state = "nostream";
+        sl2.why = "hls";
+        return;
+      }
+      const el = new Audio();
+      el.preload = "none";
+      sl2.web = !!(st.o && ctx && ctx.createMediaElementSource);
+      if (sl2.web) el.crossOrigin = "anonymous";
+      el.src = st.u;
+      sl2.el = el;
+      sl2.state = "loading";
+      el.addEventListener("playing", () => {
+        if (sl2.el === el) sl2.state = "playing";
+      });
+      el.addEventListener("waiting", () => {
+        if (sl2.el === el && sl2.state === "playing") sl2.state = "loading";
+      });
+      el.addEventListener("error", () => {
+        if (sl2.el !== el) return;
+        if (sl2.web) {
+          st.o = 0;
+          this.play(sl2, s29);
+          return;
+        }
+        st.fail = this.t;
+        sl2.state = "nostream";
+        sl2.why = "failed";
+      });
+      if (sl2.web) {
+        try {
+          sl2.node = ctx.createMediaElementSource(el);
+          sl2.filt = ctx.createBiquadFilter();
+          sl2.filt.type = "lowpass";
+          sl2.filt.frequency.value = 15e3;
+          sl2.gain = ctx.createGain();
+          sl2.gain.gain.value = 0;
+          sl2.node.connect(sl2.filt);
+          sl2.filt.connect(sl2.gain);
+          sl2.gain.connect(this.master);
+        } catch (e) {
+          sl2.web = false;
+        }
+      }
+      if (!sl2.web) el.volume = 0;
+      const pr2 = el.play();
+      if (pr2 && pr2.catch) pr2.catch(() => {
+        if (sl2.el === el) {
+          st.fail = this.t;
+          sl2.state = "nostream";
+          sl2.why = "failed";
+        }
+      });
+    }
+    drop(sl2) {
+      if (sl2.el) {
+        try {
+          sl2.el.pause();
+          sl2.el.removeAttribute("src");
+          sl2.el.load();
+        } catch (e) {
+        }
+      }
+      if (sl2.node) {
+        try {
+          sl2.node.disconnect();
+          sl2.gain.disconnect();
+        } catch (e) {
+        }
+      }
+      sl2.el = null;
+      sl2.node = null;
+      sl2.filt = null;
+      sl2.gain = null;
+      sl2.s = null;
+      sl2.state = "idle";
+    }
+    setGain(sl2, v, cut) {
+      if (!sl2.el) return;
+      if (sl2.web && sl2.gain) {
+        sl2.gain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
+        sl2.filt.frequency.setTargetAtTime(cut, this.ctx.currentTime, 0.05);
+      } else sl2.el.volume = clamp(v * this.vol, 0, 1);
+    }
+    // ---- every frame
+    update(dt) {
+      this.t += dt;
+      if (!this.on || !this.data || !this.ctx) return;
+      const [mx2, my2] = this.where();
+      if (this.inTun) this.tunBack += Math.abs(this.g.player.car.v) * dt;
+      if (this.t >= this.nextCheck) {
+        this.nextCheck = this.t + 0.3;
+        this.sense(mx2, my2);
+      }
+      const band = this.band, f = this.freq[band], am2 = band === "AM";
+      const h = this.heard(band, f, mx2, my2, true);
+      const A = h[0], B = h[1];
+      const wantA = A && A[0] > (am2 ? this.amFloor() - 12 : 6) ? A[1] : null;
+      const wantB = B && wantA && (am2 ? B[0] > this.amFloor() - 6 && A[0] - B[0] < 18 : A[0] - B[0] < 9 && B[0] > 10) ? B[1] : null;
+      if (this.lastF !== band + f) {
+        this.lastF = band + f;
+        this.restAt = this.t;
+      }
+      const rested = this.t - this.restAt > 0.45;
+      const sl2 = this.slots;
+      for (const want of [wantA, wantB]) {
+        if (!want || !rested) continue;
+        if (sl2.some((x) => x.s === want)) continue;
+        const free = sl2.find((x) => x.s !== wantA && x.s !== wantB) || sl2[1];
+        this.play(free, want);
+      }
+      for (const x of sl2) if (x.s && x.s !== wantA && x.s !== wantB && (rested || x.s.f !== f)) this.drop(x);
+      for (const x of sl2) {
+        if (x.s && x.state === "nostream") {
+          const st = x.s.u ? x.s : x.s.p >= 0 ? this.data.s[x.s.p] : null;
+          if (st && st.u && st.fail && this.t - st.fail > 30) {
+            st.fail = 0;
+            this.play(x, x.s);
+          }
+        }
+      }
+      let noise = 1, sigA = 0, sigB = 0, cutA = 15e3, cutB = 15e3;
+      if (A) {
+        if (!am2) {
+          const q = smooth(16, 42, A[0]);
+          sigA = smooth(6, 20, A[0]);
+          noise = (1 - q) * 0.85;
+          cutA = 2500 + 12500 * q;
+          if (B) {
+            const D = A[0] - B[0];
+            sigB = smooth(9, 0, D) * smooth(6, 20, B[0]) * 0.75;
+            sigA *= 1 - 0.35 * smooth(6, 0, D);
+            noise = Math.max(noise, 0.35 * smooth(4, 0, D));
+            cutB = 2500 + 12500 * smooth(16, 42, B[0]);
+          }
+        } else {
+          const N = this.amFloor(), snr = A[0] - N;
+          sigA = smooth(-10, 12, snr);
+          noise = (1 - smooth(-2, 30, snr)) * 0.75 + 0.04;
+          cutA = 2200 + 2600 * smooth(0, 30, snr);
+          if (B) {
+            sigB = Math.pow(10, (B[0] - A[0]) / 20) * smooth(-10, 12, B[0] - N);
+            cutB = cutA;
+          }
+        }
+      }
+      for (const x of sl2) {
+        if (!x.s) continue;
+        const isA = A && x.s === A[1], live = x.state === "playing";
+        this.setGain(x, live ? isA ? sigA : sigB : 0, isA ? cutA : cutB);
+      }
+      const aSlot = A && sl2.find((x) => x.s === A[1]);
+      if (aSlot && aSlot.state === "loading") noise = Math.max(noise, 0.25);
+      const tc2 = this.ctx.currentTime;
+      this.noiseFM.gain.setTargetAtTime(am2 ? 0 : noise * 0.5, tc2, 0.03);
+      this.noiseAM.gain.setTargetAtTime(am2 ? noise * 0.9 : 0, tc2, 0.03);
+      this.tShow -= dt;
+      if (this.tShow <= 0 || this.shown === null) {
+        this.tShow = 0.2;
+        const locked = A && (am2 ? A[0] - this.amFloor() > 4 : A[0] > 18);
+        const sA = locked ? A[1] : null, slA = sA && sl2.find((x) => x.s === sA);
+        const bars = A ? Math.round(5 * (am2 ? smooth(-5, 35, A[0] - this.amFloor()) : smooth(10, 55, A[0]))) : 0;
+        const info = {
+          band,
+          freq: am2 ? amText(f) : fmText(f),
+          bars,
+          stereo: !am2 && A && A[0] > 48 && !!slA,
+          call: sA ? sA.c : "",
+          city: sA ? sA.city : "",
+          note: !sA || !slA ? "" : slA.state === "loading" ? "tuning in" : slA.state === "nostream" ? slA.why === "none" ? "no stream found" : slA.why === "hls" ? "its stream does not play in this browser" : "its stream is not answering" : sA.pc ? "relays " + sA.pc : ""
+        };
+        const key2 = JSON.stringify(info);
+        if (key2 !== this.shown) {
+          this.shown = key2;
+          this.g.ui.radioShow(info);
+        }
+      }
+    }
+  };
+
   // src/lights.js
   var COLS = [[1, 0.92, 0.78], [1, 0.13, 0.08], [0.22, 1, 0.38], [1, 0.78, 0.16]];
   var EDGE = 0.07;
@@ -21121,7 +21722,7 @@ void main() {
   gl_FragColor = vec4(vC * across * along, 1.0);
 }`
   );
-  function hash(x, y) {
+  function hash3(x, y) {
     const s29 = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
     return s29 - Math.floor(s29);
   }
@@ -21170,7 +21771,7 @@ void main() {
           e: e.slice(),
           n: n.slice(),
           u: u.slice(),
-          phase: hash(mx2, my2) * P2,
+          phase: hash3(mx2, my2) * P2,
           on: 0,
           name: d.names ? d.names[i] : "",
           tower: null,
@@ -21909,12 +22510,13 @@ void main() {
       this.webster = { state: "idle", meshes: [] };
       this.landmarks = this.buildLandmarks();
       this.dunkin = new Dunkin(this);
+      this.radio = new Radio(this);
       this.lights = new Lights(this);
       this.skyline = new Skyline(this);
       let start = meta.starts[0], named = false;
-      const hash3 = (location.hash || "").replace("#", "").toLowerCase();
-      if (hash3) {
-        const s29 = meta.starts.find((s30) => slug(s30.n).startsWith(hash3));
+      const hash4 = (location.hash || "").replace("#", "").toLowerCase();
+      if (hash4) {
+        const s29 = meta.starts.find((s30) => slug(s30.n).startsWith(hash4));
         if (s29) {
           start = s29;
           named = true;
@@ -22690,6 +23292,7 @@ void main() {
       cam.far = 46e4;
       cam.updateProjectionMatrix();
       this.ui.update(dt);
+      if (this.radio) this.radio.update(dt);
       if (!this.ready && this.terrain.settled() && this.terrain.frame > 8) {
         this.ready = true;
         $2("cover").classList.remove("bare");
