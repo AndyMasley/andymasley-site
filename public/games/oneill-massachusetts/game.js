@@ -14844,6 +14844,8 @@ void main() {
   var RM = 160;
   var RCELL = 128;
   var RREG = 72;
+  var WCELL = 32;
+  var WPAD = 14;
   var DECK_T = 0.95;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
   var VERSIONS = null;
@@ -15277,6 +15279,100 @@ void main() {
       o.ty = dy2 * il;
       return best;
     }
+    // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
+    // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
+    // concrete, 1 stone, 2 brick).  ws holds five numbers a wall: first point, points, s, m, and the ends that run on into
+    // another wall (1 its start, 2 its end).
+    setWalls(list) {
+      let n = 0;
+      for (const w of list) n += w.p.length;
+      const X = new Float64Array(n), Y = new Float64Array(n), F = new Float32Array(n), T = new Float32Array(n), Wi = new Int32Array(n);
+      const ws2 = [];
+      let k = 0;
+      for (const w of list) {
+        const wi2 = ws2.length / 5;
+        ws2.push(k, w.p.length, w.s, w.m, 0);
+        for (const q of w.p) {
+          X[k] = q[0];
+          Y[k] = q[1];
+          F[k] = q[2];
+          T[k] = q[3];
+          Wi[k] = wi2;
+          k++;
+        }
+      }
+      const ends = /* @__PURE__ */ new Map(), ekey = (x, y) => Math.round(x * 2) * 1e7 + Math.round(y * 2);
+      for (let wi2 = 0; wi2 < ws2.length / 5; wi2++) {
+        const a = ws2[wi2 * 5], b = a + ws2[wi2 * 5 + 1] - 1;
+        for (const p of [a, b]) {
+          const key2 = ekey(X[p], Y[p]);
+          ends.set(key2, (ends.get(key2) || 0) + 1);
+        }
+      }
+      for (let wi2 = 0; wi2 < ws2.length / 5; wi2++) {
+        const a = ws2[wi2 * 5], b = a + ws2[wi2 * 5 + 1] - 1;
+        ws2[wi2 * 5 + 4] = (ends.get(ekey(X[a], Y[a])) > 1 ? 1 : 0) + (ends.get(ekey(X[b], Y[b])) > 1 ? 2 : 0);
+      }
+      const cells = /* @__PURE__ */ new Map();
+      for (let wi2 = 0; wi2 < ws2.length / 5; wi2++) {
+        const a = ws2[wi2 * 5], c = ws2[wi2 * 5 + 1];
+        for (let i = a; i < a + c - 1; i++) {
+          const cx0 = Math.floor((Math.min(X[i], X[i + 1]) - WPAD) / WCELL), cx1 = Math.floor((Math.max(X[i], X[i + 1]) + WPAD) / WCELL);
+          const cy0 = Math.floor((Math.min(Y[i], Y[i + 1]) - WPAD) / WCELL), cy1 = Math.floor((Math.max(Y[i], Y[i + 1]) + WPAD) / WCELL);
+          for (let cy2 = cy0; cy2 <= cy1; cy2++) for (let cx2 = cx0; cx2 <= cx1; cx2++) {
+            const key2 = cy2 * 65536 + cx2;
+            let l = cells.get(key2);
+            if (!l) cells.set(key2, l = []);
+            l.push(i);
+          }
+        }
+      }
+      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, n: ws2.length / 5 };
+      this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
+    }
+    // The wall segment nearest (mx, my) within WPAD, in this._wl: d (the distance), sd (signed, from the segment's line:
+    // + on the high side, or on the left of a freestanding wall), foot and top there, t along the segment, i its first
+    // point, w its wall, s and m the wall's, ux, uy its direction, nx, ny toward the high side, and end (the point is
+    // past an end of the wall); null if there is none.  stepped: only walls between two levels.
+    _wallNear(mx2, my2, stepped) {
+      const W = this.walls;
+      if (!W) return null;
+      const l = W.cells.get(Math.floor(my2 / WCELL) * 65536 + Math.floor(mx2 / WCELL));
+      if (!l) return null;
+      let best = 1e9, bi2 = -1, bt2 = 0;
+      for (let q = 0; q < l.length; q++) {
+        const i2 = l[q];
+        if (stepped && !W.ws[W.Wi[i2] * 5 + 2]) continue;
+        const ax2 = W.X[i2], ay2 = W.Y[i2], dx3 = W.X[i2 + 1] - ax2, dy3 = W.Y[i2 + 1] - ay2, l2 = dx3 * dx3 + dy3 * dy3;
+        let t = l2 > 0 ? ((mx2 - ax2) * dx3 + (my2 - ay2) * dy3) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = mx2 - ax2 - dx3 * t, ey2 = my2 - ay2 - dy3 * t, d = Math.sqrt(ex2 * ex2 + ey2 * ey2);
+        if (d < best) {
+          best = d;
+          bi2 = i2;
+          bt2 = t;
+        }
+      }
+      if (bi2 < 0 || best > WPAD) return null;
+      const o = this._wl, i = bi2, wi2 = W.Wi[i], s29 = W.ws[wi2 * 5 + 2], a = W.ws[wi2 * 5], c = W.ws[wi2 * 5 + 1], jn2 = W.ws[wi2 * 5 + 4];
+      const dx2 = W.X[i + 1] - W.X[i], dy2 = W.Y[i + 1] - W.Y[i], len = Math.hypot(dx2, dy2) || 1;
+      o.ux = dx2 / len;
+      o.uy = dy2 / len;
+      const sg = s29 || 1;
+      o.nx = -o.uy * sg;
+      o.ny = o.ux * sg;
+      o.sd = (mx2 - W.X[i]) * o.nx + (my2 - W.Y[i]) * o.ny;
+      o.d = best;
+      o.t = bt2;
+      o.i = i;
+      o.w = wi2;
+      o.s = s29;
+      o.m = W.ws[wi2 * 5 + 3];
+      o.foot = W.F[i] + (W.F[i + 1] - W.F[i]) * bt2;
+      o.top = W.T[i] + (W.T[i + 1] - W.T[i]) * bt2;
+      o.end = bt2 <= 0 && i === a && !(jn2 & 1) || bt2 >= 1 && i + 1 === a + c - 1 && !(jn2 & 2);
+      return o;
+    }
     // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
     // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
     outrankedBy(mx2, my2) {
@@ -15377,11 +15473,16 @@ void main() {
         if (sink && ww > 0.98 && this.webInFoot(mx2, my2)) h -= 0.8;
       }
       if (carve) {
+        const wl2 = this.walls ? this._wallNear(mx2, my2, true) : null;
         const edge = this.nearestRoad(mx2, my2);
         if (edge < 40) {
           const nr2 = this._nr;
           const shoulder = Math.max(nr2.hw < 5 ? 3 : 4 + nr2.hw * 0.5, Math.min(h - nr2.z, 14));
-          const wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          let wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          if (wgt > 0 && wl2 && wl2.sd > 0 && !wl2.end && edge > 0.5) {
+            const qx2 = mx2 - nr2.side * nr2.d * nr2.ty, qy2 = my2 + nr2.side * nr2.d * nr2.tx;
+            if ((qx2 - this.walls.X[wl2.i]) * wl2.nx + (qy2 - this.walls.Y[wl2.i]) * wl2.ny < 0) wgt = 0;
+          }
           if (wgt > 0 && nr2.reg.rCls[nr2.road] === 18) {
             if (!water) {
               h = h + (nr2.z - 0.7 - h) * wgt;
@@ -15395,6 +15496,10 @@ void main() {
             gi2.reg = nr2.reg;
             gi2.edge = edge;
           }
+        }
+        if (wl2 && wl2.d < 4 && !wl2.end && !(edge < 0.5) && !water) {
+          const k = 1 - smoothstep(2.5, 4, wl2.d);
+          h = wl2.sd > 0 ? h + (Math.max(h, wl2.top) - h) * k : h + (Math.min(h, wl2.foot) - h) * k;
         }
         const dreg = this.regionAt(mx2, my2);
         if (dreg && dreg.nDeck) h = this._underDecks(dreg, mx2, my2, h, water, gi2);
@@ -18804,6 +18909,28 @@ void main() {
       for (let i = s29; i < e; i++) f(i, i + 1 < e ? i + 1 : s29);
     }
   }
+  function wallPolygon(world, W, i, sw) {
+    const ax2 = W.X[i], ay2 = W.Y[i], bx2 = W.X[i + 1], by2 = W.Y[i + 1], len = Math.hypot(bx2 - ax2, by2 - ay2);
+    if (len < 0.05) return null;
+    if (world.nearestRoad(ax2, ay2) < 0.3 || world.nearestRoad((ax2 + bx2) / 2, (ay2 + by2) / 2) < 0.3 || world.nearestRoad(bx2, by2) < 0.3) return null;
+    const ux2 = (bx2 - ax2) / len, uy2 = (by2 - ay2) / len, sg = sw || 1, nx2 = -uy2 * sg, ny2 = ux2 * sg;
+    const e02 = sw ? -0.12 : -0.2, e1 = sw ? 0.35 : 0.2;
+    const pts = new Float64Array([ax2 + nx2 * e02, ay2 + ny2 * e02, bx2 + nx2 * e02, by2 + ny2 * e02, bx2 + nx2 * e1, by2 + ny2 * e1, ax2 + nx2 * e1, ay2 + ny2 * e1]);
+    let area = 0;
+    for (let k = 0; k < 4; k++) {
+      const j = (k + 1) % 4;
+      area += pts[k * 2] * pts[j * 2 + 1] - pts[j * 2] * pts[k * 2 + 1];
+    }
+    if (area < 0) for (let a = 0, b = 3; a < b; a++, b--) {
+      const tx2 = pts[a * 2], ty2 = pts[a * 2 + 1];
+      pts[a * 2] = pts[b * 2];
+      pts[a * 2 + 1] = pts[b * 2 + 1];
+      pts[b * 2] = tx2;
+      pts[b * 2 + 1] = ty2;
+    }
+    const cx2 = (ax2 + bx2) / 2, cy2 = (ay2 + by2) / 2;
+    return { pts, n: 4, cx: cx2, cy: cy2, rad: len / 2 + 0.5, rings: null };
+  }
   function inPolygon(x, y, P2) {
     const p = P2.pts;
     let inside = false;
@@ -19099,6 +19226,23 @@ void main() {
           const poly = footprintPolygon(r2, l, k);
           if (poly) polys.push(poly);
         }
+      }
+      const W = w.walls;
+      if (W) {
+        const seen = /* @__PURE__ */ new Set();
+        for (let gy2 = Math.floor((c.my - 1.5 * cs2) / WCELL); gy2 <= Math.floor((c.my + 1.5 * cs2) / WCELL); gy2++)
+          for (let gx2 = Math.floor((c.mx - 1.5 * cs2) / WCELL); gx2 <= Math.floor((c.mx + 1.5 * cs2) / WCELL); gx2++) {
+            const l = W.cells.get(gy2 * 65536 + gx2);
+            if (!l) continue;
+            for (const i of l) {
+              if (seen.has(i)) continue;
+              seen.add(i);
+              const wi2 = W.Wi[i], sw = W.ws[wi2 * 5 + 2];
+              if (Math.max(W.T[i], W.T[i + 1]) - Math.max(W.F[i], W.F[i + 1]) < 0.4) continue;
+              const poly = wallPolygon(w, W, i, sw);
+              if (poly) polys.push(poly);
+            }
+          }
       }
       this.bCache = { reg, cx: cx2, cy: cy2, real: !!reg.real, polys };
       return polys;
@@ -21542,6 +21686,11 @@ void main() {
       this.world.onMissingRegion = (rx2, ry2) => {
         this.loadRegion(rx2, ry2);
       };
+      if (F.walls) fetch(vurl("data/" + F.walls.file)).then((r) => r.json()).then((j) => {
+        this.world.setWalls(j);
+        if (this.player) this.player.bCache = null;
+      }).catch(() => {
+      });
       this.names = null;
       if (F.names) fetch(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
         this.names = j;

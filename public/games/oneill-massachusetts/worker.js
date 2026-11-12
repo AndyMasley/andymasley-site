@@ -94,6 +94,8 @@
   var RM = 160;
   var RCELL = 128;
   var RREG = 72;
+  var WCELL = 32;
+  var WPAD = 14;
   var DECK_T = 0.95;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
   var VERSIONS = null;
@@ -553,6 +555,100 @@
       o.ty = dy * il;
       return best;
     }
+    // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
+    // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
+    // concrete, 1 stone, 2 brick).  ws holds five numbers a wall: first point, points, s, m, and the ends that run on into
+    // another wall (1 its start, 2 its end).
+    setWalls(list) {
+      let n = 0;
+      for (const w of list) n += w.p.length;
+      const X = new Float64Array(n), Y = new Float64Array(n), F = new Float32Array(n), T = new Float32Array(n), Wi = new Int32Array(n);
+      const ws = [];
+      let k = 0;
+      for (const w of list) {
+        const wi = ws.length / 5;
+        ws.push(k, w.p.length, w.s, w.m, 0);
+        for (const q of w.p) {
+          X[k] = q[0];
+          Y[k] = q[1];
+          F[k] = q[2];
+          T[k] = q[3];
+          Wi[k] = wi;
+          k++;
+        }
+      }
+      const ends = /* @__PURE__ */ new Map(), ekey = (x, y) => Math.round(x * 2) * 1e7 + Math.round(y * 2);
+      for (let wi = 0; wi < ws.length / 5; wi++) {
+        const a = ws[wi * 5], b = a + ws[wi * 5 + 1] - 1;
+        for (const p of [a, b]) {
+          const key2 = ekey(X[p], Y[p]);
+          ends.set(key2, (ends.get(key2) || 0) + 1);
+        }
+      }
+      for (let wi = 0; wi < ws.length / 5; wi++) {
+        const a = ws[wi * 5], b = a + ws[wi * 5 + 1] - 1;
+        ws[wi * 5 + 4] = (ends.get(ekey(X[a], Y[a])) > 1 ? 1 : 0) + (ends.get(ekey(X[b], Y[b])) > 1 ? 2 : 0);
+      }
+      const cells = /* @__PURE__ */ new Map();
+      for (let wi = 0; wi < ws.length / 5; wi++) {
+        const a = ws[wi * 5], c = ws[wi * 5 + 1];
+        for (let i = a; i < a + c - 1; i++) {
+          const cx0 = Math.floor((Math.min(X[i], X[i + 1]) - WPAD) / WCELL), cx1 = Math.floor((Math.max(X[i], X[i + 1]) + WPAD) / WCELL);
+          const cy0 = Math.floor((Math.min(Y[i], Y[i + 1]) - WPAD) / WCELL), cy1 = Math.floor((Math.max(Y[i], Y[i + 1]) + WPAD) / WCELL);
+          for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
+            const key2 = cy * 65536 + cx;
+            let l = cells.get(key2);
+            if (!l) cells.set(key2, l = []);
+            l.push(i);
+          }
+        }
+      }
+      this.walls = { X, Y, F, T, Wi, ws, cells, n: ws.length / 5 };
+      this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
+    }
+    // The wall segment nearest (mx, my) within WPAD, in this._wl: d (the distance), sd (signed, from the segment's line:
+    // + on the high side, or on the left of a freestanding wall), foot and top there, t along the segment, i its first
+    // point, w its wall, s and m the wall's, ux, uy its direction, nx, ny toward the high side, and end (the point is
+    // past an end of the wall); null if there is none.  stepped: only walls between two levels.
+    _wallNear(mx, my, stepped) {
+      const W = this.walls;
+      if (!W) return null;
+      const l = W.cells.get(Math.floor(my / WCELL) * 65536 + Math.floor(mx / WCELL));
+      if (!l) return null;
+      let best = 1e9, bi = -1, bt = 0;
+      for (let q = 0; q < l.length; q++) {
+        const i2 = l[q];
+        if (stepped && !W.ws[W.Wi[i2] * 5 + 2]) continue;
+        const ax = W.X[i2], ay = W.Y[i2], dx2 = W.X[i2 + 1] - ax, dy2 = W.Y[i2 + 1] - ay, l2 = dx2 * dx2 + dy2 * dy2;
+        let t = l2 > 0 ? ((mx - ax) * dx2 + (my - ay) * dy2) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = mx - ax - dx2 * t, ey = my - ay - dy2 * t, d = Math.sqrt(ex * ex + ey * ey);
+        if (d < best) {
+          best = d;
+          bi = i2;
+          bt = t;
+        }
+      }
+      if (bi < 0 || best > WPAD) return null;
+      const o = this._wl, i = bi, wi = W.Wi[i], s = W.ws[wi * 5 + 2], a = W.ws[wi * 5], c = W.ws[wi * 5 + 1], jn = W.ws[wi * 5 + 4];
+      const dx = W.X[i + 1] - W.X[i], dy = W.Y[i + 1] - W.Y[i], len = Math.hypot(dx, dy) || 1;
+      o.ux = dx / len;
+      o.uy = dy / len;
+      const sg = s || 1;
+      o.nx = -o.uy * sg;
+      o.ny = o.ux * sg;
+      o.sd = (mx - W.X[i]) * o.nx + (my - W.Y[i]) * o.ny;
+      o.d = best;
+      o.t = bt;
+      o.i = i;
+      o.w = wi;
+      o.s = s;
+      o.m = W.ws[wi * 5 + 3];
+      o.foot = W.F[i] + (W.F[i + 1] - W.F[i]) * bt;
+      o.top = W.T[i] + (W.T[i + 1] - W.T[i]) * bt;
+      o.end = bt <= 0 && i === a && !(jn & 1) || bt >= 1 && i + 1 === a + c - 1 && !(jn & 2);
+      return o;
+    }
     // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
     // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
     outrankedBy(mx, my) {
@@ -653,11 +749,16 @@
         if (sink && ww > 0.98 && this.webInFoot(mx, my)) h -= 0.8;
       }
       if (carve) {
+        const wl = this.walls ? this._wallNear(mx, my, true) : null;
         const edge = this.nearestRoad(mx, my);
         if (edge < 40) {
           const nr = this._nr;
           const shoulder = Math.max(nr.hw < 5 ? 3 : 4 + nr.hw * 0.5, Math.min(h - nr.z, 14));
-          const wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          let wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          if (wgt > 0 && wl && wl.sd > 0 && !wl.end && edge > 0.5) {
+            const qx = mx - nr.side * nr.d * nr.ty, qy = my + nr.side * nr.d * nr.tx;
+            if ((qx - this.walls.X[wl.i]) * wl.nx + (qy - this.walls.Y[wl.i]) * wl.ny < 0) wgt = 0;
+          }
           if (wgt > 0 && nr.reg.rCls[nr.road] === 18) {
             if (!water) {
               h = h + (nr.z - 0.7 - h) * wgt;
@@ -671,6 +772,10 @@
             gi.reg = nr.reg;
             gi.edge = edge;
           }
+        }
+        if (wl && wl.d < 4 && !wl.end && !(edge < 0.5) && !water) {
+          const k = 1 - smoothstep(2.5, 4, wl.d);
+          h = wl.sd > 0 ? h + (Math.max(h, wl.top) - h) * k : h + (Math.min(h, wl.foot) - h) * k;
         }
         const dreg = this.regionAt(mx, my);
         if (dreg && dreg.nDeck) h = this._underDecks(dreg, mx, my, h, water, gi);
@@ -3015,9 +3120,10 @@
     return m;
   }
   function buildDeckTile(world2, reg, ix, iy, s, cx, cy, cz, th, nbi) {
-    if (!reg || !(reg.nDeck || reg.nTun)) return null;
+    const walls = !!reg && wallsIn(world2, ix, iy, s);
+    if (!reg || !(reg.nDeck || reg.nTun || walls)) return null;
     const list = reg.nDeck && index2(reg, s).get(iy * 65536 + ix) || [];
-    if (!list.length && !reg.nTun) return null;
+    if (!list.length && !reg.nTun && !walls) return null;
     const M = new Mesh();
     const c = Math.cos(th), sn = Math.sin(th);
     const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, segR = reg.segR;
@@ -3267,9 +3373,138 @@
         bigStructure(M, P2, world2, st, setW(0, 7), 0.42);
       }
     }
-    count += addTunnels(M, world2, reg, ix, iy, s, P2);
+    if (reg.nTun) count += addTunnels(M, world2, reg, ix, iy, s, P2);
+    if (walls) count += addWalls(M, world2, ix, iy, s, P2);
     if (!M.n) return null;
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
+  }
+  var WALL_FACE = -0.12;
+  var WALL_BACK = 0.35;
+  var WALL_CAP = 0.35;
+  var WALL_SINK = 0.5;
+  function wallsIn(world2, ix, iy, s) {
+    const W = world2.walls;
+    if (!W) return false;
+    for (let cy = Math.floor(iy * s / WCELL); cy <= Math.floor((iy + 1) * s / WCELL); cy++)
+      for (let cx = Math.floor(ix * s / WCELL); cx <= Math.floor((ix + 1) * s / WCELL); cx++) if (W.cells.has(cy * 65536 + cx)) return true;
+    return false;
+  }
+  function wallNormal(W, i, a, c, sg, out) {
+    let tx = 0, ty = 0;
+    if (i > a) {
+      const dx = W.X[i] - W.X[i - 1], dy = W.Y[i] - W.Y[i - 1], l2 = Math.hypot(dx, dy) || 1;
+      tx += dx / l2;
+      ty += dy / l2;
+    }
+    if (i < a + c - 1) {
+      const dx = W.X[i + 1] - W.X[i], dy = W.Y[i + 1] - W.Y[i], l2 = Math.hypot(dx, dy) || 1;
+      tx += dx / l2;
+      ty += dy / l2;
+    }
+    const l = Math.hypot(tx, ty) || 1;
+    tx /= l;
+    ty /= l;
+    let k = 1;
+    if (i > a && i < a + c - 1) {
+      const dx = W.X[i + 1] - W.X[i], dy = W.Y[i + 1] - W.Y[i], l2 = Math.hypot(dx, dy) || 1;
+      k = 1 / Math.max(0.6, (tx * dx + ty * dy) / l2);
+    }
+    out[0] = -ty * sg * k;
+    out[1] = tx * sg * k;
+  }
+  var wnA = [0, 0];
+  var wnB = [0, 0];
+  function addWalls(M, world2, ix, iy, s, P2) {
+    const W = world2.walls, seen = /* @__PURE__ */ new Set();
+    let count = 0;
+    for (let cy = Math.floor(iy * s / WCELL); cy <= Math.floor((iy + 1) * s / WCELL); cy++)
+      for (let cx = Math.floor(ix * s / WCELL); cx <= Math.floor((ix + 1) * s / WCELL); cx++) {
+        const l = W.cells.get(cy * 65536 + cx);
+        if (!l) continue;
+        for (const i of l) {
+          if (seen.has(i)) continue;
+          seen.add(i);
+          const xm = (W.X[i] + W.X[i + 1]) / 2, ym = (W.Y[i] + W.Y[i + 1]) / 2;
+          if (Math.floor(xm / s) !== ix || Math.floor(ym / s) !== iy) continue;
+          if (world2.nearestRoad(W.X[i], W.Y[i]) < 0.3 || world2.nearestRoad(xm, ym) < 0.3 || world2.nearestRoad(W.X[i + 1], W.Y[i + 1]) < 0.3) continue;
+          if (wallSegment(M, W, i, P2)) count++;
+        }
+      }
+    return count;
+  }
+  function wallSegment(M, W, i, P2) {
+    const wi = W.Wi[i], a = W.ws[wi * 5], c = W.ws[wi * 5 + 1], sw = W.ws[wi * 5 + 2], mat = W.ws[wi * 5 + 3], jn = W.ws[wi * 5 + 4];
+    const xA = W.X[i], yA = W.Y[i], xB = W.X[i + 1], yB = W.Y[i + 1], len = Math.hypot(xB - xA, yB - yA);
+    if (len < 0.05) return false;
+    const ux = (xB - xA) / len, uy = (yB - yA) / len;
+    wallNormal(W, i, a, c, sw || 1, wnA);
+    wallNormal(W, i + 1, a, c, sw || 1, wnB);
+    let s0 = 0;
+    for (let k = a; k < i; k++) s0 += Math.hypot(W.X[k + 1] - W.X[k], W.Y[k + 1] - W.Y[k]);
+    const s1 = s0 + len;
+    const fA = W.F[i], tA = W.T[i], fB = W.F[i + 1], tB = W.T[i + 1];
+    let e0, e1, botA, botB, capA, capB, backA, backB;
+    if (sw) {
+      e0 = WALL_FACE;
+      e1 = WALL_BACK;
+      botA = fA - WALL_SINK;
+      botB = fB - WALL_SINK;
+      capA = tA + WALL_CAP;
+      capB = tB + WALL_CAP;
+      backA = tA - WALL_SINK;
+      backB = tB - WALL_SINK;
+    } else {
+      e0 = -0.2;
+      e1 = 0.2;
+      botA = fA - 0.3;
+      botB = fB - 0.3;
+      capA = tA;
+      capB = tB;
+      backA = botA;
+      backB = botB;
+    }
+    M.M[0] = mat === 2 ? MAT.BRICK : MAT.CONCRETE;
+    M.M[1] = 0;
+    M.M[2] = 0;
+    M.M[3] = wi * 37 + 11 & 255;
+    M.W[0] = 0;
+    M.W[1] = 0;
+    M.W[2] = 0;
+    M.W[3] = -1;
+    let t = P2(xA + wnA[0] * e0, yA + wnA[1] * e0, (capA + botA) / 2);
+    M.C[0] = t[0];
+    M.C[1] = t[1];
+    M.C[2] = t[2];
+    const nA = Math.hypot(wnA[0], wnA[1]) || 1, nB = Math.hypot(wnB[0], wnB[1]) || 1;
+    const v = (x, y, e, h, wn, nx, ny, nz, tu, tv) => {
+      const q = P2(x + wn[0] * e, y + wn[1] * e, h);
+      return M.v(q[0], q[1], q[2], nx, nz, -ny, tu, tv);
+    };
+    {
+      const fx = -(wnA[0] / nA + wnB[0] / nB) / 2, fy = -(wnA[1] / nA + wnB[1] / nB) / 2, fl = Math.hypot(fx, fy) || 1;
+      const i0 = v(xA, yA, e0, botA, wnA, fx / fl, fy / fl, 0, s0, botA), i1 = v(xB, yB, e0, botB, wnB, fx / fl, fy / fl, 0, s1, botB);
+      const i2 = v(xB, yB, e0, capB, wnB, fx / fl, fy / fl, 0, s1, capB), i3 = v(xA, yA, e0, capA, wnA, fx / fl, fy / fl, 0, s0, capA);
+      M.quad(i0, i1, i2, i3);
+    }
+    {
+      const i0 = v(xA, yA, e0, capA, wnA, 0, 0, 1, s0, 0), i1 = v(xB, yB, e0, capB, wnB, 0, 0, 1, s1, 0);
+      const i2 = v(xB, yB, e1, capB, wnB, 0, 0, 1, s1, e1 - e0), i3 = v(xA, yA, e1, capA, wnA, 0, 0, 1, s0, e1 - e0);
+      M.quad(i0, i1, i2, i3);
+    }
+    {
+      const bx = (wnA[0] / nA + wnB[0] / nB) / 2, by = (wnA[1] / nA + wnB[1] / nB) / 2, bl = Math.hypot(bx, by) || 1;
+      const i0 = v(xA, yA, e1, capA, wnA, bx / bl, by / bl, 0, s0, capA), i1 = v(xB, yB, e1, capB, wnB, bx / bl, by / bl, 0, s1, capB);
+      const i2 = v(xB, yB, e1, backB, wnB, bx / bl, by / bl, 0, s1, backB), i3 = v(xA, yA, e1, backA, wnA, bx / bl, by / bl, 0, s0, backA);
+      M.quad(i0, i1, i2, i3);
+    }
+    const endCap = (x, y, wn, bot, cap, back, dir) => {
+      const i0 = v(x, y, e0, bot, wn, ux * dir, uy * dir, 0, 0, bot), i1 = v(x, y, e1, back, wn, ux * dir, uy * dir, 0, e1 - e0, back);
+      const i2 = v(x, y, e1, cap, wn, ux * dir, uy * dir, 0, e1 - e0, cap), i3 = v(x, y, e0, cap, wn, ux * dir, uy * dir, 0, 0, cap);
+      M.quad(i0, i1, i2, i3);
+    };
+    if (i === a && !(jn & 1)) endCap(xA, yA, wnA, botA, capA, backA, -1);
+    if (i + 1 === a + c - 1 && !(jn & 2)) endCap(xB, yB, wnB, botB, capB, backB, 1);
+    return true;
   }
 
   // src/worker.js
@@ -3301,6 +3536,7 @@
   };
   var NBI = null;
   var nbiReady = null;
+  var wallsReady = null;
   function init(m) {
     const meta = m.meta;
     const parts = { sdf: new Uint8Array(m.sdf), sdfW: m.sdfW, sdfH: m.sdfH, cover: new Uint8Array(m.cover), aux: new Uint8Array(m.aux) };
@@ -3318,6 +3554,11 @@
     lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
     LCP = meta.lcPack || 8192;
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
+    const wf = meta.files && meta.files.walls;
+    wallsReady = wf ? fetch(vurl("data/" + wf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (j) world.setWalls(j);
+    }).catch(() => {
+    }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
     const bf = meta.files && meta.files.bridges;
     nbiReady = bf ? fetch(vurl("data/" + bf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
@@ -3514,6 +3755,17 @@
     }
     return false;
   }
+  function crossesWall(w, o, p, dx, dy) {
+    const sd = w[o * 4], sdp = sd + dx * w[o * 4 + 1] + dy * w[o * 4 + 2];
+    return sd > 0 !== sdp > 0;
+  }
+  function wallsNear(x0, y0, size) {
+    const W = world.walls;
+    if (!W) return false;
+    for (let cy = Math.floor(y0 / WCELL); cy <= Math.floor((y0 + size) / WCELL); cy++)
+      for (let cx = Math.floor(x0 / WCELL); cx <= Math.floor((x0 + size) / WCELL); cx++) if (W.cells.has(cy * 65536 + cx)) return true;
+    return false;
+  }
   function genChunk(q) {
     const { level, ix, iy } = q;
     const s = ROOT / (1 << level), mx0 = ix * s, my0 = iy * s;
@@ -3539,14 +3791,47 @@
     }
     if (sea) N = Math.max(4, Math.min(N, Math.ceil(s / 190)));
     const cell = s / N, G = N + 3;
-    const carve = cell <= 50 && hasRoads;
+    const walls = !sea && cell <= 50 && wallsNear(mx0 - cell, my0 - cell, s + 2 * cell);
+    const carve = cell <= 50 && (hasRoads || walls);
+    let off = null, wside = null;
+    if (walls && cell <= 12) {
+      off = new Float32Array(G * G * 2);
+      wside = new Float32Array(G * G * 4);
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const mx = mx0 + (i - 1) * cell, my = my0 + (j - 1) * cell;
+        const wl = world._wallNear(mx, my, true);
+        if (!wl || wl.end || wl.d > 2 * cell || wl.top - wl.foot < 0.4) continue;
+        const o = (j * G + i) * 4;
+        wside[o] = wl.sd || -1e-3;
+        wside[o + 1] = wl.nx;
+        wside[o + 2] = wl.ny;
+        wside[o + 3] = 1;
+      }
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const o = j * G + i;
+        if (!wside[o * 4 + 3]) continue;
+        let across2 = false;
+        for (let b = -1; b <= 1 && !across2; b++) for (let a = -1; a <= 1; a++) {
+          const jj = j + b, ii = i + a;
+          if ((a || b) && jj >= 0 && jj < G && ii >= 0 && ii < G && crossesWall(wside, o, jj * G + ii, a * cell, b * cell)) {
+            across2 = true;
+            break;
+          }
+        }
+        if (!across2) continue;
+        const sd = wside[o * 4], mv = (sd > 0 ? 0.08 : -0.08) - sd;
+        off[o * 2] = wside[o * 4 + 1] * mv;
+        off[o * 2 + 1] = wside[o * 4 + 2] * mv;
+      }
+    }
     const hs = new Float32Array(G * G);
     let hmin = 1e9, hmax = -1e9;
     for (let j = 0; j < G; j++) {
       const my = my0 + (j - 1) * cell;
       for (let i = 0; i < G; i++) {
-        const h = sea ? 0 : world.groundH(mx0 + (i - 1) * cell, my, carve, !realBuildings);
-        hs[j * G + i] = h;
+        const o = j * G + i;
+        const h = sea ? 0 : off ? world.groundH(mx0 + (i - 1) * cell + off[o * 2], my + off[o * 2 + 1], carve, !realBuildings) : world.groundH(mx0 + (i - 1) * cell, my, carve, !realBuildings);
+        hs[o] = h;
         if (h < hmin) hmin = h;
         if (h > hmax) hmax = h;
       }
@@ -3578,22 +3863,33 @@
     let v = 0;
     const N1 = N + 1;
     const nrm = new Float32Array(N1 * N1 * 3);
+    const across = (o, p) => wside && wside[o * 4 + 3] && crossesWall(wside, o, p, (p % G - o % G) * cell, (Math.floor(p / G) - Math.floor(o / G)) * cell);
     for (let j = 0; j <= N; j++) {
       const my = my0 + j * cell;
       for (let i = 0; i <= N; i++) {
         const o = (j + 1) * G + i + 1;
-        const dx = (hs[o + 1] - hs[o - 1]) / (2 * cell), dy = (hs[o + G] - hs[o - G]) / (2 * cell);
+        let dx, dy;
+        if (!wside) {
+          dx = (hs[o + 1] - hs[o - 1]) / (2 * cell);
+          dy = (hs[o + G] - hs[o - G]) / (2 * cell);
+        } else {
+          const l = across(o, o - 1), r = across(o, o + 1), d = across(o, o - G), u = across(o, o + G);
+          dx = l && r ? 0 : l ? (hs[o + 1] - hs[o]) / cell : r ? (hs[o] - hs[o - 1]) / cell : (hs[o + 1] - hs[o - 1]) / (2 * cell);
+          dy = d && u ? 0 : d ? (hs[o + G] - hs[o]) / cell : u ? (hs[o] - hs[o - G]) / cell : (hs[o + G] - hs[o - G]) / (2 * cell);
+        }
         const il = 1 / Math.hypot(dx, dy, 1);
         const k = (j * N1 + i) * 3;
         nrm[k] = -dx * il;
         nrm[k + 1] = -dy * il;
         nrm[k + 2] = il;
-        put(v++, mx0 + i * cell, my, hs[o], nrm[k], nrm[k + 1], nrm[k + 2], i * cell, j * cell);
+        const ox = off ? off[o * 2] : 0, oy = off ? off[o * 2 + 1] : 0;
+        put(v++, mx0 + i * cell + ox, my + oy, hs[o], nrm[k], nrm[k + 1], nrm[k + 2], i * cell + ox, j * cell + oy);
       }
     }
     const edge = (i, j) => {
       const o = (j + 1) * G + i + 1, k = (j * N1 + i) * 3;
-      put(v++, mx0 + i * cell, my0 + j * cell, hs[o] - skirt, nrm[k], nrm[k + 1], nrm[k + 2], i * cell, j * cell);
+      const ox = off ? off[o * 2] : 0, oy = off ? off[o * 2 + 1] : 0;
+      put(v++, mx0 + i * cell + ox, my0 + j * cell + oy, hs[o] - skirt, nrm[k], nrm[k + 1], nrm[k + 2], i * cell + ox, j * cell + oy);
     };
     for (let i = 0; i <= N; i++) edge(i, 0);
     for (let i = 0; i <= N; i++) edge(i, N);
@@ -3960,6 +4256,7 @@
         }
       }
       if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
+      if (wallsReady) await wallsReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);
