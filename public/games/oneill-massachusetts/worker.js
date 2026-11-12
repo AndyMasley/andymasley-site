@@ -324,7 +324,7 @@
       this.onMissingRegion = null;
       this.pinned = null;
       this.tick = 0;
-      this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
+      this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1, u: 1e9 };
       this._nd = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
       this._nt = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
     }
@@ -500,13 +500,14 @@
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
+      o.u = 1e9;
       const reg = this.regionAt(mx, my);
       if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
       const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
-      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99;
+      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99, umin = 1e9;
       const rCls = reg.rCls;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
@@ -519,6 +520,7 @@
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex = ux - dx2 * t, ey = uy - dy2 * t;
         const d = Math.sqrt(ex * ex + ey * ey), edge = d - rHw[ri2] - (tun ? WALL_GAP : 0);
+        if (!deck && edge < umin && rCls[ri2] < 14) umin = edge;
         if (deck) {
           const zz = reg.pz[pi] + (reg.pz[pi + 1] - reg.pz[pi]) * t;
           if (zz > zmax) continue;
@@ -537,6 +539,7 @@
         bd = d;
         bside = ux * dy2 - uy * dx2 >= 0 ? 1 : -1;
       }
+      o.u = umin;
       if (bi < 0) return 1e9;
       const dx = px[bi + 1] - px[bi], dy = py[bi + 1] - py[bi], len = Math.hypot(dx, dy), il = len > 0 ? 1 / len : 0, ri = segR[bi];
       o.d = bd;
@@ -3601,7 +3604,7 @@
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
     if (hasRoads && level >= 6) {
-      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T);
+      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 2);
       let any = false;
       const far = toHalf(60), one = toHalf(1), zero = toHalf(0);
       for (let b = 0; b < T; b++) {
@@ -3615,14 +3618,16 @@
             data[k + 1] = toHalf(nr.hw);
             data[k + 2] = toHalf(Math.cos(ph));
             data[k + 3] = toHalf(Math.sin(ph));
-            kind[b * T + a] = roadKind(nr.reg, nr.road);
-            if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[b * T + a] |= 128;
+            kind[(b * T + a) * 2] = roadKind(nr.reg, nr.road);
+            kind[(b * T + a) * 2 + 1] = Math.round(clamp((nr.u + 1.5) / 6, 0, 1) * 255);
+            if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[(b * T + a) * 2] |= 128;
             any = true;
           } else {
             data[k] = far;
             data[k + 1] = zero;
             data[k + 2] = one;
             data[k + 3] = zero;
+            kind[(b * T + a) * 2 + 1] = 255;
           }
         }
       }

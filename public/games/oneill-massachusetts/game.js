@@ -15048,7 +15048,7 @@ void main() {
       this.onMissingRegion = null;
       this.pinned = null;
       this.tick = 0;
-      this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
+      this._nr = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1, u: 1e9 };
       this._nd = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
       this._nt = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 };
     }
@@ -15224,13 +15224,14 @@ void main() {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
+      o.u = 1e9;
       const reg = this.regionAt(mx2, my2);
       if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
       if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 1e9;
       const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
-      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9, bpr = 99;
+      let best = 1e9, bi2 = -1, bt2 = 0, bd2 = 0, bside = 1, bon = false, bz = -1e9, bpr = 99, umin = 1e9;
       const rCls = reg.rCls;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi2 = items[q], ri3 = segR[pi2], en2 = rEnd[ri3];
@@ -15243,6 +15244,7 @@ void main() {
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex2 = ux2 - dx3 * t, ey2 = uy2 - dy3 * t;
         const d = Math.sqrt(ex2 * ex2 + ey2 * ey2), edge = d - rHw[ri3] - (tun ? WALL_GAP : 0);
+        if (!deck && edge < umin && rCls[ri3] < 14) umin = edge;
         if (deck) {
           const zz = reg.pz[pi2] + (reg.pz[pi2 + 1] - reg.pz[pi2]) * t;
           if (zz > zmax) continue;
@@ -15261,6 +15263,7 @@ void main() {
         bd2 = d;
         bside = ux2 * dy3 - uy2 * dx3 >= 0 ? 1 : -1;
       }
+      o.u = umin;
       if (bi2 < 0) return 1e9;
       const dx2 = px2[bi2 + 1] - px2[bi2], dy2 = py2[bi2 + 1] - py2[bi2], len = Math.hypot(dx2, dy2), il = len > 0 ? 1 / len : 0, ri2 = segR[bi2];
       o.d = bd2;
@@ -16053,6 +16056,7 @@ void main() {
 
   // ---- roads painted on the carved ground
   float paved = 0.0, mark = 0.0, shoulder = 0.0, onRoadGeom = 0.0, dirt = 0.0, walk = 0.0, kerb = 0.0, joint = 0.0, bed = 0.0, river = 0.0;
+  float streetEdge = 1e3;                           // metres outside the streets' paving (in reach of the road texture)
   vec3 markCol = vec3(0.0), bedCol = vec3(0.0), airLamp = vec3(0.0);
   const vec3 yellow = vec3(0.78, 0.55, 0.06), white = vec3(0.82);
   if (uHasRoad > 0.5) {
@@ -16077,10 +16081,19 @@ void main() {
       float keepEdge = 1.0 - float((kd >> 7) & 1);      // 0 where this road gives way to a bigger one beside it
       dirt = float((kd >> 5) & 1);
       float aa = max(fwidth(dc), 0.03);
-      float edge = dc - hw;
+      float edge = dc - hw, edge0 = edge;
+      if (style == 1 || style == 2) {
+        // a street's paving, shoulders, kerbs and sidewalks follow the edge of all the streets' paving together, read
+        // from the four texels round the point like a distance (the lines still follow this street's own centre)
+        vec4 ug = vec4(texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0).g,
+                       texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0).g);
+        vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+        if (max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995) edge = min(edge, dot(uw, ug) * 6.0 - 1.5);     // (4.5 m out it is saturated)
+        streetEdge = edge;
+      }
       paved = 1.0 - smoothstep(-aa, aa, edge);
       shoulder = (1.0 - smoothstep(0.3, 2.2 + aa, edge)) * (1.0 - paved);
-      onRoadGeom = 1.0 - smoothstep(2.0, 9.0 + hw * 0.5, edge);
+      onRoadGeom = 1.0 - smoothstep(2.0, 9.0 + hw * 0.5, edge0);
       float lw = 0.075;                                  // half width of a painted line
       float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);    // fade lines thinner than a pixel
       float la = max(aa, 0.02);
@@ -16184,6 +16197,10 @@ void main() {
     vec2 jit = (vec2(vnoise(m * 0.83 + 17.3), vnoise(m * 0.83 + 71.1)) - 0.5) * 1.1 * (1.0 - smoothstep(0.8, 2.5, fp));
     lc = int(texture2D(uLc, (vLoc + jit) / uSize).r * 255.0 + 0.5);
     if (lc == 0) kLc = 0.0;
+    // along a street's edge the street's own paving, shoulders and sidewalks decide: the 1 m squares of paving and
+    // soil the survey found there step along any street that is not square to the grid (the "staircase" at gores and
+    // down medians), so within a few metres of the paving the ground goes back to the 30 m cover
+    kLc *= smoothstep(2.4, 3.8, streetEdge);
   }
   float lcPave = 0.0, lcSoil = 0.0, lcWater = 0.0, lcConc = 0.0;
   if (kLc > 0.0) {
@@ -17672,7 +17689,7 @@ void main() {
       this.defines = game2.defs(game2.quality.atmosMid, game2.quality.atmosFar);
       this.dummyRoad = new an(new Uint16Array(4), 1, 1, on, Pn);
       this.dummyRoad.needsUpdate = true;
-      this.dummyK = new an(new Uint8Array(1), 1, 1, Rl, cn);
+      this.dummyK = new an(new Uint8Array([0, 255]), 1, 1, bi, cn);
       this.dummyK.needsUpdate = true;
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
@@ -17726,7 +17743,7 @@ void main() {
         roadTex.magFilter = roadTex.minFilter = ye;
         roadTex.wrapS = roadTex.wrapT = rn;
         roadTex.needsUpdate = true;
-        roadKTex = new an(m.roadK, m.roadT, m.roadT, Rl, cn);
+        roadKTex = new an(m.roadK, m.roadT, m.roadT, bi, cn);
         roadKTex.magFilter = roadKTex.minFilter = Te;
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
@@ -20483,6 +20500,21 @@ void main() {
         const p = r.pts, cum = [0];
         for (let i = 1; i < p.length; i++) cum.push(cum[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
         const len = cum[cum.length - 1], kind = this.kinds[r.kind] ? r.kind : len > 9e3 ? "ferry" : "launch", n = r.n ? clamp(r.n, 1, 3) : clamp(Math.round(len / 16e3), 1, 3);
+        if (!r.nrm) {
+          const N = r.nrm = new Float64Array(p.length * 2);
+          for (let i = 0; i < p.length; i++) {
+            let nx2 = 0, ny2 = 0;
+            for (const [a, b] of [[i - 1, i], [i, i + 1]]) {
+              if (a < 0 || b >= p.length) continue;
+              const dx2 = p[b][0] - p[a][0], dy2 = p[b][1] - p[a][1], l2 = Math.hypot(dx2, dy2) || 1;
+              nx2 += dy2 / l2;
+              ny2 -= dx2 / l2;
+            }
+            const l = Math.hypot(nx2, ny2) || 1;
+            N[i * 2] = nx2 / l;
+            N[i * 2 + 1] = ny2 / l;
+          }
+        }
         for (let k = 0; k < n; k++) this.ferries.push({ r, p, cum, len, kind, phase: (k + 0.37 * this.ferries.length) / n, hash: this.ferries.length * 0.6180339 % 1, hdg: 0, set: false });
       }
     }
@@ -20522,9 +20554,12 @@ void main() {
       out.v = moving ? v * clamp(Math.min(s29, len - s29) / E, vmin, 1) : 0;
       out.h = Math.atan2((b[0] - a[0]) * (back ? -1 : 1), (b[1] - a[1]) * (back ? -1 : 1));
       const keep = f.kind === "ferry" ? 16 : 8, room = -this.game.world.sdfAt(out.x, out.y) - (f.kind === "ferry" ? 11 : 6);
-      const off = Math.min(keep * clamp(0.35 + 0.65 * Math.min(s29, len - s29) / E, 0, 1), Math.max(0, room));
-      out.x += Math.cos(out.h) * off;
-      out.y -= Math.sin(out.h) * off;
+      const off = Math.min(keep * clamp(0.35 + 0.65 * Math.min(s29, len - s29) / E, 0, 1), Math.max(0, room)) * (back ? -1 : 1);
+      const N = f.r.nrm;
+      let nx2 = N[lo2 * 2] + (N[hi2 * 2] - N[lo2 * 2]) * u, ny2 = N[lo2 * 2 + 1] + (N[hi2 * 2 + 1] - N[lo2 * 2 + 1]) * u;
+      const nl = Math.hypot(nx2, ny2) || 1;
+      out.x += nx2 / nl * off;
+      out.y += ny2 / nl * off;
       return out;
     }
     spawn(cx2, cy2) {
@@ -21468,6 +21503,7 @@ void main() {
         delete meta.tiles.measured;
         delete meta.tiles.trees;
       }
+      if (params.get("lc") === "0" && meta.tiles) delete meta.tiles.lcp;
       if (params.get("ground") === "0" && meta.tiles) delete meta.tiles.ground;
       this.groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
       this.measuredFiles = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
