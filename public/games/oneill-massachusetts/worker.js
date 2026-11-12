@@ -752,14 +752,20 @@
         const wl = this.walls ? this._wallNear(mx, my, true) : null;
         const edge = this.nearestRoad(mx, my);
         if (edge < 40) {
-          const nr = this._nr;
-          const shoulder = Math.max(nr.hw < 5 ? 3 : 4 + nr.hw * 0.5, Math.min(h - nr.z, 14));
-          let wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          const nr = this._nr, cls = nr.reg.rCls[nr.road], brook = cls === 19;
+          const shoulder = brook ? Math.max(1.5, Math.min(h - nr.z, 6)) : Math.max(nr.hw < 5 ? 3 : 4 + nr.hw * 0.5, Math.min(h - nr.z, 14));
+          let wgt = 1 - smoothstep(brook ? 0.4 : 0.6, (brook ? 0.4 : 0.6) + shoulder, edge);
           if (wgt > 0 && wl && wl.sd > 0 && !wl.end && edge > 0.5) {
             const qx = mx - nr.side * nr.d * nr.ty, qy = my + nr.side * nr.d * nr.tx;
             if ((qx - this.walls.X[wl.i]) * wl.nx + (qy - this.walls.Y[wl.i]) * wl.ny < 0) wgt = 0;
           }
-          if (wgt > 0 && nr.reg.rCls[nr.road] === 18) {
+          if (wgt > 0 && brook) {
+            if (!water) {
+              const zb = nr.z - 0.45;
+              if (zb < h) h += (zb - h) * wgt;
+              if (edge < 0) water = true;
+            }
+          } else if (wgt > 0 && cls === 18) {
             if (!water) {
               h = h + (nr.z - 0.7 - h) * wgt;
               if (edge < 0) water = true;

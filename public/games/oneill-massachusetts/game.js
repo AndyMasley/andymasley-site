@@ -15476,14 +15476,20 @@ void main() {
         const wl2 = this.walls ? this._wallNear(mx2, my2, true) : null;
         const edge = this.nearestRoad(mx2, my2);
         if (edge < 40) {
-          const nr2 = this._nr;
-          const shoulder = Math.max(nr2.hw < 5 ? 3 : 4 + nr2.hw * 0.5, Math.min(h - nr2.z, 14));
-          let wgt = 1 - smoothstep(0.6, 0.6 + shoulder, edge);
+          const nr2 = this._nr, cls = nr2.reg.rCls[nr2.road], brook = cls === 19;
+          const shoulder = brook ? Math.max(1.5, Math.min(h - nr2.z, 6)) : Math.max(nr2.hw < 5 ? 3 : 4 + nr2.hw * 0.5, Math.min(h - nr2.z, 14));
+          let wgt = 1 - smoothstep(brook ? 0.4 : 0.6, (brook ? 0.4 : 0.6) + shoulder, edge);
           if (wgt > 0 && wl2 && wl2.sd > 0 && !wl2.end && edge > 0.5) {
             const qx2 = mx2 - nr2.side * nr2.d * nr2.ty, qy2 = my2 + nr2.side * nr2.d * nr2.tx;
             if ((qx2 - this.walls.X[wl2.i]) * wl2.nx + (qy2 - this.walls.Y[wl2.i]) * wl2.ny < 0) wgt = 0;
           }
-          if (wgt > 0 && nr2.reg.rCls[nr2.road] === 18) {
+          if (wgt > 0 && brook) {
+            if (!water) {
+              const zb = nr2.z - 0.45;
+              if (zb < h) h += (zb - h) * wgt;
+              if (edge < 0) water = true;
+            }
+          } else if (wgt > 0 && cls === 18) {
             if (!water) {
               h = h + (nr2.z - 0.7 - h) * wgt;
               if (edge < 0) water = true;
@@ -16240,7 +16246,7 @@ void main() {
         markCol = (yl > wl && yl > dl) ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
-        // narrow for the water map
+        // narrow for the water map, 6 a stream
         float pp = abs(ang) / 3.14159;                                   // 0 at one point of every 12 m, for lamps
         float pulse = mix(0.07, 1.0 - smoothstep(0.03, 0.07, pp), clamp(0.5 / aa, 0.0, 1.0));
         if (nl < 2.5) {
@@ -16264,8 +16270,24 @@ void main() {
           markCol = yellow;
           airLamp = vec3(0.12, 0.30, 1.0) * (1.0 - smoothstep(0.0, 1.0, abs(dc - (hw - 0.25)) / max(0.25, aa * 1.5))) * pulse;
         } else {
-          river = paved; paved = 0.0; onRoadGeom = 0.0;
-          shoulder = (1.0 - smoothstep(0.0, 1.8 + aa, edge)) * (1.0 - river);
+          // Where one runs into a street (into a culvert under it) the street takes the point, by the edge of all the
+          // streets' paving together: the texels of the two would otherwise meet in steps across the road.  There the
+          // paving is plain, and unpaved if a street's texel round the point says so.
+          vec4 k00 = texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0), k10 = texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0);
+          vec4 k01 = texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0), k11 = texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0);
+          vec4 ug = vec4(k00.g, k10.g, k01.g, k11.g);
+          vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+          float ue = max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995 ? dot(uw, ug) * 6.0 - 1.5 : 1e3;
+          float onSt = 1.0 - smoothstep(-aa, aa, ue);
+          float sd = 0.0;
+          int q0 = int(k00.r * 255.0 + 0.5), q1 = int(k10.r * 255.0 + 0.5), q2 = int(k01.r * 255.0 + 0.5), q3 = int(k11.r * 255.0 + 0.5);
+          if ((q0 & 3) != 3 && k00.g < 0.995) sd = max(sd, float((q0 >> 5) & 1));
+          if ((q1 & 3) != 3 && k10.g < 0.995) sd = max(sd, float((q1 >> 5) & 1));
+          if ((q2 & 3) != 3 && k01.g < 0.995) sd = max(sd, float((q2 >> 5) & 1));
+          if ((q3 & 3) != 3 && k11.g < 0.995) sd = max(sd, float((q3 >> 5) & 1));
+          river = paved * smoothstep(0.2 - aa, 0.2 + aa, ue);
+          paved = onSt; dirt = sd; onRoadGeom = onSt; streetEdge = ue;
+          shoulder = max((1.0 - smoothstep(0.0, (nl > 5.5 ? 0.7 : 1.8) + aa, edge)) * (1.0 - river), 1.0 - smoothstep(0.3, 2.2 + aa, ue)) * (1.0 - onSt);
         }
       }
     }
@@ -19635,7 +19657,7 @@ void main() {
       if (!fly && p.car.road >= 0 && p.car.reg) {
         const reg = p.car.reg, ri2 = p.car.road, nm2 = g.names ? g.names[reg.rName[ri2]] : "";
         const cls = reg.rCls[ri2];
-        road = cls >= 14 ? ["Railway", "Railway siding", "Runway", "Taxiway", ""][cls - 14] : (nm2 || (cls >= 13 ? "Service road" : "Unnamed road")) + "  \xB7  limit " + limitMph(reg, ri2);
+        road = cls >= 14 ? ["Railway", "Railway siding", "Runway", "Taxiway"][cls - 14] || "" : (nm2 || (cls >= 13 ? "Service road" : "Unnamed road")) + "  \xB7  limit " + limitMph(reg, ri2);
       } else if (!fly && p.car.water) road = "Afloat";
       else if (fly) road = "Jetpack \xD7" + p.fly.mul + (g.inp.boost ? " boosted" : "");
       $("h-road").textContent = road;
