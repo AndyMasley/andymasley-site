@@ -1,11 +1,45 @@
 {
-  "version": 1,
-  "tag": "oneill-lcp-2026-11-10-f557fc6f60b8",
-  "directory": "lcp",
-  "manifestSha256": "f557fc6f60b8b32fe82359ca0eb8ddf982c357000493c926165ba3297c7de504",
-  "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lcp-2026-11-10-f557fc6f60b8/oneill-lcp-f557fc6f60b8.tar",
-  "archiveSha256": "6ad0e66a0bfbb975b700b8298e82aa544b9aa816b1526b5d8e54c616ab416cd8",
-  "archiveBytes": 1257922560,
-  "files": 415,
-  "expandedBytes": 1257561507
+  "version": 2,
+  "packs": [
+    {
+      "tag": "oneill-lcp-2026-11-10-f557fc6f60b8",
+      "directory": "lcp",
+      "manifestSha256": "f557fc6f60b8b32fe82359ca0eb8ddf982c357000493c926165ba3297c7de504",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lcp-2026-11-10-f557fc6f60b8/oneill-lcp-f557fc6f60b8.tar",
+      "archiveSha256": "6ad0e66a0bfbb975b700b8298e82aa544b9aa816b1526b5d8e54c616ab416cd8",
+      "archiveBytes": 1257922560,
+      "files": 415,
+      "expandedBytes": 1257561507
+    },
+    {
+      "tag": "oneill-r2-2026-11-13-8159606e05e3",
+      "directory": "r2",
+      "manifestSha256": "8159606e05e3e7dfcc02b7fd0d5287e03efc9eaa55dd6dacc3429d5fe095ee9c",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-r2-2026-11-13-8159606e05e3/oneill-r2-8159606e05e3.tar",
+      "archiveSha256": "1b8b6b1231f6ece93e9c46e6ee51dbc0d6d1d222087143678fe8dcc3d229bccb",
+      "archiveBytes": 60979200,
+      "files": 223,
+      "expandedBytes": 60780208
+    },
+    {
+      "tag": "oneill-b3-2026-11-13-987e192df574",
+      "directory": "b3",
+      "manifestSha256": "987e192df574a70704efeb92b53fdf911f5261d549fb1d587f02acfd582fd372",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-b3-2026-11-13-987e192df574/oneill-b3-987e192df574.tar",
+      "archiveSha256": "deeda120738105ee14421ff2fe48a4c0946ee89604fa8d62de1b4a35e3f79ca8",
+      "archiveBytes": 178544640,
+      "files": 219,
+      "expandedBytes": 178350824
+    },
+    {
+      "tag": "oneill-lights-2026-11-13-e2de55d2a218",
+      "directory": "lights",
+      "manifestSha256": "e2de55d2a218eaa89687f151b3a54485b4015ecd0a41543756937170247a84c3",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lights-2026-11-13-e2de55d2a218/oneill-lights-e2de55d2a218.tar",
+      "archiveSha256": "4799fba26c8862063047271671e9f237ec4835ea3ef684db591c403a2df805ca",
+      "archiveBytes": 15779840,
+      "files": 219,
+      "expandedBytes": 15586117
+    }
+  ]
 }
