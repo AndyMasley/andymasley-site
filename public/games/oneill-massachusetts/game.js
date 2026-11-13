@@ -16138,6 +16138,10 @@ uniform float uSdfRange;
 uniform vec4 uWebRect;       // x0, y0, 1/size, on
 uniform float uBorders;
 uniform float uLights;       // 0..1 master for night lights
+uniform float uLightsFar;    // where the buildings' own points of light end (nightlights.js; 0: none in)
+uniform sampler2D uGlow;     // past them, the same lights summed over each 92 m square (bake/c28_lights.py glow.png)
+uniform float uHasGlow;
+uniform float uGlowK;        // one building's point of light, far off, as nightlights.js draws it
 uniform vec3 uSkyRefl;
 varying vec3 vRel;
 varying vec3 vNor;
@@ -16528,21 +16532,25 @@ void main() {
     float lum = dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6;
     float dark = (1.0 - smoothstep(0.035, 0.16, lum)) * uLights;
     if (dark > 0.001) {
-      float dens = clamp(pow(dev, 1.35) * 1.15 + (1.0 - smoothstep(0.0, 70.0, roadFarD)) * 0.32, 0.0, 1.0) * (1.0 - water);
-      float cs = 26.0;
-      vec2 lc = m / cs; ivec2 li = ivec2(floor(lc));
-      float rnd = hash2(li), rnd2 = hash2(li + ivec2(91, 37));
-      vec2 lp = fract(lc) - 0.5 - (vec2(rnd2, hash2(li + ivec2(13, 57))) - 0.5) * 0.5;
-      float on = step(1.0 - dens * 0.75, rnd);
-      float rad = max(0.09, fpn / cs * 0.9);
-      float nearK = 1.0 - smoothstep(140.0, 800.0, dist);
-      float dotI = (1.0 - smoothstep(rad * 0.4, rad, length(lp))) * on * 0.011 / (rad * rad);
-      float far = clamp(fpn / (cs * 0.8), 0.0, 1.0);
-      float I = mix(dotI * (1.0 - nearK), dens * 0.75 * 0.016, far);
-      vec3 lcol = mix(vec3(1.0, 0.60, 0.24), vec3(0.85, 0.92, 1.0), step(0.72, rnd2));
-      col += lcol * I * dark * 9.0;
-      // close by, a lamp is a pool of light on the ground, not a glowing disc
-      col += land * lcol * (exp(-dot(lp, lp) * 60.0) * on * nearK * dark * 0.42);
+      // every light out to uLightsFar is a building's own: its windows while it is drawn, then the point of light
+      // nightlights.js puts where it stands.  Past that, where houses are too small to tell apart, the ground glows
+      // with those same lights: each 92 m square's, spread over it, as bright together as their points would be
+      float far = clamp(fpn / 21.0, 0.0, 1.0);
+      float glowK = uLightsFar > 0.0 ? smoothstep(uLightsFar * 0.7, uLightsFar, dist) : far;
+      if (uHasGlow > 0.5) {
+        const float TEXA = 8471.2;                  // one square of the grid (m2)
+        const float CIRC = 6.2831853 * RC;
+        vec2 gs = texture2D(uGlow, vUv).rg * (255.0 / 16.0);
+        gs *= gs;                                   // the homes' (and industry's) lights here, and the shops' and offices'
+        vec2 ddx = dFdx(m), ddy = dFdy(m);
+        ddx.y -= CIRC * floor(ddx.y / CIRC + 0.5); ddy.y -= CIRC * floor(ddy.y / CIRC + 0.5);
+        float apx = min(abs(ddx.x * ddy.y - ddx.y * ddy.x), 6.0 * TEXA);      // the ground this pixel covers (m2)
+        float att = exp(-dist / 70000.0) / (1.0 + dist / 7000.0);             // nightlights.js's fading with distance
+        col += (vec3(1.0, 0.68, 0.38) * gs.x + vec3(0.96, 0.93, 0.84) * gs.y) * (apx / TEXA * uGlowK * att * glowK * dark * (1.0 - water));
+      } else {
+        float dens = clamp(pow(dev, 1.35) * 1.15 + (1.0 - smoothstep(0.0, 70.0, roadFarD)) * 0.32, 0.0, 1.0) * (1.0 - water);
+        col += vec3(0.96, 0.69, 0.45) * dens * 0.012 * glowK * dark * 9.0;
+      }
       col += vec3(0.75, 0.88, 1.0) * nodeLamp * dark * 0.9;          // a marker lamp where the big girders cross
       col += airLamp * dark * 1.5;                                    // runway and taxiway edge lamps
       col += vec3(1.0, 0.74, 0.40) * quayLamp * dark * 2.2;           // the quay's lamps, a string of them round every window
@@ -16649,6 +16657,7 @@ void main() {
   } else {
     vec3 E = irradiance(P, N, up, Ld, sunE);
     E -= sunE * max(dot(N, Ld), 0.0) * (1.0 - sunShadow(vRel, N, Ld));
+    vec3 fAlb = vec3(0.0); float fCw = 0.0, fDark = 0.0, fK = 0.0;      // a box's wall too far off to show its windows
     if (uKind > 1.5 && uKind < 2.5) {
       // buildings far enough away to be boxes: a window grid that lights up at night
       float wall = 1.0 - abs(dot(N, up));
@@ -16657,20 +16666,28 @@ void main() {
       vec2 gq = vec2(q.x / 3.1, q.y / 3.3) * cell;
       vec2 g = fract(gq);
       float win = step(0.22, g.x) * step(g.x, 0.78) * step(0.28, g.y) * step(g.y, 0.78) * wall;
-      // far off, where a window is smaller than a pixel, the grid gives way to its average: a lit wall glows evenly
-      // instead of shimmering
       vec2 fw = fwidth(gq);
       float aa = smoothstep(0.3, 0.8, max(fw.x, fw.y));
-      win = mix(win, 0.28 * wall, aa);
+      float sf = 1.0;
       if (vStyle > -0.5) {
         // real footprints: the colours of the detailed house (vCol), a tar or membrane top on flat roofs (vCol2)
-        win *= (1.0 - vStyle) * smoothstep(0.5, 0.8, wall);
+        sf = (1.0 - vStyle) * smoothstep(0.5, 0.8, wall);
         alb = vStyle > 0.5 ? vCol : mix(vCol2, vCol, smoothstep(0.25, 0.6, wall));
       }
-      alb = mix(alb, vec3(0.03, 0.04, 0.05), win * 0.75);
       float lum = dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6;
       float dark = (1.0 - smoothstep(0.035, 0.16, lum)) * uLights;
-      float lit = mix(step(0.55, hash2(ivec2(floor(gq)) + ivec2(int(vAux * 977.0), 3))), 0.45, aa);
+      float lit = step(0.55, hash2(ivec2(floor(gq)) + ivec2(int(vAux * 977.0), 3)));
+      // far off, where a window is smaller than a pixel, the grid gives way to its average so that a lit wall does
+      // not shimmer.  It is the average of how the windows look (a lit one blown out to white beside the dark wall),
+      // which is far less than the average of their light: that made every far wall glow like a paper lantern.  It
+      // is worked out below, once the light falling on the wall is known
+      #ifdef TONE_MAPPING
+        fAlb = alb; fCw = 0.28 * wall * sf; fDark = dark; fK = aa;
+        aa = 0.0;
+      #endif
+      win = mix(win, 0.28 * wall, aa) * sf;
+      lit = mix(lit, 0.45, aa);
+      alb = mix(alb, vec3(0.03, 0.04, 0.05), win * 0.75);
       emis = vec3(1.0, 0.72, 0.38) * win * lit * dark * 0.9;
     }
     if (uKind > 3.5) emis = vCol * (0.6 + 2.2 * (1.0 - smoothstep(0.03, 0.2, dot(sunE, vec3(0.33)) * max(dot(up, Ld), 0.0))));
@@ -16683,6 +16700,17 @@ void main() {
       }
     #endif
     col = alb * (E + headlamp(vRel, N)) * 1.55 + emis;
+    #ifdef TONE_MAPPING
+    if (fK > 0.0) {
+      // the mean of how its parts look once tone mapped (the bare wall, the dark windows and the lit ones), mapped back
+      float ex = toneMappingExposure / 0.6;
+      vec3 Ein = (E + headlamp(vRel, N)) * 1.55;
+      vec3 xw = fAlb * Ein, xd = mix(fAlb, vec3(0.03, 0.04, 0.05), 0.75) * Ein, xl = xd + vec3(1.0, 0.72, 0.38) * (0.9 * fDark);
+      vec3 D = (1.0 - fCw) * RRTAndODTFit(xw * ex) + fCw * (0.55 * RRTAndODTFit(xd * ex) + 0.45 * RRTAndODTFit(xl * ex));
+      vec3 tA = max(1.0 - 0.983729 * D, vec3(1e-4)), tB = 0.0245786 - 0.432951 * D, tC = -(0.000090537 + 0.238081 * D);
+      col = mix(col, (-tB + sqrt(max(tB * tB - 4.0 * tA * tC, 0.0))) / (2.0 * tA) / ex, fK);     // RRTAndODTFit's inverse
+    }
+    #endif
     #ifdef GLOSS
     {
       // a car's finish: the lamp glinting off paint and glass, and a little of the far wall mirrored at a glancing angle
@@ -21654,10 +21682,216 @@ void main() {
     }
   };
 
+  // src/nightlights.js
+  function regionDist(rx2, ry2, mx2, my2) {
+    const ex2 = Math.max(0, Math.abs((rx2 + 0.5) * RS2 - mx2) - RS2 / 2);
+    let dy2 = Math.abs((ry2 + 0.5) * RS2 - my2) % C2;
+    dy2 = Math.min(dy2, C2 - dy2);
+    return Math.hypot(ex2, Math.max(0, dy2 - RS2 / 2));
+  }
+  var PT_VS = (
+    /* glsl */
+    `
+attribute vec4 aDat;      // lit windows, seed, flags (kind | reach share << 2 | skyline << 6), the skyline's far distance / 256 m
+uniform vec2 uFade;       // the box tiles' reach (0.85 and 0.98 of it)
+uniform float uSkyFar;    // the skyline's scale on its far distances (0: no skyline)
+uniform float uScale;     // pixels per unit of size at unit distance
+uniform float uMinPx;
+uniform float uFar;       // where these give way to the ground's glow
+uniform float uDark;
+varying vec3 vCol;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  float dist = length(mv.xyz);
+  float fl = aDat.z;
+  float kind = mod(fl, 4.0), share = 0.45 + 0.55 * mod(floor(fl / 4.0), 16.0) / 15.0, jit = aDat.y / 255.0;
+  // it lights where its box stops: the box tiles' distance by its seed, times its share (terrain.js SCATTER_VS)
+  float dOn = mix(uFade.x, uFade.y, jit) * share;
+  if (fl > 63.5 && uSkyFar > 0.0) dOn = max(dOn, aDat.w * 256.0 * uSkyFar * (0.92 + 0.08 * jit));
+  float on = smoothstep(dOn * 0.96, dOn * 1.02, dist) * (1.0 - smoothstep(uFar * 0.7, uFar, dist));
+  // now and then a home is all dark; the rest light by how many windows they have
+  float h1 = fract(sin(aDat.y * 12.9898 + position.x * 0.0173 + position.z * 0.0311) * 43758.5453);
+  float lw = aDat.x * (0.4 + 1.2 * h1) * step(0.12, h1);
+  float px = uScale * (1.4 + 0.32 * sqrt(lw)) / max(dist, 1.0);
+  float size = clamp(px, uMinPx, 44.0);
+  vec3 c = kind < 0.5 ? vec3(1.0, 0.68, 0.38) : kind < 1.5 ? vec3(0.96, 0.93, 0.84) : kind < 2.5 ? vec3(1.0, 0.58, 0.26) : vec3(0.90, 0.96, 1.0);
+  // all its light in one point, a little fainter with distance and through the haze
+  float I = pow(lw, 0.62) * on * uDark / (1.0 + dist / 7000.0) * exp(-dist / 70000.0);
+  vCol = c * I * 0.55 * min(1.0, (uMinPx * 2.2) / size);
+  gl_PointSize = I > 0.002 ? size : 0.0;
+  mv.xyz *= 1.0 - min(1.4 * size / uScale, 0.4);          // drawn a little nearer than the building, so the ground cannot cut it
+  gl_Position = projectionMatrix * mv;
+}`
+  );
+  var PT_FS = (
+    /* glsl */
+    `
+varying vec3 vCol;
+void main() {
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(q, q);
+  if (r2 > 1.0) discard;
+  float core = exp(-r2 * 14.0), halo = exp(-r2 * 3.5) * (1.0 - r2);
+  gl_FragColor = vec4(vCol * (0.45 * halo + 1.4 * core), 1.0);
+}`
+  );
+  var GLOW_CAL = 0.065;
+  var NightLights = class {
+    constructor(game2) {
+      this.game = game2;
+      this.regions = /* @__PURE__ */ new Map();
+      this.loading = 0;
+      this.queue = [];
+      this.ready = false;
+      this.on = false;
+      const q = game2.quality;
+      this.R = q.lightsR !== void 0 ? q.lightsR : 18e3;
+      const F = game2.meta.files && game2.meta.files.lights;
+      this.tiles = new Set(F ? F.tiles : []);
+      this.dir = F ? F.dir : null;
+      const t = game2.terrain;
+      this.U = {
+        uFade: t.bldMat ? t.bldMat.uniforms.uFade : { value: new et(q.bldR * 0.85, q.bldR * 0.98) },
+        uSkyFar: { value: 0 },
+        uScale: { value: 900 },
+        uMinPx: { value: 1.6 },
+        uFar: { value: this.R },
+        uDark: { value: 0 }
+      };
+      this.mat = new Rn({
+        vertexShader: PT_VS,
+        fragmentShader: PT_FS,
+        uniforms: this.U,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: yu
+      });
+      this.ready = !!this.dir && this.R > 0;
+      const G = game2.meta.files && game2.meta.files.glow;
+      if (G) {
+        fetch(vurl("data/" + G.file)).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+          if (!img || img.w !== G.w || img.h !== G.h) return;
+          const t2 = new an(img.data, img.w, img.h, bi, cn);
+          t2.wrapS = rn;
+          t2.wrapT = dr;
+          t2.magFilter = ye;
+          t2.minFilter = In;
+          t2.generateMipmaps = true;
+          t2.unpackAlignment = 1;
+          t2.needsUpdate = true;
+          game2.U.uGlow.value = t2;
+          game2.U.uHasGlow.value = 1;
+        }).catch(() => {
+        });
+      }
+    }
+    // how dark it is: the windows' rule (LIT_FS), on the light of the day as a whole
+    darkness() {
+      const s29 = this.game.sky;
+      return (s29.isNight ? 1 : 1 - smoothstep(0.03, 0.2, s29.dayness)) * this.game.U.uLights.value;
+    }
+    update(camC) {
+      if (!this.ready) return;
+      const g = this.game, dark = this.darkness();
+      this.U.uDark.value = dark;
+      this.on = dark > 1e-3;
+      g.U.uLightsFar.value = this.on && this.regions.size ? this.R : 0;
+      if (!this.on) {
+        for (const r of this.regions.values()) if (r.pts) r.pts.visible = false;
+        return;
+      }
+      const H = g.renderer.domElement.height;
+      this.U.uScale.value = H / (2 * Math.tan(g.camera.fov * Math.PI / 360));
+      this.U.uMinPx.value = Math.max(1.6, H * 16e-4);
+      g.U.uGlowK.value = GLOW_CAL * 0.55 * 0.193 * Math.PI * this.U.uMinPx.value * this.U.uMinPx.value / 4;
+      this.U.uSkyFar.value = g.skyline && g.skyline.ready ? g.quality.skyFar : 0;
+      const cm2 = g.camMap;
+      if ((this.tick = (this.tick || 0) + 1) % 30 === 1) {
+        const my2 = wrapY(cm2[1]), rx0 = Math.floor(cm2[0] / RS2), ry0 = Math.floor(my2 / RS2), n = Math.ceil(this.R / RS2) + 1, want = [];
+        for (let dy2 = -n; dy2 <= n; dy2++) for (let dx2 = -n; dx2 <= n; dx2++) {
+          const rx2 = rx0 + dx2, ryw = ((ry0 + dy2) % RNY + RNY) % RNY;
+          if (rx2 < 0 || rx2 >= RNX) continue;
+          const key2 = regionKey(rx2, ryw);
+          if (!this.tiles.has(key2) || want.some((x) => x[3] === key2)) continue;
+          const d = regionDist(rx2, ryw, cm2[0], my2);
+          if (d < this.R) want.push([d, rx2, ryw, key2]);
+        }
+        want.sort((a, b) => a[0] - b[0]);
+        this.queue = want.filter((w) => !this.regions.has(w[3]));
+        for (const [k, r] of this.regions) {
+          if (r.pts && !want.some((w) => w[3] === k) && regionDist(r.rx, r.ry, cm2[0], my2) > this.R * 1.3) {
+            g.scene.remove(r.pts);
+            r.pts.geometry.dispose();
+            this.regions.delete(k);
+          }
+        }
+      }
+      while (this.loading < 2 && this.queue.length) {
+        const [, rx2, ry2, key2] = this.queue.shift();
+        if (this.regions.has(key2)) continue;
+        this.loading++;
+        const r = { rx: rx2, ry: ry2, pts: null };
+        this.regions.set(key2, r);
+        fetch(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".png")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+          if (img && this.regions.get(key2) === r) this.build(r, img.data);
+        }).catch(() => {
+        }).finally(() => {
+          this.loading--;
+        });
+      }
+      for (const r of this.regions.values()) {
+        if (!r.pts) continue;
+        const m = r.pts.matrix;
+        m.makeTranslation(r.C[0] - camC[0], r.C[1] - camC[1], r.C[2] - camC[2]);
+        r.pts.matrixWorld.copy(m);
+        r.pts.visible = true;
+      }
+    }
+    build(r, u8) {
+      const g = this.game, w = g.world;
+      if (u8[0] !== 76 || u8[1] !== 71 || u8[2] !== 84 || u8[3] !== 49) return;
+      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), n = dv2.getUint32(4, true);
+      const x02 = r.rx * RS2, y02 = r.ry * RS2, C3 = new Float64Array(3), P2 = new Float64Array(3);
+      cyl(x02 + RS2 / 2, y02 + RS2 / 2, w.baseH(x02 + RS2 / 2, y02 + RS2 / 2), C3);
+      const pos = new Float32Array(n * 3), dat = new Uint8Array(n * 4), far = 8 + n * 8;
+      for (let i = 0; i < n; i++) {
+        const o = 8 + i * 8;
+        const mx2 = x02 + (u8[o] | u8[o + 1] << 8) * 0.2, my2 = y02 + (u8[o + 2] | u8[o + 3] << 8) * 0.2, h = u8[o + 4];
+        cyl(mx2, my2, w.baseH(mx2, my2) + Math.max(2.5, h * 0.55) + 1.5, P2);
+        pos[i * 3] = P2[0] - C3[0];
+        pos[i * 3 + 1] = P2[1] - C3[1];
+        pos[i * 3 + 2] = P2[2] - C3[2];
+        dat[i * 4] = u8[o + 5];
+        dat[i * 4 + 1] = u8[o + 6];
+        dat[i * 4 + 2] = u8[o + 7];
+        dat[i * 4 + 3] = u8[far + i];
+      }
+      const geo = new Yt();
+      geo.setAttribute("position", new me(pos, 3));
+      geo.setAttribute("aDat", new me(dat, 4));
+      geo.boundingSphere = new Ie(new C(0, 0, 0), RS2 * 0.75 + 400);
+      const pts = new Ro(geo, this.mat);
+      pts.matrixAutoUpdate = false;
+      pts.frustumCulled = true;
+      pts.visible = false;
+      pts.renderOrder = 5;
+      r.C = [C3[0], C3[1], C3[2]];
+      r.pts = pts;
+      r.n = n;
+      g.scene.add(pts);
+    }
+    // the frame's two depth ranges: every one of these lies past the near range's split, so they go in the far pass
+    passVisibility(nearPass) {
+      if (!this.ready) return;
+      for (const r of this.regions.values()) if (r.pts) r.pts.visible = this.on && !nearPass;
+    }
+  };
+
   // src/lights.js
   var COLS = [[1, 0.92, 0.78], [1, 0.13, 0.08], [0.22, 1, 0.38], [1, 0.78, 0.16]];
   var EDGE = 0.07;
-  var PT_VS = (
+  var PT_VS2 = (
     /* glsl */
     `
 attribute vec3 aCol;
@@ -21676,7 +21910,7 @@ void main() {
   gl_Position = projectionMatrix * mv;
 }`
   );
-  var PT_FS = (
+  var PT_FS2 = (
     /* glsl */
     `
 varying vec3 vCol;
@@ -21892,7 +22126,7 @@ void main() {
       this.colArr = new Float32Array(N * 3);
       pg.setAttribute("aCol", new me(this.colArr, 3).setUsage(Zm));
       this.PU = { uScale: { value: 1e3 }, uMinPx: { value: 4 } };
-      const pts = new Ro(pg, new Rn({ vertexShader: PT_VS, fragmentShader: PT_FS, uniforms: this.PU, transparent: true, depthWrite: false, depthTest: true, blending: yu, toneMapped: false }));
+      const pts = new Ro(pg, new Rn({ vertexShader: PT_VS2, fragmentShader: PT_FS2, uniforms: this.PU, transparent: true, depthWrite: false, depthTest: true, blending: yu, toneMapped: false }));
       pts.frustumCulled = false;
       pts.matrixAutoUpdate = false;
       pts.renderOrder = 5;
@@ -22225,9 +22459,9 @@ void main() {
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
-    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5 },
-    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1 },
-    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2 }
+    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
+    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {
@@ -22442,6 +22676,10 @@ void main() {
         uWebRect: { value: new de(wb.mx0 - 0.5 * wb.g, wb.my0 - 0.5 * wb.g, 1 / (wb.n * wb.g), 0) },
         uBorders: { value: 0 },
         uLights: { value: 1 },
+        uLightsFar: { value: 0 },
+        uGlow: { value: tex(new Uint8Array(2), 1, 1, bi, true, false) },
+        uHasGlow: { value: 0 },
+        uGlowK: { value: 0 },
         uHeadPos: { value: new de() },
         uHeadDir: { value: new C(1, 0, 0) },
         uSkyRefl: { value: new C() },
@@ -22513,6 +22751,7 @@ void main() {
       this.radio = new Radio(this);
       this.lights = new Lights(this);
       this.skyline = new Skyline(this);
+      this.nightLights = params.get("lights") !== "0" ? new NightLights(this) : null;
       let start = meta.starts[0], named = false;
       const hash4 = (location.hash || "").replace("#", "").toLowerCase();
       if (hash4) {
@@ -23264,6 +23503,7 @@ void main() {
       }
       if (this.lights) this.lights.update(camC);
       if (this.skyline) this.skyline.update(camC);
+      if (this.nightLights) this.nightLights.update(camC);
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
       const split = clamp(agl * 0.5, (this.quality.treeR + 160) / 1.5, 4e3), nearFar = split * 1.5;
@@ -23276,6 +23516,7 @@ void main() {
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(false, nearFar);
         if (this.skyline) this.skyline.passVisibility(false, nearFar);
+        if (this.nightLights) this.nightLights.passVisibility(false);
         r.render(this.scene, cam);
         const calls = r.info.render.calls, tris = r.info.render.triangles;
         r.clearDepth();
@@ -23284,6 +23525,7 @@ void main() {
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(true, nearFar);
         if (this.skyline) this.skyline.passVisibility(true, nearFar);
+        if (this.nightLights) this.nightLights.passVisibility(true);
         r.render(this.scene, cam);
         this.drawCalls = calls + r.info.render.calls;
         this.drawTris = tris + r.info.render.triangles;
