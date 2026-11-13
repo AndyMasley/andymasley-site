@@ -16657,7 +16657,6 @@ void main() {
   } else {
     vec3 E = irradiance(P, N, up, Ld, sunE);
     E -= sunE * max(dot(N, Ld), 0.0) * (1.0 - sunShadow(vRel, N, Ld));
-    vec3 fAlb = vec3(0.0); float fCw = 0.0, fDark = 0.0, fK = 0.0;      // a box's wall too far off to show its windows
     if (uKind > 1.5 && uKind < 2.5) {
       // buildings far enough away to be boxes: a window grid that lights up at night
       float wall = 1.0 - abs(dot(N, up));
@@ -16667,7 +16666,8 @@ void main() {
       vec2 g = fract(gq);
       float win = step(0.22, g.x) * step(g.x, 0.78) * step(0.28, g.y) * step(g.y, 0.78) * wall;
       vec2 fw = fwidth(gq);
-      float aa = smoothstep(0.3, 0.8, max(fw.x, fw.y));
+      float wpp = max(fw.x, fw.y);                    // windows to a pixel
+      float aa = smoothstep(0.3, 0.8, wpp);
       float sf = 1.0;
       if (vStyle > -0.5) {
         // real footprints: the colours of the detailed house (vCol), a tar or membrane top on flat roofs (vCol2)
@@ -16677,18 +16677,26 @@ void main() {
       float lum = dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6;
       float dark = (1.0 - smoothstep(0.035, 0.16, lum)) * uLights;
       float lit = step(0.55, hash2(ivec2(floor(gq)) + ivec2(int(vAux * 977.0), 3)));
-      // far off, where a window is smaller than a pixel, the grid gives way to its average so that a lit wall does
-      // not shimmer.  It is the average of how the windows look (a lit one blown out to white beside the dark wall),
-      // which is far less than the average of their light: that made every far wall glow like a paper lantern.  It
-      // is worked out below, once the light falling on the wall is known
-      #ifdef TONE_MAPPING
-        fAlb = alb; fCw = 0.28 * wall * sf; fDark = dark; fK = aa;
-        aa = 0.0;
-      #endif
+      // far off, where a window is smaller than a pixel, the wall takes the windows' mean colour so that it does not
+      // shimmer, and at night its lit windows show as sparks: cells about two and a half pixels across on the wall,
+      // lit at random so that about as much of the wall is bright as up close (a tenth or so), from a coarser and a
+      // finer cell size blended as the distance changes.  (Their mean light spread over the wall made every far
+      // building a glowing beige slab.)
+      float spark = 0.0;
+      if (aa > 0.0 && dark > 0.001) {
+        float Lf = log2(max(2.5 * wpp, 1.0)), L0 = floor(Lf), tL = Lf - L0;
+        for (int k = 0; k < 2; k++) {
+          float sc = exp2(L0 + float(k));
+          vec2 c = gq / sc;
+          float on = step(0.62, hash2(ivec2(floor(c)) * 7 + ivec2(int(vAux * 977.0) + (int(L0) + k) * 131, 17)));
+          spark += (k == 0 ? 1.0 - tL : tL) * on * (1.0 - smoothstep(0.22, 0.36, length(fract(c) - 0.5)));
+        }
+        spark *= wall * sf * aa;
+      }
       win = mix(win, 0.28 * wall, aa) * sf;
-      lit = mix(lit, 0.45, aa);
+      lit *= 1.0 - aa;
       alb = mix(alb, vec3(0.03, 0.04, 0.05), win * 0.75);
-      emis = vec3(1.0, 0.72, 0.38) * win * lit * dark * 0.9;
+      emis = vec3(1.0, 0.72, 0.38) * (win * lit + spark * 1.2) * dark * 0.9;
     }
     if (uKind > 3.5) emis = vCol * (0.6 + 2.2 * (1.0 - smoothstep(0.03, 0.2, dot(sunE, vec3(0.33)) * max(dot(up, Ld), 0.0))));
     #ifdef LAMPS
@@ -16700,17 +16708,6 @@ void main() {
       }
     #endif
     col = alb * (E + headlamp(vRel, N)) * 1.55 + emis;
-    #ifdef TONE_MAPPING
-    if (fK > 0.0) {
-      // the mean of how its parts look once tone mapped (the bare wall, the dark windows and the lit ones), mapped back
-      float ex = toneMappingExposure / 0.6;
-      vec3 Ein = (E + headlamp(vRel, N)) * 1.55;
-      vec3 xw = fAlb * Ein, xd = mix(fAlb, vec3(0.03, 0.04, 0.05), 0.75) * Ein, xl = xd + vec3(1.0, 0.72, 0.38) * (0.9 * fDark);
-      vec3 D = (1.0 - fCw) * RRTAndODTFit(xw * ex) + fCw * (0.55 * RRTAndODTFit(xd * ex) + 0.45 * RRTAndODTFit(xl * ex));
-      vec3 tA = max(1.0 - 0.983729 * D, vec3(1e-4)), tB = 0.0245786 - 0.432951 * D, tC = -(0.000090537 + 0.238081 * D);
-      col = mix(col, (-tB + sqrt(max(tB * tB - 4.0 * tA * tC, 0.0))) / (2.0 * tA) / ex, fK);     // RRTAndODTFit's inverse
-    }
-    #endif
     #ifdef GLOSS
     {
       // a car's finish: the lamp glinting off paint and glass, and a little of the far wall mirrored at a glancing angle
