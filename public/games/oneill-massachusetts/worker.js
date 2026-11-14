@@ -4460,6 +4460,7 @@
   // src/worker.js
   var TUN_SHELL = 0.6;
   var TREE_H = [12.8, 14.4];
+  var TREE_R = [3.9, 2.9];
   var world = null;
   var towers = [];
   var realBuildings = false;
@@ -4679,6 +4680,42 @@
       pending.set(k, pr);
     }
     return pr;
+  }
+  function inRightOfWay(reg, mx, my) {
+    const f = reg && reg.feat;
+    if (!f || !f.nL) return false;
+    if (!reg.row) {
+      const G = /* @__PURE__ */ new Map();
+      for (let l = 0; l < f.nL; l++) {
+        if (f.lKind[l] === 1) continue;
+        const kv = f.lKv[l], a = f.lStart[l], e = a + f.lCount[l];
+        let tower = false;
+        for (let v = a; v < e; v++) if (f.lk[v] === 1) {
+          tower = true;
+          break;
+        }
+        const hw = kv >= 300 ? 30 : kv >= 100 || kv === 0 && tower ? 17 : kv >= 60 ? 12 : 0;
+        if (!hw) continue;
+        for (let v = a; v + 1 < e; v++) {
+          const x0 = f.lx[v], y0 = f.ly[v], x1 = f.lx[v + 1], y1 = f.ly[v + 1];
+          for (let cy = Math.floor((Math.min(y0, y1) - hw) / 64); cy <= Math.floor((Math.max(y0, y1) + hw) / 64); cy++)
+            for (let cx = Math.floor((Math.min(x0, x1) - hw) / 64); cx <= Math.floor((Math.max(x0, x1) + hw) / 64); cx++) {
+              const k = cy * 4096 + cx;
+              if (!G.has(k)) G.set(k, []);
+              G.get(k).push(x0, y0, x1, y1, hw);
+            }
+        }
+      }
+      reg.row = G;
+    }
+    const lx = mx - reg.x0, ly = my - reg.y0, L2 = reg.row.get(Math.floor(ly / 64) * 4096 + Math.floor(lx / 64));
+    if (!L2) return false;
+    for (let i = 0; i < L2.length; i += 5) {
+      const ax = L2[i], ay = L2[i + 1], dx = L2[i + 2] - ax, dy = L2[i + 3] - ay, l2 = dx * dx + dy * dy;
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((lx - ax) * dx + (ly - ay) * dy) / l2)) : 0;
+      if (Math.hypot(lx - ax - dx * t, ly - ay - dy * t) < L2[i + 4]) return true;
+    }
+    return false;
   }
   function overMouth(reg, mx, my, h) {
     return !!(reg && reg.nTun && world.nearestTunnel(mx, my) < 3 + TUN_SHELL && world._nt.z + TUN_H + TUN_SHELL + 1.5 > h);
@@ -5024,6 +5061,7 @@
         if (g.water || g.edge < (kind === "trees" ? 2.5 : 16) || g.deck > -1e8) continue;
         if (seen && byBridge(mx, my, h, kind === "trees" ? 7 : 14)) continue;
         if (overMouth(reg, mx, my, h)) continue;
+        if (inRightOfWay(reg, mx, my)) continue;
         const sand = world.coverBilinear(mx, my, 2);
         if (sand > 0.5) continue;
         if (tI >= 0 && world.nearestRoad(mx, my) < 28 && world._nr.reg.rCls[world._nr.road] < 14) continue;
@@ -5043,10 +5081,27 @@
         const conifer = r4 < pc ? 1 : 0;
         cyl(mx, my, h, p32);
         const sc = seen && kind === "trees" ? clamp(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / TREE_H[conifer], 0.25, 2.9) : 0.75 + 0.65 * hash2(gi + 3, gj + 29);
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5));
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5), 0);
         order.push(hash2(gi * 13 + 1, gj * 17 + 5));
       }
       if (tI >= 0) {
+        const q0 = tr.off[tI], q1 = tr.off[tI + 1], nn = new Float32Array(q1 - q0).fill(99), cell3 = 8, gw = Math.ceil(s / cell3) + 1, grid = /* @__PURE__ */ new Map();
+        for (let q2 = q0; q2 < q1; q2++) {
+          const k = Math.floor((tr.rec[q2 * 4 + 1] + 0.5) * s / 256 / cell3) * gw + Math.floor((tr.rec[q2 * 4] + 0.5) * s / 256 / cell3);
+          if (!grid.has(k)) grid.set(k, []);
+          grid.get(k).push(q2);
+        }
+        for (let q2 = q0; q2 < q1; q2++) {
+          const x = (tr.rec[q2 * 4] + 0.5) * s / 256, y = (tr.rec[q2 * 4 + 1] + 0.5) * s / 256, ci = Math.floor(x / cell3), cj = Math.floor(y / cell3);
+          let best = 99;
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+            const L2 = grid.get((cj + dj) * gw + ci + di);
+            if (L2) {
+              for (const p of L2) if (p !== q2) best = Math.min(best, Math.hypot((tr.rec[p * 4] + 0.5) * s / 256 - x, (tr.rec[p * 4 + 1] + 0.5) * s / 256 - y));
+            }
+          }
+          nn[q2 - q0] = best;
+        }
         for (let q2 = tr.off[tI]; q2 < tr.off[tI + 1]; q2++) {
           let mx = mx0 + (tr.rec[q2 * 4] + 0.5) * s / 256, my = my0 + (tr.rec[q2 * 4 + 1] + 0.5) * s / 256;
           const tall = tr.rec[q2 * 4 + 2] * 0.25;
@@ -5063,14 +5118,25 @@
           const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
           const conifer = tr.kinds ? tr.rec[q2 * 4 + 3] >> 7 : hash2(gi + 91, gj + 17) < pc ? 1 : 0;
           cyl(mx, my, h, p32);
-          out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, clamp(tall / (conifer ? TREE_H[1] : TREE_H[0]), 0.22, 2.9), hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832, conifer, hash2(gi + 57, gj + 5));
+          const rad = (tr.kinds ? tr.rec[q2 * 4 + 3] & 127 : tr.rec[q2 * 4 + 3]) * 0.1;
+          const crown = clamp(Math.min(rad || 3, Math.max(1, 0.6 * nn[q2 - tr.off[tI]])), 0.8, 12.7);
+          out.push(
+            p32[0] - cx,
+            p32[1] - cy,
+            p32[2] - cz,
+            clamp(tall / (conifer ? TREE_H[1] : TREE_H[0]), 0.22, 2.9),
+            hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832,
+            conifer,
+            hash2(gi + 57, gj + 5),
+            crown / (conifer ? TREE_R[1] : TREE_R[0])
+          );
           order.push(hash2(gi * 13 + 1, gj * 17 + 5));
         }
       }
       const nT = order.length, perm = Array.from({ length: nT }, (_, i) => i).sort((a, b) => order[a] - order[b]);
-      const arr2 = new Float32Array(nT * 7);
-      for (let i = 0; i < nT; i++) for (let k = 0; k < 7; k++) arr2[i * 7 + k] = out[perm[i] * 7 + k];
-      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 7 }, [arr2.buffer]);
+      const arr2 = new Float32Array(nT * 8);
+      for (let i = 0; i < nT; i++) for (let k = 0; k < 8; k++) arr2[i * 8 + k] = out[perm[i] * 8 + k];
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 8 }, [arr2.buffer]);
       return;
     }
     if (kind === "decks") {

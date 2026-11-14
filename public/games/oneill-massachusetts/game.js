@@ -18920,8 +18920,9 @@ void main() {
           inst[i * 4 + 1] = tall > 0.55 ? 1 : 0;
         } else {
           Q.setFromAxisAngle(Y, d[o + 4]);
-          const sc2 = d[o + 3] * (m.kind === "clumps" ? 1 : 1);
-          S.set(sc2, sc2 * (0.85 + 0.3 * d[o + 6]), sc2);
+          const sc2 = d[o + 3], ws2 = st >= 8 ? d[o + 7] : 0;
+          if (ws2 > 0) S.set(ws2, sc2, ws2);
+          else S.set(sc2, sc2 * (0.85 + 0.3 * d[o + 6]), sc2);
           inst[i * 4] = d[o + 6];
           inst[i * 4 + 1] = d[o + 5];
         }
