@@ -50,6 +50,16 @@
       "archiveBytes": 157235200,
       "files": 226,
       "expandedBytes": 157039040
+    },
+    {
+      "tag": "oneill-aer2-2026-11-14-3048df37712d",
+      "directory": "aer2",
+      "manifestSha256": "3048df37712dd4899f843352984a2e049018f34adb589f16504a8147cfdc8870",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-aer2-2026-11-14-3048df37712d/oneill-aer2-3048df37712d.tar",
+      "archiveSha256": "86729000f84694cc65c622a02dd83fcfa1fe0574379f7fab1b0f39e484d017ca",
+      "archiveBytes": 507176960,
+      "files": 226,
+      "expandedBytes": 506982562
     }
   ]
 }

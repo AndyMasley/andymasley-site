@@ -1,8 +1,8 @@
 // The O'Neill cylinder drive (public/games/oneill-massachusetts) keeps its biggest data folders out of git: the 1 m
 // land cover packs (lcp, about 1.2 GB), the region files a building rebake rewrites (r2, b3, lights, a few hundred
-// MB each time) and the aerial photographs at 5.75 m (aer, about 160 MB). Each folder lives in a fixed GitHub
-// release (data/derived/oneill/release.json, written by the game repo's site/publish_packs.py); this puts each in
-// place before a build and checks it.
+// MB each time) and the aerial photographs at 5.75 m and 2.88 m (aer and aer2, about 160 MB and 500 MB). Each
+// folder lives in a fixed GitHub release (data/derived/oneill/release.json, written by the game repo's
+// site/publish_packs.py); this puts each in place before a build and checks it.
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { cp, mkdtemp, readFile, rename, rm, stat } from 'node:fs/promises';
@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 const project = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const release = JSON.parse(await readFile(join(project, 'data/derived/oneill/release.json'), 'utf8'));
-const DIRECTORIES = ['lcp', 'r2', 'b3', 'lights', 'aer'];
+const DIRECTORIES = ['lcp', 'r2', 'b3', 'lights', 'aer', 'aer2'];
 const NAME = /^\d+_\d+\.(bin|png|webp)$/;
 if (release.version !== 2 || !Array.isArray(release.packs)) throw new Error("Invalid O'Neill release list");
 const hash = async (path) => { const digest = createHash('sha256'); for await (const data of createReadStream(path)) digest.update(data); return digest.digest('hex'); };
