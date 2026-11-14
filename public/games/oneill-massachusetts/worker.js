@@ -1305,8 +1305,9 @@
   function bayWidth(cls) {
     return cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW ? 2.5 : cls >= CLS.APART && cls !== CLS.CHURCH && cls !== CLS.ROW ? 3.4 : 2.9;
   }
-  function doorAt(len, cls, seed) {
-    const nb = Math.max(1, Math.floor((len - 0.6) / bayWidth(cls)));
+  function doorAt(len, cls, seed, tb) {
+    const bp = ((tb | 0) >> 4 & 255) * 0.1;
+    const nb = bp > 0 ? Math.max(1, Math.round(len / bp)) : Math.max(1, Math.floor((len - 0.6) / bayWidth(cls)));
     let bi = nb >> 1;
     if (nb >= 2 && (cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW)) bi = seed & 1 ? 0 : nb - 1;
     return (bi + 0.5) * len / nb;
@@ -1356,7 +1357,7 @@
       let flags = (gableEnd ? 1 : 0) | (front ? 2 : 0);
       let door = -1;
       if (front) {
-        door = doorAt(len, cls, seed);
+        door = doorAt(len, cls, seed, M.T[3]);
         if (cls === CLS.GARAGE || cls === CLS.BARN) flags |= 4;
         if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
       } else if (cls === CLS.INDUS && s === (side + 2) % 4) {
@@ -1507,7 +1508,7 @@
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
     const [p0u, p0v, p1u, p1v, nu, nv, len] = wall;
     const tu = (p1u - p0u) / len, tv = (p1v - p0v) / len;
-    const du = doorAt(len, cls, seed);
+    const du = doorAt(len, cls, seed, M.T[3]);
     const floorY = y0 + found;
     let walkFrom = 0.25;
     const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
@@ -2213,7 +2214,7 @@
         }
         if (LF) corrCuts(LF, u0, v0, u1, v1, cuts);
         cuts.sort((x, y) => x - y);
-        const isFront = i === front2, door = isFront ? doorAt(len, cls, seed) : -1;
+        const isFront = i === front2, door = isFront ? doorAt(len, cls, seed, M.T[3]) : -1;
         if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
         setM(MAT.WALL);
         for (let c = 0; c + 1 < cuts.length; c++) {

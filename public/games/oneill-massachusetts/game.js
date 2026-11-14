@@ -16168,6 +16168,32 @@ varying vec2 vMap;
 
 float band(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
 
+// One of the nearer photos at uv (layer: 0 for 5.75 m, 1 for 2.88 m; 4,096 texels across each, wrapping) with the
+// edges between fields kept sharp: where the four texels round the point differ a lot (a field's edge), the smooth
+// colour is pushed to whichever of the two most different of them it is nearer, along the line between them, so the
+// edge falls crisply where the photo's ramp is halfway and runs as smoothly as that ramp does; what the two colours do
+// not explain is kept, and where the four differ little (inside a field) the colour stays smooth
+vec3 aerCrisp(vec2 uv, float layer) {
+  vec2 t = uv * 4096.0 - 0.5;
+  vec2 f = fract(t);
+  ivec2 i0 = ivec2(mod(floor(t), 4096.0)), i1 = ivec2(mod(floor(t) + 1.0, 4096.0));
+  int L = int(layer + 0.5);
+  vec3 c00 = texelFetch(uAerNear, ivec3(i0.x, i0.y, L), 0).rgb, c10 = texelFetch(uAerNear, ivec3(i1.x, i0.y, L), 0).rgb;
+  vec3 c01 = texelFetch(uAerNear, ivec3(i0.x, i1.y, L), 0).rgb, c11 = texelFetch(uAerNear, ivec3(i1.x, i1.y, L), 0).rgb;
+  vec3 c = mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
+  vec3 A = c00, B = c11;
+  float dm = distance(c00, c11), d;
+  d = distance(c10, c01); if (d > dm) { A = c10; B = c01; dm = d; }
+  d = distance(c00, c10); if (d > dm) { A = c00; B = c10; dm = d; }
+  d = distance(c01, c11); if (d > dm) { A = c01; B = c11; dm = d; }
+  d = distance(c00, c01); if (d > dm) { A = c00; B = c01; dm = d; }
+  d = distance(c10, c11); if (d > dm) { A = c10; B = c11; dm = d; }
+  vec3 ab = B - A;
+  float s = clamp(dot(c - A, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  vec3 sharp = max(mix(A, B, smoothstep(0.38, 0.62, s)) + (c - mix(A, B, s)), vec3(0.0));
+  return mix(c, sharp, smoothstep(0.05, 0.12, dm));
+}
+
 void main() {
   vec3 P = uCam + vRel;
   float r = length(P.yz);
@@ -16341,11 +16367,13 @@ void main() {
   // ---- the 2023 aerial photographs (aerial.js), brought to the palette: 2.88 m in the 4 x 4 tiles round the camera
   // (fading out over the last 500 m of their block), 5.75 m in the 2 x 2 regions round it (over the last 800 m), the
   // 46 m overview everywhere; kN says how much of the two nearer levels there is
-  float kN = 0.0;
+  float kN = 0.0, aerK0 = 0.0;
   vec3 aerN = vec3(0.0), aerF = vec3(0.0);
+  vec2 aerRg = vec2(0.0);
   if (uHasAerial > 0.5) {
     const float RSZ = 6.2831853 * RC / 16.0;
     vec2 rg = m / RSZ;                                // in regions
+    aerRg = rg;
     vec2 bq = rg - uAerBlock;
     bq.y -= 16.0 * floor((bq.y + 8.0) / 16.0);
     vec2 sq = mod(floor(rg), 2.0);
@@ -16359,6 +16387,7 @@ void main() {
     vec2 et = min(bt, 4.0 - bt) * (RSZ * 0.25);
     float k0 = uAer0Ok[int(st.x + 4.0 * st.y + 0.5)] * smoothstep(0.0, 500.0, min(et.x, et.y));
     kN = k0 + (1.0 - k0) * k1;
+    aerK0 = k0;
     vec3 a1 = texture(uAerNear, vec3(rg * 0.5, 0.0)).rgb, a0 = texture(uAerNear, vec3(rg, 1.0)).rgb;
     aerN = max((k0 * a0 + (1.0 - k0) * k1 * a1) / max(kN, 1e-4) * uAerCol.x + uAerCol.yzw, vec3(0.0));
     aerF = max(texture2D(uAerial, vUv).rgb * uAerCol.x + uAerCol.yzw, vec3(0.0));
@@ -16489,12 +16518,22 @@ void main() {
   // keeps its kind's colour from the palette, scaled channel by channel by how the 5.75 m photo over it differs from
   // that kind's average in the photos (bake/c36_photo_means.py), so a dry lawn, a cut hay field or a tilled one shows
   // as it was in the summer of 2023. Cropland, whose parcels the palette invents, takes the photo's colour outright,
-  // as does ground without the 1 m land cover; water and the mapped courts and fields keep their own.
+  // as does ground without the 1 m land cover; water and the mapped courts and fields keep their own. The fields
+  // (cropland, hay and pasture) are the photos' from the camera out, not from 30 m: the real fields, green, tilled, cut
+  // or ripe as they were, with their edges kept sharp close up (aerCrisp).
   if (kN > 0.0) {
     float kP = kN * smoothstep(30.0, 220.0, dist);
     if (uHasLc < 0.5) land = mix(land, aerN * (0.9 + 0.2 * nC), kP * 0.85);
     else if (kLc > 0.0 && lc > 0 && lc < 18 && lc != 15) {
-      if (lc == 3) land = mix(land, aerN * (0.9 + 0.2 * nC), kP * kLc * 0.9);
+      bool fieldKind = lc >= 3 && lc <= 5;
+      vec3 aerX = aerN;
+      if (fieldKind && dist < 400.0) {
+        float lay = aerK0 > 0.5 ? 1.0 : 0.0;
+        vec3 cr = max(aerCrisp(lay > 0.5 ? aerRg : aerRg * 0.5, lay) * uAerCol.x + uAerCol.yzw, vec3(0.0));
+        aerX = mix(cr, aerN, smoothstep(250.0, 400.0, dist));
+      }
+      if (lc == 3) land = mix(land, aerX * (0.9 + 0.2 * nC), kN * kLc);
+      else if (fieldKind) land = mix(land, land * clamp(aerX / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kN * kLc);
       else land = mix(land, land * clamp(aerN / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kP * kLc * (lc == 1 ? 0.6 : 1.0));
     }
   }
@@ -17039,7 +17078,8 @@ attribute vec3 aC;      // the building's centre in the tile frame
 attribute vec4 aK;      // the building's roof colour from the aerial (sRGB), alpha 1 where there is one
 attribute vec4 aJ;      // its walls' colour from the street photos (sRGB), alpha 1 where there is one
 attribute vec4 aT;      // its trim, shutter and door colours from the street photos (RGB565) and which of them a photo
-                        // showed (bits: 1 trim, 2 whether it has shutters, 4 it has, 8 door); all 0 where none did
+                        // showed (bits: 1 trim, 2 whether it has shutters, 4 it has, 8 door; bits 4-11 the width of its
+                        // window bays in decimetres, where a photo showed them); all 0 where none did
 uniform vec2 uHouseFade;
 ${PALETTE}
 varying vec3 vRel;
@@ -17052,6 +17092,7 @@ flat varying vec3 vColB;
 flat varying vec3 vColC;
 flat varying vec3 vColD;     // shutters
 flat varying float vShut;    // shutters: -1 by rule, 0 none, 1 there
+flat varying float vBay;     // the width of its window bays from a street photo, 0 by rule
 void main() {
   // beyond the detail radius the far boxes take over: each building switches at its own distance inside the band
   // (its seed), the same distance its boxes switch on at, and never grows or shrinks
@@ -17068,6 +17109,7 @@ void main() {
   vColC = (tb & 8) != 0 ? photoWall(rgb565(aT.z)) : accentColor(seed);
   vColD = (tb & 4) != 0 ? photoWall(rgb565(aT.y)) : accentColor(seed);
   vShut = (tb & 2) != 0 ? float((tb & 4) != 0) : -1.0;
+  vBay = float((tb >> 4) & 255) * 0.1;
   if (mat < 0.5) vColA = aJ.w > 0.5 ? photoWall(aJ.rgb) : claddingColor(clad, cls, seed);
   else if (mat < 1.5) vColA = aK.w > 0.5 ? aerialRoof(aK.rgb) : roofColor(cls, 1.0, seed);
   else if (mat < 2.5) vColA = vColB;
@@ -17110,6 +17152,7 @@ flat varying vec3 vColB;
 flat varying vec3 vColC;
 flat varying vec3 vColD;
 flat varying float vShut;
+flat varying float vBay;
 
 const float FOUND[16] = float[16](0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0.0, 0.15, 0.7, 0.6);
 const float KNEE[16] = float[16](0.0, 0.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6);
@@ -17162,8 +17205,8 @@ void main() {
     alb = vColA * tex;
     vec3 trim = vColB;
     // bays and storeys
-    float bw0 = (cls == 3 || cls == 15 || cls == 14) ? 2.5 : ((cls >= 6 && cls != 9) ? 3.4 : 2.9);
-    float nb = max(1.0, floor((len - 0.6) / bw0)), bw = len / nb;
+    float bw0 = vBay > 0.05 ? vBay : ((cls == 3 || cls == 15 || cls == 14) ? 2.5 : ((cls >= 6 && cls != 9) ? 3.4 : 2.9));
+    float nb = vBay > 0.05 ? max(1.0, floor(len / bw0 + 0.5)) : max(1.0, floor((len - 0.6) / bw0)), bw = len / nb;
     float bi = min(floor(u / bw), nb - 1.0), bu = u - (bi + 0.5) * bw;
     float fl = floor((v - found) / fh), fv = v - found - fl * fh;
     bool deep = !house && cls != 9 && cls != 12;                 // large buildings on a slope show lower storeys downhill
