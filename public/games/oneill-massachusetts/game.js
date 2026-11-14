@@ -16190,8 +16190,8 @@ vec3 aerCrisp(vec2 uv, float layer) {
   d = distance(c10, c11); if (d > dm) { A = c10; B = c11; dm = d; }
   vec3 ab = B - A;
   float s = clamp(dot(c - A, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
-  vec3 sharp = max(mix(A, B, smoothstep(0.38, 0.62, s)) + (c - mix(A, B, s)), vec3(0.0));
-  return mix(c, sharp, smoothstep(0.05, 0.12, dm));
+  vec3 sharp = max(mix(A, B, smoothstep(0.32, 0.68, s)) + (c - mix(A, B, s)), vec3(0.0));
+  return mix(c, sharp, smoothstep(0.12, 0.22, dm));       // only between fields that differ a lot: lesser changes inside a field stay smooth
 }
 
 void main() {
