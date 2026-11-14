@@ -16347,7 +16347,9 @@ void main() {
   if (kLc > 0.0) {
     // a nudge of up to half a metre breaks the square metres into ragged edges close up
     vec2 jit = (vec2(vnoise(m * 0.83 + 17.3), vnoise(m * 0.83 + 71.1)) - 0.5) * 1.1 * (1.0 - smoothstep(0.8, 2.5, fp));
+    int lc0 = int(texture2D(uLc, vLoc / uSize).r * 255.0 + 0.5);
     lc = int(texture2D(uLc, (vLoc + jit) / uSize).r * 255.0 + 0.5);
+    if (lc0 >= 20 || lc >= 20) lc = lc0;          // a mapped court or field keeps its straight edges
     if (lc == 0) kLc = 0.0;
     // along a street's edge the street's own paving, shoulders and sidewalks decide: the 1 m squares of paving and
     // soil the survey found there step along any street that is not square to the grid (the "staircase" at gores and
@@ -16428,6 +16430,22 @@ void main() {
     land = mix(land, vec3(0.16, 0.13, 0.085) * (0.85 + 0.3 * nB), lcSoil);
     // ponds and brooks too small for the water map, where the ground is level
     water = max(water, lcWater * smoothstep(0.965, 0.992, dot(normalize(vNor), up)) * (1.0 - clamp(onRoadGeom * 3.0, 0.0, 1.0)));
+  }
+  if (kLc > 0.0 && lc >= 20) {
+    // the courts, fields, tracks, pools, greens and playgrounds that are mapped (feat.js paintAreas)
+    vec3 sc = lc == 20 ? mix(vec3(0.050, 0.110, 0.024), vec3(0.062, 0.128, 0.028), nB)           // mown turf
+            : lc == 21 ? vec3(0.040, 0.120, 0.030)                                                // artificial turf
+            : lc == 22 ? vec3(0.040, 0.115, 0.060)                                                // a coloured hard court
+            : lc == 23 ? mix(vec3(0.060, 0.060, 0.062), vec3(0.150, 0.146, 0.140), lcConc)        // asphalt or concrete
+            : lc == 24 ? vec3(0.105, 0.135, 0.090)                                                // clay (Har-Tru)
+            : lc == 25 ? vec3(0.260, 0.050, 0.030)                                                // a synthetic track
+            : lc == 26 ? vec3(0.060, 0.330, 0.460)                                                // a pool
+            : lc == 27 ? vec3(0.040, 0.170, 0.022)                                                // a green
+            : lc == 28 ? mix(vec3(0.058, 0.150, 0.026), vec3(0.068, 0.165, 0.030), nB)           // a fairway or tee
+            : lc == 29 ? mix(vec3(0.045, 0.088, 0.022), vec3(0.058, 0.100, 0.026), nB)           // rough
+            : lc == 30 ? vec3(0.180, 0.110, 0.055)                                                // wood chips
+            : vec3(0.240, 0.130, 0.065);                                                          // infield dirt
+    land = mix(land, sc * (0.92 + 0.16 * nC), kLc);
   }
   // wet margin and a pale strand right at the waterline
   land = mix(land, vec3(0.30, 0.27, 0.20), (1.0 - smoothstep(0.0, 14.0, sdf)) * 0.55);
@@ -18489,6 +18507,112 @@ void main() {
         this.towerGeo.computeVertexNormals();
         this.towerMat = mk(0, [this.powerR * 0.85, this.powerR * 0.98], [-2, -1], { PARTS: 1 });
         this.pwireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol } });
+        const LM = [], lAdd = (g, c, p) => LM.push(part(col(g, ...c), p));
+        const orange = [0.62, 0.12, 0.02], paleW = [0.6, 0.6, 0.58], steel = [0.27, 0.28, 0.29], conc = [0.33, 0.31, 0.28];
+        const tri = (b, y) => [0, 1, 2].map((k) => {
+          const a = Math.PI / 2 + k * 2 * Math.PI / 3, r = b / Math.sqrt(3);
+          return [r * Math.cos(a), y, r * Math.sin(a)];
+        });
+        const lattice3 = (p, H, b02, b1, bay, leg, mem, banded) => {
+          const w = (y) => b02 + (b1 - b02) * y / H, colAt = (y) => banded ? Math.floor(y / H * 7) % 2 ? paleW : orange : steel;
+          const n = Math.max(1, Math.round(H / bay));
+          for (let i = 0; i < n; i++) {
+            const ya2 = H * i / n, yb = H * (i + 1) / n, A = tri(w(ya2), ya2), B = tri(w(yb), yb), c = colAt((ya2 + yb) / 2);
+            for (let k = 0; k < 3; k++) {
+              lAdd(beam(...A[k], ...B[k], leg), c, p);
+              lAdd(beam(...B[k], ...B[(k + 1) % 3], mem), c, p);
+              lAdd(beam(...A[k], ...B[(k + 1) % 3], mem * 0.8), c, p);
+            }
+          }
+        };
+        const prism3 = (p, H, b02, b1, banded) => {
+          for (let j = 0; j < (banded ? 7 : 1); j++) {
+            const ya2 = H * j / (banded ? 7 : 1), yb = H * (j + 1) / (banded ? 7 : 1);
+            const g = new Rr((b02 + (b1 - b02) * yb / H) / Math.sqrt(3), (b02 + (b1 - b02) * ya2 / H) / Math.sqrt(3), yb - ya2, 3, 1, true);
+            g.translate(0, (ya2 + yb) / 2, 0);
+            lAdd(g.toNonIndexed(), banded ? j % 2 ? paleW : orange : [0.2, 0.21, 0.22], p);
+          }
+        };
+        const antennas = (p, y, r) => {
+          const T2 = tri(r * Math.sqrt(3), y);
+          for (let k = 0; k < 3; k++) lAdd(beam(...T2[k], ...T2[(k + 1) % 3], 0.12), steel, p);
+          for (let k = 0; k < 9; k++) {
+            const a = k / 9 * 2 * Math.PI;
+            const g = new qi(0.32, 1.8, 0.14);
+            g.rotateY(-a);
+            g.translate(r * 1.05 * Math.cos(a), y + 0.5, r * 1.05 * Math.sin(a));
+            lAdd(g.toNonIndexed(), [0.52, 0.52, 0.5], p);
+          }
+        };
+        lattice3(0, 150, 2.2, 2.2, 3, 0.16, 0.07, true);
+        for (const [hy2, rr2] of [[0.33, 0.3], [0.62, 0.45], [0.92, 0.6]]) for (let k = 0; k < 3; k++) {
+          const a = Math.PI / 2 + k * 2 * Math.PI / 3;
+          lAdd(beam(0, hy2 * 150, 0, rr2 * 150 * Math.cos(a), 0, rr2 * 150 * Math.sin(a), 0.05), [0.12, 0.12, 0.12], 0);
+        }
+        prism3(1, 150, 2.2, 2.2, true);
+        lattice3(2, 60, 7, 1.6, 4, 0.26, 0.1, false);
+        antennas(2, 56.5, 1.6);
+        lAdd(beam(0, 60, 0, 0, 64, 0, 0.08), steel, 2);
+        prism3(3, 60, 7, 1.6, false);
+        lAdd(cylY(0.36, 0.62, 30, 10, 0, 0, 0), [0.36, 0.37, 0.38], 4);
+        antennas(4, 27.5, 1.3);
+        lAdd(cylY(1.6, 2.5, 47, 16, 0, 0, 0), conc, 6);
+        lAdd(cylY(1.58, 1.62, 3, 16, 0, 47, 0), [0.06, 0.055, 0.05], 6);
+        lAdd(cylY(2, 3.4, 30, 14, 0, 0, 0), paleW, 8);
+        {
+          const g = new zr(1, 18, 10);
+          g.scale(8.5, 5.2, 8.5);
+          g.translate(0, 33.5, 0);
+          lAdd(g.toNonIndexed(), paleW, 8);
+        }
+        {
+          const g = new Cr(8, 2.2, 18, 1, true);
+          g.translate(0, 39, 0);
+          lAdd(g.toNonIndexed(), [0.5, 0.52, 0.53], 8);
+        }
+        lAdd(cylY(1.25, 2.15, 80, 14, 0, 0, 0), [0.62, 0.63, 0.62], 10);
+        {
+          const g = new qi(10.5, 3.6, 3.6);
+          g.translate(-1.6, 81.8, 0);
+          lAdd(g.toNonIndexed(), [0.6, 0.61, 0.6], 10);
+        }
+        {
+          const g = new zr(1.7, 10, 8);
+          g.scale(1.3, 1, 1);
+          g.translate(4.4, 81.8, 0);
+          lAdd(g.toNonIndexed(), [0.6, 0.61, 0.6], 10);
+        }
+        this.lmGeos = {};
+        for (const g of LM) {
+          const p = g.attributes.aPart.array[0];
+          (this.lmGeos[p] = this.lmGeos[p] || []).push(g);
+        }
+        for (const p in this.lmGeos) {
+          const m = merge(this.lmGeos[p]);
+          m.computeVertexNormals();
+          this.lmGeos[p] = m;
+        }
+        const RB = [];
+        for (let k = 0; k < 3; k++) {
+          const g = new Yt(), a = k * 2 * Math.PI / 3, P3 = [];
+          const sec = [[0.03, 0.04, 0.03], [0.22, 0.075, 0.02], [0.6, 0.05, 0.012], [1, 0.014, 5e-3]];
+          for (let j = 0; j + 1 < sec.length; j++) {
+            const [r02, c02, t02] = sec[j], [r1, c1, t1] = sec[j + 1];
+            const q2 = (r, c, t, sx2, sy2) => {
+              const y = r, z = c * sx2, x = t * sy2;
+              return [x, y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a)];
+            };
+            for (const sy2 of [-1, 1]) {
+              const A = q2(r02, c02, t02, -1, sy2), B = q2(r02, c02, t02, 1, sy2), Cc2 = q2(r1, c1, t1, 1, sy2), D = q2(r1, c1, t1, -1, sy2);
+              P3.push(...A, ...B, ...Cc2, ...A, ...Cc2, ...D);
+            }
+          }
+          g.setAttribute("position", new me(new Float32Array(P3), 3));
+          g.computeVertexNormals();
+          RB.push(part(col(g, 0.64, 0.65, 0.64), 12));
+        }
+        this.rotorGeo = merge(RB);
+        this.rotorGeo.computeVertexNormals();
         this.paintMat = new Rn({
           vertexShader: LIT_VS,
           fragmentShader: LIT_FS,
@@ -18538,7 +18662,7 @@ void main() {
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
-      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)]);
+      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
       for (const [kind, level, rad] of kinds) {
         if (alt > rad * 1.2) continue;
@@ -18659,7 +18783,7 @@ void main() {
       }
       const n = m.data.length / m.stride;
       if (!n) return;
-      if (m.kind === "paint") {
+      if (m.kind === "paint" || m.kind === "gpaint") {
         const nv2 = m.data.length / 9, pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3);
         const mid2 = new C();
         let rad2 = 0;
@@ -18694,7 +18818,7 @@ void main() {
         t.n = nv2;
         t.own = true;
         t.rad = rad2 + 1;
-        t.kind = "paint";
+        t.kind = m.kind;
         this.scene.add(mesh2);
         return;
       }
@@ -18862,6 +18986,9 @@ uniform vec2 uSky;         // where the skyline's near band ends (0: none), and 
 #endif
 uniform vec2 uFade;
 uniform vec2 uFadeIn;
+#ifdef ROTOR
+uniform float uTime;
+#endif
 ${PALETTE}
 varying vec3 vRel;
 varying vec3 vNor;
@@ -18887,6 +19014,18 @@ void main() {
       pos.y = 1.0 + (pos.y - 1.0) * k;
       nl.y /= max(k, 0.02);
     }
+  #elif defined(LANDMARK)
+    // structures.js picks which instances are drawn and in which shape; aInst x seed, w (a rotor's) how fast it turns
+    vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+    #ifdef ROTOR
+      float ang = uTime * aInst.w + aInst.x * 6.2832;
+      float ca = cos(ang), sa = sin(ang);
+      pos.yz = mat2(ca, sa, -sa, ca) * pos.yz;
+      nl.yz = mat2(ca, sa, -sa, ca) * nl.yz;
+    #endif
+    float keep = 1.0;
+    float jit = 0.5;
+    float reach = 1.0;
   #elif defined(PARTS)
     float keep = abs(aPart - aInst.y) < 0.5 ? 1.0 : 0.0;        // every part is one kind of thing (feat.js)
     vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
@@ -22720,6 +22859,243 @@ void main() {
     }
   };
 
+  // src/structures.js
+  var MAGIC = 827018572;
+  var K_GUYED = 0;
+  var K_LATTICE = 1;
+  var K_TURBINE = 5;
+  var BUILT = [150, 60, 30, 50, 40, 80];
+  var WIND = 225 * Math.PI / 180;
+  var NEAR = 2200;
+  var BEACON_VS = (
+    /* glsl */
+    `
+attribute vec2 aLt;       // flashing (1) or steady (0), its phase
+uniform float uTime;
+uniform float uDark;
+uniform float uScale;
+varying float vI;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  float d = length(mv.xyz);
+  // an obstruction beacon flashes 30 times a minute; the side lights of a tall mast burn steady
+  float on = aLt.x > 0.5 ? step(fract(uTime * 0.5 + aLt.y), 0.4) : 1.0;
+  vI = on * uDark * (1.0 - smoothstep(30000.0, 60000.0, d));
+  gl_PointSize = vI > 0.0 ? clamp(uScale / max(d, 1.0), 3.0, 10.0) : 0.0;
+  gl_Position = projectionMatrix * mv;
+}`
+  );
+  var BEACON_FS = (
+    /* glsl */
+    `
+varying float vI;
+void main() {
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(q, q);
+  if (r2 > 1.0) discard;
+  // (a lamp only a few pixels across is mostly its edge: a broad core keeps it bright)
+  gl_FragColor = vec4(vec3(1.0, 0.06, 0.025) * vI * (0.6 + 1.6 * exp(-r2 * 4.0)) * (1.0 - r2), 1.0);
+}`
+  );
+  var Structures = class {
+    constructor(game2) {
+      this.game = game2;
+      this.ready = false;
+      this.loading = null;
+      this.n = 0;
+      this.at = null;
+    }
+    load() {
+      const g = this.game, t = g.terrain;
+      if (this.loading) return this.loading;
+      if (!t.lmGeos || !g.meta.files || !g.meta.files.structures) return this.loading = Promise.resolve(false);
+      this.loading = fetch(vurl("data/" + g.meta.files.structures.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((p) => {
+        if (!p) return false;
+        this.build(p.data);
+        return true;
+      }).catch((e) => {
+        console.warn("structures unavailable:", e);
+        return false;
+      });
+      return this.loading;
+    }
+    build(u8) {
+      const g = this.game, t = g.terrain, q = g.quality;
+      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      if (dv2.getUint32(0, true) !== MAGIC) return;
+      const n = dv2.getUint32(4, true);
+      const reachK = q.skyFar || 0.6;
+      this.recs = [];
+      for (let i = 0; i < n; i++) {
+        const o = 16 + i * 16;
+        const r = {
+          x: dv2.getInt32(o, true) / 10,
+          y: dv2.getInt32(o + 4, true) / 10,
+          z: dv2.getUint16(o + 8, true) / 10 - 100,
+          h: dv2.getUint16(o + 10, true) / 10,
+          kind: dv2.getUint8(o + 12),
+          rotor: dv2.getUint8(o + 13),
+          flags: dv2.getUint8(o + 14),
+          seed: dv2.getUint8(o + 15)
+        };
+        r.reach = Math.min(45e3, Math.max(2e3, r.h * 160)) * reachK;
+        r.hub = r.kind === K_TURBINE ? Math.max(r.h - r.rotor / 2, r.h * 0.55) : r.h;
+        this.recs.push(r);
+      }
+      this.n = n;
+      const mk = (defs) => new Rn({
+        vertexShader: SCATTER_VS,
+        fragmentShader: LIT_FS,
+        side: Bn,
+        defines: Object.assign({ SCATTER: 1, LANDMARK: 1 }, defs || {}, t.defines),
+        uniforms: Object.assign({}, g.U, { uKind: { value: 0 }, uFade: { value: new et(1e9, 1e9) }, uFadeIn: { value: new et(-2, -1) } })
+      });
+      this.mat = mk();
+      this.rotorMat = mk({ ROTOR: 1 });
+      this.meshes = {};
+      const count = {};
+      for (const r of this.recs) {
+        count[r.kind * 2] = (count[r.kind * 2] || 0) + 1;
+        if (r.kind <= K_LATTICE) count[r.kind * 2 + 1] = (count[r.kind * 2 + 1] || 0) + 1;
+      }
+      const mesh = (geo, mat, cap) => {
+        const m = new bo(geo, mat, cap);
+        const g2 = new Yt();
+        if (geo.index) g2.setIndex(geo.index);
+        for (const name in geo.attributes) g2.setAttribute(name, geo.attributes[name]);
+        const a = new vi(new Float32Array(cap * 4), 4);
+        g2.setAttribute("aInst", a);
+        m.geometry = g2;
+        m.count = 0;
+        m.frustumCulled = false;
+        m.matrixAutoUpdate = false;
+        m.visible = false;
+        g.scene.add(m);
+        return m;
+      };
+      for (const p in count) if (t.lmGeos[p]) this.meshes[p] = mesh(t.lmGeos[p], this.mat, count[p]);
+      const nT = this.recs.filter((r) => r.kind === K_TURBINE).length;
+      this.rotor = nT ? mesh(t.rotorGeo, this.rotorMat, nT) : null;
+      let nB = 0;
+      for (const r of this.recs) if (r.flags & 4) nB += r.kind !== K_TURBINE && r.h >= 107 ? 4 : 1;
+      this.U = { uTime: g.U.uTime, uDark: { value: 0 }, uScale: { value: 1600 * (g.renderer ? Math.min(2, g.renderer.getPixelRatio()) : 1) } };
+      this.beaconMat = new Rn({
+        vertexShader: BEACON_VS,
+        fragmentShader: BEACON_FS,
+        uniforms: this.U,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: yu
+      });
+      const pg = new Yt();
+      pg.setAttribute("position", new me(new Float32Array(Math.max(1, nB) * 3), 3));
+      pg.setAttribute("aLt", new me(new Float32Array(Math.max(1, nB) * 2), 2));
+      pg.setDrawRange(0, 0);
+      this.pts = new Ro(pg, this.beaconMat);
+      this.pts.frustumCulled = false;
+      this.pts.matrixAutoUpdate = false;
+      this.pts.visible = false;
+      this.pts.renderOrder = 5;
+      g.scene.add(this.pts);
+      this.O = new Float64Array(3);
+      this.ready = true;
+    }
+    // which structures show from here, in which shape, about an origin at the camera
+    place(cm2) {
+      const t02 = this.at || [0, 0];
+      this.at = [cm2[0], cm2[1]];
+      cyl(cm2[0], cm2[1], 0, this.O);
+      const O = this.O, P2 = new Float64Array(3);
+      const M = new Ht(), V2 = new C(), Q = new ke(), Qx2 = new ke(), S = new C(), H = new C();
+      const X = new C(1, 0, 0), Y = new C(0, 1, 0);
+      const fill = {};
+      for (const p in this.meshes) fill[p] = 0;
+      let nr2 = 0, nb = 0;
+      const bp2 = this.pts.geometry.attributes.position.array, bl = this.pts.geometry.attributes.aLt.array;
+      const alt = Math.max(0, cm2[2] - this.game.groundUnderCam);
+      for (const r of this.recs) {
+        const d = Math.hypot(r.x - cm2[0], r.y - cm2[1], alt);
+        if (d > r.reach) continue;
+        const turbine = r.kind === K_TURBINE;
+        const part = r.kind * 2 + (r.kind <= K_LATTICE && d > NEAR ? 1 : 0);
+        const m = this.meshes[part];
+        if (!m) continue;
+        cyl(r.x, r.y, r.z, P2);
+        V2.set(P2[0] - O[0], P2[1] - O[1], P2[2] - O[2]);
+        Qx2.setFromAxisAngle(X, r.y / R);
+        Q.setFromAxisAngle(Y, turbine ? WIND : r.seed / 255 * 2 * Math.PI).premultiply(Qx2);
+        const k = r.hub / BUILT[r.kind];
+        if (r.kind === K_GUYED) S.set(Math.pow(k, 0.3), k, Math.pow(k, 0.3));
+        else S.set(k, k, k);
+        M.compose(V2, Q, S);
+        const i = fill[part]++;
+        m.setMatrixAt(i, M);
+        m.geometry.attributes.aInst.array[i * 4] = r.seed / 255;
+        if (turbine && this.rotor) {
+          H.set(5.6 * k, 81.8 * k, 0).applyQuaternion(Q).add(V2);
+          const rr2 = Math.max(r.rotor / 2, 2);
+          S.set(rr2, rr2, rr2);
+          M.compose(H, Q, S);
+          this.rotor.setMatrixAt(nr2, M);
+          const a = this.rotor.geometry.attributes.aInst.array;
+          a[nr2 * 4] = r.seed / 255;
+          a[nr2 * 4 + 3] = 60 / rr2;
+          nr2++;
+        }
+        if (r.flags & 4) {
+          const lights = [[turbine ? r.hub + 2.4 * k : r.h + 0.6, 1]];
+          if (!turbine && r.h >= 107) lights.push([r.h * 0.5, 1], [r.h * 0.25, 0], [r.h * 0.75, 0]);
+          for (const [hy2, fl] of lights) {
+            cyl(r.x, r.y, r.z + hy2, P2);
+            bp2[nb * 3] = P2[0] - O[0];
+            bp2[nb * 3 + 1] = P2[1] - O[1];
+            bp2[nb * 3 + 2] = P2[2] - O[2];
+            bl[nb * 2] = fl;
+            bl[nb * 2 + 1] = turbine ? 0 : r.seed / 255;
+            nb++;
+          }
+        }
+      }
+      for (const p in this.meshes) {
+        const m = this.meshes[p];
+        m.count = fill[p];
+        m.instanceMatrix.needsUpdate = true;
+        m.geometry.attributes.aInst.needsUpdate = true;
+      }
+      if (this.rotor) {
+        this.rotor.count = nr2;
+        this.rotor.instanceMatrix.needsUpdate = true;
+        this.rotor.geometry.attributes.aInst.needsUpdate = true;
+      }
+      this.pts.geometry.setDrawRange(0, nb);
+      this.pts.geometry.attributes.position.needsUpdate = true;
+      this.pts.geometry.attributes.aLt.needsUpdate = true;
+    }
+    update(camC) {
+      if (!this.ready) return;
+      const g = this.game, cm2 = g.camMap, s29 = g.sky;
+      if (!this.at || Math.hypot(cm2[0] - this.at[0], cm2[1] - this.at[1]) > 150) this.place(cm2);
+      this.U.uDark.value = (s29.isNight ? 1 : 1 - smoothstep(0.03, 0.2, s29.dayness)) * g.U.uLights.value;
+      const dx2 = this.O[0] - camC[0], dy2 = this.O[1] - camC[1], dz = this.O[2] - camC[2];
+      const objs = Object.values(this.meshes).concat(this.rotor ? [this.rotor] : [], [this.pts]);
+      for (const o of objs) {
+        o.visible = o === this.pts ? this.U.uDark.value > 1e-3 && this.pts.geometry.drawRange.count > 0 : o.count > 0;
+        if (o.visible) {
+          const m = o.matrix;
+          m.identity();
+          m.elements[12] = dx2;
+          m.elements[13] = dy2;
+          m.elements[14] = dz;
+          o.matrixWorld.copy(m);
+        }
+      }
+    }
+    // (drawn in both of the frame's depth ranges: each range clips them at its own near and far planes)
+    passVisibility() {
+    }
+  };
+
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
@@ -23015,6 +23391,7 @@ void main() {
       this.radio = new Radio(this);
       this.lights = new Lights(this);
       this.skyline = new Skyline(this);
+      this.structures = new Structures(this);
       this.nightLights = params.get("lights") !== "0" ? new NightLights(this) : null;
       let start = meta.starts[0], named = false;
       const hash4 = (location.hash || "").replace("#", "").toLowerCase();
@@ -23039,6 +23416,7 @@ void main() {
       else this.player.place(start.x, start.y, start.hdg, true);
       if (params.get("lights") !== "0") this.lights.load();
       if (params.get("sky") !== "0") this.skyline.load();
+      if (params.get("masts") !== "0") this.structures.load();
       if (saved) {
         this.resume = saved;
         this.sky.hours = saved.hours;
@@ -23767,6 +24145,7 @@ void main() {
       }
       if (this.lights) this.lights.update(camC);
       if (this.skyline) this.skyline.update(camC);
+      if (this.structures) this.structures.update(camC);
       if (this.nightLights) this.nightLights.update(camC);
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
@@ -23780,6 +24159,7 @@ void main() {
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(false, nearFar);
         if (this.skyline) this.skyline.passVisibility(false, nearFar);
+        if (this.structures) this.structures.passVisibility(false, nearFar);
         if (this.nightLights) this.nightLights.passVisibility(false);
         r.render(this.scene, cam);
         const calls = r.info.render.calls, tris = r.info.render.triangles;
@@ -23789,6 +24169,7 @@ void main() {
         cam.updateProjectionMatrix();
         this.terrain.passVisibility(true, nearFar);
         if (this.skyline) this.skyline.passVisibility(true, nearFar);
+        if (this.structures) this.structures.passVisibility(true, nearFar);
         if (this.nightLights) this.nightLights.passVisibility(true);
         r.render(this.scene, cam);
         this.drawCalls = calls + r.info.render.calls;

@@ -3153,6 +3153,315 @@
     }
     return new Float32Array(out);
   }
+  var A_PITCH = 0;
+  var A_TRACK = 1;
+  var A_POOL = 2;
+  var A_GOLF = 4;
+  var A_PLAYGROUND = 5;
+  var A_SPACE = 6;
+  var S_BASEBALL = 1;
+  var S_SOCCER = 2;
+  var S_FOOTBALL = 3;
+  var S_TENNIS = 4;
+  var S_BASKETBALL = 5;
+  var S_RUNNING = 6;
+  var S_PICKLEBALL = 8;
+  var S_VOLLEYBALL = 9;
+  var S_GOLF = 10;
+  var S_SKATE = 11;
+  var S_HOCKEY = 13;
+  var LC_GROUND = { TURF: 20, ARTIFICIAL: 21, COURT: 22, ASPHALT: 23, CLAY: 24, TRACK: 25, POOL: 26, GREEN: 27, FAIRWAY: 28, ROUGH: 29, PLAY: 30, INFIELD: 31 };
+  function areaCode(kind, sub) {
+    const sp = sub & 15, sf = sub >> 4, G = LC_GROUND;
+    if (kind === A_PITCH || kind === A_TRACK) {
+      const court = kind === A_PITCH && (sp === S_TENNIS || sp === S_PICKLEBALL);
+      if (sf === 1) return G.TURF;
+      if (sf === 2) return G.ARTIFICIAL;
+      if (sf === 3) return court ? G.COURT : G.ASPHALT;
+      if (sf === 4) return G.COURT;
+      if (sf === 5) return kind === A_TRACK ? 14 : G.CLAY;
+      if (sf === 6) return 13;
+      if (sf === 7) return 14;
+      if (sf === 8) return G.TRACK;
+      if (kind === A_TRACK) return sp === 0 ? G.TRACK : 14;
+      if (court) return G.COURT;
+      if (sp === S_BASKETBALL || sp === S_SKATE || sp === S_HOCKEY) return G.ASPHALT;
+      if (sp === S_VOLLEYBALL) return 13;
+      if (sp === S_GOLF) return G.GREEN;
+      if (sp === S_RUNNING) return G.TRACK;
+      return G.TURF;
+    }
+    if (kind === A_POOL) return G.POOL;
+    if (kind === A_GOLF) return [0, G.GREEN, G.FAIRWAY, 13, G.FAIRWAY, G.ROUGH, 15, G.FAIRWAY][sub] || 0;
+    if (kind === A_PLAYGROUND) return G.PLAY;
+    return 0;
+  }
+  function paintAreas(reg, lc, lcN, mx0, my0, s) {
+    const f = reg && reg.feat;
+    if (!f || !f.nA) return [lc, lcN];
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    const list = [];
+    for (let a = 0; a < f.nA; a++) {
+      const b = a * 4;
+      if (f.aBox[b + 2] < lx0 || f.aBox[b] > lx0 + s || f.aBox[b + 3] < ly0 || f.aBox[b + 1] > ly0 + s) continue;
+      const code = areaCode(f.aKind[a], f.aSub[a]);
+      if (code) list.push([(f.aBox[b + 2] - f.aBox[b]) * (f.aBox[b + 3] - f.aBox[b + 1]), a, code, f.aKind[a] === A_PITCH && (f.aSub[a] & 15) === S_BASEBALL]);
+    }
+    if (!list.length) return [lc, lcN];
+    list.sort((p, q) => q[0] - p[0]);
+    if (!lc) {
+      lcN = Math.min(368, Math.round(s));
+      lc = new Uint8Array(lcN * lcN);
+    }
+    const px = s / lcN, xs = [];
+    for (const [, a, code, ball] of list) {
+      const soft = code === LC_GROUND.TURF;
+      const b = a * 4;
+      const j0 = Math.max(0, Math.floor((f.aBox[b + 1] - ly0) / px)), j1 = Math.min(lcN - 1, Math.floor((f.aBox[b + 3] - ly0) / px));
+      for (let j = j0; j <= j1; j++) {
+        const y = ly0 + (j + 0.5) * px;
+        xs.length = 0;
+        for (let r = f.aRing[a], re = r + f.aRings[a]; r < re; r++) {
+          const v0 = f.rStart[r], n = f.rCount[r];
+          for (let k = 0; k < n; k++) {
+            const p = v0 + k, q = v0 + (k + 1) % n;
+            const ya = f.ay[p], yb = f.ay[q];
+            if (ya > y === yb > y) continue;
+            xs.push(f.ax[p] + (y - ya) / (yb - ya) * (f.ax[q] - f.ax[p]));
+          }
+        }
+        if (xs.length < 2) continue;
+        xs.sort((p, q) => p - q);
+        for (let k = 0; k + 1 < xs.length; k += 2) {
+          const i0 = Math.max(0, Math.ceil((xs[k] - lx0) / px - 0.5)), i1 = Math.min(lcN - 1, Math.floor((xs[k + 1] - lx0) / px - 0.5));
+          if (!soft) {
+            for (let i = i0; i <= i1; i++) lc[j * lcN + i] = code;
+            continue;
+          }
+          for (let i = i0; i <= i1; i++) {
+            const c = lc[j * lcN + i];
+            lc[j * lcN + i] = c === 14 ? ball ? LC_GROUND.INFIELD : 14 : c === 1 ? 1 : code;
+          }
+        }
+      }
+    }
+    return [lc, lcN];
+  }
+  function obb(f, a) {
+    const r = f.aRing[a], v0 = f.rStart[r], n = f.rCount[r];
+    if (n < 3) return null;
+    const P2 = [];
+    for (let k = 0; k < n; k++) P2.push([f.ax[v0 + k], f.ay[v0 + k]]);
+    P2.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+    const cr = (o, p, q) => (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+    const lo = [], hi = [];
+    for (const p of P2) {
+      while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+      lo.push(p);
+    }
+    for (let k = P2.length - 1; k >= 0; k--) {
+      const p = P2[k];
+      while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop();
+      hi.push(p);
+    }
+    const H = lo.slice(0, -1).concat(hi.slice(0, -1));
+    if (H.length < 3) return null;
+    let best = null;
+    for (let k = 0; k < H.length; k++) {
+      const p = H[k], q = H[(k + 1) % H.length];
+      let ux2 = q[0] - p[0], uy2 = q[1] - p[1];
+      const l = Math.hypot(ux2, uy2);
+      if (l < 1e-6) continue;
+      ux2 /= l;
+      uy2 /= l;
+      let a02 = 1e9, a12 = -1e9, b02 = 1e9, b12 = -1e9;
+      for (const h of H) {
+        const s = h[0] * ux2 + h[1] * uy2, t = -h[0] * uy2 + h[1] * ux2;
+        a02 = Math.min(a02, s);
+        a12 = Math.max(a12, s);
+        b02 = Math.min(b02, t);
+        b12 = Math.max(b12, t);
+      }
+      const area = (a12 - a02) * (b12 - b02);
+      if (!best || area < best[0]) best = [area, ux2, uy2, a02, a12, b02, b12];
+    }
+    if (!best) return null;
+    let [, ux, uy, a0, a1, b0, b1] = best;
+    const sa = (a0 + a1) / 2, sb = (b0 + b1) / 2;
+    const cx = sa * ux - sb * uy, cy = sa * uy + sb * ux;
+    let L2 = a1 - a0, W = b1 - b0;
+    if (W > L2) {
+      [L2, W] = [W, L2];
+      [ux, uy] = [-uy, ux];
+    }
+    return [cx, cy, ux, uy, L2, W];
+  }
+  function groundPaint(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nA) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), WHITE = [0.78, 0.78, 0.74];
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    const vtx = (x, y) => {
+      const h = world2.groundH(x, y, true);
+      cyl(x, y, h + 0.03, p32);
+      cyl(x, y, h + 1.03, u3);
+      return [p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2]];
+    };
+    const push = (p, col) => out.push(p[0], p[1], p[2], p[3], p[4], p[5], col[0], col[1], col[2]);
+    const strip = (x0, y0, x1, y1, w, col = WHITE) => {
+      const L2 = Math.hypot(x1 - x0, y1 - y0);
+      if (L2 < 0.05) return;
+      const ux = (x1 - x0) / L2, uy = (y1 - y0) / L2, nx = -uy * w / 2, ny = ux * w / 2;
+      const n = Math.max(1, Math.ceil(L2 / 2));
+      let A = vtx(x0 - nx, y0 - ny), B = vtx(x0 + nx, y0 + ny);
+      for (let k = 1; k <= n; k++) {
+        const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
+        const C2 = vtx(x - nx, y - ny), D2 = vtx(x + nx, y + ny);
+        push(A, col);
+        push(C2, col);
+        push(D2, col);
+        push(A, col);
+        push(D2, col);
+        push(B, col);
+        A = C2;
+        B = D2;
+      }
+    };
+    for (let a = 0; a < f.nA; a++) {
+      const kind = f.aKind[a], sp = f.aSub[a] & 15;
+      const field = kind === A_PITCH && (sp === S_TENNIS || sp === S_PICKLEBALL || sp === S_SOCCER || sp === S_FOOTBALL || sp === S_BASKETBALL);
+      if (!field && kind !== A_SPACE) continue;
+      const b = a * 4;
+      if (f.aBox[b + 2] < lx0 || f.aBox[b] > lx0 + s || f.aBox[b + 3] < ly0 || f.aBox[b + 1] > ly0 + s) continue;
+      if (f.aBox[b + 2] - f.aBox[b] > 250 || f.aBox[b + 3] - f.aBox[b + 1] > 250) continue;
+      const o = obb(f, a);
+      if (!o) continue;
+      const [ocx, ocy, ux, uy, L2, W] = o;
+      if (ocx < lx0 || ocx >= lx0 + s || ocy < ly0 || ocy >= ly0 + s) continue;
+      const X = reg.x0 + ocx, Y = reg.y0 + ocy, vx = -uy, vy = ux;
+      const at = (p, q) => [X + ux * p + vx * q, Y + uy * p + vy * q];
+      const seg = (p0, q0, p1, q1, w) => {
+        const A = at(p0, q0), B = at(p1, q1);
+        strip(A[0], A[1], B[0], B[1], w);
+      };
+      const rect = (p0, q0, p1, q1, w) => {
+        seg(p0, q0, p1, q0, w);
+        seg(p1, q0, p1, q1, w);
+        seg(p1, q1, p0, q1, w);
+        seg(p0, q1, p0, q0, w);
+      };
+      const arc = (pc, qc, r, t0, t1, w) => {
+        const n = Math.max(6, Math.ceil(Math.abs(t1 - t0) * r / 1.5));
+        for (let k = 0; k < n; k++) {
+          const ta = t0 + (t1 - t0) * k / n, tb = t0 + (t1 - t0) * (k + 1) / n;
+          seg(pc + r * Math.cos(ta), qc + r * Math.sin(ta), pc + r * Math.cos(tb), qc + r * Math.sin(tb), w);
+        }
+      };
+      if (kind === A_SPACE) {
+        if (L2 > 9 || W > 5 || L2 < 3.5) continue;
+        seg(-L2 / 2, -W / 2, L2 / 2, -W / 2, 0.1);
+        seg(-L2 / 2, W / 2, L2 / 2, W / 2, 0.1);
+        continue;
+      }
+      if (sp === S_TENNIS || sp === S_PICKLEBALL) {
+        const tn = sp === S_TENNIS, cl = tn ? 23.77 : 13.41, cw = tn ? 10.97 : 6.1, pitchL = tn ? 34 : 18.3, pitchW = tn ? 16.8 : 9.1;
+        const fit = (A, B) => {
+          const nl = Math.max(1, Math.round(A / pitchL)), nw = Math.max(1, Math.round(B / pitchW));
+          return [nl, nw, Math.abs(A / nl - pitchL) / pitchL + Math.abs(B / nw - pitchW) / pitchW + 0.05 * (nl - 1)];
+        };
+        const fa = fit(L2, W), fb = fit(W, L2), turn = fb[2] < fa[2];
+        const AL = turn ? W : L2, AW = turn ? L2 : W, nL = turn ? fb[0] : fa[0], nW = turn ? fb[1] : fa[1];
+        const sl = AL / nL, sw = AW / nW, k = Math.min(1, (sl - 0.4) / cl, (sw - 0.4) / cw);
+        if (k < 0.6) continue;
+        const hl = cl * k / 2, hw = cw * k / 2;
+        const seg0 = seg;
+        const sg = turn ? (p0, q0, p1, q1, w) => seg0(q0, p0, q1, p1, w) : seg0;
+        const rc = (p0, q0, p1, q1, w) => {
+          sg(p0, q0, p1, q0, w);
+          sg(p1, q0, p1, q1, w);
+          sg(p1, q1, p0, q1, w);
+          sg(p0, q1, p0, q0, w);
+        };
+        for (let i = 0; i < nL; i++) for (let j = 0; j < nW; j++) {
+          const pc = -AL / 2 + (i + 0.5) * sl, qc = -AW / 2 + (j + 0.5) * sw;
+          const seg2 = sg;
+          rc(pc - hl, qc - hw, pc + hl, qc + hw, 0.07);
+          if (tn) {
+            const hs = 8.23 * k / 2, sv = 6.4 * k;
+            seg2(pc - hl, qc - hs, pc + hl, qc - hs, 0.05);
+            seg2(pc - hl, qc + hs, pc + hl, qc + hs, 0.05);
+            seg2(pc - sv, qc - hs, pc - sv, qc + hs, 0.05);
+            seg2(pc + sv, qc - hs, pc + sv, qc + hs, 0.05);
+            seg2(pc - sv, qc, pc + sv, qc, 0.05);
+            seg2(pc - hl, qc, pc - hl + 0.1, qc, 0.05);
+            seg2(pc + hl - 0.1, qc, pc + hl, qc, 0.05);
+          } else {
+            const kz = 2.13 * k;
+            seg2(pc - kz, qc - hw, pc - kz, qc + hw, 0.05);
+            seg2(pc + kz, qc - hw, pc + kz, qc + hw, 0.05);
+            seg2(pc - hl, qc, pc - kz, qc, 0.05);
+            seg2(pc + kz, qc, pc + hl, qc, 0.05);
+          }
+        }
+      } else if (sp === S_BASKETBALL) {
+        const full = L2 > 19;
+        const k = Math.min(1, (L2 - 0.6) / (full ? 28.65 : 14.3), (W - 0.6) / 15.24);
+        if (k < 0.45) continue;
+        const hl = (full ? 28.65 : 14.3) * k / 2, hw = 15.24 * k / 2;
+        rect(-hl, -hw, hl, hw, 0.05);
+        const ends = full ? [-1, 1] : [-1];
+        if (full) {
+          seg(0, -hw, 0, hw, 0.05);
+          arc(0, 0, 1.83 * k, 0, 2 * Math.PI, 0.05);
+        } else seg(hl, -hw, hl, hw, 0.05);
+        for (const e of ends) {
+          const base = e * hl, inw = -e;
+          const key2 = 5.79 * k, kw = 4.88 * k / 2;
+          seg(base, -kw, base + inw * key2, -kw, 0.05);
+          seg(base, kw, base + inw * key2, kw, 0.05);
+          seg(base + inw * key2, -kw, base + inw * key2, kw, 0.05);
+          arc(base + inw * key2, 0, 1.83 * k, inw > 0 ? -Math.PI / 2 : Math.PI / 2, inw > 0 ? Math.PI / 2 : 3 * Math.PI / 2, 0.05);
+          const hoop = base + inw * 1.6 * k, r3 = Math.min(7.24 * k, hw - 0.3), qs = Math.min(6.7 * k, hw - 0.3);
+          const tc = Math.asin(Math.min(1, qs / r3)), pend = hoop + inw * r3 * Math.cos(tc);
+          seg(base, -qs, pend, -qs, 0.05);
+          seg(base, qs, pend, qs, 0.05);
+          if (inw > 0) arc(hoop, 0, r3, -tc, tc, 0.05);
+          else arc(hoop, 0, r3, Math.PI - tc, Math.PI + tc, 0.05);
+        }
+      } else if (sp === S_SOCCER) {
+        const k = Math.min(1, L2 / 105, W / 68), hl = L2 / 2 - 0.5, hw = W / 2 - 0.5;
+        if (L2 < 30) continue;
+        rect(-hl, -hw, hl, hw, 0.12);
+        seg(0, -hw, 0, hw, 0.12);
+        arc(0, 0, 9.15 * k, 0, 2 * Math.PI, 0.12);
+        for (const e of [-1, 1]) {
+          const g = e * hl, inw = -e, pa = 16.5 * k, pw = Math.min(hw, 20.16 * k), ga = 5.5 * k, gw = Math.min(hw, 9.16 * k);
+          seg(g + inw * pa, -pw, g + inw * pa, pw, 0.12);
+          seg(g, -pw, g + inw * pa, -pw, 0.12);
+          seg(g, pw, g + inw * pa, pw, 0.12);
+          seg(g + inw * ga, -gw, g + inw * ga, gw, 0.12);
+          seg(g, -gw, g + inw * ga, -gw, 0.12);
+          seg(g, gw, g + inw * ga, gw, 0.12);
+          const spot = g + inw * 11 * k, r = 9.15 * k, t = Math.acos(Math.min(1, (pa - 11 * k) / r));
+          if (inw > 0) arc(spot, 0, r, -t, t, 0.12);
+          else arc(spot, 0, r, Math.PI - t, Math.PI + t, 0.12);
+          seg(spot - 0.11, 0, spot + 0.11, 0, 0.22);
+        }
+      } else if (sp === S_FOOTBALL) {
+        if (L2 < 60) continue;
+        const k = Math.min(1, (L2 - 1) / 109.73), hl = 109.73 * k / 2, hw = Math.min(W / 2 - 0.5, 24.38);
+        rect(-hl, -hw, hl, hw, 0.12);
+        const gl = 45.72 * k;
+        for (let yd = -50; yd <= 50; yd += 5) seg(yd / 50 * gl, -hw, yd / 50 * gl, hw, 0.12);
+        for (let yd = -49; yd <= 49; yd++) {
+          if (yd % 5 === 0) continue;
+          const p = yd / 50 * gl;
+          for (const q of [-hw + 0.6, -8.13 * k, 8.13 * k, hw - 0.6]) seg(p, q - 0.3, p, q + 0.3, 0.1);
+        }
+      }
+    }
+    return new Float32Array(out);
+  }
 
   // src/spans.js
   var D = { SLAB: 1, GIRDER: 2, DECK_TRUSS: 3, TRUSS: 4, DECK_ARCH: 5, ARCH: 6, SUSPENSION: 7, STAYED: 8, LIFT: 9, BASCULE: 10, SWING: 11, FRAME: 12 };
@@ -4636,6 +4945,10 @@
         lcN = 0;
       }
     }
+    if (level >= 6 && !sea) {
+      const reg2 = world.regionAt(mx0 + s / 2, my0 + s / 2);
+      if (reg2 && reg2.feat && reg2.feat.nA) [lc, lcN] = paintAreas(reg2, lc, lcN, mx0, my0, s);
+    }
     const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, tun, lc, lcN, size: s, mx0, my0 };
     const tr = [pos.buffer, nor.buffer, loc.buffer];
     if (road) tr.push(road.buffer, roadK.buffer);
@@ -4656,10 +4969,10 @@
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: kind === "wires" ? 6 : 5 }, [arr2.buffer]);
       return;
     }
-    if (kind === "signs" || kind === "paint" || kind === "power" || kind === "pwires") {
-      const fn = kind === "signs" ? signItems : kind === "paint" ? paintTris : kind === "power" ? powerItems : powerWires;
+    if (kind === "signs" || kind === "paint" || kind === "gpaint" || kind === "power" || kind === "pwires") {
+      const fn = kind === "signs" ? signItems : kind === "paint" ? paintTris : kind === "gpaint" ? groundPaint : kind === "power" ? powerItems : powerWires;
       const arr2 = reg ? fn(world, reg, mx0, my0, s, cx, cy, cz) : new Float32Array(0);
-      const stride = kind === "signs" ? 7 : kind === "paint" ? 9 : kind === "power" ? 5 : 6;
+      const stride = kind === "signs" ? 7 : kind === "paint" || kind === "gpaint" ? 9 : kind === "power" ? 5 : 6;
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride }, [arr2.buffer]);
       return;
     }
