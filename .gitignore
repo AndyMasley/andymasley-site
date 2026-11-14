@@ -48,9 +48,11 @@ data/source/GLHYMPS*
 # Python bytecode from the bake scripts
 __pycache__/
 
-# The O'Neill cylinder's 1 m land cover packs and its building region files come from fixed releases before builds
+# The O'Neill cylinder's 1 m land cover packs, its building region files and its aerial photographs come from fixed
+# releases before builds
 # (scripts/prepare-oneill-assets.mjs, data/derived/oneill/release.json).
 /public/games/oneill-massachusetts/data/lcp/
 /public/games/oneill-massachusetts/data/r2/
 /public/games/oneill-massachusetts/data/b3/
 /public/games/oneill-massachusetts/data/lights/
+/public/games/oneill-massachusetts/data/aer/

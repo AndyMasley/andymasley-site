@@ -40,6 +40,16 @@
       "archiveBytes": 15779840,
       "files": 219,
       "expandedBytes": 15586117
+    },
+    {
+      "tag": "oneill-aer-2026-11-13-f83f4f74add6",
+      "directory": "aer",
+      "manifestSha256": "f83f4f74add658da97519e34aa7c6bd3c369fcb22df790c425cbf78321644def",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-aer-2026-11-13-f83f4f74add6/oneill-aer-f83f4f74add6.tar",
+      "archiveSha256": "41f4034c8249cd243cd5c39521523ca8da6ee2d3526fc22481d40c52e7a7eedc",
+      "archiveBytes": 157235200,
+      "files": 226,
+      "expandedBytes": 157039040
     }
   ]
 }
