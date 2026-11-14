@@ -12,14 +12,14 @@
       "expandedBytes": 1257561507
     },
     {
-      "tag": "oneill-r2-2026-11-13-8dd964a7838a",
+      "tag": "oneill-r2-2026-11-14-7db761c22409",
       "directory": "r2",
-      "manifestSha256": "8dd964a7838ab507c9386c7455e969be208511fce04b57164500ffe711ac24f6",
-      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-r2-2026-11-13-8dd964a7838a/oneill-r2-8dd964a7838a.tar",
-      "archiveSha256": "59409e22c6cb3483233bb555228427892fa3e4ba5fb97c250fb9514d2f21c122",
-      "archiveBytes": 60979200,
+      "manifestSha256": "7db761c2240924bb7c1542b8cfacc7dca6a420d37c47f6deb85cac181f28390e",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-r2-2026-11-14-7db761c22409/oneill-r2-7db761c22409.tar",
+      "archiveSha256": "4af58b4919173a24ede48735fe1c923cc3dae61d00d467f4bebc40d846bb2ec4",
+      "archiveBytes": 62863360,
       "files": 223,
-      "expandedBytes": 60782624
+      "expandedBytes": 62667928
     },
     {
       "tag": "oneill-b3-2026-11-13-987e192df574",
