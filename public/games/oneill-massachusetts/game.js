@@ -14935,7 +14935,12 @@ void main() {
     reg.bCell = new Uint32Array(buf.slice(p, p + nc2 * 4));
     p += nc2 * 4;
     reg.b = new Uint8Array(buf.slice(p, p + nB * 12));
-    reg.roof = dv2.getUint32(20, true) & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
+    const bflags = dv2.getUint32(20, true);
+    reg.roof = bflags & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
+    const wo = p + nB * 12 + (bflags & 1 ? nB * 2 : 0);
+    reg.wall = bflags & 2 ? new Uint16Array(buf.slice(wo, wo + nB * 2)) : null;
+    const fo2 = wo + (bflags & 2 ? nB * 2 : 0);
+    reg.fac = bflags & 4 ? new Uint16Array(buf.slice(fo2, fo2 + nB * 8)) : null;
     const gw = reg.gw = Math.ceil((RS2 + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill) => {
@@ -16707,6 +16712,18 @@ void main() {
         emis = vStyle > 4.5 ? vec3(1.0, 0.66, 0.30) * (1.5 * night) : vStyle > 3.5 ? vec3(1.0, 0.72, 0.38) * (0.28 * night) : vStyle > 2.5 ? vec3(0.9, 0.03, 0.02) * (0.03 + 0.15 * night) : vec3(1.0, 0.95, 0.8) * (0.3 + 1.7 * night);
       }
     #endif
+    #ifdef SIGNS
+      // a traffic signal's lenses: green for 44% of its cycle, yellow for 6%, red for the rest; the cross street's
+      // half a cycle on (feat.js sets the phase)
+      if (vStyle > 5.5) {
+        float tc = fract(uTime / 70.0 + vAux);
+        float on = tc < 0.44 ? 8.0 : tc < 0.50 ? 7.0 : 6.0;
+        vec3 lc = vStyle > 7.5 ? vec3(0.04, 0.85, 0.42) : vStyle > 6.5 ? vec3(1.0, 0.55, 0.02) : vec3(1.0, 0.03, 0.015);
+        float lit = step(abs(vStyle - on), 0.5);
+        alb = lc * 0.04;
+        emis = lc * (lit * 1.1 + 0.015);
+      }
+    #endif
     col = alb * (E + headlamp(vRel, N)) * 1.55 + emis;
     #ifdef GLOSS
     {
@@ -16914,6 +16931,15 @@ vec3 roofColor(float cls, float pitched, float seed) {
 vec3 aerialRoof(vec3 s) {
   return pow(s, vec3(2.2));
 }
+// a wall's colour from the street photos, mapped in the bake to paint and masonry albedo (sRGB)
+vec3 photoWall(vec3 s) {
+  return pow(s, vec3(2.2));
+}
+// an RGB565 colour as sRGB 0..1 (the bake writes the trim, shutter and door colours the photos showed this way)
+vec3 rgb565(float c) {
+  float r = floor(c / 2048.0), g = floor(mod(c, 2048.0) / 32.0), b = mod(c, 32.0);
+  return vec3(r / 31.0, g / 63.0, b / 31.0);
+}
 vec3 trimColor(float clad, float cls, float seed) {
   float r = sr3(seed);
   int c = int(clad + 0.5);
@@ -16935,6 +16961,9 @@ attribute vec4 aW;      // wall length, wall height, storeys + 64 * flags, door 
 attribute vec4 aM;      // material id, cladding, class, seed
 attribute vec3 aC;      // the building's centre in the tile frame
 attribute vec4 aK;      // the building's roof colour from the aerial (sRGB), alpha 1 where there is one
+attribute vec4 aJ;      // its walls' colour from the street photos (sRGB), alpha 1 where there is one
+attribute vec4 aT;      // its trim, shutter and door colours from the street photos (RGB565) and which of them a photo
+                        // showed (bits: 1 trim, 2 whether it has shutters, 4 it has, 8 door); all 0 where none did
 uniform vec2 uHouseFade;
 ${PALETTE}
 varying vec3 vRel;
@@ -16945,6 +16974,8 @@ flat varying vec4 vM;
 flat varying vec3 vColA;
 flat varying vec3 vColB;
 flat varying vec3 vColC;
+flat varying vec3 vColD;     // shutters
+flat varying float vShut;    // shutters: -1 by rule, 0 none, 1 there
 void main() {
   // beyond the detail radius the far boxes take over: each building switches at its own distance inside the band
   // (its seed), the same distance its boxes switch on at, and never grows or shrinks
@@ -16956,9 +16987,12 @@ void main() {
   vUV = aUV; vW = aW; vM = aM;
   float mat = aM.x, clad = aM.y, cls = aM.z, seed = aM.w;
   bool pitched = mat < 1.5;
-  vColB = trimColor(clad, cls, seed);
-  vColC = accentColor(seed);
-  if (mat < 0.5) vColA = claddingColor(clad, cls, seed);
+  int tb = int(aT.w + 0.5);
+  vColB = (tb & 1) != 0 ? photoWall(rgb565(aT.x)) : trimColor(clad, cls, seed);
+  vColC = (tb & 8) != 0 ? photoWall(rgb565(aT.z)) : accentColor(seed);
+  vColD = (tb & 4) != 0 ? photoWall(rgb565(aT.y)) : accentColor(seed);
+  vShut = (tb & 2) != 0 ? float((tb & 4) != 0) : -1.0;
+  if (mat < 0.5) vColA = aJ.w > 0.5 ? photoWall(aJ.rgb) : claddingColor(clad, cls, seed);
   else if (mat < 1.5) vColA = aK.w > 0.5 ? aerialRoof(aK.rgb) : roofColor(cls, 1.0, seed);
   else if (mat < 2.5) vColA = vColB;
   else if (mat < 3.5) vColA = aK.w > 0.5 ? aerialRoof(aK.rgb) : roofColor(cls, 0.0, seed);
@@ -16998,6 +17032,8 @@ flat varying vec4 vM;
 flat varying vec3 vColA;
 flat varying vec3 vColB;
 flat varying vec3 vColC;
+flat varying vec3 vColD;
+flat varying float vShut;
 
 const float FOUND[16] = float[16](0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0.0, 0.15, 0.7, 0.6);
 const float KNEE[16] = float[16](0.0, 0.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6);
@@ -17105,7 +17141,7 @@ void main() {
     if (cls == 3 || cls == 14) boards = max(boards, seg(v, eave - 0.55, eave + 0.2, px.y));          // deep cornice band on flat-topped houses
     // shutters on some houses
     float shut = 0.0;
-    if (hasWin && house && cls != 4 && cls != 5 && sr3(seed) < 0.42 && bw > ww * 2.0 + 1.0)
+    if (hasWin && house && cls != 4 && cls != 5 && (vShut < -0.5 ? sr3(seed) < 0.42 : vShut > 0.5) && bw > ww * 2.0 + 1.0)
       shut = box2(vec2(abs(bu), fv), vec2(ww + 0.10, sill - 0.02), vec2(ww + 0.44, head + 0.02), px);
     // masonry: a band between storeys, the street-floor sign band on shops, and the cap of a parapet
     float band = 0.0;
@@ -17119,7 +17155,7 @@ void main() {
     alb = mix(alb, mix(trim, vec3(0.12, 0.13, 0.14), float(shop && fl < 0.5 && v <= eave) * step(0.5, float(clad != 3))), band * (1.0 - gw));
     alb = mix(alb, trim, clamp(boards, 0.0, 1.0));
     alb = mix(alb, trim * 0.92, clamp(lintel, 0.0, 1.0));
-    if (shut > 0.0) alb = mix(alb, vColC * (0.75 + 0.25 * step(0.5, fract(fv / 0.07))), shut);
+    if (shut > 0.0) alb = mix(alb, vColD * (0.75 + 0.25 * step(0.5, fract(fv / 0.07))), shut);
     alb = mix(alb, trim, clamp(frame, 0.0, 1.0));
     // foundation
     float fnd = 1.0 - seg(v, found, 1e3, px.y);
@@ -17975,7 +18011,7 @@ void main() {
     }
     pump() {
       if (!this.queue.length && !this.scatterQueue.length) return;
-      this.queue.sort((a, b) => b.prio - a.prio);
+      this.queue.sort((a, b) => a.prio - b.prio);
       const nextChunk = () => {
         while (this.queue.length) {
           const q = this.queue.pop(), c = this.chunks.get(q.key);
@@ -17988,7 +18024,7 @@ void main() {
         return null;
       };
       const nextScatter = () => {
-        if (this.scatterQueue.length > 1) this.scatterQueue.sort((a, b) => b.prio - a.prio);
+        if (this.scatterQueue.length > 1) this.scatterQueue.sort((a, b) => a.prio - b.prio);
         while (this.scatterQueue.length) {
           const q = this.scatterQueue.pop(), s29 = this.scatter.get(q.key);
           if (s29 && s29.state === "pending" && this.frame - s29.last < 120) return q;
@@ -18314,6 +18350,155 @@ void main() {
         this.carMat.side = Mi;
         this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol } });
       }
+      this.signR = this.game.realBuildings ? q.signR || 0 : 0;
+      this.powerR = this.game.realBuildings ? q.powerR || 0 : 0;
+      if (this.signR || this.powerR) {
+        const beam = (ax2, ay2, az, bx2, by2, bz, w, d) => {
+          const L2 = Math.hypot(bx2 - ax2, by2 - ay2, bz - az) || 0.01;
+          const g = new qi(w, L2, d === void 0 ? w : d);
+          const dir = new C(bx2 - ax2, by2 - ay2, bz - az).normalize();
+          g.applyQuaternion(new ke().setFromUnitVectors(new C(0, 1, 0), dir));
+          g.translate((ax2 + bx2) / 2, (ay2 + by2) / 2, (az + bz) / 2);
+          return g.toNonIndexed();
+        };
+        const box2 = (sx2, sy2, sz, x, y, z) => {
+          const g = new qi(sx2, sy2, sz);
+          g.translate(x, y, z);
+          return g.toNonIndexed();
+        };
+        const cylY = (r02, r1, h, seg, x, y, z) => {
+          const g = new Rr(r02, r1, h, seg, 1);
+          g.translate(x, y + h / 2, z);
+          return g.toNonIndexed();
+        };
+        const plate = (r, n, a, t, x, y, z) => {
+          const g = new Rr(r, r, t, n, 1);
+          g.rotateY(a);
+          g.rotateX(Math.PI / 2);
+          g.translate(x, y, z);
+          return g.toNonIndexed();
+        };
+        const P2 = [];
+        const add = (g, c, p) => P2.push(part(col(g, ...c), p));
+        const galv = [0.3, 0.31, 0.32], dark = [0.035, 0.038, 0.036], white = [0.62, 0.62, 0.6], red = [0.42, 0.025, 0.02], wood = [0.105, 0.082, 0.058];
+        const head = (x, y, p) => {
+          add(box2(0.36, 1.06, 0.26, x, y, 0), dark, p);
+          add(box2(0.62, 1.3, 0.02, x, y, -0.14), dark, p);
+          [[-6, 0.33], [-7, 0], [-8, -0.33]].forEach(([code, dy2]) => add(plate(0.105, 10, 0, 0.03, x, y + dy2, 0.14), [code, 0, 0], p));
+        };
+        add(box2(0.06, 2.15, 0.06, 0, 1.075, 0), galv, 0);
+        add(plate(0.4, 8, Math.PI / 8, 0.02, 0, 2.15, 0.035), white, 0);
+        add(plate(0.36, 8, Math.PI / 8, 0.02, 0, 2.15, 0.047), red, 0);
+        add(box2(0.06, 2, 0.06, 0, 1, 0), galv, 1);
+        add(plate(0.5, 3, 0, 0.02, 0, 2.08, 0.035), red, 1);
+        add(plate(0.33, 3, 0, 0.02, 0, 2.08, 0.047), white, 1);
+        for (const [p, reach, heads] of [[2, 5.2, [-4.6]], [3, 9.4, [-4.6, -8.8]]]) {
+          add(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, p);
+          add(beam(0, 6.6, 0, -reach, 6.9, 0, 0.12), galv, p);
+          add(beam(0, 5.4, 0, -reach * 0.45, 6.6, 0, 0.06), galv, p);
+          for (const hx2 of heads) head(hx2, 6.05, p);
+          head(0, 3.3, p);
+        }
+        add(box2(0.08, 3.3, 0.08, 0, 1.65, 0), galv, 4);
+        for (const a of [Math.PI / 4, -Math.PI / 4]) {
+          const g = new qi(1.25, 0.23, 0.02);
+          g.rotateZ(a);
+          g.translate(0, 2.95, 0.05);
+          add(g.toNonIndexed(), white, 4);
+        }
+        add(cylY(0.14, 0.15, 0.58, 10, 0, 0, 0), [0.4, 0.035, 0.025], 5);
+        add(cylY(0.15, 0.08, 0.14, 10, 0, 0.58, 0), [0.4, 0.035, 0.025], 5);
+        add(beam(-0.24, 0.42, 0, 0.24, 0.42, 0, 0.09), [0.4, 0.035, 0.025], 5);
+        add(beam(0, 0.4, 0, 0, 0.4, 0.22, 0.11), [0.4, 0.035, 0.025], 5);
+        add(box2(0.06, 2.7, 0.06, 0, 1.35, 0), galv, 6);
+        add(box2(0.46, 0.62, 0.02, 0, 2.45, 0.04), white, 6);
+        add(box2(0.46, 0.12, 0.022, 0, 2.7, 0.041), [0.05, 0.12, 0.35], 6);
+        add(box2(3.2, 2.2, 0.04, 0, 1.25, -0.75), [0.2, 0.24, 0.26], 7);
+        add(box2(0.04, 2.2, 1.4, -1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
+        add(box2(0.04, 2.2, 1.4, 1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
+        add(box2(3.4, 0.08, 1.7, 0, 2.38, 0), dark, 7);
+        for (const x of [-1.62, 1.62]) for (const z of [-0.78, 0.68]) add(box2(0.07, 2.36, 0.07, x, 1.18, z), dark, 7);
+        add(box2(2.2, 0.06, 0.4, 0, 0.45, -0.5), [0.16, 0.16, 0.17], 7);
+        add(box2(0.06, 2.7, 0.06, 2.1, 1.35, 0.6), galv, 7);
+        add(box2(0.46, 0.62, 0.02, 2.1, 2.45, 0.64), white, 7);
+        add(cylY(0.05, 0.09, 10, 8, 0, 0, 0), [0.66, 0.66, 0.64], 8);
+        add(box2(1.5, 0.95, 0.01, 0.78, 9.4, 0), [0.4, 0.04, 0.05], 8);
+        add(box2(0.62, 0.52, 0.012, 0.34, 9.61, 0), [0.04, 0.06, 0.22], 8);
+        add(box2(1.5, 0.12, 0.012, 0.78, 9.25, 0), white, 8);
+        add(cylY(0.09, 0.13, 8.6, 8, 0, 0, 0), galv, 9);
+        add(beam(0, 8.3, 0, 0, 8.55, 1.9, 0.07), galv, 9);
+        add(box2(0.28, 0.12, 0.66, 0, 8.52, 2.2), galv, 9);
+        {
+          const g = new Yt();
+          g.setAttribute("position", new me(new Float32Array([-0.11, 8.455, 1.95, 0.11, 8.455, 1.95, 0.11, 8.455, 2.45, -0.11, 8.455, 1.95, 0.11, 8.455, 2.45, -0.11, 8.455, 2.45]), 3));
+          g.setAttribute("normal", new me(new Float32Array(18).map((v, i) => i % 3 === 1 ? -1 : 0), 3));
+          add(g, [-5, 0, 0], 9);
+        }
+        this.signGeo = merge(P2);
+        this.signGeo.computeVertexNormals();
+        this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1 });
+        const T = [];
+        const tAdd = (g, c, p) => T.push(part(col(g, ...c), p));
+        const insul = [0.42, 0.4, 0.36];
+        const lattice = (p, top, arms, peak) => {
+          const b = 3.5, t = 0.8, lv2 = [0, 7, 13, 18.5, top];
+          const at = (y) => b + (t - b) * (y / top);
+          const corners = (y) => {
+            const w = at(y);
+            return [[-w, y, -w], [w, y, -w], [w, y, w], [-w, y, w]];
+          };
+          for (let c = 0; c < 4; c++) {
+            const A = corners(0)[c], B = corners(top)[c];
+            tAdd(beam(...A, ...B, 0.22), galv, p);
+          }
+          for (let k = 0; k < lv2.length; k++) {
+            const C3 = corners(lv2[k]);
+            for (let c = 0; c < 4; c++) tAdd(beam(...C3[c], ...C3[(c + 1) % 4], 0.12), galv, p);
+            if (k + 1 < lv2.length) {
+              const D = corners(lv2[k + 1]);
+              for (let c = 0; c < 4; c++) {
+                tAdd(beam(...C3[c], ...D[(c + 1) % 4], 0.08), galv, p);
+                tAdd(beam(...C3[(c + 1) % 4], ...D[c], 0.08), galv, p);
+              }
+            }
+          }
+          tAdd(beam(-t, top, -t, 0, peak, 0, 0.16), galv, p);
+          tAdd(beam(t, top, t, 0, peak, 0, 0.16), galv, p);
+          tAdd(beam(t, top, -t, 0, peak, 0, 0.16), galv, p);
+          tAdd(beam(-t, top, t, 0, peak, 0, 0.16), galv, p);
+          for (const [x, y] of arms) {
+            tAdd(beam(0, y + 2.2, -0.5, x, y + 2.2, -0.5, 0.18), galv, p);
+            tAdd(beam(0, y + 2.2, 0.5, x, y + 2.2, 0.5, 0.18), galv, p);
+            tAdd(beam(0, y + 0.6, 0, x * 0.85, y + 2.2, 0, 0.12), galv, p);
+            tAdd(beam(x, y + 2.2, 0, x, y, 0, 0.16), insul, p);
+          }
+        };
+        lattice(0, 26.2, [[-7.5, 24], [1e-3, 24], [7.5, 24]], 31.2);
+        tAdd(beam(-4.5, 31.2, 0, 4.5, 31.2, 0, 0.14), galv, 0);
+        lattice(3, 31, [[-6.2, 20], [-6.2, 25.6], [-6.2, 31.2], [6.2, 20], [6.2, 25.6], [6.2, 31.2]], 36.6);
+        for (const x of [-2.6, 2.6]) tAdd(cylY(0.15, 0.2, 18, 8, x, -0.5, 0), wood, 1);
+        tAdd(beam(-5, 14.9, 0, 5, 14.9, 0, 0.22), wood, 1);
+        tAdd(beam(-2.6, 8.5, 0, 2.6, 14, 0, 0.12), wood, 1);
+        tAdd(beam(2.6, 8.5, 0, -2.6, 14, 0, 0.12), wood, 1);
+        for (const x of [-4.2, 1e-3, 4.2]) tAdd(beam(x, 14.9, 0, x, 14.35, 0, 0.12), insul, 1);
+        tAdd(cylY(0.13, 0.17, 12, 7, 0, -0.5, 0), wood, 2);
+        tAdd(box2(2.4, 0.1, 0.12, 0, 10.2, 0.12), wood, 2);
+        for (const x of [-1, 1]) tAdd(box2(0.07, 0.18, 0.07, x, 10.3, 0.12), insul, 2);
+        tAdd(box2(0.08, 0.3, 0.08, 0, 11.4, 0), insul, 2);
+        this.towerGeo = merge(T);
+        this.towerGeo.computeVertexNormals();
+        this.towerMat = mk(0, [this.powerR * 0.85, this.powerR * 0.98], [-2, -1], { PARTS: 1 });
+        this.pwireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol } });
+        this.paintMat = new Rn({
+          vertexShader: LIT_VS,
+          fragmentShader: LIT_FS,
+          defines: Object.assign({}, this.defines),
+          uniforms: Object.assign({}, this.U, { uKind: { value: 0 } }),
+          polygonOffset: true,
+          polygonOffsetFactor: -2,
+          polygonOffsetUnits: -4
+        });
+      }
       this.leafR = this.game.software && !this.game.forceLeaves ? 0 : q.leafR || 0;
       if (this.leafR) {
         this.leafGeo = leafTreeGeometry();
@@ -18353,6 +18538,8 @@ void main() {
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
+      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)]);
+      if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
       for (const [kind, level, rad] of kinds) {
         if (alt > rad * 1.2) continue;
         const s29 = ROOT / (1 << level);
@@ -18442,6 +18629,8 @@ void main() {
         g.setAttribute("aM", new me(h.m, 4));
         g.setAttribute("aC", new me(h.c, 3));
         g.setAttribute("aK", new me(h.k, 4, true));
+        g.setAttribute("aJ", new me(h.j || new Uint8Array(h.k.length), 4, true));
+        g.setAttribute("aT", new me(h.t || new Uint16Array(h.k.length), 4));
         g.setIndex(new me(h.idx, 1));
         const mid2 = new C();
         let rad2 = 0;
@@ -18470,7 +18659,46 @@ void main() {
       }
       const n = m.data.length / m.stride;
       if (!n) return;
-      if (m.kind === "wires") {
+      if (m.kind === "paint") {
+        const nv2 = m.data.length / 9, pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3);
+        const mid2 = new C();
+        let rad2 = 0;
+        for (let i = 0; i < nv2; i++) {
+          pos[i * 3] = m.data[i * 9];
+          pos[i * 3 + 1] = m.data[i * 9 + 1];
+          pos[i * 3 + 2] = m.data[i * 9 + 2];
+          nor[i * 3] = m.data[i * 9 + 3];
+          nor[i * 3 + 1] = m.data[i * 9 + 4];
+          nor[i * 3 + 2] = m.data[i * 9 + 5];
+          colr[i * 3] = m.data[i * 9 + 6];
+          colr[i * 3 + 1] = m.data[i * 9 + 7];
+          colr[i * 3 + 2] = m.data[i * 9 + 8];
+          mid2.x += pos[i * 3];
+          mid2.y += pos[i * 3 + 1];
+          mid2.z += pos[i * 3 + 2];
+        }
+        mid2.multiplyScalar(1 / nv2);
+        for (let i = 0; i < nv2; i++) rad2 = Math.max(rad2, Math.hypot(pos[i * 3] - mid2.x, pos[i * 3 + 1] - mid2.y, pos[i * 3 + 2] - mid2.z));
+        const g = new Yt();
+        g.setAttribute("position", new me(pos, 3));
+        g.setAttribute("normal", new me(nor, 3));
+        g.setAttribute("aCol", new me(colr, 3));
+        g.boundingSphere = new Ie(mid2.clone(), rad2 + 1);
+        const mesh2 = new Ce(g, this.paintMat);
+        mesh2.matrixAutoUpdate = false;
+        mesh2.visible = false;
+        t.mesh = mesh2;
+        t.basis = new Ht();
+        t.center = m.center;
+        t.mid = [m.center[0] + mid2.x, m.center[1] + mid2.y, m.center[2] + mid2.z];
+        t.n = nv2;
+        t.own = true;
+        t.rad = rad2 + 1;
+        t.kind = "paint";
+        this.scene.add(mesh2);
+        return;
+      }
+      if (m.kind === "wires" || m.kind === "pwires") {
         const g = new Yt();
         g.setAttribute("position", new me(m.data, 3));
         const mid2 = new C();
@@ -18483,7 +18711,7 @@ void main() {
         mid2.multiplyScalar(3 / m.data.length);
         for (let i = 0; i < m.data.length; i += 3) rad2 = Math.max(rad2, Math.hypot(m.data[i] - mid2.x, m.data[i + 1] - mid2.y, m.data[i + 2] - mid2.z));
         g.boundingSphere = new Ie(mid2.clone(), rad2 + 2);
-        const mesh2 = new _n(g, this.wireMat);
+        const mesh2 = new _n(g, m.kind === "pwires" ? this.pwireMat : this.wireMat);
         mesh2.matrixAutoUpdate = false;
         mesh2.visible = false;
         mesh2.renderOrder = 4;
@@ -18494,18 +18722,19 @@ void main() {
         t.n = n;
         t.own = true;
         t.rad = rad2 + 2;
-        t.kind = "wires";
+        t.kind = m.kind;
         this.scene.add(mesh2);
         return;
       }
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
-      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : this.bldMat;
+      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
       const cenA = m.kind === "buildings" && st >= 15 ? new Float32Array(n * 4) : null;
+      const wallA = m.kind === "buildings" && st >= 17 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S = new C(), Y = new C(0, 1, 0);
       let rad = 0;
       const lp2 = new Float32Array(n * 3), mid = new C();
@@ -18537,11 +18766,28 @@ void main() {
             cenA[i * 4 + 2] = C3.z;
             cenA[i * 4 + 3] = st >= 16 ? d[o + 15] : 1;
           }
+          const wc2 = wallA ? d[o + 16] : 0;
+          if (wc2 > 0) {
+            wallA[i * 4] = (wc2 >> 11 & 31) / 31;
+            wallA[i * 4 + 1] = (wc2 >> 5 & 63) / 63;
+            wallA[i * 4 + 2] = (wc2 & 31) / 31;
+            wallA[i * 4 + 3] = 2;
+          }
         } else if (m.kind === "poles") {
           Q.setFromAxisAngle(Y, d[o + 3]);
           S.set(1, 0.92 + 0.16 * d[o + 4], 1);
           inst[i * 4] = d[o + 4];
           inst[i * 4 + 1] = d[o + 4] < 0.14 ? 0 : d[o + 4] < 0.56 ? 1 : 5;
+        } else if (m.kind === "signs") {
+          Q.setFromAxisAngle(Y, d[o + 3]);
+          S.set(1, d[o + 4] === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : 1, 1);
+          inst[i * 4] = d[o + 4] === 8 ? 0 : d[o + 5];
+          inst[i * 4 + 1] = d[o + 4];
+        } else if (m.kind === "power") {
+          Q.setFromAxisAngle(Y, d[o + 3]);
+          S.set(1, 1, 1);
+          inst[i * 4] = 0;
+          inst[i * 4 + 1] = d[o + 4];
         } else if (m.kind === "cars") {
           const hsh = d[o + 4], tall = hsh * 7.13 % 1;
           Q.setFromAxisAngle(Y, d[o + 3]);
@@ -18565,6 +18811,7 @@ void main() {
       g2.setAttribute("aInst", ia2);
       if (roofA) g2.setAttribute("aRoof", new vi(roofA, 4));
       if (cenA) g2.setAttribute("aCen", new vi(cenA, 4));
+      if (wallA) g2.setAttribute("aWall", new vi(wallA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
       if (m.kind === "trees" && this.leafGeo) {
@@ -18576,7 +18823,7 @@ void main() {
         t.geoFar = g2;
         t.near = false;
       }
-      const pad = m.kind === "trees" ? 22 : m.kind === "clumps" ? 34 : m.kind === "poles" || m.kind === "cars" ? 14 : 110;
+      const pad = m.kind === "trees" ? 22 : m.kind === "clumps" ? 34 : m.kind === "poles" || m.kind === "cars" || m.kind === "signs" ? 14 : m.kind === "power" ? 45 : 110;
       mid.multiplyScalar(1 / n);
       for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(lp2[i * 3] - mid.x, lp2[i * 3 + 1] - mid.y, lp2[i * 3 + 2] - mid.z));
       mesh.boundingSphere = new Ie(mid.clone(), rad + pad);
@@ -18605,6 +18852,7 @@ attribute float aPart;
 attribute vec4 aInst;      // trees: tint, species.  buildings: seed, roof rise (m), cladding, class
 #ifdef BLD
 attribute vec4 aRoof;      // the roof's colour from the aerial (sRGB), w 2 where there is one
+attribute vec4 aWall;      // the walls' colour from the street photos (sRGB), w 2 where there is one
 attribute vec4 aCen;       // the building's origin (tile frame): a box and the detailed model switch at its distance;
                            // w: the share of the tiles' reach it shows to (its size)
 #ifdef SKY
@@ -18639,6 +18887,11 @@ void main() {
       pos.y = 1.0 + (pos.y - 1.0) * k;
       nl.y /= max(k, 0.02);
     }
+  #elif defined(PARTS)
+    float keep = abs(aPart - aInst.y) < 0.5 ? 1.0 : 0.0;        // every part is one kind of thing (feat.js)
+    vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+    float jit = fract(aInst.x * 7.77 + 0.31 + aInst.y * 0.13);
+    float reach = 1.0;
   #else
     float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
     vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
@@ -18670,6 +18923,10 @@ void main() {
     else if (aCol.r < -1.5) { vCol = vec3(0.55, 0.55, 0.50); vStyle = 2.0; }
     else if (aCol.r < -0.5) { vCol = carPaint(aInst.x); vStyle = 1.0; }
   #endif
+  #ifdef SIGNS
+    // a signal's lenses: -6 red, -7 yellow, -8 green (LIT_FS lights the one its cycle is on)
+    if (aCol.r < -5.5) { vStyle = -aCol.r; vCol = vec3(0.03); }
+  #endif
   #ifdef BLD
     // the same colours the detailed house would have (the roof piece is part 1)
     vStyle = aPart < 1.5 ? 1.0 : 0.0;
@@ -18680,6 +18937,7 @@ void main() {
       if (aPart < 1.5) vCol = rc;
       vCol2 = rc;
     }
+    if (aWall.w > 1.5 && aPart > 1.5) vCol = photoWall(aWall.rgb);
     vAux = aInst.x / 255.0;
   #endif
   gl_Position = projectionMatrix * viewMatrix * wp;
@@ -22311,9 +22569,11 @@ void main() {
     build(u8) {
       const g = this.game, t = g.terrain, q = g.quality;
       const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-      if (dv2.getUint32(0, true) !== 844712787) return;
+      const magic = dv2.getUint32(0, true);
+      if (magic !== 844712787 && magic !== 861490003) return;
+      const BS2 = magic === 861490003 ? 18 : 16;
       const nReg = dv2.getUint32(4, true), nB = dv2.getUint32(8, true);
-      const oR = 16, oB = oR + nReg * 20, oX = oB + nB * 16;
+      const oR = 16, oB = oR + nReg * 20, oX = oB + nB * BS2;
       this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
       const mat = (band) => {
         const m = new Rn({
@@ -22349,7 +22609,7 @@ void main() {
         const b02 = dv2.getUint32(o + 4, true), nb = dv2.getUint32(o + 8, true);
         let xi2 = dv2.getUint32(o + 12, true);
         for (let i = 0; i < nb; i++) {
-          const ob = oB + (b02 + i) * 16;
+          const ob = oB + (b02 + i) * BS2;
           const bx2 = (rx2 + 0.5) * RS2 + dv2.getInt16(ob, true) / 4, by2 = (ry2 + 0.5) * RS2 + dv2.getInt16(ob + 2, true) / 4;
           const nbx = dv2.getUint8(ob + 14), nfar = dv2.getUint8(ob + 15), far = dv2.getUint16(ob + 12, true) * 4;
           const sx2 = Math.min(3, Math.max(0, Math.floor((bx2 - rx2 * RS2) / (RS2 / 4)))), sy2 = Math.min(3, Math.max(0, Math.floor((by2 - ry2 * RS2) / (RS2 / 4))));
@@ -22369,13 +22629,13 @@ void main() {
         const basis = new Ht().set(1, 0, 0, 0, 0, c, -s29, 0, 0, s29, c, 0, 0, 0, 0, 1);
         const inv = basis.clone().transpose();
         const mesh = new bo(t.bldGeo, G.band === 1 ? this.mat1 : this.mat2, n);
-        const inst = new Float32Array(n * 4), roofA = new Float32Array(n * 4), cenA = new Float32Array(n * 4), farA = new Float32Array(n);
+        const inst = new Float32Array(n * 4), roofA = new Float32Array(n * 4), cenA = new Float32Array(n * 4), farA = new Float32Array(n), wallA = new Float32Array(n * 4);
         let k = 0;
         for (const [ob, x02, use, rx2, ry2] of G.idx) {
           const rcx = (rx2 + 0.5) * RS2, rcy = (ry2 + 0.5) * RS2;
           const bx2 = rcx + dv2.getInt16(ob, true) / 4, by2 = rcy + dv2.getInt16(ob + 2, true) / 4, bz = dv2.getInt16(ob + 4, true) / 10;
           const seed = dv2.getUint8(ob + 6), cls = dv2.getUint8(ob + 7), clad = dv2.getUint8(ob + 8), reach = dv2.getUint8(ob + 9) / 255;
-          const rc2 = dv2.getUint16(ob + 10, true), far = dv2.getUint16(ob + 12, true) * 4;
+          const rc2 = dv2.getUint16(ob + 10, true), far = dv2.getUint16(ob + 12, true) * 4, wc2 = BS2 === 18 ? dv2.getUint16(ob + 16, true) : 0;
           cyl(bx2, by2, bz, P2);
           V2.set(P2[0] - Cc2[0], P2[1] - Cc2[1], P2[2] - Cc2[2]).applyMatrix4(inv);
           const cenX = V2.x, cenY = V2.y, cenZ = V2.z;
@@ -22401,6 +22661,12 @@ void main() {
               roofA[k * 4 + 2] = (rc2 & 31) / 31;
               roofA[k * 4 + 3] = 2;
             }
+            if (wc2 > 0) {
+              wallA[k * 4] = (wc2 >> 11 & 31) / 31;
+              wallA[k * 4 + 1] = (wc2 >> 5 & 63) / 63;
+              wallA[k * 4 + 2] = (wc2 & 31) / 31;
+              wallA[k * 4 + 3] = 2;
+            }
             cenA[k * 4] = cenX;
             cenA[k * 4 + 1] = cenY;
             cenA[k * 4 + 2] = cenZ;
@@ -22416,6 +22682,7 @@ void main() {
         g2.setAttribute("aRoof", new vi(roofA, 4));
         g2.setAttribute("aCen", new vi(cenA, 4));
         g2.setAttribute("aFar", new vi(farA, 1));
+        g2.setAttribute("aWall", new vi(wallA, 4));
         mesh.geometry = g2;
         mesh.boundingSphere = new Ie(new C(0, 150, 0), G.half);
         g2.boundingSphere = new Ie(new C(0, 8, 0), 60);
@@ -22456,9 +22723,9 @@ void main() {
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
-    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
-    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
-    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
+    low: { height: "heightLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
+    med: { height: "heightHi", chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {

@@ -185,7 +185,12 @@
     reg.bCell = new Uint32Array(buf.slice(p, p + nc * 4));
     p += nc * 4;
     reg.b = new Uint8Array(buf.slice(p, p + nB * 12));
-    reg.roof = dv.getUint32(20, true) & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
+    const bflags = dv.getUint32(20, true);
+    reg.roof = bflags & 1 ? new Uint16Array(buf.slice(p + nB * 12, p + nB * 14)) : null;
+    const wo = p + nB * 12 + (bflags & 1 ? nB * 2 : 0);
+    reg.wall = bflags & 2 ? new Uint16Array(buf.slice(wo, wo + nB * 2)) : null;
+    const fo = wo + (bflags & 2 ? nB * 2 : 0);
+    reg.fac = bflags & 4 ? new Uint16Array(buf.slice(fo, fo + nB * 8)) : null;
     const gw = reg.gw = Math.ceil((RS + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill) => {
@@ -1184,11 +1189,15 @@
       this.m = new Uint8Array(this.cap * 4);
       this.c = new Float32Array(this.cap * 3);
       this.k = new Uint8Array(this.cap * 4);
+      this.j = new Uint8Array(this.cap * 4);
+      this.t = new Uint16Array(this.cap * 4);
       this.idx = new Uint32Array(this.icap);
       this.W = [0, 0, 0, -1];
       this.M = [0, 0, 0, 0];
       this.C = [0, 0, 0];
       this.K = [0, 0, 0, 0];
+      this.J = [0, 0, 0, 0];
+      this.T = [0, 0, 0, 0];
       this.ox = 0;
       this.oy = 0;
       this.oz = 0;
@@ -1210,6 +1219,8 @@
       this.m = g(this.m, 4);
       this.c = g(this.c, 3);
       this.k = g(this.k, 4);
+      this.j = g(this.j, 4);
+      this.t = g(this.t, 4);
       this.cap *= 2;
     }
     // a vertex given in the building's frame (u along the footprint's yaw, y up, v across), with its normal there
@@ -1228,6 +1239,8 @@
       this.m.set(this.M, i * 4);
       this.c.set(this.C, i * 3);
       this.k.set(this.K, i * 4);
+      this.j.set(this.J, i * 4);
+      this.t.set(this.T, i * 4);
       return i;
     }
     tri(a, b, c) {
@@ -2553,6 +2566,7 @@
     for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
     if (minSize > 0 && big < minSize) return 0;
     const mul = clamp(0.3 + big * 0.025, 0.45, 1);
+    const wc = reg && reg.wall ? reg.wall[id] : 0;
     const P2 = _p3a, B = _p3b;
     cyl(mx, my, g, B);
     for (const b of boxes) {
@@ -2562,7 +2576,7 @@
       cyl(fx, fy, g + foot, P2);
       const a2 = a + (b.length > 8 ? b[8] : 0);
       const yaw = turn ? a2 + Math.PI / 2 : a2, W = turn ? bd : bw, D2 = turn ? bw : bd;
-      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul);
+      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul, wc);
     }
     return boxes.length;
   }
@@ -2663,10 +2677,19 @@
         M.K[2] = (rc & 31) * 255 / 31;
         M.K[3] = 255;
       } else M.K[0] = M.K[1] = M.K[2] = M.K[3] = 0;
+      const wc = reg && reg.wall ? reg.wall[id] : 0;
+      if (wc > 0) {
+        M.J[0] = (wc >> 11 & 31) * 255 / 31;
+        M.J[1] = (wc >> 5 & 63) * 255 / 63;
+        M.J[2] = (wc & 31) * 255 / 31;
+        M.J[3] = 255;
+      } else M.J[0] = M.J[1] = M.J[2] = M.J[3] = 0;
+      if (reg && reg.fac && reg.fac[id * 4 + 3]) for (let q = 0; q < 4; q++) M.T[q] = reg.fac[id * 4 + q];
+      else M.T[0] = M.T[1] = M.T[2] = M.T[3] = 0;
       if (!(measured2 && realBuilding(M, real, id, list, k, g, gmin, gmax, env, a))) building(M, list, k, g, gmin, gmax, env);
       count++;
     }
-    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
+    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
   }
 
   // src/street.js
@@ -2786,6 +2809,345 @@
           if (world2.g.water) continue;
           cyl(mx, my, h + 0.02, p32);
           out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, Math.atan2(-tx * side, ty * side), hash2(k + 31, reg.rName[ri] + k * 13));
+        }
+      }
+    }
+    return new Float32Array(out);
+  }
+
+  // src/feat.js
+  var MAGIC = 827606342;
+  var SIGNAL = 0;
+  var STOP = 1;
+  var GIVEWAY = 2;
+  var CROSSING = 3;
+  var LEVEL = 4;
+  var FLAGPOLE = 11;
+  var HYDRANT = 12;
+  var BUSSTOP = 13;
+  var LAMP = 14;
+  var PART = { STOP: 0, YIELD: 1, SIGNAL: 2, SIGNAL_LONG: 3, CROSSBUCK: 4, HYDRANT: 5, BUS: 6, SHELTER: 7, FLAGPOLE: 8, LAMP: 9 };
+  var TOWER = { LATTICE: 0, HFRAME: 1, POLE: 2, LATTICE2: 3 };
+  var HANG = [
+    [[-7.5, 24], [0, 24], [7.5, 24], [-4.5, 31.2], [4.5, 31.2]],
+    [[-4.2, 14.4], [0, 14.4], [4.2, 14.4], [-2.4, 17.6], [2.4, 17.6]],
+    [[-1, 10.2], [0, 11.3], [1, 10.2]],
+    [[-6.2, 20], [-6.2, 25.6], [-6.2, 31.2], [6.2, 20], [6.2, 25.6], [6.2, 31.2], [0, 36.6]]
+  ];
+  function parseFeat(e) {
+    const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
+    if (dv.getUint32(0, true) !== MAGIC) throw new Error("bad feature file");
+    const nP = dv.getUint32(4, true), nAp = dv.getUint32(8, true), nL = dv.getUint32(12, true), nLV = dv.getUint32(16, true);
+    const nA = dv.getUint32(20, true), nR = dv.getUint32(24, true), nAV = dv.getUint32(28, true);
+    let o = 32;
+    const f = { nP, nL, nA };
+    f.px = new Float32Array(nP);
+    f.py = new Float32Array(nP);
+    f.kind = new Uint8Array(nP);
+    f.sub = new Uint8Array(nP);
+    f.h = new Float32Array(nP);
+    f.napp = new Uint8Array(nP);
+    f.first = new Uint32Array(nP);
+    for (let i = 0; i < nP; i++, o += 16) {
+      f.px[i] = dv.getInt32(o, true) / 10;
+      f.py[i] = dv.getInt32(o + 4, true) / 10;
+      f.kind[i] = dv.getUint8(o + 8);
+      f.sub[i] = dv.getUint8(o + 9);
+      f.h[i] = dv.getUint8(o + 10) / 2;
+      f.napp[i] = dv.getUint8(o + 11);
+      f.first[i] = dv.getUint32(o + 12, true);
+    }
+    f.apH = new Float32Array(nAp);
+    f.apCls = new Uint8Array(nAp);
+    f.apFoot = new Uint8Array(nAp);
+    f.apOne = new Uint8Array(nAp);
+    f.apFace = new Uint8Array(nAp);
+    for (let j = 0; j < nAp; j++, o += 4) {
+      f.apH[j] = dv.getUint16(o, true) / 65536 * 2 * Math.PI;
+      const c = dv.getUint8(o + 2);
+      f.apCls[j] = c & 15;
+      f.apFoot[j] = c >> 4 & 1;
+      f.apOne[j] = c >> 5 & 1;
+      f.apFace[j] = dv.getUint8(o + 3);
+    }
+    f.lStart = new Uint32Array(nL);
+    f.lCount = new Uint32Array(nL);
+    f.lKv = new Float32Array(nL);
+    f.lKind = new Uint8Array(nL);
+    f.lCab = new Uint8Array(nL);
+    for (let i = 0; i < nL; i++, o += 12) {
+      f.lStart[i] = dv.getUint32(o, true);
+      f.lCount[i] = dv.getUint32(o + 4, true);
+      f.lKv[i] = dv.getUint16(o + 8, true) / 10;
+      f.lKind[i] = dv.getUint8(o + 10);
+      f.lCab[i] = dv.getUint8(o + 11);
+    }
+    f.lx = new Float32Array(nLV);
+    f.ly = new Float32Array(nLV);
+    for (let i = 0; i < nLV; i++) f.lx[i] = dv.getInt32(o + i * 4, true) / 10;
+    o += nLV * 4;
+    for (let i = 0; i < nLV; i++) f.ly[i] = dv.getInt32(o + i * 4, true) / 10;
+    o += nLV * 4;
+    f.lk = new Uint8Array(e.buffer.slice(e.byteOffset + o, e.byteOffset + o + nLV));
+    o += nLV;
+    o = o + 3 & ~3;
+    f.aRing = new Uint32Array(nA);
+    f.aRings = new Uint16Array(nA);
+    f.aKind = new Uint8Array(nA);
+    f.aSub = new Uint8Array(nA);
+    for (let i = 0; i < nA; i++, o += 8) {
+      f.aRing[i] = dv.getUint32(o, true);
+      f.aRings[i] = dv.getUint16(o + 4, true);
+      f.aKind[i] = dv.getUint8(o + 6);
+      f.aSub[i] = dv.getUint8(o + 7);
+    }
+    f.rStart = new Uint32Array(nR);
+    f.rCount = new Uint32Array(nR);
+    f.rOuter = new Uint8Array(nR);
+    for (let i = 0; i < nR; i++, o += 12) {
+      f.rStart[i] = dv.getUint32(o, true);
+      f.rCount[i] = dv.getUint32(o + 4, true);
+      f.rOuter[i] = dv.getUint8(o + 8);
+    }
+    f.ax = new Float32Array(nAV);
+    f.ay = new Float32Array(nAV);
+    for (let i = 0; i < nAV; i++) f.ax[i] = dv.getInt32(o + i * 4, true) / 10;
+    o += nAV * 4;
+    for (let i = 0; i < nAV; i++) f.ay[i] = dv.getInt32(o + i * 4, true) / 10;
+    f.aBox = new Float32Array(nA * 4);
+    for (let a = 0; a < nA; a++) {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (let r = f.aRing[a], re = r + f.aRings[a]; r < re; r++) for (let v = f.rStart[r], ve = v + f.rCount[r]; v < ve; v++) {
+        const x = f.ax[v], y = f.ay[v];
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+      f.aBox[a * 4] = x0;
+      f.aBox[a * 4 + 1] = y0;
+      f.aBox[a * 4 + 2] = x1;
+      f.aBox[a * 4 + 3] = y1;
+    }
+    return f;
+  }
+  function hwAt(world2, x, y) {
+    const d = world2.nearestRoad(x, y);
+    return d < 14 ? world2._nr.hw : 0;
+  }
+  function junctionBack(world2, f, i, mx, my, j) {
+    let w = 0;
+    for (let q = f.first[i], e = q + f.napp[i]; q < e; q++) {
+      if (q === j || f.apFoot[q]) continue;
+      const t = f.apH[q];
+      w = Math.max(w, hwAt(world2, mx - Math.cos(t) * 10, my - Math.sin(t) * 10));
+    }
+    return w;
+  }
+  function roadCount(f, i) {
+    let n = 0;
+    for (let q = f.first[i], e = q + f.napp[i]; q < e; q++) if (!f.apFoot[q]) n++;
+    return n;
+  }
+  function signItems(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nP) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3);
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    const put = (mx, my, yaw, part, phase, arm, lift) => {
+      const h = world2.groundH(mx, my, true);
+      if (world2.g.water) return;
+      if (world2.g.deck > -1e8 && world2.g.deck < h + 8 && world2.g.deck > h + 0.5) return;
+      cyl(mx, my, h + (lift || 0), p32);
+      out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, phase, arm);
+    };
+    for (let i = 0; i < f.nP; i++) {
+      const x = f.px[i], y = f.py[i];
+      if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
+      const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
+      if (k === SIGNAL || k === STOP || k === GIVEWAY || k === LEVEL) {
+        const nroad = roadCount(f, i), junction = nroad >= 3;
+        const cyc = hash2(i * 7 + 3, reg.x0 * 0.013 + reg.y0 * 7e-3);
+        for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) {
+          if (f.apFoot[j] || !f.apFace[j]) continue;
+          const t = f.apH[j], dx = Math.cos(t), dy = Math.sin(t);
+          const hw = hwAt(world2, mx - dx * 10, my - dy * 10) || 4;
+          let back = junction ? junctionBack(world2, f, i, mx, my, j) + (k === SIGNAL ? 2.6 : 1.6) : 0;
+          if (k === LEVEL) back = 4.5;
+          const side = hw + (k === SIGNAL ? 1 : 0.7);
+          const ox = mx - dx * back + dy * side, oy = my - dy * back - dx * side;
+          if (k === SIGNAL) {
+            const tm = (t % Math.PI + Math.PI) % Math.PI;
+            const phase = (cyc + (tm > Math.PI / 4 && tm < 3 * Math.PI / 4 ? 0.5 : 0)) % 1;
+            const reach = f.apOne[j] ? 2 * hw : hw;
+            put(ox, oy, t - Math.PI / 2, reach > 7.5 ? PART.SIGNAL_LONG : PART.SIGNAL, phase, reach);
+          } else put(ox, oy, t - Math.PI / 2, k === STOP ? PART.STOP : k === GIVEWAY ? PART.YIELD : PART.CROSSBUCK, 0, 0);
+        }
+      } else if (k === HYDRANT) {
+        put(mx, my, hash2(i, 5) * 6.28, PART.HYDRANT, 0, 0);
+      } else if (k === BUSSTOP || k === LAMP) {
+        const e = world2.nearestRoad(mx, my);
+        const part = k === LAMP ? PART.LAMP : f.sub[i] ? PART.SHELTER : PART.BUS;
+        if (e > 30) {
+          put(mx, my, hash2(i, 3) * 6.28, part, 0, 0);
+          continue;
+        }
+        const nr = world2._nr, sd = nr.side, ox_ = nr.ty * sd, oy_ = -nr.tx * sd;
+        const shift = Math.max(0, nr.hw + (k === BUSSTOP ? 1.3 : 0.7) - nr.d);
+        const toStreet = Math.atan2(-oy_, -ox_);
+        put(mx + ox_ * shift, my + oy_ * shift, toStreet + Math.PI / 2, part, 0, 0);
+      } else if (k === FLAGPOLE) {
+        put(mx, my, hash2(i, 9) * 6.28, PART.FLAGPOLE, f.h[i] || 0, 0);
+      }
+    }
+    return new Float32Array(out);
+  }
+  function paintTris(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nP) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3);
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    const WHITE = [0.78, 0.78, 0.74];
+    const quad = (ox, oy, dx, dy, a0, a1, c0, c1, col) => {
+      const n = Math.max(1, Math.ceil((c1 - c0) / 2));
+      const P2 = [];
+      for (let q = 0; q <= n; q++) {
+        const c = c0 + (c1 - c0) * q / n;
+        for (const a of [a0, a1]) {
+          const x = ox + dx * a + dy * c, y = oy + dy * a - dx * c;
+          const h = world2.groundH(x, y, true);
+          cyl(x, y, h + 0.03, p32);
+          cyl(x, y, h + 1.03, u3);
+          P2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2]]);
+        }
+      }
+      const v = (p) => out.push(p[0], p[1], p[2], p[3], p[4], p[5], col[0], col[1], col[2]);
+      for (let q = 0; q < n; q++) {
+        const A = P2[q * 2], B = P2[q * 2 + 1], C2 = P2[q * 2 + 2], D2 = P2[q * 2 + 3];
+        v(A);
+        v(D2);
+        v(B);
+        v(A);
+        v(C2);
+        v(D2);
+      }
+    };
+    for (let i = 0; i < f.nP; i++) {
+      const x = f.px[i], y = f.py[i];
+      if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
+      const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
+      if (k === CROSSING) {
+        const d = world2.nearestRoad(mx, my);
+        if (d > 2.5) continue;
+        const hw = world2._nr.hw;
+        if (hw < 2.2) continue;
+        let t = null;
+        for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) if (!f.apFoot[j]) {
+          t = f.apH[j];
+          break;
+        }
+        if (t === null) continue;
+        const dx = Math.cos(t), dy = Math.sin(t);
+        world2.groundH(mx, my, true);
+        if (world2.g.water) continue;
+        const sub = f.sub[i], lines = sub === 3 || sub === 5 || sub === 4, bars = sub === 2 || sub === 1 || sub === 7;
+        if (lines || sub === 1 || sub === 7) {
+          for (const a of [-1.65, 1.35]) {
+            if (sub !== 4) {
+              quad(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
+              continue;
+            }
+            for (let c = -hw; c < hw - 0.2; c += 1.2) quad(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
+          }
+        }
+        if (bars) {
+          const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2));
+          const c0 = -nb * 0.6 + 0.3, a0 = sub === 2 ? -1.5 : -1.3, a1 = sub === 2 ? 1.5 : 1.3;
+          for (let b = 0; b < nb; b++) quad(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
+        }
+      } else if (k === STOP || k === SIGNAL) {
+        const junction = roadCount(f, i) >= 3;
+        for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) {
+          if (f.apFoot[j] || !f.apFace[j]) continue;
+          const t = f.apH[j], dx = Math.cos(t), dy = Math.sin(t);
+          const hw = hwAt(world2, mx - dx * 10, my - dy * 10);
+          if (hw < 2.5) continue;
+          const back = (junction ? junctionBack(world2, f, i, mx, my, j) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
+          quad(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : 0.15, hw - 0.3, WHITE);
+        }
+      }
+    }
+    return new Float32Array(out);
+  }
+  function towerKind(f, l, v) {
+    const vk = f.lk[v], kv = f.lKv[l];
+    if (f.lKind[l] === 1) return TOWER.POLE;
+    if (vk === 1) return f.lCab[l] >= 6 ? TOWER.LATTICE2 : kv >= 100 || kv === 0 ? TOWER.LATTICE : TOWER.HFRAME;
+    if (vk === 2) return kv >= 60 ? TOWER.HFRAME : TOWER.POLE;
+    return kv >= 100 ? f.lCab[l] >= 6 ? TOWER.LATTICE2 : TOWER.LATTICE : kv >= 60 ? TOWER.HFRAME : TOWER.POLE;
+  }
+  function across(f, l, v) {
+    const a = f.lStart[l], e = a + f.lCount[l] - 1;
+    const p = Math.max(a, v - 1), n = Math.min(e, v + 1);
+    let dx = f.lx[n] - f.lx[p], dy = f.ly[n] - f.ly[p];
+    const L2 = Math.hypot(dx, dy) || 1;
+    dx /= L2;
+    dy /= L2;
+    return [dy, -dx];
+  }
+  function powerItems(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nL) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3);
+    for (let l = 0; l < f.nL; l++) {
+      const a = f.lStart[l], e = a + f.lCount[l];
+      for (let v = a; v < e; v++) {
+        const mx = reg.x0 + f.lx[v], my = reg.y0 + f.ly[v];
+        if (mx < mx0 || mx >= mx0 + s || my < my0 || my >= my0 + s) continue;
+        if (f.lk[v] === 3) continue;
+        const h = world2.groundH(mx, my, true);
+        if (world2.g.water && f.lk[v] === 0) continue;
+        const [ax, ay] = across(f, l, v);
+        cyl(mx, my, h, p32);
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, Math.atan2(ay, ax), towerKind(f, l, v));
+      }
+    }
+    return new Float32Array(out);
+  }
+  function powerWires(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nL) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3);
+    for (let l = 0; l < f.nL; l++) {
+      const a = f.lStart[l], e = a + f.lCount[l];
+      for (let v = a; v < e - 1; v++) {
+        const mx = reg.x0 + f.lx[v], my = reg.y0 + f.ly[v];
+        if (mx < mx0 || mx >= mx0 + s || my < my0 || my >= my0 + s) continue;
+        const nx = reg.x0 + f.lx[v + 1], ny = reg.y0 + f.ly[v + 1];
+        const span = Math.hypot(nx - mx, ny - my);
+        if (span < 1 || span > 1500) continue;
+        const kA = towerKind(f, l, v), kB = towerKind(f, l, v + 1);
+        const hA = world2.groundH(mx, my, true), hB = world2.groundH(nx, ny, true);
+        const [aax, aay] = across(f, l, v), [bax, bay] = across(f, l, v + 1);
+        const HA = HANG[kA], HB = HANG[kB];
+        const lowA = f.lk[v] === 3 ? 0.55 : 1, lowB = f.lk[v + 1] === 3 ? 0.55 : 1;
+        const nw = Math.min(HA.length, HB.length);
+        const sag = clamp(span * span * 11e-5, 0.25, 16);
+        const segs = span > 260 ? 12 : span > 90 ? 8 : 5;
+        for (let w = 0; w < nw; w++) {
+          const [cA, uA] = HA[w], [cB, uB] = HB[w];
+          let x0 = 0, y0 = 0, z0 = 0;
+          for (let q = 0; q <= segs; q++) {
+            const u = q / segs;
+            const x = mx + (nx - mx) * u + (aax * cA * (1 - u) + bax * cB * u), y = my + (ny - my) * u + (aay * cA * (1 - u) + bay * cB * u);
+            const z = (hA + uA * lowA) * (1 - u) + (hB + uB * lowB) * u - 4 * sag * u * (1 - u);
+            cyl(x, y, z, p32);
+            const X = p32[0] - cx, Y = p32[1] - cy, Z = p32[2] - cz;
+            if (q > 0) out.push(x0, y0, z0, X, Y, Z);
+            x0 = X;
+            y0 = Y;
+            z0 = Z;
+          }
         }
       }
     }
@@ -3655,7 +4017,7 @@
     if (reg.nTun) count += addTunnels(M, world2, reg, ix, iy, s, P2);
     if (walls) count += addWalls(M, world2, ix, iy, s, P2);
     if (!M.n) return null;
-    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
+    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
   }
   var WALL_FACE = -0.12;
   var WALL_BACK = 0.35;
@@ -3795,6 +4157,7 @@
   var measured = /* @__PURE__ */ new Set();
   var treeFiles = /* @__PURE__ */ new Set();
   var groundFiles = /* @__PURE__ */ new Set();
+  var featFiles = /* @__PURE__ */ new Set();
   var lcPacks = /* @__PURE__ */ new Set();
   var LCP = 8192;
   var LCQ = 2048;
@@ -3830,6 +4193,7 @@
     measured = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
     treeFiles = new Set(meta.tiles && meta.tiles.trees ? meta.tiles.trees : []);
     groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
+    featFiles = new Set(meta.tiles && meta.tiles.feat ? meta.tiles.feat : []);
     setDecks(meta.tiles && meta.tiles.decks);
     lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
     LCP = meta.lcPack || 8192;
@@ -3951,6 +4315,7 @@
         const e = await fetchPart(dir, rx, ry);
         if (dir === "b3") reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
         else if (dir === "g3") reg.ground = parseGround(e);
+        else if (dir === "f1") reg.feat = parseFeat(e);
         else if (dir === "t3") {
           const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
           const magic = dv.getUint32(0, true);
@@ -3988,6 +4353,7 @@
           if (measured.has(k)) parts.push("b3");
           if (treeFiles.has(k)) parts.push("t3");
           if (groundFiles.has(k)) parts.push("g3");
+          if (featFiles.has(k)) parts.push("f1");
           await readParts(reg, rx, ry, parts);
           world.addRegion(rx, ry, reg);
           regionFails.delete(k);
@@ -4095,15 +4461,15 @@
       for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
         const o = j * G + i;
         if (!wside[o * 4 + 3]) continue;
-        let across2 = false;
-        for (let b = -1; b <= 1 && !across2; b++) for (let a = -1; a <= 1; a++) {
+        let across3 = false;
+        for (let b = -1; b <= 1 && !across3; b++) for (let a = -1; a <= 1; a++) {
           const jj = j + b, ii = i + a;
           if ((a || b) && jj >= 0 && jj < G && ii >= 0 && ii < G && crossesWall(wside, o, jj * G + ii, a * cell, b * cell)) {
-            across2 = true;
+            across3 = true;
             break;
           }
         }
-        if (!across2) continue;
+        if (!across3) continue;
         const sd = wside[o * 4], mv = (sd > 0 ? 0.08 : -0.08) - sd;
         off[o * 2] = wside[o * 4 + 1] * mv;
         off[o * 2 + 1] = wside[o * 4 + 2] * mv;
@@ -4148,7 +4514,7 @@
     let v = 0;
     const N1 = N + 1;
     const nrm = new Float32Array(N1 * N1 * 3);
-    const across = (o, p) => wside && wside[o * 4 + 3] && crossesWall(wside, o, p, (p % G - o % G) * cell, (Math.floor(p / G) - Math.floor(o / G)) * cell);
+    const across2 = (o, p) => wside && wside[o * 4 + 3] && crossesWall(wside, o, p, (p % G - o % G) * cell, (Math.floor(p / G) - Math.floor(o / G)) * cell);
     for (let j = 0; j <= N; j++) {
       const my = my0 + j * cell;
       for (let i = 0; i <= N; i++) {
@@ -4158,7 +4524,7 @@
           dx = (hs[o + 1] - hs[o - 1]) / (2 * cell);
           dy = (hs[o + G] - hs[o - G]) / (2 * cell);
         } else {
-          const l = across(o, o - 1), r = across(o, o + 1), d = across(o, o - G), u = across(o, o + G);
+          const l = across2(o, o - 1), r = across2(o, o + 1), d = across2(o, o - G), u = across2(o, o + G);
           dx = l && r ? 0 : l ? (hs[o + 1] - hs[o]) / cell : r ? (hs[o] - hs[o - 1]) / cell : (hs[o + 1] - hs[o - 1]) / (2 * cell);
           dy = d && u ? 0 : d ? (hs[o + G] - hs[o]) / cell : u ? (hs[o] - hs[o - G]) / cell : (hs[o + G] - hs[o - G]) / (2 * cell);
         }
@@ -4290,6 +4656,13 @@
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: kind === "wires" ? 6 : 5 }, [arr2.buffer]);
       return;
     }
+    if (kind === "signs" || kind === "paint" || kind === "power" || kind === "pwires") {
+      const fn = kind === "signs" ? signItems : kind === "paint" ? paintTris : kind === "power" ? powerItems : powerWires;
+      const arr2 = reg ? fn(world, reg, mx0, my0, s, cx, cy, cz) : new Float32Array(0);
+      const stride = kind === "signs" ? 7 : kind === "paint" ? 9 : kind === "power" ? 5 : 6;
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride }, [arr2.buffer]);
+      return;
+    }
     if (kind === "trees" || kind === "clumps") {
       const sp2 = kind === "trees" ? 8.5 : 30, order = [];
       const n2 = Math.round(s / sp2), cell2 = s / n2;
@@ -4390,7 +4763,7 @@
     if (kind === "decks") {
       const t = buildDeckTile(world, reg, ix, iy, s, cx, cy, cz, (my0 + s / 2) / R, NBI);
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer] : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : []) : []);
       return;
     }
     if (kind === "houses") {
@@ -4403,7 +4776,7 @@
       }
       const t = sel.length ? buildHouseTile(world, list, sel, cx, cy, cz, (my0 + s / 2) / R, reg) : null;
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer] : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : []) : []);
       return;
     }
     if (realBuildings) {
@@ -4411,7 +4784,7 @@
       const list = reg ? cellBuildings(reg, Math.round((mx0 - reg.x0) / cs), Math.round((my0 - reg.y0) / cs)) : null;
       if (list) for (let k = 0; k < list.length; k += 16) farBoxes(world, list, k, reg, cx, cy, cz, out);
       const arr2 = new Float32Array(out);
-      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 16 }, [arr2.buffer]);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 17 }, [arr2.buffer]);
       return;
     }
     const sp = 27, n = Math.round(s / sp), cell = s / n;
