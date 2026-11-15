@@ -5081,8 +5081,9 @@
         if (lcv >= 0) pc = lcv === 7 || lcv === 17 ? 0.97 : lcv === 8 ? 0.5 : lcv === 10 ? 0.35 : lcv === 6 || lcv === 16 ? 0.03 : pc;
         const conifer = r4 < pc ? 1 : 0;
         cyl(mx, my, h, p32);
-        const sc = seen && kind === "trees" ? clamp(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / TREE_H[conifer], 0.25, 2.9) : 0.75 + 0.65 * hash2(gi + 3, gj + 29);
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5), 0);
+        const wide = 0.75 + 0.65 * hash2(gi + 3, gj + 29), measuredClump = seen && kind === "clumps";
+        const sc = measuredClump ? tall / 16 : seen && kind === "trees" ? clamp(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / TREE_H[conifer], 0.25, 2.9) : wide;
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5), measuredClump ? wide : 0);
         order.push(hash2(gi * 13 + 1, gj * 17 + 5));
       }
       if (tI >= 0) {
