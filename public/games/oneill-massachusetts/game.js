@@ -20128,12 +20128,14 @@ void main() {
       const next = [];
       const keep = (R2) => {
         if (R2.length < 6) return;
-        let a = 0;
+        let a = 0, per = 0;
         for (let i = 0, n = R2.length / 2; i < n; i++) {
           const j = (i + 1) % n;
           a += R2[i * 2] * R2[j * 2 + 1] - R2[j * 2] * R2[i * 2 + 1];
+          per += Math.hypot(R2[j * 2] - R2[i * 2], R2[j * 2 + 1] - R2[i * 2 + 1]);
         }
-        if (Math.abs(a) > 0.6) next.push(R2);
+        a = Math.abs(a) / 2;
+        if (a > 3 && a / per > 0.175) next.push(R2);
       };
       for (const Q of pieces) {
         let clear = false;
