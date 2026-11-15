@@ -5715,7 +5715,7 @@
       const reg2 = world.regionAt(mx0 + s / 2, my0 + s / 2);
       if (reg2 && reg2.feat && reg2.feat.nA) [lc, lcN] = paintAreas(reg2, lc, lcN, mx0, my0, s);
     }
-    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, tun, shore, lc, lcN, size: s, mx0, my0 };
+    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, roadsChecked: level >= 6 && !!reg, tun, shore, lc, lcN, size: s, mx0, my0 };
     const tr = [pos.buffer, nor.buffer, loc.buffer];
     if (road) tr.push(road.buffer, roadK.buffer);
     if (tun) tr.push(tun.buffer);

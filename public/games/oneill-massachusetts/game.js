@@ -16774,7 +16774,8 @@ void main() {
         }
       }
     }
-  } else {
+  } else if (uHasRoad > -0.5) {
+    // far off, the main roads from the coarse map (-1: a near chunk with no street in reach, which paints none)
     float w0 = max(fpn * 1.1, 22.0);
     paved = (1.0 - smoothstep(w0 * 0.5, w0 * 1.15, roadFarD - 10.0)) * 0.8 * clamp(34.0 / fpn, 0.25, 1.0);
     onRoadGeom = 1.0 - smoothstep(20.0, 45.0, roadFarD);
@@ -18803,7 +18804,7 @@ void main() {
           uMap0: { value: new et(m.mx0, m.my0) },
           uSize: { value: m.size },
           uTex0: { value: new et(m.mx0 % 48, m.my0 % 48) },
-          uHasRoad: { value: roadTex ? 1 : 0 },
+          uHasRoad: { value: roadTex ? 1 : m.roadsChecked ? -1 : 0 },
           uRoad: { value: roadTex || this.dummyRoad },
           uRoadK: { value: roadKTex || this.dummyK },
           uRoadT: { value: m.roadT },
