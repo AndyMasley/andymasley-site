@@ -14971,7 +14971,145 @@ void main() {
       if (!onOtherWay(reg, px2[a], py2[a], pz[a], i, true)) rEnd[i] |= 1;
       if (!onOtherWay(reg, px2[b], py2[b], pz[b], i, true)) rEnd[i] |= 2;
     }
+    if (nDeck) {
+      easeRims(reg);
+      snapMerges(reg);
+    }
     return reg;
+  }
+  var RIM_EASE = 15;
+  function easeRims(reg) {
+    const { px: px2, py: py2, pz, rStart, rCount, rEnd, rCls, rTun, cum, segR } = reg;
+    const gw = reg.gw;
+    let eased = 0;
+    for (let i = 0; i < reg.nRoads; i++) {
+      const en2 = rEnd[i];
+      if (!(en2 & 3)) continue;
+      const a = rStart[i], n = rCount[i], b = a + n - 1;
+      for (const [bit, q, q2] of [[1, a, a + 1], [2, b, b - 1]]) {
+        if (!(en2 & bit)) continue;
+        const x = px2[q], y = py2[q], ox2 = px2[q] - px2[q2], oy2 = py2[q] - py2[q2], ol2 = Math.hypot(ox2, oy2) || 1;
+        const cx2 = Math.floor((x + RM) / RCELL), cy2 = Math.floor((y + RM) / RCELL);
+        if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) continue;
+        const c = cy2 * gw + cx2;
+        let bd2 = 0.5, dz = 0;
+        for (let k = reg.gstart[c]; k < reg.gstart[c + 1]; k++) {
+          const pi2 = reg.gitems[k], rj = segR[pi2];
+          if (rj === i || rEnd[rj] || rTun[rj] || rCls[rj] > 15 || rCls[rj] >= 14 !== rCls[i] >= 14) continue;
+          const sx2 = px2[pi2 + 1] - px2[pi2], sy2 = py2[pi2 + 1] - py2[pi2], l2 = sx2 * sx2 + sy2 * sy2;
+          if (l2 < 1e-6) continue;
+          const l = Math.sqrt(l2);
+          if (Math.abs(sx2 * ox2 + sy2 * oy2) / (l * ol2) < 0.8) continue;
+          const t = Math.max(0, Math.min(1, ((x - px2[pi2]) * sx2 + (y - py2[pi2]) * sy2) / l2));
+          const d = Math.hypot(x - px2[pi2] - sx2 * t, y - py2[pi2] - sy2 * t);
+          if (d >= bd2) continue;
+          const step = pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t - pz[q];
+          if (Math.abs(step) < 0.1 || Math.abs(step) >= 2) continue;
+          bd2 = d;
+          dz = step;
+        }
+        if (!dz) continue;
+        for (let k = a; k <= b; k++) {
+          const d = Math.abs(cum[k] - cum[q]);
+          if (d >= RIM_EASE) continue;
+          const f = 1 - d / RIM_EASE;
+          pz[k] += dz * f * f * (3 - 2 * f);
+        }
+        eased++;
+        (reg.easedRims || (reg.easedRims = [])).push(q);
+      }
+    }
+    reg.nRimsEased = eased;
+  }
+  var deckSegDir = (dx2, dy2) => {
+    let t = Math.atan2(dy2, dx2);
+    if (t < 0) t += Math.PI;
+    return t >= Math.PI ? 0 : t;
+  };
+  function deckOutranks(reg, rj, ri2, thj, oj, thi, oi2) {
+    const cj = reg.rCls[rj], ci = reg.rCls[ri2];
+    if (cj !== ci) return cj < ci;
+    const hj = reg.rHw[rj], hi2 = reg.rHw[ri2];
+    if (Math.abs(hj - hi2) > 0.01) return hj > hi2;
+    if (Math.abs(thj - thi) > 1e-3) return thj < thi;
+    if (Math.abs(oj - oi2) > 0.05) return oj < oi2;
+    return false;
+  }
+  var _own = { z: 0 };
+  function deckOwnerAt(reg, lx2, ly2, z, ri2, thi, oi2, dz, inset) {
+    const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+    if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return -1;
+    const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rCls = reg.rCls;
+    const rail = rCls[ri2] >= 14;
+    let best = -1, bth = 0, bo2 = 0, bz = 0;
+    for (let q = reg.gstart[c]; q < e; q++) {
+      const pi2 = items[q], rj = segR[pi2];
+      if (rj === ri2 || !rEnd[rj] || rCls[rj] > 15 || rCls[rj] >= 14 !== rail) continue;
+      const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+      if (l2 < 1e-6) continue;
+      const t = ((lx2 - ax2) * dx2 + (ly2 - ay2) * dy2) / l2;
+      if (t < 0 || t > 1) continue;
+      const ex2 = lx2 - ax2 - dx2 * t, ey2 = ly2 - ay2 - dy2 * t, w = rHw[rj] - inset;
+      if (w <= 0 || ex2 * ex2 + ey2 * ey2 >= w * w) continue;
+      const zj = pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t;
+      if (Math.abs(zj - z) >= dz) continue;
+      const thj = deckSegDir(dx2, dy2), oj = -(reg.x0 + ax2) * Math.sin(thj) + (reg.y0 + ay2) * Math.cos(thj);
+      if (best >= 0 && (best === rj || !deckOutranks(reg, rj, best, thj, oj, bth, bo2))) continue;
+      best = rj;
+      bth = thj;
+      bo2 = oj;
+      bz = zj;
+    }
+    if (best < 0 || !deckOutranks(reg, best, ri2, bth, bo2, thi, oi2)) return -1;
+    _own.z = bz;
+    return best;
+  }
+  var MERGE_DZ = 0.8;
+  var MERGE_EASE = 20;
+  function snapMerges(reg) {
+    const { px: px2, py: py2, pz, rStart, rCount, rEnd, rCls, rHw, cum } = reg;
+    const order = [];
+    for (let i = 0; i < reg.nRoads; i++) if (rEnd[i]) order.push(i);
+    order.sort((a, b) => rCls[a] - rCls[b] || rHw[b] - rHw[a]);
+    let moved = 0;
+    for (const i of order) {
+      const a = rStart[i], n = rCount[i];
+      let any = false;
+      const dz = new Float32Array(n), snap = new Uint8Array(n);
+      for (let k = 0; k < n; k++) {
+        const q = a + k, q02 = k < n - 1 ? q : q - 1;
+        const th = deckSegDir(px2[q02 + 1] - px2[q02], py2[q02 + 1] - py2[q02]), o = -(reg.x0 + px2[q02]) * Math.sin(th) + (reg.y0 + py2[q02]) * Math.cos(th);
+        if (deckOwnerAt(reg, px2[q], py2[q], pz[q], i, th, o, MERGE_DZ, 0.05) >= 0) {
+          dz[k] = _own.z - pz[q];
+          snap[k] = 1;
+          any = true;
+        }
+      }
+      if (!any) continue;
+      for (let k = 0; k < n; k++) {
+        if (snap[k]) continue;
+        let bd2 = MERGE_EASE, bk = -1;
+        for (let j = 0; j < n; j++) if (snap[j]) {
+          const d = Math.abs(cum[a + j] - cum[a + k]);
+          if (d < bd2) {
+            bd2 = d;
+            bk = j;
+          }
+        }
+        if (bk >= 0) {
+          const f = 1 - bd2 / MERGE_EASE;
+          dz[k] = dz[bk] * f * f * (3 - 2 * f);
+        }
+      }
+      let ch = false;
+      for (let k = 0; k < n; k++) if (dz[k]) {
+        pz[a + k] += dz[k];
+        moved++;
+        if (Math.abs(dz[k]) > 0.01) ch = true;
+      }
+      if (ch) (reg.mergedWays || (reg.mergedWays = [])).push(i);
+    }
+    reg.nMerged = moved;
   }
   function onOtherWay(reg, lx2, ly2, z, ri2, deckOnly) {
     const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -15516,7 +15654,11 @@ void main() {
               if (edge < 0) water = true;
             }
           } else if (wgt > 0) {
-            const zr2 = water ? Math.max(nr2.z, lev + 3.5) : nr2.z;
+            let zr2 = nr2.z;
+            if (water) {
+              const z02 = Math.max(nr2.z, lev + 0.3);
+              zr2 = z02 + Math.max(0, lev + 3.5 - z02) * smoothstep(4, 30, -s29);
+            }
             h = h + (zr2 - h) * wgt;
             if (wgt > 0.5) water = false;
             gi2.road = nr2.road;
@@ -15576,10 +15718,23 @@ void main() {
     // from: what the car is on now ('deck', 'tunnel' or 'ground').  A car on a deck follows it up its grade (a deck up
     // to 1.7 m over it); one on the ground or in a tunnel gets onto a deck only where the deck meets its own level (a rim,
     // within 0.45 m), so a road passing under a bridge never jumps up onto it.
-    driveH(mx2, my2, href, from) {
+    // keep ({ reg, road }): the deck the car is on.  While that deck is under it within reach, the car stays on it, so
+    // where two decks overlap at a merge (one up to 1.7 m over the other) it is not lifted onto the one it is not on.
+    driveH(mx2, my2, href, from, keep) {
       const h = this.groundH(mx2, my2), g = this.g;
       g.onTunnel = false;
       const reach = from === void 0 || from === "deck" ? 1.7 : 0.45;
+      if (keep && from === "deck" && keep.reg && keep.road >= 0) {
+        const z = this.onWayZ(keep.reg, keep.road, mx2, my2);
+        if (z !== null && Math.abs(z - href) < reach && z > h) {
+          g.onDeck = true;
+          g.water = false;
+          g.deck = z;
+          g.deckRoad = keep.road;
+          g.deckReg = keep.reg;
+          return z;
+        }
+      }
       if (g.deck > -1e8 && this.nearestDeck(mx2, my2, href + reach) < 0.35) {
         const nd2 = this._nd;
         if (nd2.z > h) {
@@ -15603,6 +15758,26 @@ void main() {
         }
       }
       return h;
+    }
+    // The height of deck way ri of region reg under (mx, my), or null where the point is off its roadway (more than
+    // 0.35 m past its edge) or past one of its rims.
+    onWayZ(reg, ri2, mx2, my2) {
+      const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, a = reg.rStart[ri2], n = reg.rCount[ri2], px2 = reg.px, py2 = reg.py, pz = reg.pz, en2 = reg.rEnd[ri2];
+      let best = 1e18, z = null;
+      for (let q = a; q < a + n - 1; q++) {
+        const dx2 = px2[q + 1] - px2[q], dy2 = py2[q + 1] - py2[q], l2 = dx2 * dx2 + dy2 * dy2;
+        if (l2 < 1e-6) continue;
+        let t = ((lx2 - px2[q]) * dx2 + (ly2 - py2[q]) * dy2) / l2;
+        const tol = en2 & 1 && q === a || en2 & 2 && q === a + n - 2 ? 0 : 0.3 / Math.sqrt(l2);
+        if (t < -tol && q === a || t > 1 + tol && q === a + n - 2) continue;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = lx2 - px2[q] - dx2 * t, ey2 = ly2 - py2[q] - dy2 * t, d2 = ex2 * ex2 + ey2 * ey2;
+        if (d2 < best) {
+          best = d2;
+          z = pz[q] + (pz[q + 1] - pz[q]) * t;
+        }
+      }
+      return z !== null && Math.sqrt(best) - reg.rHw[ri2] < 0.35 ? z : null;
     }
     // Every surface a car could stand on at (mx, my), highest first: the decks the point is on, the ground, and the
     // floors of the tunnels under it.  Each is { z, kind: 'deck' | 'ground' | 'tunnel' }.
@@ -19152,16 +19327,22 @@ void main() {
         g.setAttribute("aJ", new me(h.j || new Uint8Array(h.k.length), 4, true));
         g.setAttribute("aT", new me(h.t || new Uint16Array(h.k.length), 4));
         g.setIndex(new me(h.idx, 1));
-        const mid2 = new C();
-        let rad2 = 0;
-        for (let i = 0; i < h.c.length; i += 3) {
-          mid2.x += h.c[i];
-          mid2.y += h.c[i + 1];
-          mid2.z += h.c[i + 2];
+        const pp2 = h.pos;
+        let x02 = 1e9, y02 = 1e9, z02 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9;
+        for (const arr of [pp2, h.c]) for (let i = 0; i < arr.length; i += 3) {
+          const x = arr[i], y = arr[i + 1], z = arr[i + 2];
+          if (x < x02) x02 = x;
+          if (x > x1) x1 = x;
+          if (y < y02) y02 = y;
+          if (y > y1) y1 = y;
+          if (z < z02) z02 = z;
+          if (z > z1) z1 = z;
         }
-        mid2.multiplyScalar(3 / h.c.length);
-        for (let i = 0; i < h.c.length; i += 3) rad2 = Math.max(rad2, Math.hypot(h.c[i] - mid2.x, h.c[i + 1] - mid2.y, h.c[i + 2] - mid2.z));
-        g.boundingSphere = new Ie(mid2.clone(), rad2 + 140);
+        const mid2 = new C((x02 + x1) / 2, (y02 + y1) / 2, (z02 + z1) / 2);
+        let r2 = 0;
+        for (const arr of [pp2, h.c]) for (let i = 0; i < arr.length; i += 3) r2 = Math.max(r2, (arr[i] - mid2.x) ** 2 + (arr[i + 1] - mid2.y) ** 2 + (arr[i + 2] - mid2.z) ** 2);
+        const rad2 = Math.sqrt(r2);
+        g.boundingSphere = new Ie(mid2.clone(), rad2 + 2);
         const mesh2 = new Ce(g, m.kind === "decks" ? this.deckMat : this.houseMat);
         mesh2.matrixAutoUpdate = false;
         mesh2.visible = false;
@@ -19172,7 +19353,7 @@ void main() {
         t.mid = [m.center[0] + mid2.x, m.center[1] + mid2.y, m.center[2] + mid2.z];
         t.n = h.count;
         t.own = true;
-        t.rad = rad2 + 140;
+        t.rad = rad2 + 2;
         t.kind = m.kind;
         this.scene.add(mesh2);
         return;
@@ -20238,7 +20419,12 @@ void main() {
       const w = this.game.world, c = this.car, f = this.fly;
       if (this.mode === "drive") {
         const from0 = c.deck ? "deck" : c.tun ? "tunnel" : "ground";
-        const gh = w.driveH(c.mx, c.my, c.h, from0), g = w.g;
+        const keep = c.deck && c.wayReg ? this._keep || (this._keep = { reg: null, road: -1 }) : void 0;
+        if (keep) {
+          keep.reg = c.wayReg;
+          keep.road = c.wayRoad;
+        }
+        const gh = w.driveH(c.mx, c.my, c.h, from0, keep), g = w.g;
         c.deck = g.onDeck;
         c.tun = g.onTunnel;
         c.water = g.water;
@@ -20247,8 +20433,8 @@ void main() {
         const smooth2 = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
         const vmax = (c.water ? 17 : smooth2 ? 52 : 27) * (inp.boost ? 1.5 : 1);
         const sx2 = Math.sin(c.hdg), sy2 = Math.cos(c.hdg);
-        const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h, from0), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h, from0);
-        const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h, from0), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h, from0);
+        const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h, from0, keep), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h, from0, keep);
+        const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h, from0, keep), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h, from0, keep);
         const slope = (ha2 - hb) / 4.4;
         let a = 0;
         if (inp.fwd > 0) a = c.v >= -0.2 ? 7.5 * inp.fwd * Math.max(0, 1 - c.v / vmax) : 13;
@@ -20273,10 +20459,18 @@ void main() {
           this.bump();
           if (this.game.traffic) this.game.traffic.bump(c);
           c.odo += Math.abs(ds2);
-          let tgt = w.driveH(c.mx, c.my, c.h, from);
+          const keepS = from === "deck" && c.wayReg ? this._keepS || (this._keepS = { reg: null, road: -1 }) : void 0;
+          if (keepS) {
+            keepS.reg = c.wayReg;
+            keepS.road = c.wayRoad;
+          }
+          let tgt = w.driveH(c.mx, c.my, c.h, from, keepS);
           let onDeck = w.g.onDeck, onTun = w.g.onTunnel;
           if (!onDeck && from === "deck" && w.nearestDeck(c.mx, c.my, c.h + 1.7) < 3 && w._nd.road === c.wayRoad && w._nd.reg === c.wayReg && Math.abs(w._nd.z - c.h) < 1.5) {
-            onDeck = true;
+            const nd2 = w._nd, reg = nd2.reg, out = nd2.d - nd2.hw - 0.05;
+            const ex2 = c.mx - nd2.ty * nd2.side * out, ey2 = c.my + nd2.tx * nd2.side * out;
+            const open = onOtherWay(reg, ex2 - reg.x0, ey2 - reg.y0, nd2.z, nd2.road, false);
+            if (!(open && Math.abs(tgt - c.h) < 0.45)) onDeck = true;
           }
           if (!onTun && from === "tunnel" && w.nearestTunnel(c.mx, c.my, c.h + 1.7) < 3 && w._nt.road === c.wayRoad && w._nt.reg === c.wayReg && Math.abs(w._nt.z - c.h) < 1.5) {
             onTun = true;
@@ -20290,7 +20484,7 @@ void main() {
               const into = (Math.sin(c.hdg) * nd2.ty - Math.cos(c.hdg) * nd2.tx) * nd2.side * Math.sign(c.v || 1);
               if (into > 0) c.v *= 1 - Math.min(1, into * 0.9);
             }
-            tgt = w.driveH(c.mx, c.my, c.h, "deck");
+            tgt = w.driveH(c.mx, c.my, c.h, "deck", keepS);
           } else if (onTun) {
             if (!w.g.onTunnel) w.nearestTunnel(c.mx, c.my, c.h + 1.7);
             const nt = w._nt, over = nt.d - Math.max(nt.hw + WALL_GAP - 0.1 - this.across(nt), 0.3);

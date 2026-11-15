@@ -221,7 +221,145 @@
       if (!onOtherWay(reg, px[a], py[a], pz[a], i, true)) rEnd[i] |= 1;
       if (!onOtherWay(reg, px[b], py[b], pz[b], i, true)) rEnd[i] |= 2;
     }
+    if (nDeck) {
+      easeRims(reg);
+      snapMerges(reg);
+    }
     return reg;
+  }
+  var RIM_EASE = 15;
+  function easeRims(reg) {
+    const { px, py, pz, rStart, rCount, rEnd, rCls, rTun, cum, segR } = reg;
+    const gw = reg.gw;
+    let eased = 0;
+    for (let i = 0; i < reg.nRoads; i++) {
+      const en = rEnd[i];
+      if (!(en & 3)) continue;
+      const a = rStart[i], n = rCount[i], b = a + n - 1;
+      for (const [bit, q, q2] of [[1, a, a + 1], [2, b, b - 1]]) {
+        if (!(en & bit)) continue;
+        const x = px[q], y = py[q], ox = px[q] - px[q2], oy = py[q] - py[q2], ol = Math.hypot(ox, oy) || 1;
+        const cx = Math.floor((x + RM) / RCELL), cy = Math.floor((y + RM) / RCELL);
+        if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) continue;
+        const c = cy * gw + cx;
+        let bd = 0.5, dz = 0;
+        for (let k = reg.gstart[c]; k < reg.gstart[c + 1]; k++) {
+          const pi = reg.gitems[k], rj = segR[pi];
+          if (rj === i || rEnd[rj] || rTun[rj] || rCls[rj] > 15 || rCls[rj] >= 14 !== rCls[i] >= 14) continue;
+          const sx = px[pi + 1] - px[pi], sy = py[pi + 1] - py[pi], l2 = sx * sx + sy * sy;
+          if (l2 < 1e-6) continue;
+          const l = Math.sqrt(l2);
+          if (Math.abs(sx * ox + sy * oy) / (l * ol) < 0.8) continue;
+          const t = Math.max(0, Math.min(1, ((x - px[pi]) * sx + (y - py[pi]) * sy) / l2));
+          const d = Math.hypot(x - px[pi] - sx * t, y - py[pi] - sy * t);
+          if (d >= bd) continue;
+          const step = pz[pi] + (pz[pi + 1] - pz[pi]) * t - pz[q];
+          if (Math.abs(step) < 0.1 || Math.abs(step) >= 2) continue;
+          bd = d;
+          dz = step;
+        }
+        if (!dz) continue;
+        for (let k = a; k <= b; k++) {
+          const d = Math.abs(cum[k] - cum[q]);
+          if (d >= RIM_EASE) continue;
+          const f = 1 - d / RIM_EASE;
+          pz[k] += dz * f * f * (3 - 2 * f);
+        }
+        eased++;
+        (reg.easedRims || (reg.easedRims = [])).push(q);
+      }
+    }
+    reg.nRimsEased = eased;
+  }
+  var deckSegDir = (dx, dy) => {
+    let t = Math.atan2(dy, dx);
+    if (t < 0) t += Math.PI;
+    return t >= Math.PI ? 0 : t;
+  };
+  function deckOutranks(reg, rj, ri, thj, oj, thi, oi) {
+    const cj = reg.rCls[rj], ci = reg.rCls[ri];
+    if (cj !== ci) return cj < ci;
+    const hj = reg.rHw[rj], hi = reg.rHw[ri];
+    if (Math.abs(hj - hi) > 0.01) return hj > hi;
+    if (Math.abs(thj - thi) > 1e-3) return thj < thi;
+    if (Math.abs(oj - oi) > 0.05) return oj < oi;
+    return false;
+  }
+  var _own = { z: 0 };
+  function deckOwnerAt(reg, lx, ly, z, ri, thi, oi, dz, inset) {
+    const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+    if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return -1;
+    const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rCls = reg.rCls;
+    const rail = rCls[ri] >= 14;
+    let best = -1, bth = 0, bo = 0, bz = 0;
+    for (let q = reg.gstart[c]; q < e; q++) {
+      const pi = items[q], rj = segR[pi];
+      if (rj === ri || !rEnd[rj] || rCls[rj] > 15 || rCls[rj] >= 14 !== rail) continue;
+      const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+      if (l2 < 1e-6) continue;
+      const t = ((lx - ax) * dx + (ly - ay) * dy) / l2;
+      if (t < 0 || t > 1) continue;
+      const ex = lx - ax - dx * t, ey = ly - ay - dy * t, w = rHw[rj] - inset;
+      if (w <= 0 || ex * ex + ey * ey >= w * w) continue;
+      const zj = pz[pi] + (pz[pi + 1] - pz[pi]) * t;
+      if (Math.abs(zj - z) >= dz) continue;
+      const thj = deckSegDir(dx, dy), oj = -(reg.x0 + ax) * Math.sin(thj) + (reg.y0 + ay) * Math.cos(thj);
+      if (best >= 0 && (best === rj || !deckOutranks(reg, rj, best, thj, oj, bth, bo))) continue;
+      best = rj;
+      bth = thj;
+      bo = oj;
+      bz = zj;
+    }
+    if (best < 0 || !deckOutranks(reg, best, ri, bth, bo, thi, oi)) return -1;
+    _own.z = bz;
+    return best;
+  }
+  var MERGE_DZ = 0.8;
+  var MERGE_EASE = 20;
+  function snapMerges(reg) {
+    const { px, py, pz, rStart, rCount, rEnd, rCls, rHw, cum } = reg;
+    const order = [];
+    for (let i = 0; i < reg.nRoads; i++) if (rEnd[i]) order.push(i);
+    order.sort((a, b) => rCls[a] - rCls[b] || rHw[b] - rHw[a]);
+    let moved = 0;
+    for (const i of order) {
+      const a = rStart[i], n = rCount[i];
+      let any = false;
+      const dz = new Float32Array(n), snap = new Uint8Array(n);
+      for (let k = 0; k < n; k++) {
+        const q = a + k, q0 = k < n - 1 ? q : q - 1;
+        const th = deckSegDir(px[q0 + 1] - px[q0], py[q0 + 1] - py[q0]), o = -(reg.x0 + px[q0]) * Math.sin(th) + (reg.y0 + py[q0]) * Math.cos(th);
+        if (deckOwnerAt(reg, px[q], py[q], pz[q], i, th, o, MERGE_DZ, 0.05) >= 0) {
+          dz[k] = _own.z - pz[q];
+          snap[k] = 1;
+          any = true;
+        }
+      }
+      if (!any) continue;
+      for (let k = 0; k < n; k++) {
+        if (snap[k]) continue;
+        let bd = MERGE_EASE, bk = -1;
+        for (let j = 0; j < n; j++) if (snap[j]) {
+          const d = Math.abs(cum[a + j] - cum[a + k]);
+          if (d < bd) {
+            bd = d;
+            bk = j;
+          }
+        }
+        if (bk >= 0) {
+          const f = 1 - bd / MERGE_EASE;
+          dz[k] = dz[bk] * f * f * (3 - 2 * f);
+        }
+      }
+      let ch = false;
+      for (let k = 0; k < n; k++) if (dz[k]) {
+        pz[a + k] += dz[k];
+        moved++;
+        if (Math.abs(dz[k]) > 0.01) ch = true;
+      }
+      if (ch) (reg.mergedWays || (reg.mergedWays = [])).push(i);
+    }
+    reg.nMerged = moved;
   }
   function onOtherWay(reg, lx, ly, z, ri, deckOnly) {
     const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
@@ -792,7 +930,11 @@
               if (edge < 0) water = true;
             }
           } else if (wgt > 0) {
-            const zr = water ? Math.max(nr.z, lev + 3.5) : nr.z;
+            let zr = nr.z;
+            if (water) {
+              const z0 = Math.max(nr.z, lev + 0.3);
+              zr = z0 + Math.max(0, lev + 3.5 - z0) * smoothstep(4, 30, -s);
+            }
             h = h + (zr - h) * wgt;
             if (wgt > 0.5) water = false;
             gi.road = nr.road;
@@ -852,10 +994,23 @@
     // from: what the car is on now ('deck', 'tunnel' or 'ground').  A car on a deck follows it up its grade (a deck up
     // to 1.7 m over it); one on the ground or in a tunnel gets onto a deck only where the deck meets its own level (a rim,
     // within 0.45 m), so a road passing under a bridge never jumps up onto it.
-    driveH(mx, my, href, from) {
+    // keep ({ reg, road }): the deck the car is on.  While that deck is under it within reach, the car stays on it, so
+    // where two decks overlap at a merge (one up to 1.7 m over the other) it is not lifted onto the one it is not on.
+    driveH(mx, my, href, from, keep) {
       const h = this.groundH(mx, my), g = this.g;
       g.onTunnel = false;
       const reach = from === void 0 || from === "deck" ? 1.7 : 0.45;
+      if (keep && from === "deck" && keep.reg && keep.road >= 0) {
+        const z = this.onWayZ(keep.reg, keep.road, mx, my);
+        if (z !== null && Math.abs(z - href) < reach && z > h) {
+          g.onDeck = true;
+          g.water = false;
+          g.deck = z;
+          g.deckRoad = keep.road;
+          g.deckReg = keep.reg;
+          return z;
+        }
+      }
       if (g.deck > -1e8 && this.nearestDeck(mx, my, href + reach) < 0.35) {
         const nd = this._nd;
         if (nd.z > h) {
@@ -879,6 +1034,26 @@
         }
       }
       return h;
+    }
+    // The height of deck way ri of region reg under (mx, my), or null where the point is off its roadway (more than
+    // 0.35 m past its edge) or past one of its rims.
+    onWayZ(reg, ri, mx, my) {
+      const lx = mx - reg.x0, ly = my - reg.y0, a = reg.rStart[ri], n = reg.rCount[ri], px = reg.px, py = reg.py, pz = reg.pz, en = reg.rEnd[ri];
+      let best = 1e18, z = null;
+      for (let q = a; q < a + n - 1; q++) {
+        const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = dx * dx + dy * dy;
+        if (l2 < 1e-6) continue;
+        let t = ((lx - px[q]) * dx + (ly - py[q]) * dy) / l2;
+        const tol = en & 1 && q === a || en & 2 && q === a + n - 2 ? 0 : 0.3 / Math.sqrt(l2);
+        if (t < -tol && q === a || t > 1 + tol && q === a + n - 2) continue;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = lx - px[q] - dx * t, ey = ly - py[q] - dy * t, d2 = ex * ex + ey * ey;
+        if (d2 < best) {
+          best = d2;
+          z = pz[q] + (pz[q + 1] - pz[q]) * t;
+        }
+      }
+      return z !== null && Math.sqrt(best) - reg.rHw[ri] < 0.35 ? z : null;
     }
     // Every surface a car could stand on at (mx, my), highest first: the decks the point is on, the ground, and the
     // floors of the tunnels under it.  Each is { z, kind: 'deck' | 'ground' | 'tunnel' }.
@@ -1223,16 +1398,19 @@
       this.t = g(this.t, 4);
       this.cap *= 2;
     }
-    // a vertex given in the building's frame (u along the footprint's yaw, y up, v across), with its normal there
+    // a vertex given in the building's frame (u along the footprint's yaw, y up, v across), with its normal there.  The
+    // normal is stored as three signed bytes, so it is brought to unit length first: a longer one (a mitred offset passed
+    // by mistake) would wrap past 127 and point somewhere else, and tri() winds the triangles by it
     v(pu, py, pv, nu, ny, nv, tu, tv) {
       if (this.n === this.cap) this.grow();
       const i = this.n++, p = this.pos, q = this.nor;
       p[i * 3] = this.ox + this.ux * pu + this.vx * pv;
       p[i * 3 + 1] = this.oy + py;
       p[i * 3 + 2] = this.oz + this.uz * pu + this.vz * pv;
-      q[i * 4] = Math.round((this.ux * nu + this.vx * nv) * 127);
-      q[i * 4 + 1] = Math.round(ny * 127);
-      q[i * 4 + 2] = Math.round((this.uz * nu + this.vz * nv) * 127);
+      const wx = this.ux * nu + this.vx * nv, wz = this.uz * nu + this.vz * nv, nl = 127 / (Math.hypot(wx, ny, wz) || 1);
+      q[i * 4] = Math.round(wx * nl);
+      q[i * 4 + 1] = Math.round(ny * nl);
+      q[i * 4 + 2] = Math.round(wz * nl);
       this.uv[i * 2] = tu;
       this.uv[i * 2 + 1] = tv;
       this.w.set(this.W, i * 4);
@@ -2932,16 +3110,33 @@
     }
     return f;
   }
-  function hwAt(world2, x, y) {
+  function hwAt(world2, x, y, zD = null) {
+    if (zD !== null) {
+      const d2 = world2.nearestDeck(x, y, zD + 0.6);
+      return d2 < 14 ? world2._nd.hw : 0;
+    }
     const d = world2.nearestRoad(x, y);
     return d < 14 ? world2._nr.hw : 0;
   }
-  function junctionBack(world2, f, i, mx, my, j) {
+  function deckOwner(world2, mx, my) {
+    const dd = world2.nearestDeck(mx, my);
+    if (dd >= 0.35) return null;
+    const z = world2._nd.z, cd = dd + world2._nd.hw;
+    const dg = world2.nearestRoad(mx, my), cg = dg + world2._nr.hw;
+    if (dg < 1e8 && cg <= cd + 0.5) return null;
+    if (z <= world2.groundH(mx, my, true) + 0.5) return null;
+    return z;
+  }
+  function surfaceH(world2, x, y, zD) {
+    if (zD !== null && world2.nearestDeck(x, y, zD + 0.6) < 0.35) return world2._nd.z + 0.03;
+    return world2.groundH(x, y, true);
+  }
+  function junctionBack(world2, f, i, mx, my, j, zD = null) {
     let w = 0;
     for (let q = f.first[i], e = q + f.napp[i]; q < e; q++) {
       if (q === j || f.apFoot[q]) continue;
       const t = f.apH[q];
-      w = Math.max(w, hwAt(world2, mx - Math.cos(t) * 10, my - Math.sin(t) * 10));
+      w = Math.max(w, hwAt(world2, mx - Math.cos(t) * 10, my - Math.sin(t) * 10, zD));
     }
     return w;
   }
@@ -2955,10 +3150,17 @@
     if (!f || !f.nP) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    let zD = null;
     const put = (mx, my, yaw, part, phase, arm, lift) => {
-      const h = world2.groundH(mx, my, true);
-      if (world2.g.water) return;
-      if (world2.g.deck > -1e8 && world2.g.deck < h + 8 && world2.g.deck > h + 0.5) return;
+      let h;
+      if (zD !== null) {
+        if (world2.nearestDeck(mx, my, zD + 0.6) > 1.2) return;
+        h = world2._nd.z + 0.86;
+      } else {
+        h = world2.groundH(mx, my, true);
+        if (world2.g.water) return;
+        if (world2.g.deck > -1e8 && world2.g.deck < h + 8 && world2.g.deck > h + 0.5) return;
+      }
       cyl(mx, my, h + (lift || 0), p32);
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, phase, arm);
     };
@@ -2966,14 +3168,15 @@
       const x = f.px[i], y = f.py[i];
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
       const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
+      zD = deckOwner(world2, mx, my);
       if (k === SIGNAL || k === STOP || k === GIVEWAY || k === LEVEL) {
         const nroad = roadCount(f, i), junction = nroad >= 3;
         const cyc = hash2(i * 7 + 3, reg.x0 * 0.013 + reg.y0 * 7e-3);
         for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) {
           if (f.apFoot[j] || !f.apFace[j]) continue;
           const t = f.apH[j], dx = Math.cos(t), dy = Math.sin(t);
-          const hw = hwAt(world2, mx - dx * 10, my - dy * 10) || 4;
-          let back = junction ? junctionBack(world2, f, i, mx, my, j) + (k === SIGNAL ? 2.6 : 1.6) : 0;
+          const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD) || 4;
+          let back = junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0;
           if (k === LEVEL) back = 4.5;
           const side = hw + (k === SIGNAL ? 1 : 0.7);
           const ox = mx - dx * back + dy * side, oy = my - dy * back - dx * side;
@@ -3009,6 +3212,7 @@
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const WHITE = [0.78, 0.78, 0.74];
+    let zD = null;
     const quad = (ox, oy, dx, dy, a0, a1, c0, c1, col) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
@@ -3016,7 +3220,7 @@
         const c = c0 + (c1 - c0) * q / n;
         for (const a of [a0, a1]) {
           const x = ox + dx * a + dy * c, y = oy + dy * a - dx * c;
-          const h = world2.groundH(x, y, true);
+          const h = surfaceH(world2, x, y, zD);
           cyl(x, y, h + 0.03, p32);
           cyl(x, y, h + 1.03, u3);
           P2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2]]);
@@ -3037,10 +3241,17 @@
       const x = f.px[i], y = f.py[i];
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
       const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
+      zD = deckOwner(world2, mx, my);
       if (k === CROSSING) {
-        const d = world2.nearestRoad(mx, my);
-        if (d > 2.5) continue;
-        const hw = world2._nr.hw;
+        let hw;
+        if (zD !== null) {
+          world2.nearestDeck(mx, my, zD + 0.6);
+          hw = world2._nd.hw;
+        } else {
+          const d = world2.nearestRoad(mx, my);
+          if (d > 2.5) continue;
+          hw = world2._nr.hw;
+        }
         if (hw < 2.2) continue;
         let t = null;
         for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) if (!f.apFoot[j]) {
@@ -3050,7 +3261,7 @@
         if (t === null) continue;
         const dx = Math.cos(t), dy = Math.sin(t);
         world2.groundH(mx, my, true);
-        if (world2.g.water) continue;
+        if (zD === null && world2.g.water) continue;
         const sub = f.sub[i], lines = sub === 3 || sub === 5 || sub === 4, bars = sub === 2 || sub === 1 || sub === 7;
         if (lines || sub === 1 || sub === 7) {
           for (const a of [-1.65, 1.35]) {
@@ -3071,9 +3282,9 @@
         for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) {
           if (f.apFoot[j] || !f.apFace[j]) continue;
           const t = f.apH[j], dx = Math.cos(t), dy = Math.sin(t);
-          const hw = hwAt(world2, mx - dx * 10, my - dy * 10);
+          const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD);
           if (hw < 2.5) continue;
-          const back = (junction ? junctionBack(world2, f, i, mx, my, j) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
+          const back = (junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
           quad(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : 0.15, hw - 0.3, WHITE);
         }
       }
@@ -3661,15 +3872,35 @@
       }
     }
   }
-  function bigStructure(M, P2, world2, st, setM, PW) {
+  function wayZ(reg, ri, X, Y, out) {
+    const a = reg.rStart[ri], n = reg.rCount[ri], px = reg.px, py = reg.py, pz = reg.pz;
+    const x = X - reg.x0, y = Y - reg.y0;
+    let best = 1e18;
+    for (let q = a; q < a + n - 1; q++) {
+      const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], L2 = dx * dx + dy * dy || 1e-9;
+      const f = clamp(((x - px[q]) * dx + (y - py[q]) * dy) / L2, 0, 1), ex = px[q] + dx * f - x, ey = py[q] + dy * f - y, d2 = ex * ex + ey * ey;
+      if (d2 < best) {
+        best = d2;
+        out[0] = pz[q] + (pz[q + 1] - pz[q]) * f;
+      }
+    }
+    out[1] = Math.sqrt(best);
+    return out;
+  }
+  var _wz = [0, 0];
+  function bigStructure(M, P2, world2, st, setM, PW, reg) {
     const des = st[0], Ls = clamp(st[3] / 10, 12, 400), W = Math.max(st[6] / 10, 7), cx = st[7] / 10, cy = st[8] / 10;
     let tx = st[9] / 1e3, ty = st[10] / 1e3;
     const tl = Math.hypot(tx, ty) || 1;
     tx /= tl;
     ty /= tl;
     const nx = ty, ny = -tx;
-    const z0 = world2.nearestDeck(cx, cy) < 30 ? world2._nd.z : world2.groundH(cx, cy, true);
-    const zAt = (s) => {
+    const ri = reg && st[11] >= 0 && st[11] < reg.nRoads && reg.rEnd[st[11]] ? st[11] : -1;
+    const z0 = ri >= 0 ? wayZ(reg, ri, cx, cy, _wz)[0] : world2.nearestDeck(cx, cy) < 30 ? world2._nd.z : world2.groundH(cx, cy, true);
+    const zAt = ri >= 0 ? (s) => {
+      wayZ(reg, ri, cx + tx * s, cy + ty * s, _wz);
+      return _wz[1] < Math.max(30, W) ? _wz[0] : z0;
+    } : (s) => {
       const x = cx + tx * s, y = cy + ty * s;
       return world2.nearestDeck(x, y) < 12 ? world2._nd.z : z0;
     };
@@ -4087,7 +4318,7 @@
       T[2] = -sn * dy + c * dz;
       return T;
     };
-    const cross = (ri, q, out) => {
+    const cross = (ri, q, out, unit) => {
       const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1;
       let tx = 0, ty = 0;
       if (q > a) {
@@ -4110,8 +4341,10 @@
       }
       out[0] = ty * k;
       out[1] = -tx * k;
+      unit[0] = ty;
+      unit[1] = -tx;
     };
-    const n0 = [0, 0], n1 = [0, 0];
+    const n0 = [0, 0], n1 = [0, 0], u0 = [0, 0], u1 = [0, 0];
     let count = 0;
     const spanSts = nbi ? nbi.structures.get(reg.ry * 28 + reg.rx) : null;
     const underMainSpan = (X, Y) => {
@@ -4131,8 +4364,8 @@
       const len = Math.hypot(bx - ax, by - ay);
       if (len < 0.05) continue;
       const tx = (bx - ax) / len, ty = (by - ay) / len;
-      cross(ri, q, n0);
-      cross(ri, q + 1, n1);
+      cross(ri, q, n0, u0);
+      cross(ri, q + 1, n1, u1);
       const PW = rail ? 0.34 : 0.42, PH = rail ? 0.55 : 0.86, DT = rail ? 1.5 : DECK_T - 0.05;
       const s0 = cum[q], s1 = cum[q + 1];
       const mid = P2((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
@@ -4149,16 +4382,22 @@
       const lx = px[q], ly = py[q], lbx = px[q + 1], lby = py[q + 1];
       const strip = (f0, f1, o0, y0, o1, y1, nl, nu, tv0, tv1) => {
         const cxA = n0[0] + (n1[0] - n0[0]) * f0, cyA = n0[1] + (n1[1] - n0[1]) * f0, cxB = n0[0] + (n1[0] - n0[0]) * f1, cyB = n0[1] + (n1[1] - n0[1]) * f1;
+        let uxA = u0[0] + (u1[0] - u0[0]) * f0, uyA = u0[1] + (u1[1] - u0[1]) * f0, uxB = u0[0] + (u1[0] - u0[0]) * f1, uyB = u0[1] + (u1[1] - u0[1]) * f1;
+        const lA = Math.hypot(uxA, uyA) || 1, lB = Math.hypot(uxB, uyB) || 1;
+        uxA /= lA;
+        uyA /= lA;
+        uxB /= lB;
+        uyB /= lB;
         const xA = ax + (bx - ax) * f0, yA = ay + (by - ay) * f0, zA = az + (bz - az) * f0, xB = ax + (bx - ax) * f1, yB = ay + (by - ay) * f1, zB = az + (bz - az) * f1;
         const sA = s0 + (s1 - s0) * f0, sB = s0 + (s1 - s0) * f1;
         let t = P2(xA + cxA * o0, yA + cyA * o0, zA + y0);
-        const i0 = M.v(t[0], t[1], t[2], cxA * nl, nu, -cyA * nl, sA, tv0);
+        const i0 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv0);
         t = P2(xA + cxA * o1, yA + cyA * o1, zA + y1);
-        const i1 = M.v(t[0], t[1], t[2], cxA * nl, nu, -cyA * nl, sA, tv1);
+        const i1 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv1);
         t = P2(xB + cxB * o1, yB + cyB * o1, zB + y1);
-        const i2 = M.v(t[0], t[1], t[2], cxB * nl, nu, -cyB * nl, sB, tv1);
+        const i2 = M.v(t[0], t[1], t[2], uxB * nl, nu, -uyB * nl, sB, tv1);
         t = P2(xB + cxB * o0, yB + cyB * o0, zB + y0);
-        const i3 = M.v(t[0], t[1], t[2], cxB * nl, nu, -cyB * nl, sB, tv0);
+        const i3 = M.v(t[0], t[1], t[2], uxB * nl, nu, -uyB * nl, sB, tv0);
         M.quad(i0, i1, i2, i3);
       };
       const stub = (f, sg, dir) => {
@@ -4182,7 +4421,40 @@
       M.W[2] = (covL > 0.3 ? 1 : 0) + (covR > 0.3 ? 2 : 0);
       M.W[3] = -1;
       const lift = rail ? 0 : (13 - Math.min(cls, 13)) * 3e-3 + (reg.rName[ri] & 7) * 4e-4;
-      strip(0, 1, -hw, lift, hw, lift, 0, 1, -hw, hw);
+      const NA = Math.max(1, Math.ceil(len / 1.5)), NC = Math.max(2, Math.ceil(2 * hw / 1.5));
+      const thi = deckSegDir(tx, ty), oi = -ax * Math.sin(thi) + ay * Math.cos(thi);
+      let any = false;
+      const own = rail || covL < 0.01 && covR < 0.01 && deckOwnerAt(reg, (lx + lbx) / 2, (ly + lby) / 2, (az + bz) / 2, ri, thi, oi, 0.25, 0.02) < 0 ? null : new Int32Array((NA + 1) * (NC + 1));
+      if (own) {
+        for (let ia = 0; ia <= NA; ia++) for (let ic = 0; ic <= NC; ic++) {
+          const f = ia / NA, o = -hw + 2 * hw * ic / NC;
+          const cxA = n0[0] + (n1[0] - n0[0]) * f, cyA = n0[1] + (n1[1] - n0[1]) * f;
+          const rj = deckOwnerAt(reg, lx + (lbx - lx) * f + cxA * o, ly + (lby - ly) * f + cyA * o, az + (bz - az) * f, ri, thi, oi, 0.25, 0.02);
+          if (rj >= 0) {
+            own[ia * (NC + 1) + ic] = rj + 1;
+            any = true;
+          }
+        }
+      }
+      if (!any) strip(0, 1, -hw, lift, hw, lift, 0, 1, -hw, hw);
+      else {
+        for (let ia = 0; ia < NA; ia++) {
+          let c0 = -1;
+          for (let ic = 0; ic <= NC; ic++) {
+            const o0 = ic < NC ? own[ia * (NC + 1) + ic] : 0;
+            const gone = o0 > 0 && own[ia * (NC + 1) + ic + 1] === o0 && own[(ia + 1) * (NC + 1) + ic] === o0 && own[(ia + 1) * (NC + 1) + ic + 1] === o0;
+            if (ic < NC && !gone) {
+              if (c0 < 0) c0 = ic;
+              continue;
+            }
+            if (c0 >= 0) {
+              const oA = -hw + 2 * hw * c0 / NC, oB = -hw + 2 * hw * ic / NC;
+              strip(ia / NA, (ia + 1) / NA, oA, lift, oB, lift, 0, 1, oA, oB);
+              c0 = -1;
+            }
+          }
+        }
+      }
       setM(rail ? MAT.METAL : MAT.CONCRETE);
       M.W[0] = 0;
       M.W[1] = 0;
@@ -4321,7 +4593,7 @@
         M.C[0] = mid[0];
         M.C[1] = mid[1];
         M.C[2] = mid[2];
-        bigStructure(M, P2, world2, st, setW(0, 7), 0.42);
+        bigStructure(M, P2, world2, st, setW(0, 7), 0.42, reg);
       }
     }
     if (reg.nTun) count += addTunnels(M, world2, reg, ix, iy, s, P2);
