@@ -19430,6 +19430,24 @@ void main() {
         }
         add(cylY(0.1, 0.1, 0.85, 12, 0, 0, 0), galv, 22);
         add(cylY(0.102, 0.102, 0.08, 12, 0, 0.68, 0), [0.55, 0.42, 0.04], 22);
+        for (const x of [-0.375, 0.375]) add(cylY(0.03, 0.03, 0.55, 6, x, 0, 0), galv, 23);
+        for (let k = 0; k < 6; k++) {
+          const a02 = Math.PI * k / 6, a1 = Math.PI * (k + 1) / 6;
+          add(beam(0.375 * Math.cos(a02), 0.55 + 0.375 * Math.sin(a02), 0, 0.375 * Math.cos(a1), 0.55 + 0.375 * Math.sin(a1), 0, 0.06), galv, 23);
+        }
+        add(cylY(0.04, 0.045, 0.95, 8, 0, 0, 0), black, 24);
+        {
+          const g = new qo(0.22, 0.02, 6, 16);
+          g.translate(0, 0.72, 0);
+          add(g.toNonIndexed(), black, 24);
+        }
+        const dockGrey = [0.08, 0.085, 0.09], shareBlue = [0.02, 0.1, 0.32];
+        add(box2(0.75, 0.04, 0.5, 0, 0.02, 0), dockGrey, 25);
+        add(box2(0.14, 0.85, 0.22, 0, 0.45, 0.05), dockGrey, 25);
+        add(box2(0.16, 0.08, 0.24, 0, 0.9, 0.05), shareBlue, 25);
+        add(box2(0.6, 2.2, 0.3, 0, 1.1, 0), dockGrey, 26);
+        add(box2(0.62, 0.5, 0.02, 0, 1.95, 0.16), shareBlue, 26);
+        add(box2(0.5, 0.9, 0.02, 0, 1.2, 0.16), [0.5, 0.5, 0.48], 26);
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1 });

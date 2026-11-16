@@ -3310,6 +3310,8 @@
   var LAMP = 14;
   var BENCH = 16;
   var BOLLARD = 17;
+  var BIKEPARK = 18;
+  var BIKESHARE = 19;
   var PART = {
     STOP: 0,
     YIELD: 1,
@@ -3333,7 +3335,11 @@
     BENCH_METAL_BARE: 19,
     BENCH_STONE: 20,
     BOLLARD: 21,
-    BOLLARD_STEEL: 22
+    BOLLARD_STEEL: 22,
+    BIKE_HOOP: 23,
+    BIKE_POST: 24,
+    DOCK: 25,
+    KIOSK: 26
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -3661,6 +3667,27 @@
         if (sb & 8) put(mx, my, (sb >> 4 & 15) * Math.PI / 8 + Math.PI / 2, part, 0, 0);
         else if (zD === null && world2.nearestRoad(mx, my) < 12 && kerbSide(world2, mx, my, 0.6, ks)) put(ks.x, ks.y, ks.yaw, part, 0, 0);
         else put(mx, my, hash2(i, 7) * 6.28, part, 0, 0);
+      } else if (k === BIKEPARK || k === BIKESHARE) {
+        const t = f.sub[i], cap = Math.round(f.h[i] * 2), share = k === BIKESHARE;
+        if (!share && t === 3) continue;
+        const n = share ? clamp2(cap || 15, 4, 40) : t === 2 ? clamp2(cap || 2, 1, 12) : clamp2(Math.ceil((cap || 4) / 2), 1, 12);
+        const gap = share ? 0.75 : t === 2 ? 1.2 : 0.9, part = share ? PART.DOCK : t === 2 ? PART.BIKE_POST : PART.BIKE_HOOP;
+        let x2 = mx, y2 = my, yaw = hash2(i, 13) * 6.28, tx = Math.cos(yaw), ty = Math.sin(yaw);
+        if (zD === null && world2.nearestRoad(mx, my) < 15 && kerbSide(world2, mx, my, share ? -100 : 0.6, ks)) {
+          x2 = ks.x;
+          y2 = ks.y;
+          yaw = ks.yaw;
+          tx = world2._nr.tx;
+          ty = world2._nr.ty;
+        }
+        for (let j = 0; j < n; j++) {
+          const o = (j - (n - 1) / 2) * gap;
+          put(x2 + tx * o, y2 + ty * o, yaw, part, 0, 0);
+        }
+        if (share) {
+          const o = ((n - 1) / 2 + 1.1) * gap;
+          put(x2 + tx * o, y2 + ty * o, yaw, PART.KIOSK, 0, 0);
+        }
       } else if (k === BOLLARD) {
         const t = f.sub[i];
         put(mx, my, hash2(i, 11) * 6.28, t === 3 ? PART.FLEXPOST : t ? PART.BOLLARD_STEEL : PART.BOLLARD, 0, 0);
