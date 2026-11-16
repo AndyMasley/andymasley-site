@@ -16560,6 +16560,14 @@ float sunShadow(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
 #endif
 `
   );
+  var PAVEMENT = (
+    /* glsl */
+    `
+const vec3 ASPHALT = vec3(0.100, 0.099, 0.101);
+const vec3 SIDEWALK = vec3(0.270, 0.262, 0.248);
+const vec3 KERB = vec3(0.250, 0.245, 0.240);
+`
+  );
   var STREET_PAINT = (
     /* glsl */
     `
@@ -16650,6 +16658,7 @@ ${SHADOW}
 ${SPACE}
 ${SURFACE_SHADING}
 ${STREET_PAINT}
+${PAVEMENT}
 uniform sampler2D uZone;          // metres into the hull's glass, on a square-root scale
 uniform float uZoneRange;
 uniform sampler2DArray uGndTex;   // grass, forest floor, soil (the Webster drive's ground tiles)
@@ -17091,12 +17100,12 @@ void main() {
   land = mix(land, vec3(0.30, 0.27, 0.20), (1.0 - smoothstep(0.0, 14.0, sdf)) * 0.55);
 
   // roads over everything
-  vec3 asphalt = mix(vec3(0.040, 0.040, 0.043), vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * nB);
+  vec3 asphalt = mix(ASPHALT, vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * nB);
   land = mix(land, vec3(0.115, 0.105, 0.088), shoulder * 0.7);
   land = mix(land, asphalt, paved);
   land = mix(land, bedCol * (0.85 + 0.3 * nB), bed);
-  land = mix(land, vec3(0.37, 0.36, 0.34) * (1.0 - 0.45 * joint), walk);
-  land = mix(land, vec3(0.34, 0.335, 0.33), kerb);
+  land = mix(land, SIDEWALK * (1.0 - 0.45 * joint), walk);
+  land = mix(land, KERB, kerb);
   land = mix(land, markCol, mark);
 
   // ---- surface detail underfoot: the Webster drive's grass, leaf litter, soil, asphalt and concrete
@@ -17658,6 +17667,7 @@ attribute vec4 aT;      // its trim, shutter and door colours from the street ph
                         // window bays in decimetres, where a photo showed them); all 0 where none did
 uniform vec2 uHouseFade;
 ${PALETTE}
+${PAVEMENT}
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec2 vUV;
@@ -17695,13 +17705,13 @@ void main() {
   else if (mat < 6.5) vColA = vec3(0.34, 0.31, 0.27);
   else if (mat < 7.5) vColA = clad > 254.5 ? vec3(0.060, 0.064, 0.060) : vColB;     // a bridge's railing (decks.js): dark painted metal
   else if (mat < 9.5) vColA = (cls > 13.5 && cls < 15.5 && mat < 8.5) ? vec3(0.085, 0.075, 0.068) : vec3(0.40, 0.42, 0.43);      // the girders of a railway bridge are dark painted steel
-  else if (mat < 10.5) vColA = vec3(0.050, 0.050, 0.053);          // a driveway
+  else if (mat < 10.5) vColA = vec3(0.085, 0.084, 0.086);          // a driveway
   else if (mat < 11.5) vColA = carPaint(fract(seed * 0.618 + 0.31));  // a car on it: paint,
   else if (mat < 12.5) vColA = vec3(0.020, 0.020, 0.023);             // tyres and trim,
   else if (mat < 13.5) vColA = vec3(0.03, 0.045, 0.06);               // glass,
   else if (mat < 14.5) vColA = vec3(0.42, 0.42, 0.42);                // hubs, plate and head lamps,
   else if (mat < 15.5) vColA = vec3(0.30, 0.02, 0.02);                // tail lamps
-  else vColA = vec3(0.040, 0.040, 0.043);                             // a bridge's roadway or track bed
+  else vColA = ASPHALT;                                               // a bridge's roadway or track bed
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `
@@ -17717,6 +17727,7 @@ ${NOISE}
 ${SHADOW}
 ${SURFACE_SHADING}
 ${STREET_PAINT}
+${PAVEMENT}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
@@ -17966,7 +17977,7 @@ void main() {
     float nl = float((kd >> 2) & 7), dirt = float((kd >> 5) & 1);
     float aa = max(px.y, 0.03), la = max(aa, 0.02), lw = 0.075;
     float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);
-    alb = mix(vec3(0.040, 0.040, 0.043), vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * vnoise(uv / 9.0));
+    alb = mix(ASPHALT, vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * vnoise(uv / 9.0));
     vec3 tex = surf(2, uv);
     alb *= mix(vec3(1.0), mix(vec3(1.0), tex, 0.55), (1.0 - smoothstep(45.0, 130.0, dist)) * (1.0 - dirt));
     relief = surfaceHeight(mix(vec3(1.0), tex, 0.55), 0.003);
