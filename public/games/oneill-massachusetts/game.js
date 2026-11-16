@@ -14741,11 +14741,18 @@ void main() {
     if (dv2.getUint32(0, true) !== 861099091) throw new Error("bad streets file");
     const covW = dv2.getUint32(4, true), covCell = dv2.getUint32(8, true) / 100;
     const nPR = dv2.getUint32(12, true), nPV = dv2.getUint32(16, true), nWR = dv2.getUint32(20, true), nWV = dv2.getUint32(24, true), nT = dv2.getUint32(28, true);
+    const flags = dv2.getUint32(36, true);
     let p = 64;
     const rowB = covW + 7 >> 3;
     const cov = e.slice(p, p + covW * rowB);
     p += covW * rowB;
     p = p + 3 & ~3;
+    let paint = null;
+    if (flags & 1) {
+      paint = e.slice(p, p + covW * rowB);
+      p += covW * rowB;
+      p = p + 3 & ~3;
+    }
     const ringSet = (nR, nV) => {
       const rings = new Uint32Array(e.buffer.slice(e.byteOffset + p, e.byteOffset + p + nR * 8));
       p += nR * 8;
@@ -14759,7 +14766,20 @@ void main() {
     const pave = ringSet(nPR, nPV), water = ringSet(nWR, nWV);
     const tab = /* @__PURE__ */ new Map(), t02 = p + nT * 12;
     for (let i = 0; i < nT; i++) tab.set(dv2.getUint32(p + i * 12, true), [t02 + dv2.getUint32(p + i * 12 + 4, true), dv2.getUint32(p + i * 12 + 8, true)]);
-    return { e, dv: dv2, covW, covCell, rowB, cov, pave, water, tab };
+    let kerbs = null;
+    const kN = dv2.getUint32(44, true);
+    if (kN) {
+      kerbs = /* @__PURE__ */ new Map();
+      let q = dv2.getUint32(40, true);
+      for (let i = 0; i < kN; i++) {
+        const ri2 = dv2.getUint32(q, true), n = dv2.getUint32(q + 4, true);
+        q += 8;
+        const P2 = new Array(n);
+        for (let j = 0; j < n; j++, q += 8) P2[j] = [dv2.getInt32(q, true) / 100, dv2.getInt16(q + 4, true) / 100, dv2.getInt16(q + 6, true) / 100];
+        kerbs.set(ri2, P2);
+      }
+    }
+    return { e, dv: dv2, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs };
   }
   function streetsCovered(st, lx2, ly2) {
     const cx2 = Math.floor(lx2 / st.covCell), cy2 = Math.floor(ly2 / st.covCell);
@@ -15211,17 +15231,26 @@ void main() {
     XS = m;
     XK = k || null;
   }
-  function xsOf(reg, ri2) {
-    const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
-    return m ? m.get(ri2) : void 0;
-  }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri2, s29) {
-    const m = XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null, P2 = m ? m.get(ri2) : null;
+    const st = reg && reg.streets, m = !st && XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null;
+    const P2 = st ? st.kerbs ? st.kerbs.get(ri2) : null : m ? m.get(ri2) : null;
     if (!P2 || !P2.length || s29 < P2[0][0] - 6 || s29 > P2[P2.length - 1][0] + 6) return null;
     if (P2.hwMed === void 0) {
-      const w = P2.map((q) => (q[2] - q[1]) / 2).sort((x, y) => x - y);
-      P2.hwMed = w[w.length >> 1];
+      const w = [];
+      for (let i2 = 0; i2 + 1 < P2.length; i2++) w.push([(P2[i2][2] - P2[i2][1] + P2[i2 + 1][2] - P2[i2 + 1][1]) / 4, P2[i2 + 1][0] - P2[i2][0]]);
+      if (!w.length) w.push([(P2[0][2] - P2[0][1]) / 2, 1]);
+      w.sort((x, y) => x[0] - y[0]);
+      let tot = 0, run = 0;
+      for (const q of w) tot += q[1];
+      P2.hwMed = w[w.length - 1][0];
+      for (const q of w) {
+        run += q[1];
+        if (run >= tot / 2) {
+          P2.hwMed = q[0];
+          break;
+        }
+      }
     }
     let i = 0;
     while (i < P2.length - 2 && P2[i + 1][0] < s29) i++;
@@ -15231,9 +15260,6 @@ void main() {
     _kerbs.mid = (_kerbs.left + _kerbs.right) / 2;
     _kerbs.hw = P2.hwMed;
     return _kerbs;
-  }
-  function redone(xs) {
-    return !!xs && Math.max(xs[1], xs[4]) >= 2;
   }
   function deckOwnerAt(reg, lx2, ly2, z, ri2, thi, oi2, dz, inset) {
     const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -21680,10 +21706,8 @@ void main() {
     aim(c) {
       const p = pointAt(c.reg, c.ri, c.s);
       let o = c.off * c.dir;
-      if (c.kerbs) {
-        const kb = kerbsAt(c.reg, c.ri, c.s - c.reg.cum[c.reg.rStart[c.ri]]);
-        if (kb) o += kb.mid;
-      }
+      const kb = kerbsAt(c.reg, c.ri, c.s - c.reg.cum[c.reg.rStart[c.ri]]);
+      if (kb) o += kb.mid;
       c.cx = c.reg.x0 + p.x;
       c.cy = c.reg.y0 + p.y;
       c.gx = c.cx + p.ty * o;
@@ -21735,7 +21759,6 @@ void main() {
         keen: 0.86 + 0.2 * (hash4 * 11.9 % 1)
       };
       c.off = this.lane(reg, ri2, c.dir, c.pick);
-      c.kerbs = redone(xsOf(reg, ri2));
       this.aim(c);
       for (const o of this.cars) if (Math.abs(o.mx - c.gx) < 24 && Math.abs(wrapD(o.my - c.gy)) < 24) return;
       const pc2 = this.game.player.car;
@@ -21785,7 +21808,6 @@ void main() {
         c.s = clamp2(c.s, s0of(c.reg, c.ri), s1of(c.reg, c.ri));
       }
       c.off = this.lane(c.reg, c.ri, c.dir, c.pick);
-      c.kerbs = redone(xsOf(c.reg, c.ri));
       c.next = void 0;
       this.aim(c);
       c.ox = hx2 - c.gx;
@@ -21834,7 +21856,6 @@ void main() {
           c.s = nr2.s;
           c.dir = dot > 0 ? 1 : -1;
           c.next = void 0;
-          c.kerbs = redone(xsOf(r2, nr2.road));
           this.aim(c);
         }
       }

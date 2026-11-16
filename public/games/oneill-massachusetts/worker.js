@@ -9,11 +9,18 @@
     if (dv.getUint32(0, true) !== 861099091) throw new Error("bad streets file");
     const covW = dv.getUint32(4, true), covCell = dv.getUint32(8, true) / 100;
     const nPR = dv.getUint32(12, true), nPV = dv.getUint32(16, true), nWR = dv.getUint32(20, true), nWV = dv.getUint32(24, true), nT = dv.getUint32(28, true);
+    const flags = dv.getUint32(36, true);
     let p = 64;
     const rowB = covW + 7 >> 3;
     const cov = e.slice(p, p + covW * rowB);
     p += covW * rowB;
     p = p + 3 & ~3;
+    let paint = null;
+    if (flags & 1) {
+      paint = e.slice(p, p + covW * rowB);
+      p += covW * rowB;
+      p = p + 3 & ~3;
+    }
     const ringSet = (nR, nV) => {
       const rings = new Uint32Array(e.buffer.slice(e.byteOffset + p, e.byteOffset + p + nR * 8));
       p += nR * 8;
@@ -27,7 +34,26 @@
     const pave = ringSet(nPR, nPV), water = ringSet(nWR, nWV);
     const tab = /* @__PURE__ */ new Map(), t0 = p + nT * 12;
     for (let i = 0; i < nT; i++) tab.set(dv.getUint32(p + i * 12, true), [t0 + dv.getUint32(p + i * 12 + 4, true), dv.getUint32(p + i * 12 + 8, true)]);
-    return { e, dv, covW, covCell, rowB, cov, pave, water, tab };
+    let kerbs = null;
+    const kN = dv.getUint32(44, true);
+    if (kN) {
+      kerbs = /* @__PURE__ */ new Map();
+      let q = dv.getUint32(40, true);
+      for (let i = 0; i < kN; i++) {
+        const ri = dv.getUint32(q, true), n = dv.getUint32(q + 4, true);
+        q += 8;
+        const P2 = new Array(n);
+        for (let j = 0; j < n; j++, q += 8) P2[j] = [dv.getInt32(q, true) / 100, dv.getInt16(q + 4, true) / 100, dv.getInt16(q + 6, true) / 100];
+        kerbs.set(ri, P2);
+      }
+    }
+    return { e, dv, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs };
+  }
+  function streetsPainted(st2, lx, ly) {
+    const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
+    if (cx < 0 || cy < 0 || cx >= st2.covW || cy >= st2.covW) return false;
+    const bm = st2.paint || st2.cov;
+    return (bm[cy * st2.rowB + (cx >> 3)] >> (cx & 7) & 1) === 1;
   }
   function streetsCovered(st2, lx, ly) {
     const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
@@ -474,11 +500,24 @@
   }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri, s) {
-    const m = XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null, P2 = m ? m.get(ri) : null;
+    const st2 = reg && reg.streets, m = !st2 && XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null;
+    const P2 = st2 ? st2.kerbs ? st2.kerbs.get(ri) : null : m ? m.get(ri) : null;
     if (!P2 || !P2.length || s < P2[0][0] - 6 || s > P2[P2.length - 1][0] + 6) return null;
     if (P2.hwMed === void 0) {
-      const w = P2.map((q) => (q[2] - q[1]) / 2).sort((x, y) => x - y);
-      P2.hwMed = w[w.length >> 1];
+      const w = [];
+      for (let i2 = 0; i2 + 1 < P2.length; i2++) w.push([(P2[i2][2] - P2[i2][1] + P2[i2 + 1][2] - P2[i2 + 1][1]) / 4, P2[i2 + 1][0] - P2[i2][0]]);
+      if (!w.length) w.push([(P2[0][2] - P2[0][1]) / 2, 1]);
+      w.sort((x, y) => x[0] - y[0]);
+      let tot = 0, run = 0;
+      for (const q of w) tot += q[1];
+      P2.hwMed = w[w.length - 1][0];
+      for (const q of w) {
+        run += q[1];
+        if (run >= tot / 2) {
+          P2.hwMed = q[0];
+          break;
+        }
+      }
     }
     let i = 0;
     while (i < P2.length - 2 && P2[i + 1][0] < s) i++;
@@ -3421,10 +3460,12 @@
           const surv = surveyed(reg, lx, ly);
           if (surv) {
             const kb = kerbsAt(reg, ri, sk - cum[a]);
-            if (!kb) continue;
-            const o2 = kb.mid + side * (kb.hw - bw - Math.max(buf, 0.4) / 2);
-            mx += ty * (o2 - off);
-            my -= tx * (o2 - off);
+            if (!kb && surveyPainted(reg, lx, ly)) continue;
+            if (kb) {
+              const o2 = kb.mid + side * (kb.hw - bw - Math.max(buf, 0.4) / 2);
+              mx += ty * (o2 - off);
+              my -= tx * (o2 - off);
+            }
           }
           if (mx < reg.x0 + lx0 || mx >= reg.x0 + lx0 + s || my < reg.y0 + ly0 || my >= reg.y0 + ly0 + s) continue;
           let h;
@@ -3513,6 +3554,13 @@
     const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
     return cx >= 0 && cy >= 0 && cx < st2.covW && cy < st2.covW && (st2.cov[cy * st2.rowB + (cx >> 3)] >> (cx & 7) & 1) === 1;
   }
+  function surveyPainted(reg, lx, ly) {
+    const st2 = reg.streets;
+    if (!st2) return false;
+    const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
+    const bm = st2.paint || st2.cov;
+    return cx >= 0 && cy >= 0 && cx < st2.covW && cy < st2.covW && (bm[cy * st2.rowB + (cx >> 3)] >> (cx & 7) & 1) === 1;
+  }
   function paintTris(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
     if (!f || !f.nP) return new Float32Array(0);
@@ -3547,7 +3595,7 @@
     for (let i = 0; i < f.nP; i++) {
       const x = f.px[i], y = f.py[i];
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
-      if (surveyed(reg, x, y)) continue;
+      if (surveyPainted(reg, x, y)) continue;
       const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
       zD = deckOwner(world2, mx, my);
       if (k === CROSSING) {
@@ -3854,7 +3902,7 @@
       const b = a * 4;
       if (f.aBox[b + 2] < lx0 || f.aBox[b] > lx0 + s || f.aBox[b + 3] < ly0 || f.aBox[b + 1] > ly0 + s) continue;
       if (f.aBox[b + 2] - f.aBox[b] > 250 || f.aBox[b + 3] - f.aBox[b + 1] > 250) continue;
-      if (kind === A_SPACE && surveyed(reg, (f.aBox[b] + f.aBox[b + 2]) / 2, (f.aBox[b + 1] + f.aBox[b + 3]) / 2)) continue;
+      if (kind === A_SPACE && surveyPainted(reg, (f.aBox[b] + f.aBox[b + 2]) / 2, (f.aBox[b + 1] + f.aBox[b + 3]) / 2)) continue;
       const o = obb(f, a);
       if (!o) continue;
       const [ocx, ocy, ux, uy, L2, W] = o;
@@ -5659,6 +5707,7 @@
 
   // src/worker.js
   var TUN_SHELL = 0.6;
+  var _kbOwn = { left: 0, right: 0, mid: 0, hw: 0 };
   var TREE_H = [12.8, 14.4];
   var TREE_R = [3.9, 2.9];
   var world = null;
@@ -6145,8 +6194,20 @@
           if (sr && sr.streets && streetsCovered(sr.streets, mx - sr.x0, my - sr.y0) && !(e < 3 && world._nr.reg.rCls[world._nr.road] >= 14)) {
             const dd = streetsPaving(sr.streets, mx - sr.x0, my - sr.y0);
             const nr0 = world._nr;
-            const xs0 = e < 4 && dd < 0.5 && nr0.reg.rCls[nr0.road] < 14 && !(nr0.reg.rFlags[nr0.road] & 6) ? xsOf(nr0.reg, nr0.road) : void 0;
-            const kb = redone(xs0) ? kerbsAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]) : null;
+            const onStreet = e < 4 && dd < 0.5 && nr0.reg.rCls[nr0.road] < 14 && !(nr0.reg.rFlags[nr0.road] & 6);
+            const xs0 = onStreet ? xsOf(nr0.reg, nr0.road) : void 0;
+            const painted = streetsPainted(sr.streets, mx - sr.x0, my - sr.y0);
+            let kb = null;
+            if (onStreet && (redone(xs0) || !painted && (roadKindXS(nr0.reg, nr0.road, xs0) & 3 || xs0 && (xs0[1] || xs0[4])))) {
+              kb = kerbsAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]);
+              if (!kb && !painted) {
+                _kbOwn.left = -nr0.hw;
+                _kbOwn.right = nr0.hw;
+                _kbOwn.mid = 0;
+                _kbOwn.hw = nr0.hw;
+                kb = _kbOwn;
+              }
+            }
             const tsr = Math.min(nr0.d, 60) * nr0.side;
             if (kb && tsr > kb.left - 0.6 && tsr < kb.right + 0.6) {
               const ph = nr0.s / DASH * 2 * Math.PI, kk = (b * T + a) * 4;
@@ -6158,8 +6219,8 @@
               if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
               kind[kk] = kd | 32;
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
-              kind[kk + 2] = bikeByte(xs0[1], xs0[2], xs0[3]);
-              kind[kk + 3] = bikeByte(xs0[4], xs0[5], xs0[6]);
+              kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
+              kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
               any = true;
               continue;
             }
