@@ -498,6 +498,17 @@
     const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
+  function walkW(reg, ri, s, side) {
+    const xs = xsOf(reg, ri);
+    if (!xs) return 0;
+    const pr = side > 0 ? xs[9] : xs[10], base = side > 0 ? xs[7] : xs[8];
+    if (!pr || !pr.length) return base >= 10 ? base / 10 : 0;
+    const a = reg.rStart[ri], n = reg.rCount[ri], cum = reg.cum;
+    let k = 0;
+    while (k < n - 2 && cum[a + k + 1] - cum[a] < s) k++;
+    const L2 = cum[a + k + 1] - cum[a + k], f = L2 > 0 ? clamp2((s - (cum[a + k] - cum[a])) / L2, 0, 1) : 0;
+    return (pr[k] + (pr[k + 1] - pr[k]) * f) / 10;
+  }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri, s) {
     const st2 = reg && reg.streets, m = !st2 && XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null;
@@ -663,7 +674,7 @@
   function parseGround(u8) {
     const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
     if (dv.getUint32(0, true) !== 860114503) throw new Error("bad ground file");
-    const n = dv.getUint32(4, true), m = dv.getUint32(8, true), seg = dv.getUint32(12, true), steps = dv.getUint32(16, true), off = dv.getUint32(20, true);
+    const n = dv.getUint32(4, true), m = dv.getUint32(8, true), seg = dv.getUint32(12, true), steps = dv.getUint32(16, true), off2 = dv.getUint32(20, true);
     if (seg !== GSEG || u8.length < 32 + 2 * n * n) throw new Error("bad ground file");
     const d = new Uint16Array(n * n), hi = n * n;
     const b = u8.subarray(32);
@@ -675,7 +686,7 @@
         d[o] = j ? acc + d[o - n] & 65535 : acc;
       }
     }
-    return { n, m, d, inv: 1 / steps, off };
+    return { n, m, d, inv: 1 / steps, off: off2 };
   }
   var World = class {
     // parts: decoded arrays (see loader).  Regions arrive later through addRegion().
@@ -2798,7 +2809,7 @@
             rv = v;
           }
         }
-        const off = (r3 < 0.5 ? -1 : 1) * 0.55, cu = along2 ? ru : ru + off, cv = along2 ? rv + off : rv;
+        const off2 = (r3 < 0.5 ? -1 : 1) * 0.55, cu = along2 ? ru : ru + off2, cv = along2 ? rv + off2 : rv;
         let inside = false;
         for (let i = 0, j = nv - 1; i < nv; j = i++) {
           const ui = P2[i * 3], vi = P2[i * 3 + 1], uj = P2[j * 3], vj = P2[j * 3 + 1];
@@ -3211,9 +3222,9 @@
   function poleAt(world2, reg, ri, k, out) {
     const s0 = reg.cum[reg.rStart[ri]], s1 = reg.cum[reg.rStart[ri] + reg.rCount[ri] - 1], s = k * POLE_GAP;
     if (s < s0 + 4 || s > s1 - 4) return false;
-    const p = pointAt(reg, ri, s), side = poleSide(reg, ri), off = (reg.rHw[ri] + 0.9) * side;
-    out.mx = reg.x0 + p.x + p.ty * off;
-    out.my = reg.y0 + p.y - p.tx * off;
+    const p = pointAt(reg, ri, s), side = poleSide(reg, ri), off2 = (reg.rHw[ri] + 0.9) * side;
+    out.mx = reg.x0 + p.x + p.ty * off2;
+    out.my = reg.y0 + p.y - p.tx * off2;
     out.yaw = Math.atan2(-p.tx, p.ty) + (side < 0 ? Math.PI : 0);
     out.tx = p.tx;
     out.ty = p.ty;
@@ -3267,8 +3278,8 @@
         if (hw < 3.4 || reg.rFlags[ri] & 14) continue;
         const side = -poleSide(reg, ri);
         for (let k = Math.ceil((sA + 11) / SLOT); k * SLOT <= sB - 11; k++) {
-          const p = pointAt(reg, ri, k * SLOT), off = (hw - 0.55) * side;
-          const mx = reg.x0 + p.x + p.ty * off, my = reg.y0 + p.y - p.tx * off;
+          const p = pointAt(reg, ri, k * SLOT), off2 = (hw - 0.55) * side;
+          const mx = reg.x0 + p.x + p.ty * off2, my = reg.y0 + p.y - p.tx * off2;
           if (!inTile(mx, my)) continue;
           const dev = world2.coverBilinear(mx, my, 0);
           const want = clamp2(dev * 0.62 - (cls >= 10 ? 0.1 : 0.26), 0, 0.42);
@@ -3510,7 +3521,7 @@
         const t = side > 0 ? xs[1] : xs[4];
         if (t !== 3) continue;
         const bw = (side > 0 ? xs[2] : xs[5]) / 10, buf = (side > 0 ? xs[3] : xs[6]) / 10;
-        const off = side * (hw - bw - Math.max(buf, 0.4) / 2);
+        const off2 = side * (hw - bw - Math.max(buf, 0.4) / 2);
         let q = a;
         for (let k = Math.ceil((cum[a] + 8) / FLEX_GAP); k * FLEX_GAP < cum[b] - 8; k++) {
           const sk = k * FLEX_GAP;
@@ -3518,7 +3529,7 @@
           const L2 = cum[q + 1] - cum[q];
           if (L2 < 0.01) continue;
           const f = (sk - cum[q]) / L2, tx = (px[q + 1] - px[q]) / L2, ty = (py[q + 1] - py[q]) / L2;
-          const lx = px[q] + (px[q + 1] - px[q]) * f + ty * off, ly = py[q] + (py[q + 1] - py[q]) * f - tx * off;
+          const lx = px[q] + (px[q + 1] - px[q]) * f + ty * off2, ly = py[q] + (py[q + 1] - py[q]) * f - tx * off2;
           let mx = reg.x0 + lx, my = reg.y0 + ly;
           const surv = surveyed(reg, lx, ly);
           if (surv) {
@@ -3526,8 +3537,8 @@
             if (!kb && surveyPainted(reg, lx, ly)) continue;
             if (kb) {
               const o2 = kb.mid + side * (kb.hw - bw - Math.max(buf, 0.4) / 2);
-              mx += ty * (o2 - off);
-              my -= tx * (o2 - off);
+              mx += ty * (o2 - off2);
+              my -= tx * (o2 - off2);
             }
           }
           if (mx < reg.x0 + lx0 || mx >= reg.x0 + lx0 + s || my < reg.y0 + ly0 || my >= reg.y0 + ly0 + s) continue;
@@ -3549,10 +3560,10 @@
   function lampOnDeck(world2, mx, my, place) {
     const dd = world2.nearestRoadDeck(mx, my);
     if (dd > 12) return false;
-    const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, d = nd.d, z = nd.z, tx = nd.tx, ty = nd.ty;
+    const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, d = nd.d, z = nd.z, tx = nd.tx, ty = nd.ty, sAt = nd.s;
     const gz = world2.groundH(mx, my, true), water = world2.g.water;
     if (!water && z < gz + 2.5) return false;
-    const xs = xsOf(R2, ri), wS = xs ? (side > 0 ? xs[7] : xs[8]) / 10 : 0, walk = wS >= 1 ? wS : 0;
+    const wS = walkW(R2, ri, sAt - R2.cum[R2.rStart[ri]], side), walk = wS >= 1 ? wS : 0;
     if (!water && dd > walk + 0.42 && world2.nearestRoad(mx, my) < 3) return false;
     const par = hw + walk + 0.21;
     let d2 = d;
@@ -3633,7 +3644,7 @@
         const part = k === LAMP ? lampPart(f.sub[i]) : f.sub[i] ? PART.SHELTER : PART.BUS;
         if (part < 0) continue;
         const ht = k === LAMP ? f.h[i] : 0;
-        if (k === LAMP && zD === null && lampOnDeck(world2, mx, my, (x2, y2, h, yaw) => {
+        if (k === LAMP && lampOnDeck(world2, mx, my, (x2, y2, h, yaw) => {
           cyl(x2, y2, h, p32);
           out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, 0, ht);
         })) continue;
@@ -4179,13 +4190,13 @@
     if (layer < 0 && world2.nearestTunnel(mx, my) < 3) return o;
     const dd = world2.nearestDeck(mx, my);
     if (dd < 8) {
-      const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, lat = side * nd.d, z = nd.z, tx = nd.tx, ty = nd.ty;
+      const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, lat = side * nd.d, z = nd.z, tx = nd.tx, ty = nd.ty, sAt = nd.s;
       const gz = world2.groundH(mx, my, true), high = world2.g.water || z > gz + 2;
       let onDeck = high && layer >= 1;
       if (high && !onDeck && dd < 2.5) onDeck = world2.nearestRoad(mx, my) > 8;
       if (onDeck) {
         if (R2.rCls[ri] >= 14) return o;
-        const xs = xsOf(R2, ri), wS = xs ? (side > 0 ? xs[7] : xs[8]) / 10 : 0;
+        const wS = walkW(R2, ri, sAt - R2.cum[R2.rStart[ri]], side);
         o.z = z;
         if (Math.abs(lat) < hw - 1) {
           o.look = kind;
@@ -4555,7 +4566,7 @@
       const deck = des === D.DECK_TRUSS;
       const H = deck ? clamp2(longest * 0.12, 3.5, 14) : clamp2(longest * 0.14, 5, 16);
       const P0 = clamp2(H * 0.85, 4, 8.5);
-      const off = deck ? hw * 0.8 : hw + PW + 0.4;
+      const off2 = deck ? hw * 0.8 : hw + PW + 0.4;
       const y0 = deck ? -DT : -0.25, y1 = deck ? -DT - H : H;
       const cw = rail ? 0.32 : 0.28, ch = rail ? 0.42 : 0.36;
       setM(MAT.METAL);
@@ -4567,7 +4578,7 @@
           if (!mine(s)) continue;
           const up = upAt((s + sN) / 2);
           for (const side of [-1, 1]) {
-            const o = side * off;
+            const o = side * off2;
             beam(M, at(s, o, y0), at(sN, o, y0), cw, ch, up);
             const first = j === 0 && end0, last = j === np - 1 && end1;
             if (first) beam(M, at(s, o, y0), at(sN, o, y1), cw, ch, up);
@@ -4579,9 +4590,9 @@
               else beam(M, at(s, o, y0), at(sN, o, y1), cw * 0.6, ch * 0.6, up);
             }
           }
-          if (j > 0) beam(M, at(s, -off, y1), at(s, off, y1), 0.18, 0.25, up);
-          if (!deck && j === 0 && end0) beam(M, at(sN, -off, y1 - 1), at(sN, off, y1 - 1), 0.22, 0.45, up);
-          if (!deck && j === np - 1 && end1) beam(M, at(s, -off, y1 - 1), at(s, off, y1 - 1), 0.22, 0.45, up);
+          if (j > 0) beam(M, at(s, -off2, y1), at(s, off2, y1), 0.18, 0.25, up);
+          if (!deck && j === 0 && end0) beam(M, at(sN, -off2, y1 - 1), at(sN, off2, y1 - 1), 0.22, 0.45, up);
+          if (!deck && j === np - 1 && end1) beam(M, at(s, -off2, y1 - 1), at(s, off2, y1 - 1), 0.22, 0.45, up);
         }
       }
       return;
@@ -4664,17 +4675,17 @@
     const hw = W / 2;
     setM(MAT.METAL);
     if (des === D.ARCH) {
-      const f = clamp2(Ls * 0.22, 8, 48), N = clamp2(Math.round(Ls / 6), 10, 40), off = hw + 0.6;
+      const f = clamp2(Ls * 0.22, 8, 48), N = clamp2(Math.round(Ls / 6), 10, 40), off2 = hw + 0.6;
       const yR = (s) => f * (1 - (2 * s / Ls) ** 2) - 3;
       const depth = clamp2(Ls * 0.012, 0.8, 2.6);
       for (let k = 0; k < N; k++) {
         const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
         for (const side of [-1, 1]) {
-          const o = side * off;
+          const o = side * off2;
           beam(M, at(s0, o, yR(s0)), at(s1, o, yR(s1)), 0.55, depth, up);
           if (k > 0 && yR(s0) > 1.5) beam(M, at(s0, o, yR(s0)), at(s0, o, 0), 0.08, 0.08, up);
         }
-        if (k % 2 === 0 && yR(s0) > 6.5) beam(M, at(s0, -off, yR(s0) + depth * 0.5), at(s0, off, yR(s0) + depth * 0.5), 0.25, 0.4, up);
+        if (k % 2 === 0 && yR(s0) > 6.5) beam(M, at(s0, -off2, yR(s0) + depth * 0.5), at(s0, off2, yR(s0) + depth * 0.5), 0.25, 0.4, up);
       }
       return;
     }
@@ -4699,14 +4710,14 @@
       return;
     }
     if (des === D.SUSPENSION) {
-      const Ht = clamp2(Ls * 0.16 + 6, 10, 60), sag = Ht * 0.85, off = hw + 0.4;
-      for (const st0 of [-Ls / 2, Ls / 2]) for (const side of [-1, 1]) beam(M, at(st0, side * off, -2), at(st0, side * off, Ht), 0.7, 0.7, up);
-      for (const st0 of [-Ls / 2, Ls / 2]) beam(M, at(st0, -off, Ht - 1), at(st0, off, Ht - 1), 0.5, 0.6, up);
+      const Ht = clamp2(Ls * 0.16 + 6, 10, 60), sag = Ht * 0.85, off2 = hw + 0.4;
+      for (const st0 of [-Ls / 2, Ls / 2]) for (const side of [-1, 1]) beam(M, at(st0, side * off2, -2), at(st0, side * off2, Ht), 0.7, 0.7, up);
+      for (const st0 of [-Ls / 2, Ls / 2]) beam(M, at(st0, -off2, Ht - 1), at(st0, off2, Ht - 1), 0.5, 0.6, up);
       const N = clamp2(Math.round(Ls / 5), 8, 60), yC = (s) => Ht - sag * (1 - (2 * s / Ls) ** 2);
       for (let k = 0; k < N; k++) {
         const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
         for (const side of [-1, 1]) {
-          const o = side * off;
+          const o = side * off2;
           beam(M, at(s0, o, yC(s0)), at(s1, o, yC(s1)), 0.18, 0.18, up);
           if (k > 0) beam(M, at(s0, o, yC(s0)), at(s0, o, 0.8), 0.04, 0.04, up);
         }
@@ -4714,14 +4725,14 @@
       return;
     }
     if (des === D.LIFT) {
-      const Hl = clamp2(Ls * 0.33, 25, 55), off = hw + 1;
+      const Hl = clamp2(Ls * 0.33, 25, 55), off2 = hw + 1;
       for (const st0 of [-Ls / 2, Ls / 2]) {
         const zt = zAt(st0);
-        for (const ds of [-1.8, 1.8]) for (const side of [-1, 1]) beam(M, at(st0 + ds, side * off, -6, zt), at(st0 + ds, side * off, Hl, zt), 0.6, 0.6, up);
-        for (const yb of [Hl * 0.35, Hl * 0.7]) for (const side of [-1, 1]) beam(M, at(st0 - 1.8, side * off, yb, zt), at(st0 + 1.8, side * off, yb, zt), 0.3, 0.3, up);
+        for (const ds of [-1.8, 1.8]) for (const side of [-1, 1]) beam(M, at(st0 + ds, side * off2, -6, zt), at(st0 + ds, side * off2, Hl, zt), 0.6, 0.6, up);
+        for (const yb of [Hl * 0.35, Hl * 0.7]) for (const side of [-1, 1]) beam(M, at(st0 - 1.8, side * off2, yb, zt), at(st0 + 1.8, side * off2, yb, zt), 0.3, 0.3, up);
         setM(MAT.CONCRETE);
-        beam(M, at(st0, -off - 0.8, Hl + 1.6, zt), at(st0, off + 0.8, Hl + 1.6, zt), 2.4, 1.6, up);
-        beam(M, at(st0, -off + 1, Hl * 0.78, zt), at(st0, off - 1, Hl * 0.78, zt), 1.4, 1.8, up);
+        beam(M, at(st0, -off2 - 0.8, Hl + 1.6, zt), at(st0, off2 + 0.8, Hl + 1.6, zt), 2.4, 1.6, up);
+        beam(M, at(st0, -off2 + 1, Hl * 0.78, zt), at(st0, off2 - 1, Hl * 0.78, zt), 1.4, 1.8, up);
         setM(MAT.METAL);
       }
       const H = 6, N = clamp2(Math.round(Ls / 7), 6, 30);
@@ -5377,10 +5388,12 @@
   var p3 = new Float64Array(3);
   var runsL = [];
   var runsR = [];
-  function openRuns(reg, ri, ax, ay, az, bx, by, bz, n0, n1, off, out) {
+  var lin = (o, f) => typeof o === "number" ? o : o[0] + (o[1] - o[0]) * f;
+  var off = (o, d, s = 1) => typeof o === "number" ? s * o + d : [s * o[0] + d, s * o[1] + d];
+  function openRuns(reg, ri, ax, ay, az, bx, by, bz, n0, n1, off2, out) {
     const len = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(len / EDGE_STEP));
     const cov = (f) => {
-      const x = ax + (bx - ax) * f + (n0[0] + (n1[0] - n0[0]) * f) * off, y = ay + (by - ay) * f + (n0[1] + (n1[1] - n0[1]) * f) * off, z = az + (bz - az) * f;
+      const x = ax + (bx - ax) * f + (n0[0] + (n1[0] - n0[0]) * f) * off2, y = ay + (by - ay) * f + (n0[1] + (n1[1] - n0[1]) * f) * off2, z = az + (bz - az) * f;
       return onOtherWay(reg, x, y, z, ri, false) || reg.rCls[ri] >= 14 && onPlatform(reg.x0 + x, reg.y0 + y, z);
     };
     out.length = 0;
@@ -5491,9 +5504,12 @@
       cross(ri, q, n0, u0);
       cross(ri, q + 1, n1, u1);
       const PW = rail ? 0.34 : 0.42, PH = rail ? 0.55 : 0.86, DT = rail ? 1.5 : DECK_T - 0.05;
-      const xs = rail ? void 0 : xsOf(reg, ri);
-      const wL = xs && xs[8] >= 10 ? xs[8] / 10 : 0, wR = xs && xs[7] >= 10 ? xs[7] / 10 : 0, CH = 0.18, PB = 0.15;
-      const pL = hw + wL, pR = hw + wR;
+      const xs = rail ? void 0 : xsOf(reg, ri), qi = q - reg.rStart[ri];
+      const prR = xs && xs[9] && xs[9].length ? xs[9] : null, prL = xs && xs[10] && xs[10].length ? xs[10] : null;
+      const wR0 = prR ? prR[qi] / 10 : xs && xs[7] >= 10 ? xs[7] / 10 : 0, wR1 = prR ? prR[qi + 1] / 10 : wR0;
+      const wL0 = prL ? prL[qi] / 10 : xs && xs[8] >= 10 ? xs[8] / 10 : 0, wL1 = prL ? prL[qi + 1] / 10 : wL0;
+      const wL = (wL0 + wL1) / 2, wR = (wR0 + wR1) / 2, CH = 0.18, PB = 0.15;
+      const pL = wL0 === wL1 ? hw + wL : [hw + wL0, hw + wL1], pR = wR0 === wR1 ? hw + wR : [hw + wR0, hw + wR1];
       const s0 = cum[q], s1 = cum[q + 1];
       const mid = P2((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
       M.C[0] = mid[0];
@@ -5517,18 +5533,21 @@
         uyB /= lB;
         const xA = ax + (bx - ax) * f0, yA = ay + (by - ay) * f0, zA = az + (bz - az) * f0, xB = ax + (bx - ax) * f1, yB = ay + (by - ay) * f1, zB = az + (bz - az) * f1;
         const sA = s0 + (s1 - s0) * f0, sB = s0 + (s1 - s0) * f1;
-        let t = P2(xA + cxA * o0, yA + cyA * o0, zA + y0);
+        const oA0 = lin(o0, f0), oA1 = lin(o1, f0), oB0 = lin(o0, f1), oB1 = lin(o1, f1);
+        let t = P2(xA + cxA * oA0, yA + cyA * oA0, zA + y0);
         const i0 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv0);
-        t = P2(xA + cxA * o1, yA + cyA * o1, zA + y1);
+        t = P2(xA + cxA * oA1, yA + cyA * oA1, zA + y1);
         const i1 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv1);
-        t = P2(xB + cxB * o1, yB + cyB * o1, zB + y1);
+        t = P2(xB + cxB * oB1, yB + cyB * oB1, zB + y1);
         const i2 = M.v(t[0], t[1], t[2], uxB * nl, nu, -uyB * nl, sB, tv1);
-        t = P2(xB + cxB * o0, yB + cyB * o0, zB + y0);
+        t = P2(xB + cxB * oB0, yB + cyB * oB0, zB + y0);
         const i3 = M.v(t[0], t[1], t[2], uxB * nl, nu, -uyB * nl, sB, tv0);
         M.quad(i0, i1, i2, i3);
       };
       const stub = (f, sg, dir, a = hw, b = hw + PW, h = PH) => {
         const cx2 = n0[0] + (n1[0] - n0[0]) * f, cy2 = n0[1] + (n1[1] - n0[1]) * f, X = ax + (bx - ax) * f, Y = ay + (by - ay) * f, Z = az + (bz - az) * f;
+        a = lin(a, f);
+        b = lin(b, f);
         const oa = sg * a, ob = sg * b;
         let t = P2(X + cx2 * oa, Y + cy2 * oa, Z);
         const i0 = M.v(t[0], t[1], t[2], tx * dir, 0, -ty * dir, 0, 0);
@@ -5594,16 +5613,16 @@
         const b = wL ? CH : 0, ph = wL ? PB : PH;
         if (wL) {
           strip(f0, f1, -hw, CH, -hw, 0, 1, 0, CH, 0);
-          strip(f0, f1, -pL, CH, -hw, CH, 0, 1, 0, wL);
+          strip(f0, f1, off(pL, 0, -1), CH, -hw, CH, 0, 1, 0, wL);
           if (f0 > 1e-3) stub(f0, -1, -1, hw, pL, CH);
           if (f1 < 1 - 1e-3) stub(f1, -1, 1, hw, pL, CH);
-          rails.push(f0, f1, -pL - PW / 2, b + ph, 1);
+          rails.push(f0, f1, off(pL, -PW / 2, -1), b + ph, 1);
         }
-        strip(f0, f1, -pL - PW, b + ph, -pL, b + ph, 0, 1, 0, PW);
-        strip(f0, f1, -pL, b + ph, -pL, b, 1, 0, ph, 0);
-        strip(f0, f1, -pL - PW, -DT, -pL - PW, b + ph, -1, 0, 0, b + ph + DT);
-        if (f0 > 1e-3) stub(f0, -1, -1, pL, pL + PW, b + ph);
-        if (f1 < 1 - 1e-3) stub(f1, -1, 1, pL, pL + PW, b + ph);
+        strip(f0, f1, off(pL, -PW, -1), b + ph, off(pL, 0, -1), b + ph, 0, 1, 0, PW);
+        strip(f0, f1, off(pL, 0, -1), b + ph, off(pL, 0, -1), b, 1, 0, ph, 0);
+        strip(f0, f1, off(pL, -PW, -1), -DT, off(pL, -PW, -1), b + ph, -1, 0, 0, b + ph + DT);
+        if (f0 > 1e-3) stub(f0, -1, -1, pL, off(pL, PW), b + ph);
+        if (f1 < 1 - 1e-3) stub(f1, -1, 1, pL, off(pL, PW), b + ph);
       }
       for (let i = 0; i < runsR.length; i += 2) {
         const f0 = runsR[i], f1 = runsR[i + 1];
@@ -5614,24 +5633,24 @@
           strip(f0, f1, hw, CH, pR, CH, 0, 1, 0, wR);
           if (f0 > 1e-3) stub(f0, 1, -1, hw, pR, CH);
           if (f1 < 1 - 1e-3) stub(f1, 1, 1, hw, pR, CH);
-          rails.push(f0, f1, pR + PW / 2, b + ph, -1);
+          rails.push(f0, f1, off(pR, PW / 2), b + ph, -1);
         }
         strip(f0, f1, pR, b, pR, b + ph, -1, 0, 0, ph);
-        strip(f0, f1, pR, b + ph, pR + PW, b + ph, 0, 1, 0, PW);
-        strip(f0, f1, pR + PW, b + ph, pR + PW, -DT, 1, 0, b + ph + DT, 0);
-        if (f0 > 1e-3) stub(f0, 1, -1, pR, pR + PW, b + ph);
-        if (f1 < 1 - 1e-3) stub(f1, 1, 1, pR, pR + PW, b + ph);
+        strip(f0, f1, pR, b + ph, off(pR, PW), b + ph, 0, 1, 0, PW);
+        strip(f0, f1, off(pR, PW), b + ph, off(pR, PW), -DT, 1, 0, b + ph + DT, 0);
+        if (f0 > 1e-3) stub(f0, 1, -1, pR, off(pR, PW), b + ph);
+        if (f1 < 1 - 1e-3) stub(f1, 1, 1, pR, off(pR, PW), b + ph);
       }
-      strip(0, 1, pR + PW, -DT, -pL - PW, -DT, 0, -1, 0, pR + pL + 2 * PW);
+      strip(0, 1, off(pR, PW), -DT, off(pL, -PW, -1), -DT, 0, -1, 0, lin(pR, 0.5) + lin(pL, 0.5) + 2 * PW);
       if (rails.length) {
         setM(MAT.RAIL);
         M.M[1] = 255;
         for (let i = 0; i < rails.length; i += 5) strip(rails[i], rails[i + 1], rails[i + 2], rails[i + 3], rails[i + 2], rails[i + 3] + 0.95, rails[i + 4], 0, 0, 0.95);
         setM(MAT.CONCRETE);
       }
-      const en = reg.rEnd[ri], a0 = reg.rStart[ri], b0 = a0 + reg.rCount[ri] - 1;
-      const cap = (X, Y, Z, nn, dir) => {
-        const eL = pL + PW, eR = pR + PW;
+      const en = reg.rEnd[ri], a0 = reg.rStart[ri], b0 = a0 + reg.rCount[ri] - 1, pLs = pL, pRs = pR;
+      const cap = (X, Y, Z, nn, dir, f) => {
+        const pL2 = lin(pLs, f), pR2 = lin(pRs, f), eL = pL2 + PW, eR = pR2 + PW;
         const face = (o0, o1, h0, h12) => {
           let t = P2(X + nn[0] * o0, Y + nn[1] * o0, Z + h0);
           const i0 = M.v(t[0], t[1], t[2], tx * dir, 0, -ty * dir, o0 + eL, h0 + DT);
@@ -5645,16 +5664,16 @@
         };
         face(-eL, eR, -DT, 0);
         if (wL) {
-          face(-pL, -hw, 0, CH);
-          face(-eL, -pL, 0, CH + PB);
+          face(-pL2, -hw, 0, CH);
+          face(-eL, -pL2, 0, CH + PB);
         } else face(-eL, -hw, 0, PH);
         if (wR) {
-          face(hw, pR, 0, CH);
-          face(pR, eR, 0, CH + PB);
+          face(hw, pR2, 0, CH);
+          face(pR2, eR, 0, CH + PB);
         } else face(hw, eR, 0, PH);
       };
-      if (q === a0 && en & 1) cap(ax, ay, az, n0, -1);
-      if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1);
+      if (q === a0 && en & 1) cap(ax, ay, az, n0, -1, 0);
+      if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1, 1);
       setM(MAT.CONCRETE);
       for (let k = Math.ceil(s0 / PIER_GAP); k * PIER_GAP < s1; k++) {
         const f = (k * PIER_GAP - s0) / (s1 - s0), X = ax + (bx - ax) * f, Y = ay + (by - ay) * f, Z = az + (bz - az) * f;
@@ -5913,9 +5932,9 @@
   function decodeTile(st2, t) {
     const ent = st2.tab.get(t);
     if (!ent) return null;
-    const [off, len] = ent, dv = st2.dv, base = st2.e.byteOffset + off, buf = st2.e.buffer;
-    let q = off;
-    const u16 = (o, n) => new Uint16Array(buf.slice(base + (o - off), base + (o - off) + n * 2));
+    const [off2, len] = ent, dv = st2.dv, base = st2.e.byteOffset + off2, buf = st2.e.buffer;
+    let q = off2;
+    const u16 = (o, n) => new Uint16Array(buf.slice(base + (o - off2), base + (o - off2) + n * 2));
     const nv = dv.getUint32(q, true), nt = dv.getUint32(q + 4, true);
     q += 8;
     const V2 = u16(q, nv * 2);
@@ -6213,12 +6232,12 @@
       }).then((buf) => {
         const dv = new DataView(buf);
         if (dv.getUint32(0, true) !== 827343692 || dv.getUint32(4, true) !== 2 || dv.getUint32(8, true) !== LCQ) throw new Error("lcp " + I + "_" + J + " is not a land cover pack");
-        const n = dv.getUint32(12, true), off = new Uint32Array(n), len = new Uint32Array(n);
+        const n = dv.getUint32(12, true), off2 = new Uint32Array(n), len = new Uint32Array(n);
         for (let q = 0; q < n; q++) {
-          off[q] = dv.getUint32(16 + q * 8, true);
+          off2[q] = dv.getUint32(16 + q * 8, true);
           len[q] = dv.getUint32(20 + q * 8, true);
         }
-        const p = { buf, off, len, last: world.tick };
+        const p = { buf, off: off2, len, last: world.tick };
         packCache.set(k, p);
         trim(packCache, PACK_KEEP);
         return p;
@@ -6467,9 +6486,9 @@
     const cell = s / N, G = N + 3;
     const walls = !sea && cell <= 50 && wallsNear(mx0 - cell, my0 - cell, s + 2 * cell);
     const carve = cell <= 50 && (hasRoads || walls);
-    let off = null, wside = null;
+    let off2 = null, wside = null;
     if (walls && cell <= 12) {
-      off = new Float32Array(G * G * 2);
+      off2 = new Float32Array(G * G * 2);
       wside = new Float32Array(G * G * 4);
       for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
         const mx = mx0 + (i - 1) * cell, my = my0 + (j - 1) * cell;
@@ -6494,8 +6513,8 @@
         }
         if (!across3) continue;
         const sd = wside[o * 4], mv = (sd > 0 ? 0.08 : -0.08) - sd;
-        off[o * 2] = wside[o * 4 + 1] * mv;
-        off[o * 2 + 1] = wside[o * 4 + 2] * mv;
+        off2[o * 2] = wside[o * 4 + 1] * mv;
+        off2[o * 2 + 1] = wside[o * 4 + 2] * mv;
       }
     }
     const hs = new Float32Array(G * G);
@@ -6504,7 +6523,7 @@
       const my = my0 + (j - 1) * cell;
       for (let i = 0; i < G; i++) {
         const o = j * G + i;
-        const h = sea ? 0 : off ? world.groundH(mx0 + (i - 1) * cell + off[o * 2], my + off[o * 2 + 1], carve, !realBuildings) : world.groundH(mx0 + (i - 1) * cell, my, carve, !realBuildings);
+        const h = sea ? 0 : off2 ? world.groundH(mx0 + (i - 1) * cell + off2[o * 2], my + off2[o * 2 + 1], carve, !realBuildings) : world.groundH(mx0 + (i - 1) * cell, my, carve, !realBuildings);
         hs[o] = h;
         if (h < hmin) hmin = h;
         if (h > hmax) hmax = h;
@@ -6556,13 +6575,13 @@
         nrm[k] = -dx * il;
         nrm[k + 1] = -dy * il;
         nrm[k + 2] = il;
-        const ox = off ? off[o * 2] : 0, oy = off ? off[o * 2 + 1] : 0;
+        const ox = off2 ? off2[o * 2] : 0, oy = off2 ? off2[o * 2 + 1] : 0;
         put(v++, mx0 + i * cell + ox, my + oy, hs[o], nrm[k], nrm[k + 1], nrm[k + 2], i * cell + ox, j * cell + oy);
       }
     }
     const edge = (i, j) => {
       const o = (j + 1) * G + i + 1, k = (j * N1 + i) * 3;
-      const ox = off ? off[o * 2] : 0, oy = off ? off[o * 2 + 1] : 0;
+      const ox = off2 ? off2[o * 2] : 0, oy = off2 ? off2[o * 2 + 1] : 0;
       put(v++, mx0 + i * cell + ox, my0 + j * cell + oy, hs[o] - skirt, nrm[k], nrm[k + 1], nrm[k + 2], i * cell + ox, j * cell + oy);
     };
     for (let i = 0; i <= N; i++) edge(i, 0);
