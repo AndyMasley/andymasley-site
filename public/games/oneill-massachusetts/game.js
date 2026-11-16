@@ -15205,6 +15205,36 @@ void main() {
     return false;
   }
   var _own = { z: 0 };
+  var XS = null;
+  var XK = null;
+  function setXS(m, k) {
+    XS = m;
+    XK = k || null;
+  }
+  function xsOf(reg, ri2) {
+    const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri2) : void 0;
+  }
+  var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
+  function kerbsAt(reg, ri2, s29) {
+    const m = XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null, P2 = m ? m.get(ri2) : null;
+    if (!P2 || !P2.length || s29 < P2[0][0] - 6 || s29 > P2[P2.length - 1][0] + 6) return null;
+    if (P2.hwMed === void 0) {
+      const w = P2.map((q) => (q[2] - q[1]) / 2).sort((x, y) => x - y);
+      P2.hwMed = w[w.length >> 1];
+    }
+    let i = 0;
+    while (i < P2.length - 2 && P2[i + 1][0] < s29) i++;
+    const a = P2[i], b = P2[Math.min(i + 1, P2.length - 1)], t = b[0] > a[0] ? clamp2((s29 - a[0]) / (b[0] - a[0]), 0, 1) : 0;
+    _kerbs.left = a[1] + (b[1] - a[1]) * t;
+    _kerbs.right = a[2] + (b[2] - a[2]) * t;
+    _kerbs.mid = (_kerbs.left + _kerbs.right) / 2;
+    _kerbs.hw = P2.hwMed;
+    return _kerbs;
+  }
+  function redone(xs) {
+    return !!xs && Math.max(xs[1], xs[4]) >= 2;
+  }
   function deckOwnerAt(reg, lx2, ly2, z, ri2, thi, oi2, dz, inset) {
     const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
     if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return -1;
@@ -21634,7 +21664,12 @@ void main() {
     }
     // where the car should be on its road now: c.gx, c.gy on the map, c.tx, c.ty the way it faces, c.gz the road's height
     aim(c) {
-      const p = pointAt(c.reg, c.ri, c.s), o = c.off * c.dir;
+      const p = pointAt(c.reg, c.ri, c.s);
+      let o = c.off * c.dir;
+      if (c.kerbs) {
+        const kb = kerbsAt(c.reg, c.ri, c.s - c.reg.cum[c.reg.rStart[c.ri]]);
+        if (kb) o += kb.mid;
+      }
       c.cx = c.reg.x0 + p.x;
       c.cy = c.reg.y0 + p.y;
       c.gx = c.cx + p.ty * o;
@@ -21686,6 +21721,7 @@ void main() {
         keen: 0.86 + 0.2 * (hash4 * 11.9 % 1)
       };
       c.off = this.lane(reg, ri2, c.dir, c.pick);
+      c.kerbs = redone(xsOf(reg, ri2));
       this.aim(c);
       for (const o of this.cars) if (Math.abs(o.mx - c.gx) < 24 && Math.abs(wrapD(o.my - c.gy)) < 24) return;
       const pc2 = this.game.player.car;
@@ -21735,6 +21771,7 @@ void main() {
         c.s = clamp2(c.s, s0of(c.reg, c.ri), s1of(c.reg, c.ri));
       }
       c.off = this.lane(c.reg, c.ri, c.dir, c.pick);
+      c.kerbs = redone(xsOf(c.reg, c.ri));
       c.next = void 0;
       this.aim(c);
       c.ox = hx2 - c.gx;
@@ -21783,6 +21820,7 @@ void main() {
           c.s = nr2.s;
           c.dir = dot > 0 ? 1 : -1;
           c.next = void 0;
+          c.kerbs = redone(xsOf(r2, nr2.road));
           this.aim(c);
         }
       }
@@ -24358,6 +24396,13 @@ void main() {
       if (F.lifted) fetch(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
         this.world.setLifted(j);
         if (this.player) this.player.bCache = null;
+      }).catch(() => {
+      });
+      if (F.xs) fetch(vurl("data/" + F.xs.file)).then((r) => r.json()).then((j) => {
+        const X = /* @__PURE__ */ new Map(), K = /* @__PURE__ */ new Map();
+        for (const [k, v] of Object.entries(j.r || {})) X.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
+        for (const [k, v] of Object.entries(j.k || {})) K.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
+        setXS(X, K);
       }).catch(() => {
       });
       this.names = null;
