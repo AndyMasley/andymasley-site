@@ -47,7 +47,42 @@
         kerbs.set(ri, P2);
       }
     }
-    return { e, dv, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs };
+    let ramps = null;
+    const rN = dv.getUint32(52, true);
+    if (rN) {
+      ramps = { list: [], byTile: /* @__PURE__ */ new Map() };
+      const TSl = RS / 64;
+      let q = dv.getUint32(48, true);
+      for (let i = 0; i < rN; i++) {
+        const fx = dv.getFloat32(q, true), fy = dv.getFloat32(q + 4, true);
+        const W = dv.getUint16(q + 8, true) / 100, F = dv.getUint16(q + 10, true) / 100, D2 = dv.getUint16(q + 12, true) / 100;
+        const mat = dv.getUint8(q + 14), fl = dv.getUint8(q + 15), n = dv.getUint16(q + 16, true), sB = dv.getUint16(q + 18, true) / 100;
+        q += 20;
+        const P2 = new Float64Array(n * 2), cum = new Float64Array(n);
+        let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+        for (let j = 0; j < n; j++, q += 4) {
+          const x = fx + dv.getInt16(q, true) / 100, y = fy + dv.getInt16(q + 2, true) / 100;
+          P2[j * 2] = x;
+          P2[j * 2 + 1] = y;
+          if (j) cum[j] = cum[j - 1] + Math.hypot(x - P2[j * 2 - 2], y - P2[j * 2 - 1]);
+          bx0 = Math.min(bx0, x);
+          by0 = Math.min(by0, y);
+          bx1 = Math.max(bx1, x);
+          by1 = Math.max(by1, y);
+        }
+        const m = D2 + 0.4;
+        const r = { fx, fy, W, F, D: D2, mat, fl, P: P2, cum, sB, bx0: bx0 - m, by0: by0 - m, bx1: bx1 + m, by1: by1 + m };
+        ramps.list.push(r);
+        const i0 = clamp(Math.floor(r.bx0 / TSl), 0, 63), i1 = clamp(Math.floor(r.bx1 / TSl), 0, 63);
+        const j0 = clamp(Math.floor(r.by0 / TSl), 0, 63), j1 = clamp(Math.floor(r.by1 / TSl), 0, 63);
+        for (let tj = j0; tj <= j1; tj++) for (let ti = i0; ti <= i1; ti++) {
+          const k = tj * 64 + ti;
+          if (!ramps.byTile.has(k)) ramps.byTile.set(k, []);
+          ramps.byTile.get(k).push(r);
+        }
+      }
+    }
+    return { e, dv, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps };
   }
   function streetsPainted(st2, lx, ly) {
     const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
@@ -5956,6 +5991,66 @@
     67: [0.05, 0.12, 0.45]
   };
   var GRASSY = /* @__PURE__ */ new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 20]);
+  var LIP = 0.05;
+  var RAMP_COL = { 0: [0.32, 0.312, 0.296], 1: COL[2], 2: COL[3], 3: [0.2, 0.198, 0.19] };
+  var PANEL = [0.17, 0.04, 0.03];
+  var RAMP_STEP = 0.3;
+  var UV = new Float64Array(3);
+  function rampUV(r, x, y, o) {
+    const P2 = r.P, n = P2.length / 2;
+    let best = 1e18;
+    for (let j = 0; j + 1 < n; j++) {
+      const ax = P2[j * 2], ay = P2[j * 2 + 1], dx = P2[j * 2 + 2] - ax, dy = P2[j * 2 + 3] - ay;
+      const L2 = dx * dx + dy * dy;
+      if (L2 < 1e-10) continue;
+      const t = clamp2(((x - ax) * dx + (y - ay) * dy) / L2, 0, 1);
+      const px = ax + dx * t - x, py = ay + dy * t - y, d2 = px * px + py * py;
+      if (d2 < best) {
+        best = d2;
+        const L3 = Math.sqrt(L2);
+        o[0] = r.cum[j] + t * L3 - r.sB;
+        o[1] = (dx * (y - ay) - dy * (x - ax)) / L3;
+        o[2] = j;
+      }
+    }
+  }
+  function rampF(R2, x, y) {
+    let f = 1;
+    for (let i = 0; i < R2.length; i++) {
+      const r = R2[i];
+      if (x < r.bx0 || x > r.bx1 || y < r.by0 || y > r.by1) continue;
+      rampUV(r, x, y, UV);
+      const v = Math.max(UV[1], 0);
+      if (v >= r.D) continue;
+      const a = Math.abs(UV[0]) - r.W / 2;
+      const g = v / r.D + (a > 0 ? a / r.F : 0);
+      if (g < f) f = g;
+    }
+    return f < LIP ? LIP : f;
+  }
+  function rampAt(r, u, v, out) {
+    const P2 = r.P, n = P2.length / 2, cum = r.cum;
+    const s = clamp2(r.sB + u, 0, cum[n - 1]);
+    let j = 0;
+    while (j + 2 < n && cum[j + 1] < s) j++;
+    const L2 = cum[j + 1] - cum[j] || 1, w = (s - cum[j]) / L2;
+    const nrm = (k) => {
+      let nx2 = 0, ny2 = 0;
+      for (const m of [k - 1, k]) {
+        if (m < 0 || m + 1 >= n) continue;
+        const dx = P2[m * 2 + 2] - P2[m * 2], dy = P2[m * 2 + 3] - P2[m * 2 + 1], l3 = Math.hypot(dx, dy) || 1;
+        nx2 += -dy / l3;
+        ny2 += dx / l3;
+      }
+      const l2 = Math.hypot(nx2, ny2) || 1;
+      return [nx2 / l2, ny2 / l2];
+    };
+    const [ax, ay] = nrm(j), [bx, by] = nrm(j + 1);
+    let nx = ax + (bx - ax) * w, ny = ay + (by - ay) * w;
+    const l = Math.hypot(nx, ny) || 1;
+    out[0] = P2[j * 2] + (P2[j * 2 + 2] - P2[j * 2]) * w + nx / l * v;
+    out[1] = P2[j * 2 + 1] + (P2[j * 2 + 3] - P2[j * 2 + 1]) * w + ny / l * v;
+  }
   function decodeTile(st2, t) {
     const ent = st2.tab.get(t);
     if (!ent) return null;
@@ -6041,14 +6136,23 @@
       for (const i of order) out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, col[0], col[1], col[2]);
     };
     const flat2 = (a, b, c, col, h, depth = 0) => {
-      const l = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
-      if (l > 3 && depth < 6) {
+      const lab = Math.hypot(a[0] - b[0], a[1] - b[1]), lbc = Math.hypot(b[0] - c[0], b[1] - c[1]), lca = Math.hypot(c[0] - a[0], c[1] - a[1]);
+      const l = Math.max(lab, lbc, lca);
+      if (l > 3 && depth < 12) {
         const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-        const ab = m(a, b), bc = m(b, c), ca = m(c, a);
-        flat2(a, ab, ca, col, h, depth + 1);
-        flat2(ab, b, bc, col, h, depth + 1);
-        flat2(ca, bc, c, col, h, depth + 1);
-        flat2(ab, bc, ca, col, h, depth + 1);
+        if (l === lab) {
+          const ab = m(a, b);
+          flat2(a, ab, c, col, h, depth + 1);
+          flat2(ab, b, c, col, h, depth + 1);
+        } else if (l === lbc) {
+          const bc = m(b, c);
+          flat2(a, b, bc, col, h, depth + 1);
+          flat2(a, bc, c, col, h, depth + 1);
+        } else {
+          const ca = m(c, a);
+          flat2(a, b, ca, col, h, depth + 1);
+          flat2(ca, b, c, col, h, depth + 1);
+        }
         return;
       }
       tri([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
@@ -6102,8 +6206,8 @@
       }
       for (let i = 0; i + 1 < n; i++) {
         const a = P2[i], b = P2[i + 1], na = N[i], nb = N[i + 1];
-        const L2 = [a[0] + na[0], a[1] + na[1]], R2 = [a[0] - na[0], a[1] - na[1]], L22 = [b[0] + nb[0], b[1] + nb[1]], R22 = [b[0] - nb[0], b[1] - nb[1]];
-        flat2(L2, R2, R22, col, h);
+        const L2 = [a[0] + na[0], a[1] + na[1]], R3 = [a[0] - na[0], a[1] - na[1]], L22 = [b[0] + nb[0], b[1] + nb[1]], R22 = [b[0] - nb[0], b[1] - nb[1]];
+        flat2(L2, R3, R22, col, h);
         flat2(L2, R22, L22, col, h);
       }
     }
@@ -6129,16 +6233,58 @@
         }
       }
     }
+    const RX = reg.x0, RY = reg.y0;
+    const R2 = st2.ramps && st2.ramps.byTile.get(tj * 64 + ti) || [];
+    const tl0x = ti * TS, tl0y = tj * TS, Q = [0, 0];
+    for (const r of R2) {
+      if (r.fx < tl0x || r.fx >= tl0x + TS || r.fy < tl0y || r.fy >= tl0y + TS) continue;
+      const on = (u, v, lift) => {
+        rampAt(r, u, v, Q);
+        const x = Q[0] + RX, y = Q[1] + RY;
+        return [x, y, ground(x, y) + CURB * rampF(R2, Q[0], Q[1]) + lift];
+      };
+      const grid = (rows, cols, uv, col, lift) => {
+        const G = [];
+        for (let a = 0; a <= rows; a++) for (let b = 0; b <= cols; b++) G.push(on(...uv(a / rows, b / cols), lift));
+        for (let a = 0; a < rows; a++) for (let b = 0; b < cols; b++) {
+          const p = G[a * (cols + 1) + b], q = G[a * (cols + 1) + b + 1], s3 = G[(a + 1) * (cols + 1) + b], t = G[(a + 1) * (cols + 1) + b + 1];
+          tri(p, q, t, col);
+          tri(p, t, s3, col);
+        }
+        return G;
+      };
+      const rc = RAMP_COL[r.mat] || RAMP_COL[0], hw = r.W / 2, nm = Math.max(1, Math.ceil(r.W / RAMP_STEP)), nf = Math.max(1, Math.ceil(r.F / RAMP_STEP));
+      const M = grid(3, nm, (fv, fu) => [(fu * 2 - 1) * hw, fv * r.D], rc, 0);
+      const Rf = grid(3, nf, (fv, fu) => [hw + fu * r.F * (1 - fv), fv * r.D], rc, 0);
+      const Lf = grid(3, nf, (fv, fu) => [-hw - (1 - fu) * r.F * (1 - fv), fv * r.D], rc, 0);
+      const foot = [...Lf.slice(0, nf), ...M.slice(0, nm), ...Rf.slice(0, nf + 1)];
+      for (let i = 0; i + 1 < foot.length; i++) {
+        const [x0, y0, h0] = foot[i], [x1, y1, h12] = foot[i + 1];
+        const g0 = ground(x0, y0), g1 = ground(x1, y1);
+        const ex = x1 - x0, ey = y1 - y0, el = Math.hypot(ex, ey);
+        if (el < 1e-4) continue;
+        const wx = ey / el, wy = -ex / el;
+        cyl((x0 + x1) / 2, (y0 + y1) / 2, (g0 + g1) / 2, p32);
+        cyl((x0 + x1) / 2 + wx, (y0 + y1) / 2 + wy, (g0 + g1) / 2, A);
+        const want = [A[0] - p32[0], A[1] - p32[1], A[2] - p32[2]];
+        tri([x0, y0, h0], [x1, y1, g1 - 0.03], [x1, y1, h12], COL.kerb, want);
+        tri([x0, y0, h0], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], COL.kerb, want);
+      }
+      if (r.fl & 1) {
+        const pv0 = 0.05, pv1 = Math.max(pv0 + 0.2, Math.min(0.66, r.D - 0.05)), pw = Math.max(0.3, hw - 0.05);
+        grid(1, Math.max(1, Math.ceil(2 * pw / RAMP_STEP)), (fv, fu) => [(fu * 2 - 1) * pw, pv0 + (pv1 - pv0) * fv], PANEL, 8e-3);
+      }
+    }
     for (const [px, py, kind] of d.pts) {
       if (kind !== 1) continue;
       const x = ox + px * k, y = oy + py * k;
       if (world2.nearestRoad(x, y) > 6) continue;
       const tx = world2._nr.tx, ty = world2._nr.ty;
       const a = 0.45, c = 0.3;
-      const Q = [[-a, -c], [a, -c], [a, c], [-a, c]].map(([u, v]) => [x + tx * u + ty * v, y + ty * u - tx * v]);
+      const Q2 = [[-a, -c], [a, -c], [a, c], [-a, c]].map(([u, v]) => [x + tx * u + ty * v, y + ty * u - tx * v]);
       const h = (xx, yy) => ground(xx, yy) + 0.012;
-      flat2(Q[0], Q[1], Q[2], COL.basin, h);
-      flat2(Q[0], Q[2], Q[3], COL.basin, h);
+      flat2(Q2[0], Q2[1], Q2[2], COL.basin, h);
+      flat2(Q2[0], Q2[2], Q2[3], COL.basin, h);
     }
     return new Float32Array(out);
   }

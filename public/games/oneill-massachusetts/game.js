@@ -14779,7 +14779,42 @@ void main() {
         kerbs.set(ri2, P2);
       }
     }
-    return { e, dv: dv2, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs };
+    let ramps = null;
+    const rN = dv2.getUint32(52, true);
+    if (rN) {
+      ramps = { list: [], byTile: /* @__PURE__ */ new Map() };
+      const TSl = RS2 / 64;
+      let q = dv2.getUint32(48, true);
+      for (let i = 0; i < rN; i++) {
+        const fx2 = dv2.getFloat32(q, true), fy2 = dv2.getFloat32(q + 4, true);
+        const W = dv2.getUint16(q + 8, true) / 100, F = dv2.getUint16(q + 10, true) / 100, D = dv2.getUint16(q + 12, true) / 100;
+        const mat = dv2.getUint8(q + 14), fl = dv2.getUint8(q + 15), n = dv2.getUint16(q + 16, true), sB = dv2.getUint16(q + 18, true) / 100;
+        q += 20;
+        const P2 = new Float64Array(n * 2), cum = new Float64Array(n);
+        let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+        for (let j = 0; j < n; j++, q += 4) {
+          const x = fx2 + dv2.getInt16(q, true) / 100, y = fy2 + dv2.getInt16(q + 2, true) / 100;
+          P2[j * 2] = x;
+          P2[j * 2 + 1] = y;
+          if (j) cum[j] = cum[j - 1] + Math.hypot(x - P2[j * 2 - 2], y - P2[j * 2 - 1]);
+          bx0 = Math.min(bx0, x);
+          by0 = Math.min(by0, y);
+          bx1 = Math.max(bx1, x);
+          by1 = Math.max(by1, y);
+        }
+        const m = D + 0.4;
+        const r = { fx: fx2, fy: fy2, W, F, D, mat, fl, P: P2, cum, sB, bx0: bx0 - m, by0: by0 - m, bx1: bx1 + m, by1: by1 + m };
+        ramps.list.push(r);
+        const i0 = clamp(Math.floor(r.bx0 / TSl), 0, 63), i1 = clamp(Math.floor(r.bx1 / TSl), 0, 63);
+        const j02 = clamp(Math.floor(r.by0 / TSl), 0, 63), j1 = clamp(Math.floor(r.by1 / TSl), 0, 63);
+        for (let tj = j02; tj <= j1; tj++) for (let ti2 = i0; ti2 <= i1; ti2++) {
+          const k = tj * 64 + ti2;
+          if (!ramps.byTile.has(k)) ramps.byTile.set(k, []);
+          ramps.byTile.get(k).push(r);
+        }
+      }
+    }
+    return { e, dv: dv2, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps };
   }
   function streetsCovered(st, lx2, ly2) {
     const cx2 = Math.floor(lx2 / st.covCell), cy2 = Math.floor(ly2 / st.covCell);
