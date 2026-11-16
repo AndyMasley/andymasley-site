@@ -15604,7 +15604,11 @@ void main() {
     nearestTunnel(mx2, my2, zmax = 1e9) {
       return this._near(mx2, my2, true, this._nt, zmax, true);
     }
-    _near(mx2, my2, deck, o, zmax = 1e9, tun = false) {
+    // Nearest deck of a road (not a railway's), in this._nd.
+    nearestRoadDeck(mx2, my2) {
+      return this._near(mx2, my2, true, this._nd, 1e9, false, 13);
+    }
+    _near(mx2, my2, deck, o, zmax = 1e9, tun = false, maxCls = 99) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
@@ -15620,6 +15624,7 @@ void main() {
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi2 = items[q], ri3 = segR[pi2], en2 = rEnd[ri3];
         if (rTun[ri3] ? !tun : tun || en2 !== 0 !== deck) continue;
+        if (rCls[ri3] > maxCls) continue;
         const ax2 = px2[pi2], ay2 = py2[pi2], dx3 = px2[pi2 + 1] - ax2, dy3 = py2[pi2 + 1] - ay2, l2 = dx3 * dx3 + dy3 * dy3;
         const ux2 = lx2 - ax2, uy2 = ly2 - ay2;
         let t = l2 > 0 ? (ux2 * dx3 + uy2 * dy3) / l2 : 0;
@@ -18808,6 +18813,7 @@ void main() {
 
   // src/terrain.js
   var tmp = new Float64Array(3);
+  var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
     const N1 = N + 1, base = N1 * N1, idx = [];
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
@@ -19356,6 +19362,74 @@ void main() {
         add(cylY(0.036, 0.038, 0.84, 8, 0, 0.06, 0), [0.66, 0.66, 0.64], 10);
         add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.62, 0), [0.3, 0.3, 0.29], 10);
         add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.76, 0), [0.3, 0.3, 0.29], 10);
+        const panes = (w02, w1, y02, y1, x, z) => {
+          const g = new Rr(w1 * Math.SQRT2, w02 * Math.SQRT2, y1 - y02, 4, 1, true);
+          g.rotateY(Math.PI / 4);
+          g.translate(x, (y02 + y1) / 2, z);
+          return g.toNonIndexed();
+        };
+        const pyramid = (w, h, x, y, z) => {
+          const g = new Cr(w * Math.SQRT2, h, 4, 1);
+          g.rotateY(Math.PI / 4);
+          g.translate(x, y + h / 2, z);
+          return g.toNonIndexed();
+        };
+        const lanternHead = (c, p, x, y02, z, w02, w1, h) => {
+          add(box2(w02 * 2 + 0.06, 0.04, w02 * 2 + 0.06, x, y02 - 0.02, z), c, p);
+          add(panes(w02, w1, y02, y02 + h, x, z), [-5, 0, 0], p);
+          for (const [sx2, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) add(beam(x + sx2 * w02, y02, z + sz * w02, x + sx2 * w1, y02 + h, z + sz * w1, 0.025), c, p);
+          add(pyramid(w1 + 0.06, 0.26, x, y02 + h, z), c, p);
+          add(cylY(0.012, 0.025, 0.16, 6, x, y02 + h + 0.24, z), c, p);
+        };
+        const black = [0.022, 0.024, 0.025], bronze = [0.1, 0.068, 0.04], green = [0.03, 0.065, 0.04];
+        [[11, black], [12, bronze], [13, green]].forEach(([p, c]) => {
+          add(cylY(0.13, 0.17, 0.85, 8, 0, 0, 0), c, p);
+          add(cylY(0.105, 0.105, 0.06, 8, 0, 0.85, 0), c, p);
+          add(cylY(0.05, 0.065, 2.75, 8, 0, 0.91, 0), c, p);
+          add(cylY(0.1, 0.07, 0.12, 8, 0, 3.66, 0), c, p);
+          lanternHead(c, p, 0, 3.8, 0, 0.13, 0.21, 0.58);
+        });
+        const darkGrey = [0.12, 0.125, 0.13];
+        add(cylY(0.05, 0.075, 3.9, 8, 0, 0, 0), darkGrey, 14);
+        add(cylY(0.12, 0.08, 0.06, 10, 0, 3.86, 0), darkGrey, 14);
+        add(cylY(0.2, 0.2, 0.32, 12, 0, 3.92, 0), [-5, 0, 0], 14);
+        {
+          const g = new Cr(0.28, 0.16, 12, 1);
+          g.translate(0, 4.32, 0);
+          add(g.toNonIndexed(), darkGrey, 14);
+        }
+        add(cylY(0.15, 0.2, 0.7, 8, 0, 0, 0), black, 15);
+        add(cylY(0.06, 0.075, 4.3, 8, 0, 0.7, 0), black, 15);
+        {
+          const C3 = [[0, 4.95], [0.12, 5.25], [0.38, 5.38], [0.62, 5.3], [0.74, 5.08], [0.74, 4.88]];
+          for (let k = 0; k + 1 < C3.length; k++) add(beam(0, C3[k][1], C3[k][0], 0, C3[k + 1][1], C3[k + 1][0], 0.05), black, 15);
+        }
+        lanternHead(black, 15, 0, 4.14, 0.74, 0.1, 0.17, 0.46);
+        const slats = [0.16, 0.1, 0.055], darkGreen = [0.025, 0.045, 0.035], benchStone = [0.36, 0.35, 0.33];
+        [[16, slats, true], [17, slats, false], [18, darkGreen, true], [19, darkGreen, false]].forEach(([p, c, back]) => {
+          for (const x of [-0.78, 0.78]) {
+            add(box2(0.05, 0.43, 0.05, x, 0.215, 0.17), black, p);
+            add(box2(0.05, 0.43, 0.05, x, 0.215, -0.17), black, p);
+            add(box2(0.05, 0.05, 0.44, x, 0.405, 0), black, p);
+            if (back) add(beam(x, 0.43, -0.19, x, 0.86, -0.27, 0.05), black, p);
+          }
+          for (const z of [0.16, 0.055, -0.05, -0.155]) add(box2(1.8, 0.035, 0.09, 0, 0.445, z), c, p);
+          if (back) {
+            add(box2(1.8, 0.09, 0.03, 0, 0.62, -0.225), c, p);
+            add(box2(1.8, 0.09, 0.03, 0, 0.76, -0.25), c, p);
+          }
+        });
+        add(box2(1.8, 0.45, 0.45, 0, 0.225, 0), benchStone, 20);
+        add(cylY(0.105, 0.13, 0.1, 10, 0, 0, 0), black, 21);
+        add(cylY(0.085, 0.095, 0.7, 10, 0, 0.1, 0), black, 21);
+        add(cylY(0.1, 0.1, 0.05, 10, 0, 0.8, 0), black, 21);
+        {
+          const g = new zr(0.09, 10, 5, 0, 2 * Math.PI, 0, Math.PI / 2);
+          g.translate(0, 0.85, 0);
+          add(g.toNonIndexed(), black, 21);
+        }
+        add(cylY(0.1, 0.1, 0.85, 12, 0, 0, 0), galv, 22);
+        add(cylY(0.102, 0.102, 0.08, 12, 0, 0.68, 0), [0.55, 0.42, 0.04], 22);
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1 });
@@ -19535,6 +19609,7 @@ void main() {
           polygonOffsetFactor: -2,
           polygonOffsetUnits: -4
         });
+        this.railMat = new Rn({ vertexShader: LIT_VS, fragmentShader: LIT_FS, defines: Object.assign({}, this.defines), uniforms: Object.assign({}, this.U, { uKind: { value: 0 } }) });
       }
       this.leafR = this.game.software && !this.game.forceLeaves ? 0 : q.leafR || 0;
       if (this.leafR) {
@@ -19575,7 +19650,7 @@ void main() {
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
-      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)]);
+      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
       for (const [kind, level, rad] of kinds) {
         if (alt > rad * 1.2) continue;
@@ -19702,7 +19777,7 @@ void main() {
       }
       const n = m.data.length / m.stride;
       if (!n) return;
-      if (m.kind === "paint" || m.kind === "gpaint" || m.kind === "streets") {
+      if (m.kind === "paint" || m.kind === "gpaint" || m.kind === "streets" || m.kind === "rails") {
         const nv2 = m.data.length / 9, pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3);
         const mid2 = new C();
         let rad2 = 0;
@@ -19727,7 +19802,7 @@ void main() {
         g.setAttribute("normal", new me(nor, 3));
         g.setAttribute("aCol", new me(colr, 3));
         g.boundingSphere = new Ie(mid2.clone(), rad2 + 1);
-        const mesh2 = new Ce(g, this.paintMat);
+        const mesh2 = new Ce(g, m.kind === "rails" ? this.railMat : this.paintMat);
         mesh2.matrixAutoUpdate = false;
         mesh2.visible = false;
         t.mesh = mesh2;
@@ -19837,8 +19912,9 @@ void main() {
           inst[i * 4] = d[o + 4];
           inst[i * 4 + 1] = d[o + 4] < 0.14 ? 0 : d[o + 4] < 0.56 ? 1 : 5;
         } else if (m.kind === "signs") {
+          const pt = d[o + 4], lh = LAMP_H[pt];
           Q.setFromAxisAngle(Y, d[o + 3]);
-          S2.set(1, d[o + 4] === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : 1, 1);
+          S2.set(1, pt === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : lh && d[o + 6] > 0 ? clamp2(d[o + 6] / lh, 0.6, 1.6) : 1, 1);
           inst[i * 4] = d[o + 4] === 8 ? 0 : d[o + 5];
           inst[i * 4 + 1] = d[o + 4];
         } else if (m.kind === "power") {
@@ -24675,6 +24751,7 @@ void main() {
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
       this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
       this.depthMat.decks = this.depthMat.houses;
+      this.depthMat.rails = this.depthMat.plain;
       this.depthMat.leaves = new Rn({ vertexShader: DEPTH_TREE_VS, fragmentShader: DEPTH_TREE_FS, uniforms: { uLeafTex: this.U.uLeafTex }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
@@ -24720,7 +24797,7 @@ void main() {
       const reach = Rs2 * 1.45;
       for (const t of this.terrain.visScatter) {
         const m = t.mesh;
-        if (t.kind !== "houses" && t.kind !== "decks" && t.kind !== "trees" && t.kind !== "poles" && t.kind !== "cars" || Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) > reach + t.rad) {
+        if (t.kind !== "houses" && t.kind !== "decks" && t.kind !== "trees" && t.kind !== "poles" && t.kind !== "cars" && t.kind !== "rails" || Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) > reach + t.rad) {
           m.layers.disable(1);
           continue;
         }

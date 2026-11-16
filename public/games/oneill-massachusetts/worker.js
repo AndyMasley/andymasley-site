@@ -909,7 +909,11 @@
     nearestTunnel(mx, my, zmax = 1e9) {
       return this._near(mx, my, true, this._nt, zmax, true);
     }
-    _near(mx, my, deck, o, zmax = 1e9, tun = false) {
+    // Nearest deck of a road (not a railway's), in this._nd.
+    nearestRoadDeck(mx, my) {
+      return this._near(mx, my, true, this._nd, 1e9, false, 13);
+    }
+    _near(mx, my, deck, o, zmax = 1e9, tun = false, maxCls = 99) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
@@ -925,6 +929,7 @@
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
         if (rTun[ri2] ? !tun : tun || en !== 0 !== deck) continue;
+        if (rCls[ri2] > maxCls) continue;
         const ax = px[pi], ay = py[pi], dx2 = px[pi + 1] - ax, dy2 = py[pi + 1] - ay, l2 = dx2 * dx2 + dy2 * dy2;
         const ux = lx - ax, uy = ly - ay;
         let t = l2 > 0 ? (ux * dx2 + uy * dy2) / l2 : 0;
@@ -3292,7 +3297,43 @@
   var HYDRANT = 12;
   var BUSSTOP = 13;
   var LAMP = 14;
-  var PART = { STOP: 0, YIELD: 1, SIGNAL: 2, SIGNAL_LONG: 3, CROSSBUCK: 4, HYDRANT: 5, BUS: 6, SHELTER: 7, FLAGPOLE: 8, LAMP: 9, FLEXPOST: 10 };
+  var BENCH = 16;
+  var BOLLARD = 17;
+  var PART = {
+    STOP: 0,
+    YIELD: 1,
+    SIGNAL: 2,
+    SIGNAL_LONG: 3,
+    CROSSBUCK: 4,
+    HYDRANT: 5,
+    BUS: 6,
+    SHELTER: 7,
+    FLAGPOLE: 8,
+    LAMP: 9,
+    FLEXPOST: 10,
+    LANTERN_BLACK: 11,
+    LANTERN_BRONZE: 12,
+    LANTERN_GREEN: 13,
+    POSTTOP: 14,
+    CROOK: 15,
+    BENCH: 16,
+    BENCH_BARE: 17,
+    BENCH_METAL: 18,
+    BENCH_METAL_BARE: 19,
+    BENCH_STONE: 20,
+    BOLLARD: 21,
+    BOLLARD_STEEL: 22
+  };
+  function lampPart(sub) {
+    const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
+    if (mount === 3) return -1;
+    const fancy = lantern || colour;
+    if (mount === 1 || mount === 0 && lantern) {
+      if (!fancy) return PART.POSTTOP;
+      return colour === 2 ? PART.LANTERN_BRONZE : colour === 3 ? PART.LANTERN_GREEN : PART.LANTERN_BLACK;
+    }
+    return mount === 2 && fancy ? PART.CROOK : PART.LAMP;
+  }
   var TOWER = { LATTICE: 0, HFRAME: 1, POLE: 2, LATTICE2: 3 };
   var HANG = [
     [[-7.5, 24], [0, 24], [7.5, 24], [-4.5, 31.2], [4.5, 31.2]],
@@ -3380,6 +3421,28 @@
     for (let i = 0; i < nAV; i++) f.ax[i] = dv.getInt32(o + i * 4, true) / 10;
     o += nAV * 4;
     for (let i = 0; i < nAV; i++) f.ay[i] = dv.getInt32(o + i * 4, true) / 10;
+    o += nAV * 4;
+    f.nG = 0;
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1279869266) {
+      const nG = dv.getUint32(o + 4, true), nGV = dv.getUint32(o + 8, true);
+      o += 16;
+      f.nG = nG;
+      f.gStart = new Uint32Array(nG);
+      f.gCount = new Uint32Array(nG);
+      f.gKind = new Uint8Array(nG);
+      f.gLayer = new Int8Array(nG);
+      for (let i = 0; i < nG; i++, o += 12) {
+        f.gStart[i] = dv.getUint32(o, true);
+        f.gCount[i] = dv.getUint32(o + 4, true);
+        f.gKind[i] = dv.getUint8(o + 8);
+        f.gLayer[i] = dv.getInt8(o + 9);
+      }
+      f.gx = new Float32Array(nGV);
+      f.gy = new Float32Array(nGV);
+      for (let i = 0; i < nGV; i++) f.gx[i] = dv.getInt32(o + i * 4, true) / 10;
+      o += nGV * 4;
+      for (let i = 0; i < nGV; i++) f.gy[i] = dv.getInt32(o + i * 4, true) / 10;
+    }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -3483,6 +3546,40 @@
       }
     }
   }
+  function lampOnDeck(world2, mx, my, place) {
+    const dd = world2.nearestRoadDeck(mx, my);
+    if (dd > 12) return false;
+    const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, d = nd.d, z = nd.z, tx = nd.tx, ty = nd.ty;
+    const gz = world2.groundH(mx, my, true), water = world2.g.water;
+    if (!water && z < gz + 2.5) return false;
+    const xs = xsOf(R2, ri), wS = xs ? (side > 0 ? xs[7] : xs[8]) / 10 : 0, walk = wS >= 1 ? wS : 0;
+    if (!water && dd > walk + 0.42 && world2.nearestRoad(mx, my) < 3) return false;
+    const par = hw + walk + 0.21;
+    let d2 = d;
+    if (d < hw + 0.7) d2 = walk ? hw + 0.7 : par;
+    else if (d > par + 4.5) return true;
+    else if (d > par) d2 = par;
+    const sh = side * (d2 - d);
+    place(mx + ty * sh, my - tx * sh, z + (walk && d2 > hw ? 0.18 : 0), Math.atan2(side * tx, -side * ty) + Math.PI / 2);
+    return true;
+  }
+  function kerbSide(world2, mx, my, back, o) {
+    if (world2.nearestRoad(mx, my) > 30) return false;
+    const nr = world2._nr, R2 = nr.reg, ri = nr.road, lat = nr.side * nr.d, tx = nr.tx, ty = nr.ty;
+    let left = -nr.hw, right = nr.hw;
+    const kb = R2.streets ? kerbsAt(R2, ri, nr.s - R2.cum[R2.rStart[ri]]) : null;
+    if (kb) {
+      left = kb.left;
+      right = kb.right;
+    }
+    const mid = (left + right) / 2, nl = lat >= mid ? Math.max(lat, right + back) : Math.min(lat, left - back);
+    o.x = mx + ty * (nl - lat);
+    o.y = my - tx * (nl - lat);
+    const tw = mid > nl ? 1 : -1;
+    o.yaw = Math.atan2(-tw * tx, tw * ty) + Math.PI / 2;
+    return true;
+  }
+  var ks = { x: 0, y: 0, yaw: 0 };
   function signItems(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
     const out = [], p32 = new Float64Array(3);
@@ -3530,20 +3627,32 @@
           } else put(ox, oy, t - Math.PI / 2, k === STOP ? PART.STOP : k === GIVEWAY ? PART.YIELD : PART.CROSSBUCK, 0, 0);
         }
       } else if (k === HYDRANT) {
-        put(mx, my, hash2(i, 5) * 6.28, PART.HYDRANT, 0, 0);
+        if (zD === null && kerbSide(world2, mx, my, 0.6, ks)) put(ks.x, ks.y, ks.yaw, PART.HYDRANT, 0, 0);
+        else put(mx, my, hash2(i, 5) * 6.28, PART.HYDRANT, 0, 0);
       } else if (k === BUSSTOP || k === LAMP) {
-        const e = world2.nearestRoad(mx, my);
-        const part = k === LAMP ? PART.LAMP : f.sub[i] ? PART.SHELTER : PART.BUS;
-        if (e > 30) {
-          put(mx, my, hash2(i, 3) * 6.28, part, 0, 0);
+        const part = k === LAMP ? lampPart(f.sub[i]) : f.sub[i] ? PART.SHELTER : PART.BUS;
+        if (part < 0) continue;
+        const ht = k === LAMP ? f.h[i] : 0;
+        if (k === LAMP && zD === null && lampOnDeck(world2, mx, my, (x2, y2, h, yaw) => {
+          cyl(x2, y2, h, p32);
+          out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, 0, ht);
+        })) continue;
+        if (!kerbSide(world2, mx, my, k === BUSSTOP ? 1.3 : 0.7, ks)) {
+          put(mx, my, hash2(i, 3) * 6.28, part, 0, ht);
           continue;
         }
-        const nr = world2._nr, sd = nr.side, ox_ = nr.ty * sd, oy_ = -nr.tx * sd;
-        const shift = Math.max(0, nr.hw + (k === BUSSTOP ? 1.3 : 0.7) - nr.d);
-        const toStreet = Math.atan2(-oy_, -ox_);
-        put(mx + ox_ * shift, my + oy_ * shift, toStreet + Math.PI / 2, part, 0, 0);
+        put(ks.x, ks.y, ks.yaw, part, 0, ht);
       } else if (k === FLAGPOLE) {
         put(mx, my, hash2(i, 9) * 6.28, PART.FLAGPOLE, f.h[i] || 0, 0);
+      } else if (k === BENCH) {
+        const sb = f.sub[i], back = sb & 1, mat = sb >> 1 & 3;
+        const part = mat === 2 ? PART.BENCH_STONE : mat === 1 ? back ? PART.BENCH_METAL : PART.BENCH_METAL_BARE : back ? PART.BENCH : PART.BENCH_BARE;
+        if (sb & 8) put(mx, my, (sb >> 4 & 15) * Math.PI / 8 + Math.PI / 2, part, 0, 0);
+        else if (zD === null && world2.nearestRoad(mx, my) < 12 && kerbSide(world2, mx, my, 0.6, ks)) put(ks.x, ks.y, ks.yaw, part, 0, 0);
+        else put(mx, my, hash2(i, 7) * 6.28, part, 0, 0);
+      } else if (k === BOLLARD) {
+        const t = f.sub[i];
+        put(mx, my, hash2(i, 11) * 6.28, t === 3 ? PART.FLEXPOST : t ? PART.BOLLARD_STEEL : PART.BOLLARD, 0, 0);
       }
     }
     return new Float32Array(out);
@@ -4026,6 +4135,289 @@
           if (yd % 5 === 0) continue;
           const p = yd / 50 * gl;
           for (const q of [-hw + 0.6, -8.13 * k, 8.13 * k, hw - 0.6]) seg(p, q - 0.3, p, q + 0.3, 0.1);
+        }
+      }
+    }
+    return new Float32Array(out);
+  }
+  var RAIL_STEP = 2;
+  var C_BEAM = [0.4, 0.42, 0.42];
+  var C_POST = [0.28, 0.29, 0.3];
+  var C_BLOCK = [0.12, 0.09, 0.065];
+  var C_CONC = [0.34, 0.33, 0.31];
+  var C_TUBE = [0.4, 0.43, 0.45];
+  var HEX = [0, 1, 2, 3, 4, 5].map((k) => [-0.15 + 0.075 * Math.cos(k * Math.PI / 3), 0.92 + 0.075 * Math.sin(k * Math.PI / 3)]);
+  var RAIL = [
+    {
+      // 0: a steel W-beam guard rail on the ground
+      polys: [{ pts: [[0, 0.48], [0.083, 0.54], [0.02, 0.635], [0.083, 0.73], [0, 0.79]], col: C_BEAM }],
+      out: 0.3,
+      gap: 1.905,
+      posts: [{ a: [-0.35, -0.2], b: [-0.05, 0.74], hl: 0.075, col: C_POST }, { a: [-0.2, 0], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK }]
+    },
+    {
+      // 1: a New Jersey concrete barrier
+      polys: [{ pts: [[-0.61, 0], [0, 0], [0, 0.076], [-0.178, 0.33], [-0.228, 0.81], [-0.382, 0.81], [-0.432, 0.33], [-0.61, 0.076]], col: C_CONC, cap: true }],
+      out: 0.05,
+      gap: 0,
+      posts: []
+    },
+    {
+      // 2: on a bridge, along the kerb: a concrete curb and a steel rail on posts over it
+      polys: [{ pts: [[-0.3, 0], [0, 0], [0, 0.48], [-0.3, 0.48]], col: C_CONC, cap: true }, { pts: HEX, col: C_TUBE }],
+      out: 0,
+      gap: 2.4,
+      posts: [{ a: [-0.19, -0.11], b: [0.48, 0.92], hl: 0.04, col: C_TUBE }]
+    }
+  ];
+  function railPoint(world2, mx, my, layer, kind, o) {
+    o.look = -1;
+    o.rdx = 0;
+    o.rdy = 0;
+    o.x = mx;
+    o.y = my;
+    if (layer < 0 && world2.nearestTunnel(mx, my) < 3) return o;
+    const dd = world2.nearestDeck(mx, my);
+    if (dd < 8) {
+      const nd = world2._nd, R2 = nd.reg, ri = nd.road, hw = nd.hw, side = nd.side, lat = side * nd.d, z = nd.z, tx = nd.tx, ty = nd.ty;
+      const gz = world2.groundH(mx, my, true), high = world2.g.water || z > gz + 2;
+      let onDeck = high && layer >= 1;
+      if (high && !onDeck && dd < 2.5) onDeck = world2.nearestRoad(mx, my) > 8;
+      if (onDeck) {
+        if (R2.rCls[ri] >= 14) return o;
+        const xs = xsOf(R2, ri), wS = xs ? (side > 0 ? xs[7] : xs[8]) / 10 : 0;
+        o.z = z;
+        if (Math.abs(lat) < hw - 1) {
+          o.look = kind;
+          return o;
+        }
+        if (wS < 1) return o;
+        const sh = side * hw - lat;
+        o.x = mx + ty * sh;
+        o.y = my - tx * sh;
+        o.rdx = -side * ty;
+        o.rdy = side * tx;
+        o.look = kind === 1 ? 1 : 2;
+        return o;
+      }
+    }
+    const look = kind === 1 ? 1 : 0, e = world2.nearestRoad(mx, my);
+    if (e < 15) {
+      const nr = world2._nr, R2 = nr.reg, ri = nr.road, lat = nr.side * nr.d, tx = nr.tx, ty = nr.ty;
+      let left = -nr.hw, right = nr.hw;
+      const kb = R2.streets ? kerbsAt(R2, ri, nr.s - R2.cum[R2.rStart[ri]]) : null;
+      if (kb) {
+        left = kb.left;
+        right = kb.right;
+      }
+      const mid = (left + right) / 2, half = (right - left) / 2, out = RAIL[look].out;
+      let nl = lat;
+      if (Math.abs(lat - mid) >= half - 1.5) {
+        if (lat >= mid && lat < right + out) nl = right + out;
+        else if (lat < mid && lat > left - out) nl = left - out;
+      }
+      if (nl !== lat) {
+        o.x = mx + ty * (nl - lat);
+        o.y = my - tx * (nl - lat);
+        if (world2.nearestRoad(o.x, o.y) < -0.05 && (world2._nr.road !== ri || world2._nr.reg !== R2)) {
+          o.x = mx;
+          o.y = my;
+          nl = lat;
+        }
+      }
+      const tw = mid > nl ? 1 : -1;
+      o.rdx = tw * ty;
+      o.rdy = -tw * tx;
+    }
+    o.z = world2.groundH(o.x, o.y, true);
+    if (world2.g.water) return o;
+    o.look = look;
+    return o;
+  }
+  function railTris(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const f = reg.feat;
+    if (!f || !f.nG) return new Float32Array(0);
+    const out = [], WIN = 40;
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
+    const A = new Float64Array(3), Bq = new Float64Array(3), tmp2 = { x: 0, y: 0, z: 0, look: -1, rdx: 0, rdy: 0 };
+    const at = (x, y, z, r) => {
+      cyl(x, y, z, A);
+      r[0] = A[0] - cx;
+      r[1] = A[1] - cy;
+      r[2] = A[2] - cz;
+      return r;
+    };
+    const dir = (x, y, z, dx, dy, dz, r) => {
+      cyl(x, y, z, A);
+      cyl(x + dx, y + dy, z + dz, Bq);
+      const ex = Bq[0] - A[0], ey = Bq[1] - A[1], ez = Bq[2] - A[2], l = Math.hypot(ex, ey, ez) || 1;
+      r[0] = ex / l;
+      r[1] = ey / l;
+      r[2] = ez / l;
+      return r;
+    };
+    const push = (p, n, col) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2]);
+    const quad = (P0, P1, P2, P3, n0, n1, col) => {
+      const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
+      const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
+      if (fx * (n0[0] + n1[0]) + fy * (n0[1] + n1[1]) + fz * (n0[2] + n1[2]) >= 0) {
+        push(P0, n0, col);
+        push(P1, n0, col);
+        push(P2, n1, col);
+        push(P0, n0, col);
+        push(P2, n1, col);
+        push(P3, n1, col);
+      } else {
+        push(P0, n0, col);
+        push(P2, n1, col);
+        push(P1, n0, col);
+        push(P0, n0, col);
+        push(P3, n1, col);
+        push(P2, n1, col);
+      }
+    };
+    const tri = (P0, P1, P2, n, col) => {
+      const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
+      if ((uy * wz - uz * wy) * n[0] + (uz * wx - ux * wz) * n[1] + (ux * wy - uy * wx) * n[2] >= 0) {
+        push(P0, n, col);
+        push(P1, n, col);
+        push(P2, n, col);
+      } else {
+        push(P0, n, col);
+        push(P2, n, col);
+        push(P1, n, col);
+      }
+    };
+    for (let g = 0; g < f.nG; g++) {
+      const a0 = f.gStart[g], n = f.gCount[g], layer = f.gLayer[g], kind = f.gKind[g];
+      if (n < 2) continue;
+      let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+      for (let v = a0; v < a0 + n; v++) {
+        const x = f.gx[v], y = f.gy[v];
+        if (x < bx0) bx0 = x;
+        if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y;
+        if (y > by1) by1 = y;
+      }
+      if (bx1 < lx0 - WIN || bx0 > lx0 + s + WIN || by1 < ly0 - WIN || by0 > ly0 + s + WIN) continue;
+      const cum = new Float64Array(n);
+      for (let v = 1; v < n; v++) cum[v] = cum[v - 1] + Math.hypot(f.gx[a0 + v] - f.gx[a0 + v - 1], f.gy[a0 + v] - f.gy[a0 + v - 1]);
+      const L2 = cum[n - 1];
+      if (L2 < 1) continue;
+      const K = Math.ceil(L2 / RAIL_STEP - 1e-6);
+      const P2 = /* @__PURE__ */ new Map();
+      for (let v = 0; v < n - 1; v++) {
+        const xa = f.gx[a0 + v], ya = f.gy[a0 + v], xb = f.gx[a0 + v + 1], yb = f.gy[a0 + v + 1];
+        if (Math.max(xa, xb) < lx0 - WIN || Math.min(xa, xb) > lx0 + s + WIN || Math.max(ya, yb) < ly0 - WIN || Math.min(ya, yb) > ly0 + s + WIN) continue;
+        const sl = cum[v + 1] - cum[v];
+        for (let k = Math.ceil(cum[v] / RAIL_STEP - 1e-9); k <= K; k++) {
+          const sk = Math.min(k * RAIL_STEP, L2);
+          if (sk > cum[v + 1] + 1e-9) break;
+          if (P2.has(k)) continue;
+          const t = sl > 1e-9 ? (sk - cum[v]) / sl : 0, ox = xa + (xb - xa) * t, oy = ya + (yb - ya) * t;
+          if (ox < lx0 - WIN || ox > lx0 + s + WIN || oy < ly0 - WIN || oy > ly0 + s + WIN) continue;
+          railPoint(world2, reg.x0 + ox, reg.y0 + oy, layer, kind, tmp2);
+          P2.set(k, [ox, oy, tmp2.x, tmp2.y, tmp2.z, tmp2.look, tmp2.rdx, tmp2.rdy, sk]);
+        }
+      }
+      if (P2.size < 2) continue;
+      const F = /* @__PURE__ */ new Map();
+      for (const [k, p] of P2) {
+        if (p[5] < 0) continue;
+        const pa = P2.get(k - 1), pb = P2.get(k + 1);
+        const qa = pa && pa[5] >= 0 ? pa : p, qb = pb && pb[5] >= 0 ? pb : p;
+        let tx = qb[2] - qa[2], ty = qb[3] - qa[3], tl = Math.hypot(tx, ty);
+        if (tl < 0.05) {
+          const oa = pa || p, ob = pb || p;
+          tx = ob[0] - oa[0];
+          ty = ob[1] - oa[1];
+          tl = Math.hypot(tx, ty);
+        }
+        if (tl < 1e-6) continue;
+        tx /= tl;
+        ty /= tl;
+        let vote = 0;
+        for (let j = k - 10; j <= k + 10; j++) {
+          const q = P2.get(j);
+          if (q && (q[6] || q[7])) vote += q[6] * ty - q[7] * tx >= 0 ? 1 : -1;
+        }
+        const sg = vote >= 0 ? 1 : -1, ax = sg * ty, ay = -sg * tx;
+        F.set(k, { B: at(p[2], p[3], p[4], [0, 0, 0]), U: dir(p[2], p[3], p[4], 0, 0, 1, [0, 0, 0]), Ac: dir(p[2], p[3], p[4], ax, ay, 0, [0, 0, 0]), T: dir(p[2], p[3], p[4], tx, ty, 0, [0, 0, 0]), look: p[5] });
+      }
+      const pt = (Fr, a, b, r) => {
+        r[0] = Fr.B[0] + Fr.Ac[0] * a + Fr.U[0] * b;
+        r[1] = Fr.B[1] + Fr.Ac[1] * a + Fr.U[1] * b;
+        r[2] = Fr.B[2] + Fr.Ac[2] * a + Fr.U[2] * b;
+        return r;
+      };
+      const nrm = (Fr, na, nb, r) => {
+        r[0] = Fr.Ac[0] * na + Fr.U[0] * nb;
+        r[1] = Fr.Ac[1] * na + Fr.U[1] * nb;
+        r[2] = Fr.Ac[2] * na + Fr.U[2] * nb;
+        const l = Math.hypot(r[0], r[1], r[2]) || 1;
+        r[0] /= l;
+        r[1] /= l;
+        r[2] /= l;
+        return r;
+      };
+      const inTile = (p) => p[0] >= lx0 && p[0] < lx0 + s && p[1] >= ly0 && p[1] < ly0 + s;
+      const drawn = (k) => {
+        const A_ = F.get(k), B_ = F.get(k + 1);
+        return !!A_ && !!B_ && A_.look === B_.look;
+      };
+      const P0 = [0, 0, 0], P1 = [0, 0, 0], P22 = [0, 0, 0], P3 = [0, 0, 0], N0 = [0, 0, 0], N1 = [0, 0, 0];
+      for (const [k, Fa] of F) {
+        if (!drawn(k)) continue;
+        const Fb = F.get(k + 1), pa = P2.get(k), pb = P2.get(k + 1), R2 = RAIL[Fa.look];
+        if (inTile([(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2])) {
+          for (const poly of R2.polys) {
+            const Q = poly.pts;
+            for (let i = 0; i < Q.length; i++) {
+              const [qa, qb] = Q[i], [ra, rb] = Q[(i + 1) % Q.length];
+              if (qb === 0 && rb === 0) continue;
+              const na = rb - qb, nb = -(ra - qa);
+              pt(Fa, qa, qb, P0);
+              pt(Fa, ra, rb, P1);
+              pt(Fb, ra, rb, P22);
+              pt(Fb, qa, qb, P3);
+              quad(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
+            }
+          }
+          if (R2.gap) {
+            const s0 = pa[8], s1 = pb[8];
+            for (let m = Math.ceil(s0 / R2.gap - 1e-9); m * R2.gap < s1 - 1e-9; m++) {
+              const t = (m * R2.gap - s0) / (s1 - s0);
+              const B = [Fa.B[0] + (Fb.B[0] - Fa.B[0]) * t, Fa.B[1] + (Fb.B[1] - Fa.B[1]) * t, Fa.B[2] + (Fb.B[2] - Fa.B[2]) * t];
+              const Fr = { B, U: Fa.U, Ac: Fa.Ac, T: Fa.T };
+              for (const ps of R2.posts) {
+                const c = (ia, ib, it, r) => {
+                  pt(Fr, ps.a[ia], ps.b[ib], r);
+                  const h = it ? ps.hl : -ps.hl;
+                  r[0] += Fr.T[0] * h;
+                  r[1] += Fr.T[1] * h;
+                  r[2] += Fr.T[2] * h;
+                  return r;
+                };
+                const nA = Fa.Ac, nU = Fa.U, nT = Fa.T, mA = [-nA[0], -nA[1], -nA[2]], mT = [-nT[0], -nT[1], -nT[2]];
+                quad(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA, nA, ps.col);
+                quad(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
+                quad(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
+                quad(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
+                quad(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
+              }
+            }
+          }
+        }
+        for (const [Fe, pe, sgn, other] of [[Fa, pa, -1, k - 1], [Fb, pb, 1, k + 1]]) {
+          if (!inTile(pe)) continue;
+          if (sgn < 0 ? drawn(other) : drawn(k + 1)) continue;
+          const nT = [Fe.T[0] * sgn, Fe.T[1] * sgn, Fe.T[2] * sgn];
+          for (const poly of R2.polys) {
+            if (!poly.cap) continue;
+            const Q = poly.pts;
+            pt(Fe, Q[0][0], Q[0][1], P0);
+            for (let i = 1; i + 1 < Q.length; i++) tri(P0, pt(Fe, Q[i][0], Q[i][1], P1), pt(Fe, Q[i + 1][0], Q[i + 1][1], P22), nT, poly.col);
+          }
         }
       }
     }
@@ -6370,10 +6762,10 @@
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
       return;
     }
-    if (kind === "signs" || kind === "paint" || kind === "gpaint" || kind === "power" || kind === "pwires") {
-      const fn = kind === "signs" ? signItems : kind === "paint" ? paintTris : kind === "gpaint" ? groundPaint : kind === "power" ? powerItems : powerWires;
+    if (kind === "signs" || kind === "paint" || kind === "gpaint" || kind === "rails" || kind === "power" || kind === "pwires") {
+      const fn = kind === "signs" ? signItems : kind === "paint" ? paintTris : kind === "gpaint" ? groundPaint : kind === "rails" ? railTris : kind === "power" ? powerItems : powerWires;
       const arr2 = reg ? fn(world, reg, mx0, my0, s, cx, cy, cz) : new Float32Array(0);
-      const stride = kind === "signs" ? 7 : kind === "paint" || kind === "gpaint" ? 9 : kind === "power" ? 5 : 6;
+      const stride = kind === "signs" ? 7 : kind === "paint" || kind === "gpaint" || kind === "rails" ? 9 : kind === "power" ? 5 : 6;
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride }, [arr2.buffer]);
       return;
     }
