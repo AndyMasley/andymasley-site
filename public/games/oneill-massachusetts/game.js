@@ -16726,7 +16726,10 @@ void main() {
       int style = kd & 3;
       float nl = float((kd >> 2) & 7);
       float keepEdge = 1.0 - float((kd >> 7) & 1);      // 0 where this road gives way to a bigger one beside it
-      dirt = float((kd >> 5) & 1);
+      // a street remade since a city's survey (worker.js): the unpaved bit on a painted style.  Its paving and kerb are
+      // the survey's (g), and its offset and half width are taken between the survey's kerbs
+      bool svy = (style == 1 || style == 2) && ((kd >> 5) & 1) == 1;
+      dirt = svy ? 0.0 : float((kd >> 5) & 1);
       float aa = max(fwidth(dc), 0.03);
       float edge = dc - hw, edge0 = edge;
       if (style == 1 || style == 2) {
@@ -16735,7 +16738,8 @@ void main() {
         vec4 ug = vec4(texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0).g,
                        texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0).g);
         vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
-        if (max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995) edge = min(edge, dot(uw, ug) * 6.0 - 1.5);     // (4.5 m out it is saturated)
+        if (svy) edge = dot(uw, ug) * 6.0 - 1.5;
+        else if (max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995) edge = min(edge, dot(uw, ug) * 6.0 - 1.5);     // (4.5 m out it is saturated)
         streetEdge = edge;
       }
       paved = 1.0 - smoothstep(-aa, aa, edge);
@@ -16763,7 +16767,7 @@ void main() {
       if (style != 3) {
         vec2 bk = texture2D(uRoadK, ruv).ba * 255.0 + 0.5;
         float yel;
-        mark = streetPaint(kd, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
+        mark = streetPaint(kd & ~32, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too

@@ -463,16 +463,38 @@
   }
   var _own = { z: 0 };
   var XS = null;
-  function setXS(m) {
+  var XK = null;
+  function setXS(m, k) {
     XS = m;
+    XK = k || null;
   }
   function xsOf(reg, ri) {
     const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
+  var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
+  function kerbsAt(reg, ri, s) {
+    const m = XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null, P2 = m ? m.get(ri) : null;
+    if (!P2 || !P2.length || s < P2[0][0] - 6 || s > P2[P2.length - 1][0] + 6) return null;
+    if (P2.hwMed === void 0) {
+      const w = P2.map((q) => (q[2] - q[1]) / 2).sort((x, y) => x - y);
+      P2.hwMed = w[w.length >> 1];
+    }
+    let i = 0;
+    while (i < P2.length - 2 && P2[i + 1][0] < s) i++;
+    const a = P2[i], b = P2[Math.min(i + 1, P2.length - 1)], t = b[0] > a[0] ? clamp2((s - a[0]) / (b[0] - a[0]), 0, 1) : 0;
+    _kerbs.left = a[1] + (b[1] - a[1]) * t;
+    _kerbs.right = a[2] + (b[2] - a[2]) * t;
+    _kerbs.mid = (_kerbs.left + _kerbs.right) / 2;
+    _kerbs.hw = P2.hwMed;
+    return _kerbs;
+  }
   function bikeByte(type, bikeDm, bufDm) {
     if (!type) return 0;
     return type & 3 | clamp2(Math.round(bikeDm - 10), 0, 15) << 2 | clamp2(Math.round(bufDm / 3), 0, 3) << 6;
+  }
+  function redone(xs) {
+    return !!xs && Math.max(xs[1], xs[4]) >= 2;
   }
   function roadKindXS(reg, ri, xs) {
     let k = roadKind(reg, ri);
@@ -3379,15 +3401,23 @@
           if (L2 < 0.01) continue;
           const f = (sk - cum[q]) / L2, tx = (px[q + 1] - px[q]) / L2, ty = (py[q + 1] - py[q]) / L2;
           const lx = px[q] + (px[q + 1] - px[q]) * f + ty * off, ly = py[q] + (py[q + 1] - py[q]) * f - tx * off;
-          if (lx < lx0 || lx >= lx0 + s || ly < ly0 || ly >= ly0 + s) continue;
-          if (surveyed(reg, lx, ly)) continue;
-          const mx = reg.x0 + lx, my = reg.y0 + ly;
+          let mx = reg.x0 + lx, my = reg.y0 + ly;
+          const surv = surveyed(reg, lx, ly);
+          if (surv) {
+            const kb = kerbsAt(reg, ri, sk - cum[a]);
+            if (!kb) continue;
+            const o2 = kb.mid + side * (kb.hw - bw - Math.max(buf, 0.4) / 2);
+            mx += ty * (o2 - off);
+            my -= tx * (o2 - off);
+          }
+          if (mx < reg.x0 + lx0 || mx >= reg.x0 + lx0 + s || my < reg.y0 + ly0 || my >= reg.y0 + ly0 + s) continue;
           let h;
           if (deck) {
             if (world2.nearestDeck(mx, my, pz[q] + 0.6) > -0.1 || world2._nd.road !== ri || world2._nd.reg !== reg) continue;
             h = world2._nd.z + 0.03;
           } else {
-            if (world2.nearestRoad(mx, my) > -0.1 || world2._nr.road !== ri || world2._nr.reg !== reg) continue;
+            const e2 = world2.nearestRoad(mx, my);
+            if (surv ? e2 < 0 && (world2._nr.road !== ri || world2._nr.reg !== reg) : e2 > -0.1 || world2._nr.road !== ri || world2._nr.reg !== reg) continue;
             h = world2.groundH(mx, my, true);
             if (world2.g.water) continue;
           }
@@ -5302,9 +5332,10 @@
     const xf = meta.files && meta.files.xs;
     xsReady = xf ? fetch(vurl("data/" + xf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
-      const X = /* @__PURE__ */ new Map();
+      const X = /* @__PURE__ */ new Map(), K = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) X.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
-      setXS(X);
+      for (const [k, v] of Object.entries(j.k || {})) K.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
+      setXS(X, K);
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
@@ -5712,6 +5743,25 @@
           const sr = world.regionAt(mx, my);
           if (sr && sr.streets && streetsCovered(sr.streets, mx - sr.x0, my - sr.y0) && !(e < 3 && world._nr.reg.rCls[world._nr.road] >= 14)) {
             const dd = streetsPaving(sr.streets, mx - sr.x0, my - sr.y0);
+            const nr0 = world._nr;
+            const xs0 = e < 4 && dd < 0.5 && nr0.reg.rCls[nr0.road] < 14 && !(nr0.reg.rFlags[nr0.road] & 6) ? xsOf(nr0.reg, nr0.road) : void 0;
+            const kb = redone(xs0) ? kerbsAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]) : null;
+            const tsr = Math.min(nr0.d, 60) * nr0.side;
+            if (kb && tsr > kb.left - 0.6 && tsr < kb.right + 0.6) {
+              const ph = nr0.s / DASH * 2 * Math.PI, kk = (b * T + a) * 4;
+              data[k] = toHalf(tsr - kb.mid);
+              data[k + 1] = toHalf(kb.hw);
+              data[k + 2] = toHalf(Math.cos(ph));
+              data[k + 3] = toHalf(Math.sin(ph));
+              let kd = roadKindXS(nr0.reg, nr0.road, xs0) & ~(64 | 32 | 128);
+              if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
+              kind[kk] = kd | 32;
+              kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
+              kind[kk + 2] = bikeByte(xs0[1], xs0[2], xs0[3]);
+              kind[kk + 3] = bikeByte(xs0[4], xs0[5], xs0[6]);
+              any = true;
+              continue;
+            }
             if (dd < 4.5) {
               data[k] = zero;
               data[k + 1] = one;
