@@ -15749,12 +15749,12 @@ void main() {
     nearestRoadDeck(mx2, my2) {
       return this._near(mx2, my2, true, this._nd, 1e9, false, 13);
     }
-    _near(mx2, my2, deck, o, zmax = 1e9, tun = false, maxCls = 99) {
+    _near(mx2, my2, deck, o, zmax = 1e9, tun = false, maxCls = 99, rg = null) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
       o.u = 1e9;
-      const reg = this.regionAt(mx2, my2);
+      const reg = rg || this.regionAt(mx2, my2);
       if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -15811,8 +15811,9 @@ void main() {
     }
     // ---- buildings open beneath (bake/c27_lifted.py -> data/lifted.json).  Each entry names its building by its region
     // (r: ry * RNX + rx) and its record's x and y in 0.2 m steps (b), and says where it is open: c, corridors [x0, y0, x1,
-    // y1, half width] in metres from the region's corner where a street or a railway runs under it, up to the soffit s
-    // (a height, like the roads'); or, with no c, all of it: up to h over its ground, or to t under its top.
+    // y1, half width] in metres from the region's corner where a street or a railway runs under it, or [..., 1] over a
+    // tunnel's tube, up to the soffit s (a height, like the roads'); or, with no c, all of it: up to h over its ground,
+    // or to t under its top.
     setLifted(doc) {
       const m = /* @__PURE__ */ new Map();
       for (const e of doc && doc.b || []) m.set(e.r * 4294967296 + e.b[1] * 65536 + e.b[0], e);
@@ -15836,7 +15837,65 @@ void main() {
       const L2 = this.lifted;
       if (!L2 || !L2.size || !reg || !reg.b) return null;
       const o = id2 * 12, b = reg.b;
-      return L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+      const e = L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+      if (e && e.c && !e.mended) this._mendLift(e, reg);
+      return e;
+    }
+    // An entry's corridors, mended the first time it is asked for (houses.js and player.js see the same ones).
+    //   Where two meet end to end, each runs on past the joint by enough to close the wedge between their ends.  A covered
+    // way is one corridor a segment, and each corridor's end was a wall from the road up to the soffit wherever no other
+    // corridor was beyond it: at a bend the outer half of the road (a wall across the Pike's two left lanes under Parcel
+    // 12 at the Fenway), and where two run straight on, all of it.
+    //   An end that meets no other runs on while the road under it does (at most three half widths), as wide as that
+    // road's paving: a way's middle line enters a footprint it crosses at a slant well after the paving does, and the
+    // building stood in the lanes until it did.
+    _mendLift(e, reg) {
+      e.mended = true;
+      const C3 = e.c, n = C3.length, add = [];
+      const end = (i, s29) => s29 ? [C3[i][2], C3[i][3]] : [C3[i][0], C3[i][1]];
+      const body = (i, s29) => {
+        const c = C3[i], dx2 = c[2] - c[0], dy2 = c[3] - c[1], l = Math.hypot(dx2, dy2) || 1;
+        return s29 ? [-dx2 / l, -dy2 / l] : [dx2 / l, dy2 / l];
+      };
+      const run = new Float64Array(n * 2), joined = new Uint8Array(n * 2);
+      for (let i = 0; i < n; i++) for (let si2 = 0; si2 < 2; si2++) {
+        const [xi2, yi2] = end(i, si2), bi2 = body(i, si2);
+        for (let j = 0; j < n; j++) for (let sj = 0; sj < 2; sj++) {
+          if (j === i) continue;
+          const [xj, yj] = end(j, sj);
+          if (Math.hypot(xi2 - xj, yi2 - yj) > 0.6) continue;
+          joined[i * 2 + si2] = 1;
+          const bj = body(j, sj), bend = Math.PI - Math.acos(clamp2(bi2[0] * bj[0] + bi2[1] * bj[1], -1, 1));
+          if (bend > 1.3) continue;
+          run[i * 2 + si2] = Math.max(run[i * 2 + si2], C3[i][4] * Math.tan(bend / 2) + 0.15);
+        }
+      }
+      const nr2 = this._nl || (this._nl = { road: -1, d: 1e9, reg: null, u: 1e9 });
+      const onRoad = (lx2, ly2, ox2, oy2, near2) => {
+        this._near(reg.x0 + lx2, reg.y0 + ly2, false, nr2, 1e9, false, 15, reg);
+        return nr2.road >= 0 && nr2.d <= near2 && Math.abs(nr2.tx * ox2 + nr2.ty * oy2) >= 0.9 && !(nr2.z > (e.s != null ? e.s : 1e9) - 2.5);
+      };
+      for (let i = 0; i < n; i++) for (let si2 = 0; si2 < 2; si2++) {
+        if (joined[i * 2 + si2] || C3[i][5]) continue;
+        const [x, y] = end(i, si2), b = body(i, si2), hw = C3[i][4];
+        if (!onRoad(x, y, b[0], b[1], Math.max(2, 0.5 * hw))) continue;
+        const sg = nr2.tx * -b[0] + nr2.ty * -b[1] >= 0 ? 1 : -1, ox2 = nr2.tx * sg, oy2 = nr2.ty * sg;
+        const bx2 = x - nr2.side * nr2.d * nr2.ty, by2 = y + nr2.side * nr2.d * nr2.tx;
+        let s29 = 0, w = nr2.hw;
+        for (let t = 1, max = Math.min(3 * hw, 24); t <= max; t++) {
+          if (!onRoad(bx2 + ox2 * t, by2 + oy2 * t, ox2, oy2, Math.max(1.5, 0.25 * hw))) break;
+          s29 = t;
+          w = Math.max(w, nr2.hw);
+        }
+        if (s29 > 0) add.push([bx2 - ox2 * 0.3, by2 - oy2 * 0.3, bx2 + ox2 * s29, by2 + oy2 * s29, Math.min(w + 0.3, hw)]);
+      }
+      for (let i = 0; i < n; i++) {
+        const c = C3[i], dx2 = c[2] - c[0], dy2 = c[3] - c[1], l = Math.hypot(dx2, dy2);
+        if (l < 1e-6) continue;
+        const a = run[i * 2], z = run[i * 2 + 1];
+        C3[i] = [c[0] - dx2 / l * a, c[1] - dy2 / l * a, c[2] + dx2 / l * z, c[3] + dy2 / l * z, ...c.slice(4)];
+      }
+      for (const c of add) C3.push(c);
     }
     // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
     // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
@@ -20625,6 +20684,7 @@ void main() {
     const no2 = poly.rings ? poly.rings[1] : poly.n;
     let pieces = [Array.from(poly.pts.subarray(0, no2 * 2))];
     for (const c of L2.c) {
+      if (c[5]) continue;
       const x02 = reg.x0 + c[0], y02 = reg.y0 + c[1], x1 = reg.x0 + c[2], y1 = reg.y0 + c[3], hw = c[4], len = Math.hypot(x1 - x02, y1 - y02);
       if (len < 0.1) continue;
       const tx2 = (x1 - x02) / len, ty2 = (y1 - y02) / len, nx2 = -ty2, ny2 = tx2, o = nx2 * x02 + ny2 * y02;

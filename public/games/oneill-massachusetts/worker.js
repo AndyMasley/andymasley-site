@@ -1065,12 +1065,12 @@
     nearestRoadDeck(mx, my) {
       return this._near(mx, my, true, this._nd, 1e9, false, 13);
     }
-    _near(mx, my, deck, o, zmax = 1e9, tun = false, maxCls = 99) {
+    _near(mx, my, deck, o, zmax = 1e9, tun = false, maxCls = 99, rg = null) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
       o.u = 1e9;
-      const reg = this.regionAt(mx, my);
+      const reg = rg || this.regionAt(mx, my);
       if (!reg || !reg.nRoads || deck && !(tun ? reg.nTun : reg.nDeck)) return 1e9;
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
@@ -1127,8 +1127,9 @@
     }
     // ---- buildings open beneath (bake/c27_lifted.py -> data/lifted.json).  Each entry names its building by its region
     // (r: ry * RNX + rx) and its record's x and y in 0.2 m steps (b), and says where it is open: c, corridors [x0, y0, x1,
-    // y1, half width] in metres from the region's corner where a street or a railway runs under it, up to the soffit s
-    // (a height, like the roads'); or, with no c, all of it: up to h over its ground, or to t under its top.
+    // y1, half width] in metres from the region's corner where a street or a railway runs under it, or [..., 1] over a
+    // tunnel's tube, up to the soffit s (a height, like the roads'); or, with no c, all of it: up to h over its ground,
+    // or to t under its top.
     setLifted(doc) {
       const m = /* @__PURE__ */ new Map();
       for (const e of doc && doc.b || []) m.set(e.r * 4294967296 + e.b[1] * 65536 + e.b[0], e);
@@ -1152,7 +1153,65 @@
       const L2 = this.lifted;
       if (!L2 || !L2.size || !reg || !reg.b) return null;
       const o = id * 12, b = reg.b;
-      return L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+      const e = L2.get(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8)) || null;
+      if (e && e.c && !e.mended) this._mendLift(e, reg);
+      return e;
+    }
+    // An entry's corridors, mended the first time it is asked for (houses.js and player.js see the same ones).
+    //   Where two meet end to end, each runs on past the joint by enough to close the wedge between their ends.  A covered
+    // way is one corridor a segment, and each corridor's end was a wall from the road up to the soffit wherever no other
+    // corridor was beyond it: at a bend the outer half of the road (a wall across the Pike's two left lanes under Parcel
+    // 12 at the Fenway), and where two run straight on, all of it.
+    //   An end that meets no other runs on while the road under it does (at most three half widths), as wide as that
+    // road's paving: a way's middle line enters a footprint it crosses at a slant well after the paving does, and the
+    // building stood in the lanes until it did.
+    _mendLift(e, reg) {
+      e.mended = true;
+      const C2 = e.c, n = C2.length, add = [];
+      const end = (i, s) => s ? [C2[i][2], C2[i][3]] : [C2[i][0], C2[i][1]];
+      const body = (i, s) => {
+        const c = C2[i], dx = c[2] - c[0], dy = c[3] - c[1], l = Math.hypot(dx, dy) || 1;
+        return s ? [-dx / l, -dy / l] : [dx / l, dy / l];
+      };
+      const run = new Float64Array(n * 2), joined = new Uint8Array(n * 2);
+      for (let i = 0; i < n; i++) for (let si = 0; si < 2; si++) {
+        const [xi, yi] = end(i, si), bi = body(i, si);
+        for (let j = 0; j < n; j++) for (let sj = 0; sj < 2; sj++) {
+          if (j === i) continue;
+          const [xj, yj] = end(j, sj);
+          if (Math.hypot(xi - xj, yi - yj) > 0.6) continue;
+          joined[i * 2 + si] = 1;
+          const bj = body(j, sj), bend = Math.PI - Math.acos(clamp2(bi[0] * bj[0] + bi[1] * bj[1], -1, 1));
+          if (bend > 1.3) continue;
+          run[i * 2 + si] = Math.max(run[i * 2 + si], C2[i][4] * Math.tan(bend / 2) + 0.15);
+        }
+      }
+      const nr = this._nl || (this._nl = { road: -1, d: 1e9, reg: null, u: 1e9 });
+      const onRoad = (lx, ly, ox, oy, near) => {
+        this._near(reg.x0 + lx, reg.y0 + ly, false, nr, 1e9, false, 15, reg);
+        return nr.road >= 0 && nr.d <= near && Math.abs(nr.tx * ox + nr.ty * oy) >= 0.9 && !(nr.z > (e.s != null ? e.s : 1e9) - 2.5);
+      };
+      for (let i = 0; i < n; i++) for (let si = 0; si < 2; si++) {
+        if (joined[i * 2 + si] || C2[i][5]) continue;
+        const [x, y] = end(i, si), b = body(i, si), hw = C2[i][4];
+        if (!onRoad(x, y, b[0], b[1], Math.max(2, 0.5 * hw))) continue;
+        const sg = nr.tx * -b[0] + nr.ty * -b[1] >= 0 ? 1 : -1, ox = nr.tx * sg, oy = nr.ty * sg;
+        const bx = x - nr.side * nr.d * nr.ty, by = y + nr.side * nr.d * nr.tx;
+        let s = 0, w = nr.hw;
+        for (let t = 1, max = Math.min(3 * hw, 24); t <= max; t++) {
+          if (!onRoad(bx + ox * t, by + oy * t, ox, oy, Math.max(1.5, 0.25 * hw))) break;
+          s = t;
+          w = Math.max(w, nr.hw);
+        }
+        if (s > 0) add.push([bx - ox * 0.3, by - oy * 0.3, bx + ox * s, by + oy * s, Math.min(w + 0.3, hw)]);
+      }
+      for (let i = 0; i < n; i++) {
+        const c = C2[i], dx = c[2] - c[0], dy = c[3] - c[1], l = Math.hypot(dx, dy);
+        if (l < 1e-6) continue;
+        const a = run[i * 2], z = run[i * 2 + 1];
+        C2[i] = [c[0] - dx / l * a, c[1] - dy / l * a, c[2] + dx / l * z, c[3] + dy / l * z, ...c.slice(4)];
+      }
+      for (const c of add) C2.push(c);
     }
     // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
     // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
@@ -1975,7 +2034,7 @@
     const porch = B[k + 10] > 0, chimney = B[k + 11] > 0, mat = B[k + 12], seed = B[k + 13], id = B[k + 14];
     const r1 = h1(id, seed * 7 + 1), r2 = h1(id * 3 + 5, seed + 11), r3 = h1(id + 77, seed * 3 + 2);
     const y0 = clamp2(gmax - g, 0, 2.5);
-    const yb = Math.min(gmin - g, 0) - 0.6;
+    const yb = env.raised ? 0 : Math.min(gmin - g, 0) - 0.6;
     const found = FOUND[cls];
     const flat2 = roof === ROOF.FLAT;
     const pitch = PITCH[cls] * (0.9 + 0.25 * r1) * (roof === ROOF.HIP ? 0.8 : 1);
@@ -2160,7 +2219,7 @@
         M.tri(i0, i1, i2);
       }
     }
-    if (!LF) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
+    if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
   }
   function site(M, setM, wall2, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
@@ -2629,9 +2688,10 @@
   }
   function liftFrame(L2, reg, mx, my, ca, sa, g) {
     if (!L2) return null;
-    const F = { s: L2.s != null ? L2.s - g : L2.h != null ? L2.h : NaN, t: L2.t || 0, R: null, soff: NaN };
+    const F = { s: L2.s != null ? L2.s - g : L2.h != null ? L2.h : NaN, t: L2.t || 0, R: null, soff: NaN, tube: false };
     if (L2.c) {
       F.R = [];
+      F.tube = L2.c.every((c) => c[5]);
       for (const c of L2.c) {
         const dx0 = reg.x0 + c[0] - mx, dy0 = reg.y0 + c[1] - my, dx1 = reg.x0 + c[2] - mx, dy1 = reg.y0 + c[3] - my, hw = c[4];
         const u0 = ca * dx0 + sa * dy0, v0 = -sa * dx0 + ca * dy0, u1 = ca * dx1 + sa * dy1, v1 = -sa * dx1 + ca * dy1;
@@ -2647,6 +2707,9 @@
     }
     return F;
   }
+  function onStructure(list, k) {
+    return list[k + 2] * list[k + 3] <= 200 && list[k + 5] <= 4.5;
+  }
   function inCorridors(L2, reg, mx, my) {
     const lx = mx - reg.x0, ly = my - reg.y0;
     for (const c of L2.c) {
@@ -2660,7 +2723,14 @@
   function liftSoffit(F, top) {
     let s = F.t ? Math.max(top - F.t, Math.min(4.5, top - 1.2)) : F.s;
     s = Math.min(s, top - 1);
-    return s >= 2.4 ? s : NaN;
+    return s >= 2.4 || F.tube && s > -12 ? s : NaN;
+  }
+  function secOverCorr(sc, F) {
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+      const qu = sc[0] + (sc[2] - sc[0]) * i / 4, qv = sc[1] + (sc[3] - sc[1]) * j / 4;
+      if (inCorr(F, sc[5] * qu - sc[6] * qv, sc[6] * qu + sc[5] * qv, -0.05)) return true;
+    }
+    return false;
   }
   function inCorr(F, u, v, e) {
     if (!F.R) return true;
@@ -2821,14 +2891,19 @@
         rc = Math.cos(r);
         rs = Math.sin(r);
       }
-      secs.push([x0, yy0, x1, yy1, pl, rc, rs]);
+      let sl = Infinity, sh = -Infinity;
       for (const [qu, qv] of [[x0, yy0], [x1, yy0], [x1, yy1], [x0, yy1]]) {
         const u = rc * qu - rs * qv, v = rs * qu + rc * qv;
         let h = Infinity;
         for (const q of pl) h = Math.min(h, q[0] * u + q[1] * v + q[2]);
-        if (h < low) low = h;
+        sl = Math.min(sl, h);
+        sh = Math.max(sh, h);
       }
+      if (sh < 0.5) continue;
+      secs.push([x0, yy0, x1, yy1, pl, rc, rs, sl]);
+      if (sl < low) low = sl;
     }
+    if (!secs.length) return false;
     const holes = [];
     for (let h = 0, nh = dv.getUint8(o + 3); h < nh; h++) {
       const n = dv.getUint8(p);
@@ -2847,7 +2922,13 @@
     const basePl = [[0, 0, clamp2(low - 0.15, 2.2, 400)]];
     let LF = env.lift;
     if (LF) {
-      LF.soff = liftSoffit(LF, low + lift);
+      let lowC = low;
+      if (LF.R) {
+        lowC = Infinity;
+        for (const sc of secs) if (secOverCorr(sc, LF)) lowC = Math.min(lowC, sc[7]);
+        if (lowC === Infinity) lowC = low;
+      }
+      LF.soff = liftSoffit(LF, lowC + lift);
       if (!(LF.soff === LF.soff)) LF = null;
     }
     const fa = yawOld + side * Math.PI / 2 - theta, fu = Math.cos(fa), fv = Math.sin(fa);
@@ -3211,7 +3292,7 @@
       const F = liftFrame(L2, reg, mx, my, ca, sa, g);
       let top = Infinity;
       for (const b of boxes) top = Math.min(top, b[4]);
-      const s = F ? liftSoffit(F, top) : NaN;
+      const s = F && !F.tube ? liftSoffit(F, top) : NaN;
       let open = 1;
       if (F && F.R) {
         const ra = list[k + 4], rca = Math.cos(ra), rsa = Math.sin(ra), G = liftFrame(L2, reg, list[k], list[k + 1], rca, rsa, g);
@@ -3231,7 +3312,14 @@
         b[7] = Math.max(b.length > 7 && b[7] !== void 0 ? b[7] : yb, s);
         if (b.length < 9) b[8] = 0;
       }
-      else if (!(s === s) && L2.c && L2.s != null && L2.s - g > 2.4 && inCorridors(L2, reg, mx, my)) return 0;
+      else if (L2.c && L2.s != null && L2.s - g > 2.4 && L2.s - g > top - 1 && onStructure(list, k) && inCorridors(L2, reg, mx, my)) {
+        const up = L2.s - g;
+        for (const b of boxes) {
+          b[4] += up;
+          b[7] = up;
+          if (b.length < 9) b[8] = 0;
+        }
+      }
     }
     let big = 0;
     for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
@@ -3292,7 +3380,7 @@
         a = real.dv.getInt16(o + 12, true) / 1e4;
         measured2 = true;
       }
-      const g = world2.groundH(mx, my, true);
+      let g = world2.groundH(mx, my, true);
       if (world2.g.water && !measured2) continue;
       const ca = Math.cos(a), sa = Math.sin(a);
       let gmin = g, gmax = g;
@@ -3305,7 +3393,12 @@
       gmax = Math.min(gmax, g + 2.5);
       gmin = Math.max(gmin, g - 12);
       const Lr = world2.liftOf ? world2.liftOf(reg, id) : null;
-      if (Lr && Lr.c && Lr.s != null && Lr.s > g + 2.4 && !(Math.min(Lr.s - g, list[k + 5] - 1) >= 2.4) && inCorridors(Lr, reg, mx, my)) continue;
+      let raised = false;
+      if (Lr && Lr.c && Lr.s != null && Lr.s > g + 2.4 && Lr.s - g > list[k + 5] - 1 && onStructure(list, k) && inCorridors(Lr, reg, mx, my)) {
+        g = gmin = gmax = Lr.s;
+        raised = true;
+        measured2 = false;
+      }
       if (reg && reg.nDeck) {
         let cap = 1e9;
         for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
@@ -3343,7 +3436,8 @@
       env.ca = ca;
       env.sa = sa;
       env.g = g;
-      env.lift = liftFrame(Lr, reg, mx, my, ca, sa, g);
+      env.lift = raised ? null : liftFrame(Lr, reg, mx, my, ca, sa, g);
+      env.raised = raised;
       const rc = list[k + 15];
       if (rc > 0) {
         M.K[0] = (rc >> 11 & 31) * 255 / 31;
@@ -3722,14 +3816,22 @@
     const d = world2.nearestRoad(x, y);
     return d < 14 ? world2._nr.hw : 0;
   }
-  function deckOwner(world2, mx, my) {
+  function deckOwner(world2, mx, my, thing = false) {
     const dd = world2.nearestDeck(mx, my);
     if (dd >= 0.35) return null;
+    if (thing && world2._nd.reg.rCls[world2._nd.road] <= 1) return null;
     const z = world2._nd.z, cd = dd + world2._nd.hw;
     const dg = world2.nearestRoad(mx, my), cg = dg + world2._nr.hw;
-    if (dg < 1e8 && cg <= cd + 0.5) return null;
+    if (dg < 1e8 && cg <= cd + 0.5 && !(thing && world2._nr.road >= 0 && world2._nr.reg.rCls[world2._nr.road] <= 1)) return null;
     if (z <= world2.groundH(mx, my, true) + 0.5) return null;
     return z;
+  }
+  function besideBridge(world2, mx, my) {
+    const dd = world2.nearestDeck(mx, my);
+    if (!(dd >= 0.35 && dd <= 8) || world2._nd.road < 0 || world2._nd.reg.rCls[world2._nd.road] > 13) return false;
+    const z = world2._nd.z;
+    if (world2.nearestRoad(mx, my) > 0.5 || world2._nr.road < 0 || world2._nr.reg.rCls[world2._nr.road] > 1) return false;
+    return z > world2.groundH(mx, my, true) + 4;
   }
   function surfaceH(world2, x, y, zD) {
     if (zD !== null && world2.nearestDeck(x, y, zD + 0.6) < 0.35) return world2._nd.z + 0.03;
@@ -3844,6 +3946,7 @@
     });
     if (!f || !f.nP) return new Float32Array(out);
     let zD = null;
+    let hNode = 0;
     const put = (mx, my, yaw, part, phase, arm, lift) => {
       let h;
       if (zD !== null) {
@@ -3853,6 +3956,7 @@
         h = world2.groundH(mx, my, true);
         if (world2.g.water) return;
         if (world2.g.deck > -1e8 && world2.g.deck < h + 8 && world2.g.deck > h + 0.5) return;
+        if (h < hNode - 2.5) return;
       }
       cyl(mx, my, h + (lift || 0), p32);
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, phase, arm);
@@ -3861,7 +3965,9 @@
       const x = f.px[i], y = f.py[i];
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
       const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
-      zD = deckOwner(world2, mx, my);
+      zD = deckOwner(world2, mx, my, true);
+      if (zD === null && k !== LAMP && besideBridge(world2, mx, my)) continue;
+      hNode = world2.groundH(mx, my, true);
       if (k === SIGNAL || k === STOP || k === GIVEWAY || k === LEVEL) {
         const nroad = roadCount(f, i), junction = nroad >= 3;
         const cyc = hash2(i * 7 + 3, reg.x0 * 0.013 + reg.y0 * 7e-3);
@@ -3952,6 +4058,7 @@
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const WHITE = [0.78, 0.78, 0.74];
     let zD = null;
+    let hNode = 0;
     const quad = (ox, oy, dx, dy, a0, a1, c0, c1, col) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
@@ -3962,12 +4069,13 @@
           const h = surfaceH(world2, x, y, zD);
           cyl(x, y, h + 0.03, p32);
           cyl(x, y, h + 1.03, u3);
-          P2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2]]);
+          P2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2], h > (zD === null ? hNode - 2.5 : zD - 1.2)]);
         }
       }
       const v = (p) => out.push(p[0], p[1], p[2], p[3], p[4], p[5], col[0], col[1], col[2]);
       for (let q = 0; q < n; q++) {
         const A = P2[q * 2], B = P2[q * 2 + 1], C2 = P2[q * 2 + 2], D2 = P2[q * 2 + 3];
+        if (!(A[6] && B[6] && C2[6] && D2[6])) continue;
         v(A);
         v(D2);
         v(B);
@@ -3981,7 +4089,9 @@
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
       if (surveyPainted(reg, x, y)) continue;
       const k = f.kind[i], mx = reg.x0 + x, my = reg.y0 + y;
-      zD = deckOwner(world2, mx, my);
+      zD = deckOwner(world2, mx, my, true);
+      if (zD === null && besideBridge(world2, mx, my)) continue;
+      hNode = world2.groundH(mx, my, true);
       if (k === CROSSING) {
         let hw;
         if (zD !== null) {
@@ -7264,6 +7374,7 @@
           const tall = tr.rec[q2 * 4 + 2] * 0.25;
           const e = world.nearestRoad(mx, my);
           if (e < 1.5 && world._nr.reg.rCls[world._nr.road] >= 14 && world._nr.reg.rCls[world._nr.road] <= 15) continue;
+          if (e < -1 && world._nr.reg.rCls[world._nr.road] <= 3) continue;
           if (e < 1 && world._nr.reg.rCls[world._nr.road] < 14) {
             const nr = world._nr, k = (1.3 - e) * nr.side;
             mx += nr.ty * k;
