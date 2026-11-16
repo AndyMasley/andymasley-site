@@ -4922,7 +4922,7 @@
     M.J[2] = GLASS_TINT[2];
     M.J[3] = 255;
     M.M[0] = MAT.WALL;
-    M.M[1] = 3;
+    M.M[1] = 7;
     M.M[2] = 11;
     M.M[3] = 177;
     const storeys = 1;

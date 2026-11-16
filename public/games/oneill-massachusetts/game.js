@@ -17645,6 +17645,7 @@ vec3 trimColor(float clad, float cls, float seed) {
   int c = int(clad + 0.5);
   if (c == 1 || c == 2) return r < 0.6 ? vec3(0.62, 0.60, 0.55) : vec3(0.78, 0.78, 0.75);       // stone lintels, painted wood
   if (c == 3 || c == 4) return vec3(0.20, 0.21, 0.22);
+  if (c == 7) return vec3(0.60, 0.62, 0.61);                                                 // a station's clear glass: pale frames
   return W_TRIM[int(r * 15.999)];
 }
 vec3 accentColor(float seed) {            // doors and shutters
@@ -17795,11 +17796,11 @@ void main() {
     float u = uv.x, v = uv.y;
     // cladding
     int layer = clad == 1 ? 7 : (clad == 5 ? 6 : (clad == 2 || clad == 6 ? 3 : 0));
-    vec3 tex = (clad == 3 || clad == 4) ? vec3(1.0) : surf(layer, uv);
+    vec3 tex = (clad == 3 || clad == 4 || clad == 7) ? vec3(1.0) : surf(layer, uv);
     if (clad == 4) tex *= 0.86 + 0.14 * smoothstep(0.35, 0.5, abs(fract(u / 0.3) - 0.5) * 2.0);        // ribbed metal panels
     alb = vColA * tex;
     relief = surfaceHeight(tex, clad == 1 ? 0.008 : (clad == 5 ? 0.007 : ((clad == 2 || clad == 6) ? 0.004 : 0.009)));
-    reliefMask = clad == 3 ? 0.0 : 1.0;
+    reliefMask = (clad == 3 || clad == 7) ? 0.0 : 1.0;
     finishMask = reliefMask;
     roughness = clad == 1 ? 0.88 : ((clad == 2 || clad == 6) ? 0.86 : (clad == 4 ? 0.58 : 0.69));
     vec3 trim = vColB;
@@ -17821,7 +17822,8 @@ void main() {
     if (cls == 10) { ww = bw * 0.36; sill = 0.9; head = 2.7; }
     if (cls == 9) { ww = 0.42; sill = 1.4; head = min(fh - 1.2, 5.2); }
     if (cls == 8 || cls == 13) { ww = bw * 0.38; sill = fh * 0.58; head = fh * 0.74; }
-    if (cls == 11 || clad == 3) { ww = bw * 0.5 - 0.07; sill = 0.95; head = fh - 0.12; }
+    if (cls == 11 || clad == 3 || clad == 7) { ww = bw * 0.5 - 0.07; sill = 0.95; head = fh - 0.12; }
+    if (clad == 7) { ww = bw * 0.5 - 0.03; sill = 0.08; head = fh - 0.05; }                // a station's glass runs floor to roof
     bool hasWin = inFloors && !(cls == 4 && !front && wh > 0.35) && !(cls == 5 && wh > 0.5) && !(clad == 4 && wh > 0.3) && !(house && !front && wh > 0.86);
     if (cls == 13 && !front && len > 26.0) hasWin = false;      // a big store's side and back walls are blank; a shop's are not
     float gw = 0.0, frame = 0.0, lintel = 0.0;
@@ -17863,7 +17865,7 @@ void main() {
       shut = box2(vec2(abs(bu), fv), vec2(ww + 0.10, sill - 0.02), vec2(ww + 0.44, head + 0.02), px);
     // masonry: a band between storeys, the street-floor sign band on shops, and the cap of a parapet
     float band = 0.0;
-    if (!house && clad != 3 && clad != 4) {
+    if (!house && clad != 3 && clad != 4 && clad != 7) {
       if (v > eave) band = seg(v, eave + 0.02, eave + 0.2, px.y) * 0.8;
       else if (shop && fl < 0.5) band = seg(fv, fh - 0.62, fh - 0.08, px.y);
       else if (sr2(seed) < 0.5) band = seg(fv, fh - 0.16, fh + 0.2, px.y) * 0.7;
@@ -17890,11 +17892,15 @@ void main() {
     if (gw > 0.0) {
       vec2 g = vec2(wp.x / ww, (wp.y - sill) / max(head - sill, 0.1));       // -1..1 across, 0..1 up
       float bars = 0.0;
-      if (store || clad == 3) bars = 1.0 - seg(abs(fract(wp.x / 1.6) - 0.5), 0.03 / 1.6, 1.0, px.x / 1.6);
+      // a station's clear glass (clad 7, stations.js): a fine grid of slim mullions and transoms
+      if (clad == 7) bars = max(1.0 - seg(abs(fract(wp.x / 1.5) - 0.5), 0.025 / 1.5, 1.0, px.x / 1.5), 1.0 - seg(abs(fract(wp.y / 1.25) - 0.5), 0.025 / 1.25, 1.0, px.y / 1.25));
+      else if (store || clad == 3) bars = 1.0 - seg(abs(fract(wp.x / 1.6) - 0.5), 0.03 / 1.6, 1.0, px.x / 1.6);
       else if (ww < 0.75) bars = max(1.0 - seg(abs(g.y - 0.5), 0.02, 1.0, px.y), (cls == 1 || sr1(seed) < 0.55) ? (1.0 - seg(abs(g.x), 0.035, 1.0, px.x / ww)) : 0.0);
       else bars = 1.0 - seg(abs(fract(wp.x / 0.95) - 0.5), 0.03, 1.0, px.x / 0.95);
-      float blind = (store || clad == 3) ? 0.0 : step(g.y, 1.0) * step(1.0 - 0.75 * wh2 * wh2, g.y);
+      float blind = (store || clad == 3 || clad == 7) ? 0.0 : step(g.y, 1.0) * step(1.0 - 0.75 * wh2 * wh2, g.y);
       vec3 room = mix(vec3(0.022, 0.026, 0.030), vec3(0.42, 0.40, 0.35), blind * 0.8);
+      // through a station's clear glass the daylit hall and the far side show, tinted by the glass, not a dark room
+      if (clad == 7) room = mix(vec3(0.19, 0.23, 0.22), vColA, 0.3);
       room *= 0.75 + 0.25 * seg(g.y, 0.0, 0.93, 0.03);                            // the head of the opening shades the top of the pane
       if (daySurface > 0.0) {
         // A shallow reveal shades the already drawn opening from the actual lamp
@@ -17907,7 +17913,7 @@ void main() {
         float open = box2(wp + intoLight, vec2(-ww, sill), vec2(ww, head), px * 1.5);
         room *= 1.0 - (1.0 - open) * (0.24 * daySurface * finishK);
       }
-      float litW = step(clad == 3 || cls == 11 ? 0.45 : 0.58, wh) * dark;
+      float litW = step(clad == 3 || clad == 7 || cls == 11 ? 0.45 : 0.58, wh) * dark;
       vec3 lamp = mix(vec3(1.0, 0.70, 0.36), vec3(0.95, 0.90, 0.78), step(0.8, wh2)) * (0.55 + 0.45 * wh2);
       if (store) { litW = dark * step(0.25, wh); lamp = vec3(1.0, 0.92, 0.78); }
       vec3 pane = mix(room, trim, bars * 0.9);
@@ -17915,7 +17921,7 @@ void main() {
       // a lit room is brightest round its lamp, dimmer behind curtains at the sides and behind a drawn blind
       vec2 lq = vec2(g.x - (wh2 - 0.5) * 0.9, (g.y - 0.38) * 1.6);
       float glow = 0.42 + 0.58 * exp(-dot(lq, lq) * 1.3);
-      if (!store && clad != 3 && wh2 > 0.35) glow *= 1.0 - 0.45 * smoothstep(0.5, 0.85, abs(g.x));
+      if (!store && clad != 3 && clad != 7 && wh2 > 0.35) glow *= 1.0 - 0.45 * smoothstep(0.5, 0.85, abs(g.x));
       // seen from across town a window is a point of light at full strength; close to, it is turned down so it keeps its colour
       emis += lamp * litW * gw * (1.0 - bars * 0.93) * glow * (0.5 + 0.5 * (1.0 - blind * 0.6)) * mix(0.5, 1.0, smoothstep(25.0, 170.0, dist));
       glass = gw * (1.0 - bars) * (1.0 - blind * 0.6);
