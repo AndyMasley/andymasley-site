@@ -15669,7 +15669,10 @@ void main() {
           }
         }
       }
-      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, n: ws2.length / 5 };
+      const cap = Float32Array.from(list, (w) => w.c > 0 ? w.c : 0.35);
+      const cut = Uint8Array.from(list, (w) => w.src === "cut" ? 1 : 0);
+      const mouth = Float32Array.from(list, (w) => w.o > 0 ? w.o : 0);
+      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, cap, cut, mouth, n: ws2.length / 5 };
       this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
     }
     // The wall segment nearest (mx, my) within WPAD, in this._wl: d (the distance), sd (signed, from the segment's line:
@@ -16487,6 +16490,61 @@ float sunShadow(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
 #endif
 `
   );
+  var STREET_PAINT = (
+    /* glsl */
+    `
+// A street's paint, shared by the ground (TERRAIN_FS) and the bridge decks (HOUSE_FS).  kd: the road's kind byte
+// (common.js roadKind: style | lanes << 2 | ...); bR, bL: its bike lanes on the right and the left (common.js bikeByte:
+// type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); ts: metres right (+) or left
+// (-) of its centre line; hw: its half width; along: metres along it; lw, la: a line's half width and antialiasing;
+// dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left out.  The zone a bike lane takes at
+// the kerb is left out of the travel lanes, and a buffer is two solid lines with diagonal hatching between them.
+// Returns how much paint covers the point; yellow says whether it is the yellow kind.
+float spBand(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
+float streetPaint(int kd, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
+  int style = kd & 3;
+  float nl = float((kd >> 2) & 7), dc = abs(ts);
+  float rT = float(bR & 3), rW = 1.0 + float((bR >> 2) & 15) * 0.1, rZ = rT > 0.5 ? rW + float((bR >> 6) & 3) * 0.3 : 0.0;
+  float lT = float(bL & 3), lW = 1.0 + float((bL >> 2) & 15) * 0.1, lZ = lT > 0.5 ? lW + float((bL >> 6) & 3) * 0.3 : 0.0;
+  float zT = ts > 0.0 ? rT : lT, zW = ts > 0.0 ? rW : lW, zZ = ts > 0.0 ? rZ : lZ, keep = ts > 0.0 ? keepR : keepL;
+  float bike = 0.0;
+  yellow = 0.0;
+  if (zT > 0.5) {
+    float inner = hw - zZ;                                            // the travel lanes' edge
+    float b2 = zT > 1.5 ? spBand(dc, hw - zW, lw, la) : 0.0;           // the buffer's other line
+    const float P = 12.192 / 5.0;
+    float dd = abs(fract((along + (dc - inner)) / P) - 0.5) * P * 0.7071;
+    float hatch = zT > 1.5 ? (1.0 - smoothstep(lw * 0.8 - la, lw * 0.8 + la, dd)) * step(inner + lw, dc) * (1.0 - step(hw - zW - lw, dc)) : 0.0;
+    bike = max(b2, hatch * clamp(0.12 / la, 0.0, 1.0));
+  }
+  float yl = 0.0, wl = 0.0, dl = 0.0;
+  if (style == 1) {
+    // two-way: double yellow down the middle, white edge lines, dashes between lanes going the same way (3.5 m lanes;
+    // what is left over is shoulder)
+    float sh = clamp(hw - nl * 3.5, 0.25, 3.0);
+    yl = max(spBand(dc, 0.0, 0.26, la) - spBand(dc, 0.0, 0.085, la), 0.0);
+    wl = spBand(dc, hw - (zZ > 0.0 ? zZ : sh), lw, la) * keep;
+    for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl && (zZ <= 0.0 || 3.5 * k < hw - zZ - 1.5)) dl = max(dl, spBand(dc, 3.5 * k, lw, la)); }
+  } else if (style == 2) {
+    // one carriageway: yellow on its left edge, white on its right, dashes between lanes counted from the left (with a
+    // bike lane at the kerb the travel lanes end at it, and what is left over is the left shoulder)
+    float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
+    float re = rZ > 0.0 ? hw - rZ : hw - sh;
+    float le = lZ > 0.0 ? -(hw - lZ) : (rZ > 0.0 ? -(hw - clamp(2.0 * hw - rZ - nl * 3.5, 0.25, 3.0)) : -(hw - sh));
+    yl = spBand(ts, le, lw, la) * keepL;
+    wl = spBand(ts, re, lw, la) * keepR;
+    for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl && le + 3.5 * k < re - 1.5) dl = max(dl, spBand(ts, le + 3.5 * k, lw, la)); }
+  } else if (style == 0 && zT > 0.5) {
+    // a street without lane lines: only its bike lane's
+    wl = spBand(dc, hw - zZ, lw, la) * keep;
+  } else return 0.0;
+  dl *= dash;
+  float m = max(max(max(yl, wl), dl), bike);
+  yellow = (yl > wl && yl > dl && yl > bike) ? 1.0 : 0.0;
+  return m;
+}
+`
+  );
   var TERRAIN_VS = (
     /* glsl */
     `
@@ -16521,6 +16579,7 @@ ${NOISE}
 ${SHADOW}
 ${SPACE}
 ${SURFACE_SHADING}
+${STREET_PAINT}
 uniform sampler2D uZone;          // metres into the hull's glass, on a square-root scale
 uniform float uZoneRange;
 uniform sampler2DArray uGndTex;   // grass, forest floor, soil (the Webster drive's ground tiles)
@@ -16656,6 +16715,10 @@ void main() {
     vec4 rref = rfr.y < 0.5 ? (rfr.x < 0.5 ? r00 : r10) : (rfr.x < 0.5 ? r01 : r11);
     vec4 rw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
     rw *= vec4(step(abs(r00.g - rref.g), 0.004), step(abs(r10.g - rref.g), 0.004), step(abs(r01.g - rref.g), 0.004), step(abs(r11.g - rref.g), 0.004));
+    // and only texels of the same way: two ways of one width side by side (two tracks) switch where they meet, and
+    // their offsets jump there (a texel of one way is never more than about a texel's diagonal off its neighbour's)
+    float rtol = 1.6 * uSize / uRoadT;
+    rw *= vec4(step(abs(r00.r - rref.r), rtol), step(abs(r10.r - rref.r), rtol), step(abs(r01.r - rref.r), rtol), step(abs(r11.r - rref.r), rtol));
     vec4 rf = (r00 * rw.x + r10 * rw.y + r01 * rw.z + r11 * rw.w) / max(rw.x + rw.y + rw.z + rw.w, 1e-4);
     float ts = rf.r, dc = abs(ts), hw = rf.g;          // ts: metres right (+) or left (-) of the centre line
     if (hw > 0.5) {
@@ -16697,26 +16760,11 @@ void main() {
         walk *= farW; kerb *= farW;
       }
       float dash = smoothstep(-3.14159, -3.0, ang) * (1.0 - smoothstep(-1.62, -1.52, ang)) * step(uSize / uRoadT, 3.2);
-      if (style == 1) {
-        // two-way: double yellow down the middle, white edge lines, dashes between lanes going the same way
-        float sh = clamp(hw - nl * 3.5, 0.25, 3.0);     // 3.5 m lanes; what is left over is shoulder
-        float yl = max(band(dc, 0.0, 0.26, la) - band(dc, 0.0, 0.085, la), 0.0);
-        float wl = band(dc, hw - sh, lw, la) * keepEdge;
-        float dl = 0.0;
-        for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl) dl = max(dl, band(dc, 3.5 * k, lw, la)); }
-        dl *= dash;
-        mark = max(max(yl, wl), dl) * vis * paved;
-        markCol = (yl > wl && yl > dl) ? yellow : white;
-      } else if (style == 2) {
-        // one carriageway: yellow on its left edge, white on its right, dashes between lanes
-        float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
-        float yl = band(ts, -(hw - sh), lw, la) * keepEdge;
-        float wl = band(ts, hw - sh, lw, la) * keepEdge;
-        float dl = 0.0;
-        for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl) dl = max(dl, band(ts, 3.5 * k - (hw - sh), lw, la)); }
-        dl *= dash;
-        mark = max(max(yl, wl), dl) * vis * paved;
-        markCol = (yl > wl && yl > dl) ? yellow : white;
+      if (style != 3) {
+        vec2 bk = texture2D(uRoadK, ruv).ba * 255.0 + 0.5;
+        float yel;
+        mark = streetPaint(kd, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
+        markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
         // narrow for the water map, 6 a stream
@@ -17571,7 +17619,7 @@ void main() {
   else if (mat < 4.5) vColA = vec3(0.33, 0.12, 0.085);
   else if (mat < 5.5) vColA = vec3(0.46, 0.45, 0.42);
   else if (mat < 6.5) vColA = vec3(0.34, 0.31, 0.27);
-  else if (mat < 7.5) vColA = vColB;
+  else if (mat < 7.5) vColA = clad > 254.5 ? vec3(0.060, 0.064, 0.060) : vColB;     // a bridge's railing (decks.js): dark painted metal
   else if (mat < 9.5) vColA = (cls > 13.5 && cls < 15.5 && mat < 8.5) ? vec3(0.085, 0.075, 0.068) : vec3(0.40, 0.42, 0.43);      // the girders of a railway bridge are dark painted steel
   else if (mat < 10.5) vColA = vec3(0.050, 0.050, 0.053);          // a driveway
   else if (mat < 11.5) vColA = carPaint(fract(seed * 0.618 + 0.31));  // a car on it: paint,
@@ -17594,6 +17642,7 @@ ${ATMOS}
 ${NOISE}
 ${SHADOW}
 ${SURFACE_SHADING}
+${STREET_PAINT}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
@@ -17852,24 +17901,11 @@ void main() {
     float ph = fract(uv.x / 12.192), pw = max(px.x / 12.192, 1e-4);
     float dash = seg(ph, 0.5, 0.75, pw) * step(px.x, 3.2);
     float mark = 0.0; vec3 markCol = vec3(0.82);
-    if (style == 1) {
-      float sh = clamp(hw - nl * 3.5, 0.25, 3.0);
-      float yl = max(bandf(dc, 0.0, 0.26, la) - bandf(dc, 0.0, 0.085, la), 0.0);
-      float wl = bandf(dc, hw - sh, lw, la) * (1.0 - (ts < 0.0 ? noL : noR));
-      float dl = 0.0;
-      for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl) dl = max(dl, bandf(dc, 3.5 * k, lw, la)); }
-      dl *= dash;
-      mark = max(max(yl, wl), dl) * vis;
-      if (yl > wl && yl > dl) markCol = vec3(0.78, 0.55, 0.06);
-    } else if (style == 2) {
-      float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
-      float yl = bandf(ts, -(hw - sh), lw, la) * (1.0 - noL);
-      float wl = bandf(ts, hw - sh, lw, la) * (1.0 - noR);
-      float dl = 0.0;
-      for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl) dl = max(dl, bandf(ts, 3.5 * k - (hw - sh), lw, la)); }
-      dl *= dash;
-      mark = max(max(yl, wl), dl) * vis;
-      if (yl > wl && yl > dl) markCol = vec3(0.78, 0.55, 0.06);
+    if (style == 1 || style == 2 || style == 0) {
+      int bw = vW.w > 0.0 ? int(vW.w + 0.5) : 0;
+      float yel;
+      mark = streetPaint(kd, bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
+      if (yel > 0.5) markCol = vec3(0.78, 0.55, 0.06);
     }
     alb = mix(alb, markCol, mark);
     reliefMask *= 1.0 - mark; finishMask *= 1.0 - mark;
@@ -18719,7 +18755,7 @@ void main() {
       this.defines = game2.defs(game2.quality.atmosMid, game2.quality.atmosFar);
       this.dummyRoad = new an(new Uint16Array(4), 1, 1, on, Pn);
       this.dummyRoad.needsUpdate = true;
-      this.dummyK = new an(new Uint8Array([0, 255]), 1, 1, bi, cn);
+      this.dummyK = new an(new Uint8Array([0, 255, 0, 0]), 1, 1, on, cn);
       this.dummyK.needsUpdate = true;
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
@@ -18773,7 +18809,7 @@ void main() {
         roadTex.magFilter = roadTex.minFilter = ye;
         roadTex.wrapS = roadTex.wrapT = rn;
         roadTex.needsUpdate = true;
-        roadKTex = new an(m.roadK, m.roadT, m.roadT, bi, cn);
+        roadKTex = new an(m.roadK, m.roadT, m.roadT, on, cn);
         roadKTex.magFilter = roadKTex.minFilter = Te;
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
@@ -19225,6 +19261,10 @@ void main() {
           g.setAttribute("normal", new me(new Float32Array(18).map((v, i) => i % 3 === 1 ? -1 : 0), 3));
           add(g, [-5, 0, 0], 9);
         }
+        add(cylY(0.038, 0.042, 0.06, 8, 0, 0, 0), dark, 10);
+        add(cylY(0.036, 0.038, 0.84, 8, 0, 0.06, 0), [0.66, 0.66, 0.64], 10);
+        add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.62, 0), [0.3, 0.3, 0.29], 10);
+        add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.76, 0), [0.3, 0.3, 0.29], 10);
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1 });
@@ -19354,6 +19394,15 @@ void main() {
           g.scale(1.3, 1, 1);
           g.translate(4.4, 81.8, 0);
           lAdd(g.toNonIndexed(), [0.6, 0.61, 0.6], 10);
+        }
+        const granite = [0.46, 0.45, 0.42];
+        lAdd(cylY(2.7, 3, 22, 18, 0, 0, 0), granite, 12);
+        lAdd(cylY(3.25, 3.25, 1.2, 18, 0, 22, 0), [0.5, 0.49, 0.46], 12);
+        lAdd(cylY(2.4, 2.4, 2.6, 18, 0, 23.2, 0), granite, 12);
+        {
+          const g = new Cr(2.75, 4.2, 18, 1, true);
+          g.translate(0, 27.9, 0);
+          lAdd(g.toNonIndexed(), [0.38, 0.37, 0.35], 12);
         }
         this.lmGeos = {};
         for (const g of LM) {
@@ -20271,7 +20320,7 @@ void main() {
   function wallPolygon(world, W, i, sw) {
     const ax2 = W.X[i], ay2 = W.Y[i], bx2 = W.X[i + 1], by2 = W.Y[i + 1], len = Math.hypot(bx2 - ax2, by2 - ay2);
     if (len < 0.05) return null;
-    if (world.nearestRoad(ax2, ay2) < 0.3 || world.nearestRoad((ax2 + bx2) / 2, (ay2 + by2) / 2) < 0.3 || world.nearestRoad(bx2, by2) < 0.3) return null;
+    if (!(W.cut && W.cut[W.Wi[i]]) && (world.nearestRoad(ax2, ay2) < 0.3 || world.nearestRoad((ax2 + bx2) / 2, (ay2 + by2) / 2) < 0.3 || world.nearestRoad(bx2, by2) < 0.3)) return null;
     const ux2 = (bx2 - ax2) / len, uy2 = (by2 - ay2) / len, sg = sw || 1, nx2 = -uy2 * sg, ny2 = ux2 * sg;
     const e02 = sw ? -0.12 : -0.2, e1 = sw ? 0.35 : 0.2;
     const pts = new Float64Array([ax2 + nx2 * e02, ay2 + ny2 * e02, bx2 + nx2 * e02, by2 + ny2 * e02, bx2 + nx2 * e1, by2 + ny2 * e1, ax2 + nx2 * e1, ay2 + ny2 * e1]);
@@ -23710,7 +23759,7 @@ void main() {
   var K_GUYED = 0;
   var K_LATTICE = 1;
   var K_TURBINE = 5;
-  var BUILT = [150, 60, 30, 50, 40, 80];
+  var BUILT = [150, 60, 30, 50, 40, 80, 30];
   var WIND = 225 * Math.PI / 180;
   var NEAR = 2200;
   var BEACON_VS = (
