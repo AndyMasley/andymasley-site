@@ -15644,6 +15644,19 @@ void main() {
       for (const e of doc && doc.b || []) m.set(e.r * 4294967296 + e.b[1] * 65536 + e.b[0], e);
       this.lifted = m;
     }
+    // building records drawn by something else instead (data/stations.json "hide": [region, x, y] as lifted.json names
+    // them): the houses and far boxes leave them out; a car still meets their walls
+    setHidden(list) {
+      const m = /* @__PURE__ */ new Set();
+      for (const e of list || []) m.add(e[0] * 4294967296 + e[2] * 65536 + e[1]);
+      this.hidden = m;
+    }
+    isHidden(reg, id2) {
+      const H = this.hidden;
+      if (!H || !H.size || !reg || !reg.b) return false;
+      const o = id2 * 12, b = reg.b;
+      return H.has(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8));
+    }
     // the entry for building record id of region reg, or null
     liftOf(reg, id2) {
       const L2 = this.lifted;
@@ -15702,7 +15715,8 @@ void main() {
       const cap = Float32Array.from(list, (w) => w.c > 0 ? w.c : 0.35);
       const cut = Uint8Array.from(list, (w) => w.src === "cut" ? 1 : 0);
       const mouth = Float32Array.from(list, (w) => w.o > 0 ? w.o : 0);
-      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, cap, cut, mouth, n: ws2.length / 5 };
+      const mouthB = Float32Array.from(list, (w) => w.ob > 0 ? w.ob : 0);
+      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, cap, cut, mouth, mouthB, n: ws2.length / 5 };
       this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
     }
     // The wall segment nearest (mx, my) within WPAD, in this._wl: d (the distance), sd (signed, from the segment's line:
