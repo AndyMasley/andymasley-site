@@ -349,6 +349,7 @@
   var WCELL = 32;
   var WPAD = 14;
   var DECK_T = 0.95;
+  var DECK_JOINT = 2;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
   var VERSIONS = null;
   function setVersions(v) {
@@ -470,14 +471,89 @@
     for (let i = 0; i < nR; i++) {
       if (!rEnd[i]) continue;
       const a = rStart[i], b = a + rCount[i] - 1;
-      if (!onOtherWay(reg, px[a], py[a], pz[a], i, true)) rEnd[i] |= 1;
-      if (!onOtherWay(reg, px[b], py[b], pz[b], i, true)) rEnd[i] |= 2;
+      if (!deckRunsOn(reg, i, a, a + 1)) rEnd[i] |= 1;
+      if (!deckRunsOn(reg, i, b, b - 1)) rEnd[i] |= 2;
     }
+    const rTunJ = reg.rTunJ = new Uint8Array(nR);
+    for (let i = 0; i < nR; i++) {
+      if (!rTun[i]) continue;
+      const a = rStart[i], b = a + rCount[i] - 1;
+      for (const [q, bit] of [[a, 1], [b, 2]]) {
+        const x = px[q], y = py[q], cx = Math.floor((x + RM) / RCELL), cy = Math.floor((y + RM) / RCELL);
+        if (cx < 0 || cy < 0 || cx >= reg.gw || cy >= reg.gw) continue;
+        const c = cy * reg.gw + cx;
+        for (let k = reg.gstart[c]; k < reg.gstart[c + 1] && !(rTunJ[i] & bit); k++) {
+          const pi = reg.gitems[k], rj = reg.segR[pi];
+          if (rj === i || !rTun[rj]) continue;
+          const a2 = rStart[rj], b2 = a2 + rCount[rj] - 1;
+          for (const e of [pi, pi + 1]) if ((e === a2 || e === b2) && Math.hypot(px[e] - x, py[e] - y) < 0.5 && Math.abs(pz[e] - pz[q]) < 1.2) {
+            rTunJ[i] |= bit;
+            break;
+          }
+        }
+      }
+    }
+    if (nTun) snapTunnelJoints(reg);
     if (nDeck) {
       easeRims(reg);
       snapMerges(reg);
     }
     return reg;
+  }
+  var TUN_EASE = 15;
+  function snapTunnelJoints(reg) {
+    const { px, py, pz, rStart, rCount, rTun, rTunJ, cum, segR } = reg;
+    const done = /* @__PURE__ */ new Set();
+    for (let i = 0; i < reg.nRoads; i++) {
+      if (!rTun[i] || !rTunJ[i]) continue;
+      const a = rStart[i], b = a + rCount[i] - 1;
+      for (const [q, bit] of [[a, 1], [b, 2]]) {
+        if (!(rTunJ[i] & bit) || done.has(q)) continue;
+        const x = px[q], y = py[q], cx = Math.floor((x + RM) / RCELL), cy = Math.floor((y + RM) / RCELL);
+        if (cx < 0 || cy < 0 || cx >= reg.gw || cy >= reg.gw) continue;
+        const c = cy * reg.gw + cx, ends = [q];
+        for (let k = reg.gstart[c]; k < reg.gstart[c + 1]; k++) {
+          const pi = reg.gitems[k], rj = segR[pi];
+          if (rj === i || !rTun[rj]) continue;
+          const a2 = rStart[rj], b2 = a2 + rCount[rj] - 1;
+          for (const e of [pi, pi + 1]) if ((e === a2 || e === b2) && !ends.includes(e) && Math.hypot(px[e] - x, py[e] - y) < 0.5 && Math.abs(pz[e] - pz[q]) < 1.2) ends.push(e);
+        }
+        if (ends.length < 2) continue;
+        let zt = 0;
+        for (const e of ends) zt += pz[e];
+        zt /= ends.length;
+        for (const e of ends) {
+          done.add(e);
+          const dz = zt - pz[e];
+          if (Math.abs(dz) < 5e-3) continue;
+          const r = segR[e], a2 = rStart[r], b2 = a2 + rCount[r] - 1;
+          for (let k = a2; k <= b2; k++) {
+            const d = Math.abs(cum[k] - cum[e]);
+            if (d >= TUN_EASE) continue;
+            const f = 1 - d / TUN_EASE;
+            pz[k] += dz * f * f * (3 - 2 * f);
+          }
+        }
+      }
+    }
+  }
+  var DECK_ON = 3;
+  function deckRunsOn(reg, i, q, q2) {
+    const { px, py, pz, rStart, rCount, rEnd, rTun, segR } = reg;
+    const x = px[q], y = py[q], z = pz[q];
+    const gw = reg.gw, cx = Math.floor((x + RM) / RCELL), cy = Math.floor((y + RM) / RCELL);
+    if (cx >= 0 && cy >= 0 && cx < gw && cy < gw) {
+      const c = cy * gw + cx;
+      for (let k = reg.gstart[c]; k < reg.gstart[c + 1]; k++) {
+        const pi = reg.gitems[k], rj = segR[pi];
+        if (rj === i || !(rEnd[rj] || rTun[rj]) || reg.rCls[rj] > 15) continue;
+        const a = rStart[rj], b = a + rCount[rj] - 1;
+        for (const e of [pi, pi + 1]) if ((e === a || e === b) && Math.hypot(px[e] - x, py[e] - y) < 0.5 && Math.abs(pz[e] - z) < 1) return true;
+      }
+    }
+    if (!onOtherWay(reg, x, y, z, i, true)) return false;
+    const ox = x - px[q2], oy = y - py[q2], ol = Math.hypot(ox, oy) || 1;
+    return onOtherWay(reg, x + ox / ol * DECK_ON, y + oy / ol * DECK_ON, z + (z - pz[q2]) / ol * DECK_ON, i, true);
   }
   var RIM_EASE = 15;
   function easeRims(reg) {
@@ -690,6 +766,21 @@
       const tc = t < 0 ? 0 : t > 1 ? 1 : t, ex = ux - dx * tc, ey = uy - dy * tc, w = rHw[rj] - 0.05;
       if (ex * ex + ey * ey >= w * w) continue;
       if (Math.abs(pz[pi] + (pz[pi + 1] - pz[pi]) * tc - z) < 1) return true;
+    }
+    return false;
+  }
+  function pastDeckEnd(reg, ri, lx, ly, joint = DECK_JOINT, strict = reg.rEnd[ri]) {
+    const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1, px = reg.px, py = reg.py, en = strict, r = reg.rHw[ri] + 3;
+    let ux = lx - px[a], uy = ly - py[a];
+    if (ux * ux + uy * uy < r * r) {
+      const dx = px[a + 1] - px[a], dy = py[a + 1] - py[a], l = Math.hypot(dx, dy);
+      if (l > 1e-6 && (ux * dx + uy * dy) / l < (en & 1 ? 0 : -joint)) return true;
+    }
+    ux = lx - px[b];
+    uy = ly - py[b];
+    if (ux * ux + uy * uy < r * r) {
+      const dx = px[b] - px[b - 1], dy = py[b] - py[b - 1], l = Math.hypot(dx, dy);
+      if (l > 1e-6 && (ux * dx + uy * dy) / l > (en & 2 ? 0 : joint)) return true;
     }
     return false;
   }
@@ -985,7 +1076,7 @@
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
       const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
-      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99, umin = 1e9;
+      let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99, umin = 1e9, bcls = 99;
       const rCls = reg.rCls;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
@@ -995,7 +1086,8 @@
         const ux = lx - ax, uy = ly - ay;
         let t = l2 > 0 ? (ux * dx2 + uy * dy2) / l2 : 0;
         if (deck && !tun && (t < 0 && en & 1 && pi === reg.rStart[ri2] || t > 1 && en & 2 && pi + 2 === reg.rStart[ri2] + reg.rCount[ri2])) continue;
-        if (tun && (t < 0 && pi === reg.rStart[ri2] || t > 1 && pi + 2 === reg.rStart[ri2] + reg.rCount[ri2])) continue;
+        if (deck && !tun && (t < 0 || t > 1) && pastDeckEnd(reg, ri2, lx, ly)) continue;
+        if (tun && (t < 0 || t > 1) && pastDeckEnd(reg, ri2, lx, ly, DECK_JOINT, ~reg.rTunJ[ri2] & 3)) continue;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex = ux - dx2 * t, ey = uy - dy2 * t;
         const d = Math.sqrt(ex * ex + ey * ey), edge = d - rHw[ri2] - (tun ? WALL_GAP : 0);
@@ -1003,10 +1095,11 @@
         if (deck) {
           const zz = reg.pz[pi] + (reg.pz[pi + 1] - reg.pz[pi]) * t;
           if (zz > zmax) continue;
-          const on = edge < 0.35;
-          if (on ? bon && (zz < bz - 1 || zz <= bz + 1 && edge >= best) : bon || edge >= best) continue;
+          const on = edge < 0.35, cl = rCls[ri2];
+          if (on ? bon && (zz < bz - 1 || zz <= bz + 1 && (cl > bcls || cl === bcls && edge >= best)) : bon || edge >= best) continue;
           bon = on;
           bz = zz;
+          bcls = on ? cl : 99;
         } else {
           const pr = edge < 0 ? ROAD_RANK[rCls[ri2]] : 99;
           if (pr > bpr || pr === bpr && edge >= best) continue;
@@ -1319,9 +1412,11 @@
         let t = l2 > 0 ? (ux * dx + uy * dy) / l2 : 0;
         const a0 = reg.rStart[ri], b0 = a0 + reg.rCount[ri] - 1;
         if (t < 0 && en & 1 && pi === a0 || t > 1 && en & 2 && pi + 1 === b0) continue;
+        if ((t < 0 || t > 1) && pastDeckEnd(reg, ri, lx, ly)) continue;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
         const ex = ux - dx * t, ey = uy - dy * t, ed = Math.sqrt(ex * ex + ey * ey) - rHw[ri];
         if (ed >= 2.6) continue;
+        if (ed > 0 && gi.edge < 0) continue;
         const z = pz[pi] + (pz[pi + 1] - pz[pi]) * t;
         if (ed < 0.35 && z > gi.deck) {
           gi.deck = z;
@@ -1362,6 +1457,17 @@
           return z;
         }
       }
+      if (keep && from === "tunnel" && keep.reg && keep.road >= 0 && keep.reg.rTun && keep.reg.rTun[keep.road]) {
+        const z = this.onTunZ(keep.reg, keep.road, mx, my);
+        if (z !== null && Math.abs(z - href) < 1.2) {
+          g.onTunnel = true;
+          g.water = false;
+          g.road = keep.road;
+          g.reg = keep.reg;
+          g.edge = this._tz.edge;
+          return z;
+        }
+      }
       if (g.deck > -1e8 && this.nearestDeck(mx, my, href + reach) < 0.35) {
         const nd = this._nd;
         if (nd.z > h) {
@@ -1390,6 +1496,7 @@
     // 0.35 m past its edge) or past one of its rims.
     onWayZ(reg, ri, mx, my) {
       const lx = mx - reg.x0, ly = my - reg.y0, a = reg.rStart[ri], n = reg.rCount[ri], px = reg.px, py = reg.py, pz = reg.pz, en = reg.rEnd[ri];
+      if (pastDeckEnd(reg, ri, lx, ly, 0.3)) return null;
       let best = 1e18, z = null;
       for (let q = a; q < a + n - 1; q++) {
         const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = dx * dx + dy * dy;
@@ -1405,6 +1512,28 @@
         }
       }
       return z !== null && Math.sqrt(best) - reg.rHw[ri] < 0.35 ? z : null;
+    }
+    // The floor of tunnel way ri of region reg under (mx, my), or null where the point is off its roadway (more than
+    // 0.35 m past its edge) or past one of its ends (a portal, or a joint's width past where the next tunnel way runs
+    // on).  this._tz.edge: the point's distance out from the roadway's edge.
+    onTunZ(reg, ri, mx, my) {
+      const lx = mx - reg.x0, ly = my - reg.y0, a = reg.rStart[ri], n = reg.rCount[ri], px = reg.px, py = reg.py, pz = reg.pz;
+      if (pastDeckEnd(reg, ri, lx, ly, DECK_JOINT, ~reg.rTunJ[ri] & 3)) return null;
+      let best = 1e18, z = null;
+      for (let q = a; q < a + n - 1; q++) {
+        const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = dx * dx + dy * dy;
+        if (l2 < 1e-6) continue;
+        let t = ((lx - px[q]) * dx + (ly - py[q]) * dy) / l2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = lx - px[q] - dx * t, ey = ly - py[q] - dy * t, d2 = ex * ex + ey * ey;
+        if (d2 < best) {
+          best = d2;
+          z = pz[q] + (pz[q + 1] - pz[q]) * t;
+        }
+      }
+      const edge = Math.sqrt(best) - reg.rHw[ri];
+      (this._tz || (this._tz = { edge: 0 })).edge = edge;
+      return z !== null && edge < 0.35 ? z : null;
     }
     // Every surface a car could stand on at (mx, my), highest first: the decks the point is on, the ground, and the
     // floors of the tunnels under it.  Each is { z, kind: 'deck' | 'ground' | 'tunnel' }.
@@ -2518,6 +2647,16 @@
     }
     return F;
   }
+  function inCorridors(L2, reg, mx, my) {
+    const lx = mx - reg.x0, ly = my - reg.y0;
+    for (const c of L2.c) {
+      const dx = c[2] - c[0], dy = c[3] - c[1], l2 = dx * dx + dy * dy;
+      const t = l2 > 0 ? ((lx - c[0]) * dx + (ly - c[1]) * dy) / l2 : 0;
+      if (t < 0 || t > 1) continue;
+      if (Math.hypot(lx - c[0] - dx * t, ly - c[1] - dy * t) <= c[4]) return true;
+    }
+    return false;
+  }
   function liftSoffit(F, top) {
     let s = F.t ? Math.max(top - F.t, Math.min(4.5, top - 1.2)) : F.s;
     s = Math.min(s, top - 1);
@@ -3092,6 +3231,7 @@
         b[7] = Math.max(b.length > 7 && b[7] !== void 0 ? b[7] : yb, s);
         if (b.length < 9) b[8] = 0;
       }
+      else if (!(s === s) && L2.c && L2.s != null && L2.s - g > 2.4 && inCorridors(L2, reg, mx, my)) return 0;
     }
     let big = 0;
     for (const b of boxes) big = Math.max(big, b[2], b[3], b[4] + b[5]);
@@ -3164,6 +3304,8 @@
       }
       gmax = Math.min(gmax, g + 2.5);
       gmin = Math.max(gmin, g - 12);
+      const Lr = world2.liftOf ? world2.liftOf(reg, id) : null;
+      if (Lr && Lr.c && Lr.s != null && Lr.s > g + 2.4 && !(Math.min(Lr.s - g, list[k + 5] - 1) >= 2.4) && inCorridors(Lr, reg, mx, my)) continue;
       if (reg && reg.nDeck) {
         let cap = 1e9;
         for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
@@ -3201,7 +3343,7 @@
       env.ca = ca;
       env.sa = sa;
       env.g = g;
-      env.lift = liftFrame(world2.liftOf ? world2.liftOf(reg, id) : null, reg, mx, my, ca, sa, g);
+      env.lift = liftFrame(Lr, reg, mx, my, ca, sa, g);
       const rc = list[k + 15];
       if (rc > 0) {
         M.K[0] = (rc >> 11 & 31) * 255 / 31;
