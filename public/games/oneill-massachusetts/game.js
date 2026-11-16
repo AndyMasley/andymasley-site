@@ -14814,7 +14814,22 @@ void main() {
         }
       }
     }
-    return { e, dv: dv2, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps };
+    let poles = null;
+    const pN = dv2.getUint32(60, true);
+    if (pN) {
+      poles = { list: [], byTile: /* @__PURE__ */ new Map() };
+      const TSl = RS2 / 64;
+      let q = dv2.getUint32(56, true);
+      for (let i = 0; i < pN; i++, q += 16) {
+        const x = dv2.getFloat32(q, true), y = dv2.getFloat32(q + 4, true), a = dv2.getUint16(q + 8, true) / 65536 * 2 * Math.PI;
+        const p2 = { x, y, tx: Math.cos(a), ty: Math.sin(a), side: dv2.getInt8(q + 10), carries: dv2.getUint8(q + 11), next: dv2.getInt32(q + 12, true) };
+        poles.list.push(p2);
+        const k = clamp(Math.floor(y / TSl), 0, 63) * 64 + clamp(Math.floor(x / TSl), 0, 63);
+        if (!poles.byTile.has(k)) poles.byTile.set(k, []);
+        poles.byTile.get(k).push(i);
+      }
+    }
+    return { e, dv: dv2, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps, poles };
   }
   function streetsCovered(st, lx2, ly2) {
     const cx2 = Math.floor(lx2 / st.covCell), cy2 = Math.floor(ly2 / st.covCell);
@@ -18848,6 +18863,7 @@ void main() {
 
   // src/terrain.js
   var tmp = new Float64Array(3);
+  var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "rails", "pwires"]);
   var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
     const N1 = N + 1, base = N1 * N1, idx = [];
@@ -18892,6 +18908,12 @@ void main() {
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
       this.visScatter = [];
+      this.vel = [0, 0];
+      this.camPrev = null;
+      this.ranked = -1;
+      this.dirty = true;
+      this.prefetchT = 0;
+      this.prefetchKey = "";
       this._initScatterAssets();
       for (const w of this.workers) w.addEventListener("message", (ev2) => this.onMessage(ev2.data, this.workers.indexOf(w)));
     }
@@ -19003,10 +19025,86 @@ void main() {
       this.chunks.set(key2, { state: "pending", level, ix: ix2, iy: iy2, last: this.frame, prio });
       this.pendingCount++;
       this.queue.push({ type: "chunk", key: key2, level, ix: ix2, iy: iy2, n: this.N, prio });
+      this.dirty = true;
+    }
+    // The camera's heading over the map: its velocity, smoothed over about a third of a second (a jump of more than
+    // 2 km in one frame is a jump, not a speed), and where it will be in LOOK seconds (no more than LOOK_MAX metres on).
+    // Jobs are ranked by their distance from that stretch of path, so the tiles it is about to fly over come first.
+    track() {
+      const cm2 = this.game.camMap, dt = Math.max(1e-3, this.game.dt || 0.016);
+      if (this.camPrev) {
+        let dx2 = cm2[0] - this.camPrev[0], dy2 = cm2[1] - this.camPrev[1];
+        if (dy2 > C2 / 2) dy2 -= C2;
+        else if (dy2 < -C2 / 2) dy2 += C2;
+        if (Math.hypot(dx2, dy2) > 2e3) {
+          this.vel[0] = this.vel[1] = 0;
+        } else {
+          const k = Math.min(1, dt * 3);
+          this.vel[0] += (dx2 / dt - this.vel[0]) * k;
+          this.vel[1] += (dy2 / dt - this.vel[1]) * k;
+        }
+      }
+      this.camPrev = [cm2[0], cm2[1]];
+      const LOOK = 3, LOOK_MAX = 2500;
+      let ax2 = this.vel[0] * LOOK, ay2 = this.vel[1] * LOOK;
+      const l = Math.hypot(ax2, ay2);
+      if (l > LOOK_MAX) {
+        ax2 *= LOOK_MAX / l;
+        ay2 *= LOOK_MAX / l;
+      }
+      this.look = [cm2[0], cm2[1], ax2, ay2];
+    }
+    // a job's rank (higher first): minus its tile's distance from the camera's path ahead, less a little for how far
+    // along it is
+    rank(level, ix2, iy2) {
+      const s29 = ROOT / (1 << level), [x, y, ax2, ay2] = this.look;
+      const dx2 = (ix2 + 0.5) * s29 - x;
+      let dy2 = (iy2 + 0.5) * s29 - y;
+      dy2 -= C2 * Math.round(dy2 / C2);
+      const a2 = ax2 * ax2 + ay2 * ay2;
+      const t = a2 > 1 ? clamp2((dx2 * ax2 + dy2 * ay2) / a2, 0, 1) : 0;
+      const d = Math.hypot(dx2 - ax2 * t, dy2 - ay2 * t) + 0.25 * t * Math.sqrt(a2);
+      return -Math.max(0, d - s29 * 0.7072);
+    }
+    // Start reading the regions the camera is about to reach (and the land cover there) before any tile there is asked
+    // for: every worker, a few times a second, the regions under the path ahead.
+    prefetch() {
+      if (!this.look) return;
+      const [x, y] = this.look, pts = [], regs = /* @__PURE__ */ new Map();
+      let ax2 = this.vel[0] * 8, ay2 = this.vel[1] * 8;
+      const l = Math.hypot(ax2, ay2);
+      if (l > 6e3) {
+        ax2 *= 6e3 / l;
+        ay2 *= 6e3 / l;
+      }
+      for (const t of [0, 0.06, 0.15, 0.35, 0.6, 1]) {
+        const px2 = clamp2(x + ax2 * t, 0, L - 1), py2 = wrapY(y + ay2 * t);
+        pts.push([px2, py2]);
+        for (const [ox2, oy2] of [[0, 0], [-700, 0], [700, 0], [0, -700], [0, 700]]) {
+          const rx2 = Math.floor(clamp2(px2 + ox2, 0, L - 1) / RS3), ry2 = Math.floor(wrapY(py2 + oy2) / RS3);
+          regs.set(rx2 + "_" + ry2, [rx2, ry2]);
+        }
+      }
+      const key2 = [...regs.keys()].sort().join(" ");
+      if (key2 === this.prefetchKey && this.prefetchT > 0) return;
+      this.prefetchKey = key2;
+      this.prefetchT = 1.5;
+      const m = { type: "prefetch", regions: [...regs.values()].slice(0, 6), points: pts.slice(0, 4) };
+      for (const w of this.workers) w.postMessage(m);
     }
     pump() {
       if (!this.queue.length && !this.scatterQueue.length) return;
-      this.queue.sort((a, b) => a.prio - b.prio);
+      if (this.look && this.ranked !== this.frame) {
+        for (const q of this.queue) q.prio = this.rank(q.level, q.ix, q.iy);
+        for (const q of this.scatterQueue) q.prio = this.rank(q.level, q.ix, q.iy) - (DETAIL.has(q.kind) ? 80 : 0);
+        this.ranked = this.frame;
+        this.dirty = true;
+      }
+      if (this.dirty) {
+        this.queue.sort((a, b) => a.prio - b.prio);
+        this.scatterQueue.sort((a, b) => a.prio - b.prio);
+        this.dirty = false;
+      }
       const nextChunk = () => {
         while (this.queue.length) {
           const q = this.queue.pop(), c = this.chunks.get(q.key);
@@ -19019,7 +19117,6 @@ void main() {
         return null;
       };
       const nextScatter = () => {
-        if (this.scatterQueue.length > 1) this.scatterQueue.sort((a, b) => a.prio - b.prio);
         while (this.scatterQueue.length) {
           const q = this.scatterQueue.pop(), s29 = this.scatter.get(q.key);
           if (s29 && s29.state === "pending" && this.frame - s29.last < 120) return q;
@@ -19027,10 +19124,14 @@ void main() {
         }
         return null;
       };
+      const JOBS = 6;
       for (let wi2 = 0; wi2 < this.workers.length; wi2++) {
-        while (this.inflight[wi2] < 3) {
+        while (this.inflight[wi2] < JOBS) {
           this.turn = (this.turn || 0) + 1;
-          let job = this.turn % 3 === 0 ? nextScatter() || nextChunk() : nextChunk() || nextScatter();
+          const cq = this.queue.length ? this.queue[this.queue.length - 1].prio : -Infinity;
+          const sq = this.scatterQueue.length ? this.scatterQueue[this.scatterQueue.length - 1].prio : -Infinity;
+          const scatterFirst = sq > cq + 150 ? true : cq > sq + 150 ? false : (this.turn & 1) === 0;
+          let job = scatterFirst ? nextScatter() || nextChunk() : nextChunk() || nextScatter();
           if (!job) break;
           job.id = this.nextId++;
           this.workers[wi2].postMessage(job);
@@ -19041,6 +19142,9 @@ void main() {
     // camC: camera in cylinder space (Float64Array 3)
     update(camC) {
       this.frame++;
+      this.track();
+      this.prefetchT -= this.game.dt || 0.016;
+      if ((this.frame & 7) === 0) this.prefetch();
       const drawn = this.drawn;
       drawn.length = 0;
       const K = this.K, maxLevel = this.maxLevel, chunks = this.chunks, frame2 = this.frame;
@@ -19724,6 +19828,7 @@ void main() {
             t = { state: "pending", last: this.frame };
             this.scatter.set(key2, t);
             this.scatterQueue.push({ type: "scatter", key: key2, kind, level, ix: x, iy: yy2, prio: -d });
+            this.dirty = true;
           }
           t.last = this.frame;
         }
@@ -24398,8 +24503,8 @@ void main() {
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
     low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
-    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 2, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
-    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 2, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
+    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {
@@ -24660,7 +24765,8 @@ void main() {
       this.loadMaterials();
       this.initShadow();
       setLoad("Waking the terrain crew", 0.66);
-      const nW = this.software ? 1 : Math.min(this.quality.workers, Math.max(1, (navigator.hardwareConcurrency || 4) - 1));
+      const cores = navigator.hardwareConcurrency || 4, memGB = navigator.deviceMemory || 8;
+      const nW = this.software ? 1 : Math.max(1, Math.min(this.quality.workers, cores - 2, memGB < 8 ? 2 : 8));
       this.workers = [];
       await Promise.all(Array.from({ length: nW }, () => new Promise((resolve, reject) => {
         const w = new Worker(vurl("worker.js"));
@@ -25405,18 +25511,21 @@ void main() {
         }
       }
     }
-    // Streets for the regions the car is about to enter, so a region line crossed at speed never has bare ground under it.
+    // Streets for the regions the car (or the jetpack) is about to enter, so a region line crossed at speed never has
+    // bare ground under it: those within 2 km of the camera, and of where it will be in three seconds.
     streetsAhead(dt) {
       this.aheadT = (this.aheadT || 0) - dt;
       if (this.aheadT > 0) return;
       this.aheadT = 0.5;
-      const w = this.world, c = this.player.car, m = 2e3;
-      const rx0 = Math.max(0, Math.floor((c.mx - m) / RS3)), rx1 = Math.min(RNX - 1, Math.floor((c.mx + m) / RS3));
-      const ya2 = Math.floor(wrapY(c.my - m) / RS3), yb = Math.floor(wrapY(c.my + m) / RS3);
-      for (let rx2 = rx0; rx2 <= rx1; rx2++) for (const ry2 of ya2 === yb ? [ya2] : [ya2, yb]) {
-        const r = w.regions.get(regionKey(rx2, ry2));
-        if (r) r.used = w.tick;
-        else this.loadRegion(rx2, ry2);
+      const w = this.world, cm2 = this.camMap, m = 2e3, look = this.terrain && this.terrain.look;
+      for (const [x, y] of look ? [[cm2[0], cm2[1]], [look[0] + look[2], look[1] + look[3]]] : [[cm2[0], cm2[1]]]) {
+        const rx0 = Math.max(0, Math.floor((x - m) / RS3)), rx1 = Math.min(RNX - 1, Math.floor((x + m) / RS3));
+        const ya2 = Math.floor(wrapY(y - m) / RS3), yb = Math.floor(wrapY(y + m) / RS3);
+        for (let rx2 = rx0; rx2 <= rx1; rx2++) for (const ry2 of ya2 === yb ? [ya2] : [ya2, yb]) {
+          const r = w.regions.get(regionKey(rx2, ry2));
+          if (r) r.used = w.tick;
+          else this.loadRegion(rx2, ry2);
+        }
       }
     }
     frame(now) {

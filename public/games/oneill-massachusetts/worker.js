@@ -82,7 +82,22 @@
         }
       }
     }
-    return { e, dv, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps };
+    let poles = null;
+    const pN = dv.getUint32(60, true);
+    if (pN) {
+      poles = { list: [], byTile: /* @__PURE__ */ new Map() };
+      const TSl = RS / 64;
+      let q = dv.getUint32(56, true);
+      for (let i = 0; i < pN; i++, q += 16) {
+        const x = dv.getFloat32(q, true), y = dv.getFloat32(q + 4, true), a = dv.getUint16(q + 8, true) / 65536 * 2 * Math.PI;
+        const p2 = { x, y, tx: Math.cos(a), ty: Math.sin(a), side: dv.getInt8(q + 10), carries: dv.getUint8(q + 11), next: dv.getInt32(q + 12, true) };
+        poles.list.push(p2);
+        const k = clamp(Math.floor(y / TSl), 0, 63) * 64 + clamp(Math.floor(x / TSl), 0, 63);
+        if (!poles.byTile.has(k)) poles.byTile.set(k, []);
+        poles.byTile.get(k).push(i);
+      }
+    }
+    return { e, dv, covW, covCell, rowB, cov, paint, pave, water, tab, kerbs, ramps, poles };
   }
   function streetsPainted(st2, lx, ly) {
     const cx = Math.floor(lx / st2.covCell), cy = Math.floor(ly / st2.covCell);
@@ -3282,11 +3297,11 @@
       if (kind === "poles" || kind === "wires") {
         if (!polesOn(reg, ri)) continue;
         for (let k = Math.ceil(sA / POLE_GAP); k * POLE_GAP <= sB; k++) {
-          if (!poleAt(world2, reg, ri, k, A) || !inTile(A.mx, A.my)) continue;
+          if (!poleAt(world2, reg, ri, k, A) || !inTile(A.mx, A.my) || cityPoles(reg, A.mx, A.my)) continue;
           if (kind === "poles") {
             cyl(A.mx, A.my, A.h, p32);
             out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, hash2(k * 7 + 3, reg.rName[ri] + 11));
-          } else if (poleAt(world2, reg, ri, k + 1, B)) {
+          } else if (poleAt(world2, reg, ri, k + 1, B) && !cityPoles(reg, B.mx, B.my)) {
             const span = Math.hypot(B.mx - A.mx, B.my - A.my);
             if (span > POLE_GAP * 1.6) continue;
             let clear = true;
@@ -3329,7 +3344,52 @@
         }
       }
     }
+    const cp = reg.streets && reg.streets.poles;
+    if (cp && (kind === "poles" || kind === "wires")) {
+      const TS2 = RS2 / 64, ti = Math.round(lx0 / TS2), tj = Math.round(ly0 / TS2);
+      const at = (p, o) => {
+        o.mx = reg.x0 + p.x;
+        o.my = reg.y0 + p.y;
+        o.tx = p.tx;
+        o.ty = p.ty;
+        o.yaw = Math.atan2(-p.tx, p.ty) + (p.side < 0 ? Math.PI : 0);
+        o.h = world2.groundH(o.mx, o.my, true);
+        if (world2.g.water || world2.g.deck > -1e8 && world2.g.deck < o.h + 12) return false;
+        return true;
+      };
+      for (const i of cp.byTile.get(tj * 64 + ti) || []) {
+        const p = cp.list[i];
+        if (!at(p, A) || !inTile(A.mx, A.my)) continue;
+        if (kind === "poles") {
+          cyl(A.mx, A.my, A.h, p32);
+          out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, p.carries === 1 ? 0.3 : p.carries === 2 ? 0.05 : 0.9);
+        } else if (p.next >= 0 && at(cp.list[p.next], B)) {
+          wireSpan(world2, A, B, cx, cy, cz, p32, out);
+        }
+      }
+    }
     return new Float32Array(out);
+  }
+  function wireSpan(world2, A, B, cx, cy, cz, p32, out) {
+    for (let j = 1; j < 6; j++) {
+      world2.groundH(A.mx + (B.mx - A.mx) * j / 6, A.my + (B.my - A.my) * j / 6, true);
+      if (world2.g.deck > -1e8 && world2.g.deck < A.h + 12) return;
+    }
+    for (const [lat, hgt, sag] of [[-1.05, 8.66, 0.75], [0, 10.12, 0.7], [1.05, 8.66, 0.75], [0.16, 6.4, 0.95]]) {
+      let px0 = 0, py0 = 0, pz0 = 0;
+      for (let j = 0; j <= 6; j++) {
+        const u = j / 6, mx = A.mx + (B.mx - A.mx) * u + (A.ty + (B.ty - A.ty) * u) * lat, my = A.my + (B.my - A.my) * u - (A.tx + (B.tx - A.tx) * u) * lat;
+        cyl(mx, my, A.h + (B.h - A.h) * u + hgt - 4 * sag * u * (1 - u), p32);
+        if (j > 0) out.push(px0, py0, pz0, p32[0] - cx, p32[1] - cy, p32[2] - cz);
+        px0 = p32[0] - cx;
+        py0 = p32[1] - cy;
+        pz0 = p32[2] - cz;
+      }
+    }
+  }
+  function cityPoles(reg, mx, my) {
+    const st2 = reg.streets;
+    return !!(st2 && st2.poles && streetsPainted(st2, mx - reg.x0, my - reg.y0));
   }
 
   // src/feat.js
@@ -6310,7 +6370,7 @@
   var quadCache = [/* @__PURE__ */ new Map(), /* @__PURE__ */ new Map()];
   var quadPending = /* @__PURE__ */ new Map();
   var PACK_KEEP = 6;
-  var QUAD_KEEP = [8, 5];
+  var QUAD_KEEP = [12, 5];
   var tmp = new Float64Array(3);
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
@@ -6472,11 +6532,15 @@
     if (!r.ok) throw new Error(dir + " " + rx + "_" + ry + " " + r.status);
     return r.arrayBuffer();
   }).then(decodePNG).then((p) => p.data);
-  async function readParts(reg, rx, ry, which) {
+  async function readParts(reg, rx, ry, which, got) {
     const missing = [];
-    for (const dir of which) {
+    const all = which.map((dir) => got && got[dir] || fetchPart(dir, rx, ry).then((e) => ({ e }), (err) => ({ err })));
+    for (let i = 0; i < which.length; i++) {
+      const dir = which[i];
       try {
-        const e = await fetchPart(dir, rx, ry);
+        const r = await all[i];
+        if (r.err) throw r.err;
+        const e = r.e;
         if (dir === "b3") reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
         else if (dir === "g3") reg.ground = parseGround(e);
         else if (dir === "f1") reg.feat = parseFeat(e);
@@ -6512,15 +6576,17 @@
     if (!pr) {
       pr = (async () => {
         try {
-          const d = await fetchPart("r2", rx, ry);
-          const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry);
           const parts = [];
           if (measured.has(k)) parts.push("b3");
           if (treeFiles.has(k)) parts.push("t3");
           if (groundFiles.has(k)) parts.push("g3");
           if (featFiles.has(k)) parts.push("f1");
           if (streetFiles.has(k)) parts.push("s1");
-          await readParts(reg, rx, ry, parts);
+          const got = {};
+          for (const dir of parts) got[dir] = fetchPart(dir, rx, ry).then((e) => ({ e }), (err) => ({ err }));
+          const d = await fetchPart("r2", rx, ry);
+          const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry);
+          await readParts(reg, rx, ry, parts, got);
           world.addRegion(rx, ry, reg);
           regionFails.delete(k);
         } catch (err) {
@@ -6531,7 +6597,7 @@
         }
         pending.delete(k);
         world.tick++;
-        world.trimRegions(8);
+        world.trimRegions(10);
       })();
       pending.set(k, pr);
     }
@@ -7221,6 +7287,15 @@
       }
       if (m.type === "webster") {
         genWebster(m);
+        return;
+      }
+      if (m.type === "prefetch") {
+        for (const [rx, ry] of m.regions) {
+          const r = world.regions.get(regionKey(rx, ry));
+          if (r) r.used = world.tick;
+          else ensureRegion(rx, ry);
+        }
+        if (lcPacks.size) for (const [x, y] of (m.points || []).slice(1, 4)) lcPromises(x - 250, y - 250, 500, 0);
         return;
       }
       world.tick++;
