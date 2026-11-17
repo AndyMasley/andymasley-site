@@ -4232,7 +4232,10 @@
     BIKE_HOOP: 23,
     BIKE_POST: 24,
     DOCK: 25,
-    KIOSK: 26
+    KIOSK: 26,
+    SIGNAL_HEAD: 27,
+    SIGNAL_ARM: 28,
+    SIGNAL_MAST: 29
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -4597,6 +4600,7 @@
       }
       cyl(mx, my, h + (lift || 0), p32);
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part, phase, arm);
+      return h + (lift || 0);
     };
     for (let i = 0; i < f.nP; i++) {
       const x = f.px[i], y = f.py[i];
@@ -4619,6 +4623,20 @@
           if (k === SIGNAL) {
             const tm = (t % Math.PI + Math.PI) % Math.PI;
             const phase = (cyc + (tm > Math.PI / 4 && tm < 3 * Math.PI / 4 ? 0.5 : 0)) % 1;
+            const C2 = zD === null ? approachLanes(world2, mx - dx * (back + 1), my - dy * (back + 1), dx, dy) : null;
+            if (C2 && C2.length) {
+              const n = put(ox, oy, t - Math.PI / 2, PART.SIGNAL_MAST, phase, 0);
+              if (n === void 0) continue;
+              const hm = n, far = Math.min(...C2) - 0.4, reach2 = Math.min(20, side - far);
+              const bx = mx - dx * back, by = my - dy * back;
+              out.push(out[out.length - 7], out[out.length - 6], out[out.length - 5], t - Math.PI / 2, PART.SIGNAL_ARM, phase, reach2);
+              for (const c of C2) {
+                if (side - c > 20) continue;
+                cyl(bx + dy * c, by - dx * c, hm, p32);
+                out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, t - Math.PI / 2, PART.SIGNAL_HEAD, phase, 0);
+              }
+              continue;
+            }
             const reach = f.apOne[j] ? 2 * hw : hw;
             put(ox, oy, t - Math.PI / 2, reach > 7.5 ? PART.SIGNAL_LONG : PART.SIGNAL, phase, reach);
           } else put(ox, oy, t - Math.PI / 2, k === STOP ? PART.STOP : k === GIVEWAY ? PART.YIELD : PART.CROSSBUCK, 0, 0);
@@ -4822,6 +4840,18 @@
       }
     }
     return { cw, sig };
+  }
+  function approachLanes(world2, x, y, dx, dy) {
+    if (world2.nearestRoad(x, y) > 0.5) return null;
+    const o = world2._nr, sg = o.tx * dx + o.ty * dy;
+    if (Math.abs(sg) < 0.7) return null;
+    const G = lanesAt(o.reg, o.road, o.s - o.reg.cum[o.reg.rStart[o.road]], _lg2);
+    if (G.style !== 1 && G.style !== 2) return null;
+    if (G.style === 2 && sg < 0) return null;
+    const n = Math.min(6, Math.max(1, Math.round(G.style === 2 ? G.nF : sg > 0 ? G.nF : G.nB))), le = G.style === 2 ? G.le : sg > 0 ? G.cR : -G.cL;
+    const out = [];
+    for (let l = 0; l < n; l++) out.push(le + G.w * (l + 0.5));
+    return out;
   }
   function innerEdge(world2, x, y, dx, dy, zD) {
     let o;

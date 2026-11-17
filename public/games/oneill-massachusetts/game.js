@@ -20504,6 +20504,11 @@ void main() {
           for (const hx2 of heads) head(hx2, 6.05, p);
           head(0, 3.3, p);
         }
+        head(0, 6.05, 27);
+        add(beam(0, 6.6, 0, -1, 6.9, 0, 0.12), galv, 28);
+        add(beam(0, 5.4, 0, -0.45, 6.6, 0, 0.06), galv, 28);
+        add(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, 29);
+        head(0, 3.3, 29);
         add(box2(0.08, 3.3, 0.08, 0, 1.65, 0), galv, 4);
         for (const a of [Math.PI / 4, -Math.PI / 4]) {
           const g = new qi(1.25, 0.23, 0.02);
@@ -21114,7 +21119,7 @@ void main() {
         } else if (m.kind === "signs") {
           const pt = d[o + 4], lh = LAMP_H[pt];
           Q.setFromAxisAngle(Y, d[o + 3]);
-          S2.set(1, pt === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : lh && d[o + 6] > 0 ? clamp2(d[o + 6] / lh, 0.6, 1.6) : 1, 1);
+          S2.set(pt === 28 ? clamp2(d[o + 6], 1, 20) : 1, pt === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : lh && d[o + 6] > 0 ? clamp2(d[o + 6] / lh, 0.6, 1.6) : 1, 1);
           inst[i * 4] = d[o + 4] === 8 ? 0 : d[o + 5];
           inst[i * 4 + 1] = d[o + 4];
         } else if (m.kind === "power") {
@@ -21159,7 +21164,7 @@ void main() {
         t.geoFar = g2;
         t.near = false;
       }
-      const pad = vegetation ? vegetationPad : m.kind === "poles" || m.kind === "cars" || m.kind === "signs" ? 14 : m.kind === "power" ? 45 : 110;
+      const pad = vegetation ? vegetationPad : m.kind === "poles" || m.kind === "cars" ? 14 : m.kind === "signs" ? 22 : m.kind === "power" ? 45 : 110;
       mid.multiplyScalar(1 / n);
       for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(lp2[i * 3] - mid.x, lp2[i * 3 + 1] - mid.y, lp2[i * 3 + 2] - mid.z));
       mesh.boundingSphere = new Ie(mid.clone(), rad + pad);
