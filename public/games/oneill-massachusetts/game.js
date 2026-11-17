@@ -17779,6 +17779,178 @@ varying vec3 vCol2;
 varying vec3 vObj;
 varying float vAux;
 varying float vStyle;
+#ifdef BARRIERS
+// ---- walls, fences and hedges (feat.js barrierTris): a vertex colour's red is -(64 T + P + 0.5) for pattern T in
+// palette P, its green and blue the point's place on the surface (u along the run, v round its cross-section or up its
+// panel, in metres)
+float bIGN(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+// of points jittered in cells of 1 (x in cells): the distances to the nearest and the next nearest, and the nearest's cell
+vec2 bCells(vec2 x, out vec2 id) {
+  vec2 i = floor(x), f = x - i;
+  float d1 = 8.0, d2 = 8.0;
+  id = i;
+  for (int yy = -1; yy <= 1; yy++) for (int xx = -1; xx <= 1; xx++) {
+    vec2 g = vec2(float(xx), float(yy));
+    ivec2 c = ivec2(i + g);
+    vec2 r = g + 0.15 + 0.7 * vec2(hash2(c), hash2(c + ivec2(57, 113))) - f;
+    float d = dot(r, r);
+    if (d < d1) { d2 = d1; d1 = d; id = i + g; } else if (d < d2) d2 = d;
+  }
+  return vec2(sqrt(d1), sqrt(d2));
+}
+// a bump of height h (metres) from screen-space derivatives (as three.js's perturbNormalArb)
+vec3 bBump(vec3 pos, vec3 N, float h) {
+  vec3 dpx = dFdx(pos), dpy = dFdy(pos);
+  float dhx = dFdx(h), dhy = dFdy(h);
+  vec3 r1 = cross(dpy, N), r2 = cross(N, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (dhx * r1 + dhy * r2);
+  return normalize(abs(det) * N - grad);
+}
+// how much of a pixel a line of half width hw (m) covers at distance jm from its middle, seen at px metres to a
+// pixel: a line thinner than a pixel is drawn a pixel wide and that much fainter
+float bLine(float jm, float hw, float px) {
+  float w = max(hw, 0.5 * px);
+  return (1.0 - smoothstep(w - 0.5 * px, w + 0.5 * px, jm)) * min(1.0, hw / (0.5 * px));
+}
+// the colour of pattern T in palette pal at q = (u, v); N bumped; cut set where a panel is open
+vec3 barrier(float T, float pal, vec2 q, inout vec3 N, out float cut) {
+  cut = 0.0;
+  vec2 fq = fwidth(q);
+  float px = max(max(fq.x, fq.y), 1e-5);            // metres to a pixel
+  vec3 c = vec3(0.2);
+  float bump = 0.0, bumpAmt = 0.0;
+  // (albedos linear, on the scale of PAVEMENT's: a weathered concrete sidewalk 0.27)
+  if (T < 1.5) {
+    // fieldstone: rounded stones of many sizes and colours, small ones in the gaps between big ones, dark hollows where
+    // nothing fills them, lichen; palettes 4 and 5 (old walls in the woods) mossier
+    vec2 qw = q + (vec2(vnoise(q * 2.7), vnoise(q * 2.7 + 17.0)) - 0.5) * 0.16;
+    vec2 id; vec2 d = bCells(qw / vec2(0.42, 0.28), id);
+    float e = d.y - d.x;
+    vec2 id2; vec2 d2 = bCells(qw / vec2(0.16, 0.11) + 31.0, id2);
+    float e2 = d2.y - d2.x;
+    float edge = 1.0 - smoothstep(0.04, 0.18, e);
+    bool chink = edge > 0.7 && e2 > 0.12;
+    vec2 sid = chink ? id2 + 977.0 : id;
+    float ee = chink ? e2 * 0.7 : e;
+    float r1 = hash2(ivec2(sid) + ivec2(7, 3)), r2 = hash2(ivec2(sid) + ivec2(19, 41));
+    vec3 st = r1 < 0.42 ? vec3(0.28, 0.27, 0.25) : r1 < 0.62 ? vec3(0.16, 0.16, 0.15) : r1 < 0.78 ? vec3(0.26, 0.22, 0.17) : r1 < 0.88 ? vec3(0.42, 0.41, 0.38) : vec3(0.28, 0.19, 0.12);
+    st *= 0.8 + 0.4 * r2;
+    st = mix(st, vec3(0.38, 0.40, 0.33), smoothstep(0.58, 0.78, fbm3(q * 1.9 + r2 * 5.0)) * 0.6);
+    float mossy = pal > 3.5 ? 0.42 : 0.12;
+    st = mix(st, vec3(0.045, 0.085, 0.025), smoothstep(1.0 - mossy, 1.0, fbm3(q * 1.3 + 3.7)) * 0.85);
+    float bul = smoothstep(0.0, 0.32, ee);
+    float gap = chink ? 0.0 : 1.0 - smoothstep(0.012, 0.06, e);
+    float far = smoothstep(0.035, 0.10, px);
+    vec3 nearC = mix(st * (0.68 + 0.32 * bul), vec3(0.015, 0.015, 0.013), gap * 0.9);
+    c = mix(nearC, (pal > 3.5 ? vec3(0.18, 0.19, 0.15) : vec3(0.22, 0.215, 0.20)), far);
+    bump = 0.035 * bul; bumpAmt = 0.6 * (1.0 - far);
+  } else if (T < 2.5) {
+    // dressed stone: courses of squared blocks with thin mortar
+    float ch = 0.30, row = floor(q.y / ch);
+    float bl = 0.55 + 0.45 * hash2(ivec2(int(row), 5));
+    float uo = q.x + hash2(ivec2(int(row), 9)) * bl;
+    float bc = floor(uo / bl);
+    vec2 f = vec2(uo - bc * bl, q.y - row * ch);
+    float jm = min(min(f.x, bl - f.x), min(f.y, ch - f.y));
+    vec3 base = pal < 0.5 ? vec3(0.24, 0.235, 0.22) : pal < 1.5 ? vec3(0.16, 0.10, 0.07) : vec3(0.17, 0.15, 0.13);
+    float r = hash2(ivec2(int(bc), int(row) * 3 + 11));
+    float far = smoothstep(0.05, 0.1, px);
+    float joint = bLine(jm, 0.006, px) * (1.0 - far);
+    c = mix(base * (0.84 + 0.3 * r) * (0.92 + 0.16 * vnoise(q * 9.0)), vec3(0.28, 0.27, 0.25), joint);
+    c = mix(c, base * 0.97, far);
+    bump = -0.012 * joint; bumpAmt = 0.5 * (1.0 - far);
+  } else if (T < 3.5) {
+    // brick in running bond
+    vec2 bs = vec2(0.2032, 0.0677);
+    float row = floor(q.y / bs.y);
+    float uo = q.x + mod(row, 2.0) * 0.5 * bs.x;
+    float bc = floor(uo / bs.x);
+    vec2 f = vec2(uo - bc * bs.x, q.y - row * bs.y);
+    float jm = min(min(f.x, bs.x - f.x), min(f.y, bs.y - f.y));
+    vec3 base = pal < 0.5 ? vec3(0.20, 0.075, 0.045) : pal < 1.5 ? vec3(0.14, 0.06, 0.04) : vec3(0.30, 0.22, 0.15);
+    vec3 mort = vec3(0.30, 0.29, 0.27);
+    float r = hash2(ivec2(int(bc), int(row)));
+    float far = smoothstep(0.015, 0.035, px);
+    float joint = bLine(jm, 0.004, px) * (1.0 - far);
+    c = mix(mix(base * (0.8 + 0.4 * r), mort, joint), mix(base, mort, 0.2), far);
+    bump = -0.006 * joint; bumpAmt = 0.5 * (1.0 - far);
+  } else if (T < 4.5) {
+    // poured concrete: a joint every 3 m, the form ties' holes, streaks
+    float jx = abs(fract(q.x / 3.0 + 0.5) - 0.5) * 3.0;
+    vec2 th = abs(fract(q / 0.6) - 0.5) * 0.6;
+    float far = smoothstep(0.01, 0.03, px);
+    float tie = (1.0 - smoothstep(0.008, 0.014, length(th))) * (1.0 - far);
+    float jt = bLine(jx, 0.006, px) * (1.0 - far);
+    c = vec3(0.27, 0.262, 0.248) * (0.88 + 0.2 * fbm3(vec2(q.x * 1.3, q.y * 0.35))) * (1.0 - 0.45 * max(jt, tie));
+  } else if (T < 5.5) {
+    // a noise barrier: panels 3.66 m wide between their posts, stacked 1.22 m high, ribbed
+    float post = step(mod(q.x, 3.66), 0.25);
+    float far = smoothstep(0.015, 0.05, px);
+    float rib = mix(0.5 + 0.5 * sin(q.x / 0.2 * 6.2832), 0.5, far);
+    float jy = abs(fract(q.y / 1.22 + 0.5) - 0.5) * 1.22;
+    float joint = bLine(jy, 0.006, px) * (1.0 - far);
+    vec3 base = pal < 0.5 ? vec3(0.27, 0.24, 0.20) : vec3(0.25, 0.25, 0.24);
+    c = mix(base * (0.92 + 0.12 * rib) * (0.9 + 0.15 * fbm3(q * vec2(0.8, 0.5))), vec3(0.12, 0.12, 0.12), post);
+    c *= 1.0 - 0.35 * joint;
+    bump = 0.01 * rib * (1.0 - post); bumpAmt = 0.5 * (1.0 - far);
+  } else if (T < 6.5) {
+    // chain link: 5 cm diamonds of wire, and past where they can be seen, as much of the panel as the wire covers
+    vec2 d = vec2(q.x + q.y, q.x - q.y) / 0.0707;
+    vec2 fw = fwidth(d);
+    float fd = max(fw.x, fw.y);
+    float dA = 0.5 - abs(fract(d.x) - 0.5), dB = 0.5 - abs(fract(d.y) - 0.5);
+    float w = 0.075;
+    float cw = max(1.0 - smoothstep(w - fd, w + fd, dA), 1.0 - smoothstep(w - fd, w + fd, dB));
+    float cov = mix(cw, 0.30, smoothstep(0.35, 0.8, fd));
+    if (cov < bIGN(gl_FragCoord.xy)) cut = 1.0;
+    c = pal < 0.5 ? vec3(0.30, 0.31, 0.32) : pal < 1.5 ? vec3(0.025, 0.027, 0.025) : vec3(0.03, 0.07, 0.035);
+  } else if (T < 7.5) {
+    // boards: cedar, weathered, stained, white vinyl, or corrugated metal
+    if (pal > 3.5) {
+      float rib = 0.5 + 0.5 * sin(q.x / 0.068 * 6.2832);
+      c = vec3(0.28, 0.29, 0.30) * (0.85 + 0.2 * mix(rib, 0.5, smoothstep(0.01, 0.03, px)));
+    } else {
+      float bw = pal > 2.5 ? 0.15 : 0.14;
+      float b = floor(q.x / bw), fx = q.x - b * bw;
+      float jm = min(fx, bw - fx);
+      float far = smoothstep(0.03, 0.06, px);
+      float seam = bLine(jm, 0.003, px) * (1.0 - far);
+      vec3 base = pal < 0.5 ? vec3(0.20, 0.15, 0.105) : pal < 1.5 ? vec3(0.19, 0.18, 0.165) : pal < 2.5 ? vec3(0.09, 0.06, 0.045) : vec3(0.62, 0.62, 0.60);
+      float r = hash2(ivec2(int(b), int(pal) * 7 + 3));
+      vec3 bd = base * (pal > 2.5 ? 0.97 + 0.06 * r : (0.82 + 0.3 * r) * (0.9 + 0.2 * vnoise(vec2(q.x * 30.0, q.y * 1.5))));
+      c = mix(mix(bd, base * (pal > 2.5 ? 1.0 : 0.95), far), bd * 0.35, seam * (pal > 2.5 ? 0.4 : 1.0));
+      bump = -0.004 * seam; bumpAmt = 0.5 * (1.0 - far);
+    }
+  } else if (T < 8.5) {
+    // pickets 9 cm wide with 6 cm between, pointed at the top (the palette is the fence's height in 5 cm)
+    float pw = 0.15, fx = fract(q.x / pw), fp = fwidth(q.x / pw);
+    float on = 1.0 - smoothstep(0.6 - fp, 0.6 + fp, fx);
+    float dt = pal * 0.05 - q.y;
+    if (dt < 0.07) { float hw = 0.3 * max(dt, 0.0) / 0.07; on *= 1.0 - smoothstep(hw - fp, hw + fp, abs(fx - 0.3)); }
+    float cov = mix(on, 0.55, smoothstep(0.3, 0.7, fp));
+    if (cov < bIGN(gl_FragCoord.xy)) cut = 1.0;
+    c = vec3(0.62, 0.62, 0.59) * (0.95 + 0.1 * hash2(ivec2(int(floor(q.x / pw)), 3)));
+  } else if (T < 9.5) {
+    // a railing: bars 2 cm wide every 12.7 cm
+    float pw = 0.127, fx = fract(q.x / pw), fp = fwidth(q.x / pw);
+    float on = 1.0 - smoothstep(0.15 - fp, 0.15 + fp, fx);
+    float cov = mix(on, 0.30, smoothstep(0.3, 0.7, fp));
+    if (cov < bIGN(gl_FragCoord.xy)) cut = 1.0;
+    c = pal < 0.5 ? vec3(0.025, 0.025, 0.028) : pal < 1.5 ? vec3(0.025, 0.05, 0.03) : vec3(0.30, 0.31, 0.32);
+  } else {
+    // a hedge: clumps of leaves, darker in the hollows between them
+    float far = smoothstep(0.015, 0.05, px);
+    float n1 = fbm3(q * 3.5), n2 = mix(vnoise(q * 9.0 + 7.1), 0.5, far);
+    vec3 base = pal < 0.5 ? vec3(0.045, 0.085, 0.025) : pal < 1.5 ? vec3(0.03, 0.065, 0.03) : vec3(0.05, 0.08, 0.03);
+    c = base * (0.6 + 0.8 * n1) * (0.75 + 0.5 * n2);
+    c *= 1.0 - 0.6 * (1.0 - smoothstep(0.22, 0.4, n1 * 0.6 + n2 * 0.4));
+    bump = 0.06 * n1; bumpAmt = 0.6 * (1.0 - far);
+  }
+  if (bumpAmt > 0.01) N = normalize(mix(N, bBump(vRel, N, bump), bumpAmt));
+  return c;
+}
+#endif
 void main() {
   vec3 P = uCam + vRel;
   float r = length(P.yz);
@@ -17788,6 +17960,13 @@ void main() {
   vec3 V = normalize(-vRel);
   vec3 Ld, sunE;
   vec3 alb = vCol;
+  #ifdef BARRIERS
+  if (vCol.r < -0.5) {
+    float bn = floor(-vCol.r), bT = floor(bn / 64.0), cut;
+    alb = barrier(bT, bn - bT * 64.0, vCol.gb, N, cut);
+    if (cut > 0.5) discard;
+  }
+  #endif
   vec3 emis = vec3(0.0);
   vec3 col;
   if (uKind > 0.5 && uKind < 1.5) {
@@ -18541,6 +18720,17 @@ void main() {
   #else
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
   #endif
+}`
+  );
+  var DEPTH_RAILS_VS = (
+    /* glsl */
+    `
+attribute vec3 aCol;
+void main() {
+  float T = floor(floor(-aCol.r) / 64.0);
+  bool see = aCol.r < -0.5 && (abs(T - 6.0) < 0.5 || abs(T - 8.0) < 0.5 || abs(T - 9.0) < 0.5);
+  vec3 p = see ? vec3(0.0) : position;
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(p, 1.0);
 }`
   );
   var DEPTH_HOUSE_VS = (
@@ -20157,7 +20347,7 @@ void main() {
           polygonOffsetFactor: -2,
           polygonOffsetUnits: -4
         });
-        this.railMat = new Rn({ vertexShader: LIT_VS, fragmentShader: LIT_FS, defines: Object.assign({}, this.defines), uniforms: Object.assign({}, this.U, { uKind: { value: 0 } }) });
+        this.railMat = new Rn({ vertexShader: LIT_VS, fragmentShader: LIT_FS, defines: Object.assign({}, this.defines, { BARRIERS: 1 }), uniforms: Object.assign({}, this.U, { uKind: { value: 0 } }) });
       }
       this.leafR = this.game.software && !this.game.forceLeaves ? 0 : q.leafR || 0;
       if (this.leafR) {
@@ -20836,6 +21026,223 @@ void main() {
   var _p3a = new Float64Array(3);
   var _p3b = new Float64Array(3);
 
+  // src/feat.js
+  var MAGIC = 827606342;
+  function parseFeat(e) {
+    const dv2 = new DataView(e.buffer, e.byteOffset, e.byteLength);
+    if (dv2.getUint32(0, true) !== MAGIC) throw new Error("bad feature file");
+    const nP = dv2.getUint32(4, true), nAp = dv2.getUint32(8, true), nL = dv2.getUint32(12, true), nLV = dv2.getUint32(16, true);
+    const nA = dv2.getUint32(20, true), nR = dv2.getUint32(24, true), nAV = dv2.getUint32(28, true);
+    let o = 32;
+    const f = { nP, nL, nA };
+    f.px = new Float32Array(nP);
+    f.py = new Float32Array(nP);
+    f.kind = new Uint8Array(nP);
+    f.sub = new Uint8Array(nP);
+    f.h = new Float32Array(nP);
+    f.napp = new Uint8Array(nP);
+    f.first = new Uint32Array(nP);
+    for (let i = 0; i < nP; i++, o += 16) {
+      f.px[i] = dv2.getInt32(o, true) / 10;
+      f.py[i] = dv2.getInt32(o + 4, true) / 10;
+      f.kind[i] = dv2.getUint8(o + 8);
+      f.sub[i] = dv2.getUint8(o + 9);
+      f.h[i] = dv2.getUint8(o + 10) / 2;
+      f.napp[i] = dv2.getUint8(o + 11);
+      f.first[i] = dv2.getUint32(o + 12, true);
+    }
+    f.apH = new Float32Array(nAp);
+    f.apCls = new Uint8Array(nAp);
+    f.apFoot = new Uint8Array(nAp);
+    f.apOne = new Uint8Array(nAp);
+    f.apFace = new Uint8Array(nAp);
+    for (let j = 0; j < nAp; j++, o += 4) {
+      f.apH[j] = dv2.getUint16(o, true) / 65536 * 2 * Math.PI;
+      const c = dv2.getUint8(o + 2);
+      f.apCls[j] = c & 15;
+      f.apFoot[j] = c >> 4 & 1;
+      f.apOne[j] = c >> 5 & 1;
+      f.apFace[j] = dv2.getUint8(o + 3);
+    }
+    f.lStart = new Uint32Array(nL);
+    f.lCount = new Uint32Array(nL);
+    f.lKv = new Float32Array(nL);
+    f.lKind = new Uint8Array(nL);
+    f.lCab = new Uint8Array(nL);
+    for (let i = 0; i < nL; i++, o += 12) {
+      f.lStart[i] = dv2.getUint32(o, true);
+      f.lCount[i] = dv2.getUint32(o + 4, true);
+      f.lKv[i] = dv2.getUint16(o + 8, true) / 10;
+      f.lKind[i] = dv2.getUint8(o + 10);
+      f.lCab[i] = dv2.getUint8(o + 11);
+    }
+    f.lx = new Float32Array(nLV);
+    f.ly = new Float32Array(nLV);
+    for (let i = 0; i < nLV; i++) f.lx[i] = dv2.getInt32(o + i * 4, true) / 10;
+    o += nLV * 4;
+    for (let i = 0; i < nLV; i++) f.ly[i] = dv2.getInt32(o + i * 4, true) / 10;
+    o += nLV * 4;
+    f.lk = new Uint8Array(e.buffer.slice(e.byteOffset + o, e.byteOffset + o + nLV));
+    o += nLV;
+    o = o + 3 & ~3;
+    f.aRing = new Uint32Array(nA);
+    f.aRings = new Uint16Array(nA);
+    f.aKind = new Uint8Array(nA);
+    f.aSub = new Uint8Array(nA);
+    for (let i = 0; i < nA; i++, o += 8) {
+      f.aRing[i] = dv2.getUint32(o, true);
+      f.aRings[i] = dv2.getUint16(o + 4, true);
+      f.aKind[i] = dv2.getUint8(o + 6);
+      f.aSub[i] = dv2.getUint8(o + 7);
+    }
+    f.rStart = new Uint32Array(nR);
+    f.rCount = new Uint32Array(nR);
+    f.rOuter = new Uint8Array(nR);
+    for (let i = 0; i < nR; i++, o += 12) {
+      f.rStart[i] = dv2.getUint32(o, true);
+      f.rCount[i] = dv2.getUint32(o + 4, true);
+      f.rOuter[i] = dv2.getUint8(o + 8);
+    }
+    f.ax = new Float32Array(nAV);
+    f.ay = new Float32Array(nAV);
+    for (let i = 0; i < nAV; i++) f.ax[i] = dv2.getInt32(o + i * 4, true) / 10;
+    o += nAV * 4;
+    for (let i = 0; i < nAV; i++) f.ay[i] = dv2.getInt32(o + i * 4, true) / 10;
+    o += nAV * 4;
+    f.nG = 0;
+    f.nB = 0;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1279869266) {
+      const nG = dv2.getUint32(o + 4, true), nGV = dv2.getUint32(o + 8, true);
+      o += 16;
+      f.nG = nG;
+      f.gStart = new Uint32Array(nG);
+      f.gCount = new Uint32Array(nG);
+      f.gKind = new Uint8Array(nG);
+      f.gLayer = new Int8Array(nG);
+      for (let i = 0; i < nG; i++, o += 12) {
+        f.gStart[i] = dv2.getUint32(o, true);
+        f.gCount[i] = dv2.getUint32(o + 4, true);
+        f.gKind[i] = dv2.getUint8(o + 8);
+        f.gLayer[i] = dv2.getInt8(o + 9);
+      }
+      f.gx = new Float32Array(nGV);
+      f.gy = new Float32Array(nGV);
+      for (let i = 0; i < nGV; i++) f.gx[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nGV * 4;
+      for (let i = 0; i < nGV; i++) f.gy[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nGV * 4;
+    }
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1381122370) {
+      const nB = dv2.getUint32(o + 4, true), nBV = dv2.getUint32(o + 8, true);
+      o += 16;
+      f.nB = nB;
+      f.bStart = new Uint32Array(nB);
+      f.bCount = new Uint32Array(nB);
+      f.bKind = new Uint8Array(nB);
+      f.bSub = new Uint8Array(nB);
+      f.bH = new Float32Array(nB);
+      f.bSeed = new Uint8Array(nB);
+      for (let i = 0; i < nB; i++, o += 12) {
+        f.bStart[i] = dv2.getUint32(o, true);
+        f.bCount[i] = dv2.getUint32(o + 4, true);
+        f.bKind[i] = dv2.getUint8(o + 8);
+        f.bSub[i] = dv2.getUint8(o + 9);
+        f.bH[i] = dv2.getUint8(o + 10) / 10;
+        f.bSeed[i] = dv2.getUint8(o + 11);
+      }
+      f.bx = new Float32Array(nBV);
+      f.by = new Float32Array(nBV);
+      for (let i = 0; i < nBV; i++) f.bx[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nBV * 4;
+      for (let i = 0; i < nBV; i++) f.by[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nBV * 4;
+    }
+    f.aBox = new Float32Array(nA * 4);
+    for (let a = 0; a < nA; a++) {
+      let x02 = 1e9, y02 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (let r = f.aRing[a], re = r + f.aRings[a]; r < re; r++) for (let v = f.rStart[r], ve2 = v + f.rCount[r]; v < ve2; v++) {
+        const x = f.ax[v], y = f.ay[v];
+        if (x < x02) x02 = x;
+        if (x > x1) x1 = x;
+        if (y < y02) y02 = y;
+        if (y > y1) y1 = y;
+      }
+      f.aBox[a * 4] = x02;
+      f.aBox[a * 4 + 1] = y02;
+      f.aBox[a * 4 + 2] = x1;
+      f.aBox[a * 4 + 3] = y1;
+    }
+    return f;
+  }
+  var HEX = [0, 1, 2, 3, 4, 5].map((k) => [-0.15 + 0.075 * Math.cos(k * Math.PI / 3), 0.92 + 0.075 * Math.sin(k * Math.PI / 3)]);
+  var B_STEP = [1.5, 3, 1];
+  function barPoint(world, mx2, my2, o) {
+    o.ok = false;
+    if (world.nearestRoad(mx2, my2) < -0.2) return o;
+    if (world.nearestDeck(mx2, my2) < 1) return o;
+    o.z = world.groundH(mx2, my2, true);
+    if (world.g.water) return o;
+    o.ok = true;
+    return o;
+  }
+  function barSamples(f, g) {
+    const a02 = f.bStart[g], n = f.bCount[g], kind = f.bKind[g];
+    const cum = new Float64Array(n);
+    for (let v = 1; v < n; v++) cum[v] = cum[v - 1] + Math.hypot(f.bx[a02 + v] - f.bx[a02 + v - 1], f.by[a02 + v] - f.by[a02 + v - 1]);
+    const L2 = cum[n - 1];
+    if (L2 < 0.5) return null;
+    const step = B_STEP[kind], S2 = [], SV = [];
+    for (let v = 0; v < n; v++) {
+      S2.push(cum[v]);
+      SV.push(v);
+      if (v < n - 1) for (let k = Math.ceil((cum[v] + 0.3 * step) / step); k * step < cum[v + 1] - 0.3 * step; k++) {
+        S2.push(k * step);
+        SV.push(v);
+      }
+    }
+    const ns2 = S2.length, PX = new Float64Array(ns2), PY = new Float64Array(ns2);
+    for (let i = 0; i < ns2; i++) {
+      const v = SV[i], sl2 = (v < n - 1 ? cum[v + 1] : cum[v]) - cum[v], t = sl2 > 1e-9 ? (S2[i] - cum[v]) / sl2 : 0;
+      const xa2 = f.bx[a02 + v], ya2 = f.by[a02 + v], xb = v < n - 1 ? f.bx[a02 + v + 1] : xa2, yb = v < n - 1 ? f.by[a02 + v + 1] : ya2;
+      PX[i] = xa2 + (xb - xa2) * t;
+      PY[i] = ya2 + (yb - ya2) * t;
+    }
+    return { cum, L: L2, S: S2, PX, PY };
+  }
+  var WALL_HALF = [0.4, 0.53, 0.31, 0.18, 0.125, 0.15];
+  function barrierStretches(world, reg, x02, y02, x1, y1, cb) {
+    const f = reg.feat;
+    if (!f || !f.nB) return;
+    const lx0 = x02 - reg.x0, ly0 = y02 - reg.y0, lx1 = x1 - reg.x0, ly1 = y1 - reg.y0, tmp2 = { ok: false, z: 0 };
+    for (let g = 0; g < f.nB; g++) {
+      const a02 = f.bStart[g], n = f.bCount[g];
+      if (n < 2) continue;
+      let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+      for (let v = a02; v < a02 + n; v++) {
+        const x = f.bx[v], y = f.by[v];
+        if (x < bx0) bx0 = x;
+        if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y;
+        if (y > by1) by1 = y;
+      }
+      if (bx1 < lx0 - 4 || bx0 > lx1 + 4 || by1 < ly0 - 4 || by0 > ly1 + 4) continue;
+      const sm2 = barSamples(f, g);
+      if (!sm2) continue;
+      const { PX, PY } = sm2, ns2 = PX.length, kind = f.bKind[g];
+      const half = kind === 0 ? WALL_HALF[f.bSub[g]] || 0.2 : kind === 2 ? 0.5 : 0.05;
+      let prev = false;
+      for (let i = 0; i < ns2; i++) {
+        const near2 = PX[i] > lx0 - 4 && PX[i] < lx1 + 4 && PY[i] > ly0 - 4 && PY[i] < ly1 + 4;
+        const ok = near2 && barPoint(world, reg.x0 + PX[i], reg.y0 + PY[i], tmp2).ok;
+        if (ok && prev) {
+          const mx2 = (PX[i - 1] + PX[i]) / 2, my2 = (PY[i - 1] + PY[i]) / 2;
+          if (mx2 >= lx0 && mx2 < lx1 && my2 >= ly0 && my2 < ly1) cb(reg.x0 + PX[i - 1], reg.y0 + PY[i - 1], reg.x0 + PX[i], reg.y0 + PY[i], half);
+        }
+        prev = ok;
+      }
+    }
+  }
+
   // src/player.js
   var e3 = [0, 0, 0];
   var n3 = [0, 0, 0];
@@ -21377,13 +21784,38 @@ void main() {
       this.bCache = { reg, cx: cx2, cy: cy2, real: !!reg.real, polys };
       return polys;
     }
-    // Buildings are solid.  The car is a box (its own length and width, turned with it); if it has ended up overlapping a
-    // footprint it is put back outside the nearest wall, and loses the part of its speed that was going into that wall.
+    // The walls, fences and hedges within 64 m of the car (feat.js barrierStretches: the stretches drawn), each a thin
+    // box along its line as wide as it is drawn.  Kept until the car moves to another 32 m square.
+    barriersNear() {
+      const w = this.game.world, c = this.car, gx2 = Math.floor(c.mx / 32), gy2 = Math.floor(c.my / 32);
+      if (this.barCache && this.barCache.gx === gx2 && this.barCache.gy === gy2) return this.barCache.polys;
+      const polys = [], x02 = gx2 * 32 - 64, y02 = gy2 * 32 - 64, x1 = x02 + 160, y1 = y02 + 160, seen = /* @__PURE__ */ new Set();
+      for (const [qx2, qy2] of [[x02, y02], [x1, y02], [x02, y1], [x1, y1]]) {
+        const reg = w.regionAt(clamp2(qx2, 300, L - 300), wrapY(qy2));
+        if (!reg || seen.has(reg)) continue;
+        seen.add(reg);
+        const rx0 = Math.max(x02, reg.x0), ry0 = Math.max(y02, reg.y0), rx1 = Math.min(x1, reg.x0 + RS3), ry1 = Math.min(y1, reg.y0 + RS3);
+        if (rx1 <= rx0 || ry1 <= ry0) continue;
+        barrierStretches(w, reg, rx0, ry0, rx1, ry1, (ax2, ay2, bx2, by2, hw) => {
+          const len = Math.hypot(bx2 - ax2, by2 - ay2);
+          if (len < 0.05) return;
+          const nx2 = -(by2 - ay2) / len * hw, ny2 = (bx2 - ax2) / len * hw;
+          const pts = new Float64Array([ax2 - nx2, ay2 - ny2, bx2 - nx2, by2 - ny2, bx2 + nx2, by2 + ny2, ax2 + nx2, ay2 + ny2]);
+          polys.push({ pts, n: 4, cx: (ax2 + bx2) / 2, cy: (ay2 + by2) / 2, rad: len / 2 + hw + 0.1, rings: null });
+        });
+      }
+      this.barCache = { gx: gx2, gy: gy2, polys };
+      return polys;
+    }
+    // Buildings, and the walls, fences and hedges, are solid.  The car is a box (its own length and width, turned with
+    // it); if it has ended up overlapping a footprint it is put back outside the nearest wall, and loses the part of its
+    // speed that was going into that wall.
     bump() {
       const c = this.car;
       if (c.deck || c.tun) return;
-      const polys = this.buildingsNear();
-      if (!polys) return;
+      const bld = this.buildingsNear(), bars = this.barriersNear();
+      if (!bld && !bars.length) return;
+      const polys = bld && bars.length ? bld.concat(bars) : bld || bars;
       const fx2 = Math.sin(c.hdg), fy2 = Math.cos(c.hdg);
       for (let it = 0; it < 4; it++) {
         let best = null, bl = 0;
@@ -24571,7 +25003,7 @@ void main() {
   };
 
   // src/structures.js
-  var MAGIC = 827018572;
+  var MAGIC2 = 827018572;
   var K_GUYED = 0;
   var K_LATTICE = 1;
   var K_TURBINE = 5;
@@ -24633,7 +25065,7 @@ void main() {
     build(u8) {
       const g = this.game, t = g.terrain, q = g.quality;
       const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-      if (dv2.getUint32(0, true) !== MAGIC) return;
+      if (dv2.getUint32(0, true) !== MAGIC2) return;
       const n = dv2.getUint32(4, true);
       const reachK = q.skyFar || 0.6;
       this.recs = [];
@@ -25126,6 +25558,7 @@ void main() {
       if (params.get("streets") === "0" && meta.tiles) delete meta.tiles.streets;
       this.groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
       this.streetFiles = new Set(meta.tiles && meta.tiles.streets ? meta.tiles.streets : []);
+      this.featFiles = new Set(meta.tiles && meta.tiles.feat ? meta.tiles.feat : []);
       this.measuredFiles = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
       this.regionFails = /* @__PURE__ */ new Map();
       if (params.get("decks") === "0" && meta.tiles) delete meta.tiles.decks;
@@ -25409,7 +25842,7 @@ void main() {
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
       this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
       this.depthMat.decks = this.depthMat.houses;
-      this.depthMat.rails = this.depthMat.plain;
+      this.depthMat.rails = mk(DEPTH_RAILS_VS);
       this.depthMat.leaves = new Rn({ vertexShader: DEPTH_TREE_VS, fragmentShader: DEPTH_TREE_FS, uniforms: { uLeafTex: this.U.uLeafTex }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
@@ -25614,6 +26047,7 @@ void main() {
             if (this.groundFiles.has(k)) parts.push("g3");
             if (this.measuredFiles.has(k)) parts.push("b3");
             if (this.streetFiles.has(k)) parts.push("s1");
+            if (this.featFiles.has(k)) parts.push("f1");
             await this.readRegionParts(reg, rx2, ry2, parts);
             w.addRegion(rx2, ry2, reg);
             this.regionFails.delete(k);
@@ -25640,8 +26074,9 @@ void main() {
       }
       return pr2;
     }
-    // the optional parts of a region: the ground the LiDAR saw (g3), the measured buildings' outlines and roofs (b3) and a
-    // city's surveyed streets (s1: here for its shoreline, World.sdfAt)
+    // the optional parts of a region: the ground the LiDAR saw (g3), the measured buildings' outlines and roofs (b3), a
+    // city's surveyed streets (s1: here for its shoreline, World.sdfAt) and the street features (f1: here for the walls,
+    // fences and hedges, which the car meets)
     async readRegionParts(reg, rx2, ry2, which) {
       const key2 = "p" + rx2 + "_" + ry2;
       if (this.regionLoads.get(key2)) return this.regionLoads.get(key2);
@@ -25654,6 +26089,7 @@ void main() {
             const p = await decodePNG(await r.arrayBuffer());
             if (dir === "g3") reg.ground = parseGround(p.data);
             else if (dir === "s1") reg.streets = parseStreets(p.data);
+            else if (dir === "f1") reg.feat = parseFeat(p.data);
             else {
               const e = p.data;
               reg.real = parseReal(e.buffer.slice(e.byteOffset, e.byteOffset + e.byteLength));
@@ -25668,6 +26104,7 @@ void main() {
           reg.partial = n >= 6 ? null : { which: missing, n, next: performance.now() + 1e3 * Math.min(60, 2 ** n) };
         } else reg.partial = null;
         this.player.bCache = null;
+        this.player.barCache = null;
         this.regionLoads.delete(key2);
       })();
       this.regionLoads.set(key2, pr2);

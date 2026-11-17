@@ -4015,6 +4015,7 @@
     for (let i = 0; i < nAV; i++) f.ay[i] = dv.getInt32(o + i * 4, true) / 10;
     o += nAV * 4;
     f.nG = 0;
+    f.nB = 0;
     if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1279869266) {
       const nG = dv.getUint32(o + 4, true), nGV = dv.getUint32(o + 8, true);
       o += 16;
@@ -4034,6 +4035,32 @@
       for (let i = 0; i < nGV; i++) f.gx[i] = dv.getInt32(o + i * 4, true) / 10;
       o += nGV * 4;
       for (let i = 0; i < nGV; i++) f.gy[i] = dv.getInt32(o + i * 4, true) / 10;
+      o += nGV * 4;
+    }
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1381122370) {
+      const nB = dv.getUint32(o + 4, true), nBV = dv.getUint32(o + 8, true);
+      o += 16;
+      f.nB = nB;
+      f.bStart = new Uint32Array(nB);
+      f.bCount = new Uint32Array(nB);
+      f.bKind = new Uint8Array(nB);
+      f.bSub = new Uint8Array(nB);
+      f.bH = new Float32Array(nB);
+      f.bSeed = new Uint8Array(nB);
+      for (let i = 0; i < nB; i++, o += 12) {
+        f.bStart[i] = dv.getUint32(o, true);
+        f.bCount[i] = dv.getUint32(o + 4, true);
+        f.bKind[i] = dv.getUint8(o + 8);
+        f.bSub[i] = dv.getUint8(o + 9);
+        f.bH[i] = dv.getUint8(o + 10) / 10;
+        f.bSeed[i] = dv.getUint8(o + 11);
+      }
+      f.bx = new Float32Array(nBV);
+      f.by = new Float32Array(nBV);
+      for (let i = 0; i < nBV; i++) f.bx[i] = dv.getInt32(o + i * 4, true) / 10;
+      o += nBV * 4;
+      for (let i = 0; i < nBV; i++) f.by[i] = dv.getInt32(o + i * 4, true) / 10;
+      o += nBV * 4;
     }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
@@ -4866,7 +4893,7 @@
   }
   function railTris(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
-    if (!f || !f.nG) return new Float32Array(0);
+    if (!f || !f.nG && !f.nB) return new Float32Array(0);
     const out = [], WIN = 40;
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const A = new Float64Array(3), Bq = new Float64Array(3), tmp2 = { x: 0, y: 0, z: 0, look: -1, rdx: 0, rdy: 0 };
@@ -5051,7 +5078,368 @@
         }
       }
     }
+    if (f.nB) barrierTris(world2, reg, f, lx0, ly0, s, at, dir, out);
     return new Float32Array(out);
+  }
+  var BT = { FIELD: 1, ASHLAR: 2, BRICK: 3, CONC: 4, NOISE: 5, CHAIN: 6, BOARD: 7, PICKET: 8, BARS: 9, HEDGE: 10 };
+  var B_STEP = [1.5, 3, 1];
+  var FENCE = [
+    { gap: 3.05, pw: 0.03, top: 0.05, col: [0.3, 0.31, 0.32], back: 0 },
+    { gap: 2.44, pw: 0.045, top: 0.08, col: [0.15, 0.11, 0.08], back: 0.063 },
+    { gap: 1.83, pw: 0.064, top: 0.1, col: [0.62, 0.62, 0.6], back: 0 },
+    { gap: 2.44, pw: 0.045, top: 0.08, col: [0.62, 0.62, 0.59], back: 0.075 },
+    { gap: 3.05, pw: 0.07, top: 0.08, col: [0.21, 0.19, 0.16], back: 0 },
+    { gap: 2.44, pw: 0.025, top: 0.06, col: null, back: 0 },
+    { gap: 3.66, pw: 0.04, top: 0, col: [0.16, 0.13, 0.1], back: 0 },
+    { gap: 2.44, pw: 0.04, top: 0.05, col: [0.25, 0.26, 0.27], back: 0.06 }
+  ];
+  var BARS_COL = [[0.025, 0.025, 0.028], [0.025, 0.05, 0.03], [0.3, 0.31, 0.32]];
+  var C_GALV = [0.3, 0.31, 0.32];
+  var C_WOOD = [0.21, 0.19, 0.16];
+  var C_WHITE = [0.62, 0.62, 0.59];
+  var C_WIRE = [0.2, 0.21, 0.22];
+  function bnoise(u, per, seed) {
+    const x = u / per, i = Math.floor(x), t = x - i, w = t * t * (3 - 2 * t);
+    return hash2(i, seed) * (1 - w) + hash2(i + 1, seed) * w;
+  }
+  var capped = (w, cw, ch, h) => [[w, -0.4], [w, h - ch], [cw, h - ch], [cw, h], [-cw, h], [-cw, h - ch], [-w, h - ch], [-w, -0.4]];
+  function barProfile(kind, sub, h, seed, s) {
+    const r = (k) => hash2(Math.round(s * 4) + k * 101, seed) - 0.5;
+    if (kind === 2) {
+      const w2 = 0.85 + 0.3 * bnoise(s, 2.2, seed + 3), hh = h * (0.88 + 0.24 * bnoise(s, 2.6, seed));
+      return [
+        [0.5 * w2, -0.2],
+        [0.53 * w2, 0.36 * hh],
+        [0.5 * w2 * (1 + 0.16 * r(1)), 0.76 * hh],
+        [0.34 * w2, 0.95 * hh * (1 + 0.12 * r(2))],
+        [0.02 * w2, hh * (1 + 0.12 * r(3))],
+        [-0.33 * w2, 0.95 * hh * (1 + 0.12 * r(4))],
+        [-0.5 * w2 * (1 + 0.16 * r(5)), 0.76 * hh],
+        [-0.53 * w2, 0.36 * hh],
+        [-0.5 * w2, -0.2]
+      ];
+    }
+    if (sub <= 1) {
+      const old = sub === 1, j = old ? 0.36 : 0.24;
+      const w2 = (old ? 1.05 : 0.8) * (0.86 + 0.28 * bnoise(s, 4, seed + 7));
+      const hh = h * (old ? 0.62 + 0.62 * bnoise(s, 3, seed) : 0.84 + 0.32 * bnoise(s, 3.5, seed));
+      return [
+        [0.5 * w2, -0.4],
+        [0.47 * w2, 0.45 * hh],
+        [0.36 * w2, 0.86 * hh * (1 + j * r(1))],
+        [0.14 * w2, hh * (1 + j * r(2))],
+        [-0.12 * w2, 0.98 * hh * (1 + j * r(3))],
+        [-0.35 * w2, 0.88 * hh * (1 + j * r(4))],
+        [-0.46 * w2, 0.47 * hh],
+        [-0.5 * w2, -0.4]
+      ];
+    }
+    if (sub === 2) return capped(0.28, 0.31, 0.1, h);
+    if (sub === 3) return capped(0.15, 0.18, 0.08, h);
+    const w = sub === 4 ? 0.125 : 0.15;
+    return [[w, -0.4], [w, h], [-w, h], [-w, -0.4]];
+  }
+  function barLook(kind, sub, seed) {
+    if (kind === 2) return [BT.HEDGE, seed % 3];
+    if (sub <= 1) return [BT.FIELD, sub === 1 ? 4 + (seed & 1) : seed & 3];
+    if (sub === 2) return [BT.ASHLAR, seed % 3];
+    if (sub === 3) return [BT.BRICK, seed % 3];
+    if (sub === 4) return [BT.CONC, 0];
+    return [BT.NOISE, seed & 1];
+  }
+  function barPoint(world2, mx, my, o) {
+    o.ok = false;
+    if (world2.nearestRoad(mx, my) < -0.2) return o;
+    if (world2.nearestDeck(mx, my) < 1) return o;
+    o.z = world2.groundH(mx, my, true);
+    if (world2.g.water) return o;
+    o.ok = true;
+    return o;
+  }
+  function barSamples(f, g) {
+    const a0 = f.bStart[g], n = f.bCount[g], kind = f.bKind[g];
+    const cum = new Float64Array(n);
+    for (let v = 1; v < n; v++) cum[v] = cum[v - 1] + Math.hypot(f.bx[a0 + v] - f.bx[a0 + v - 1], f.by[a0 + v] - f.by[a0 + v - 1]);
+    const L2 = cum[n - 1];
+    if (L2 < 0.5) return null;
+    const step = B_STEP[kind], S = [], SV = [];
+    for (let v = 0; v < n; v++) {
+      S.push(cum[v]);
+      SV.push(v);
+      if (v < n - 1) for (let k = Math.ceil((cum[v] + 0.3 * step) / step); k * step < cum[v + 1] - 0.3 * step; k++) {
+        S.push(k * step);
+        SV.push(v);
+      }
+    }
+    const ns = S.length, PX = new Float64Array(ns), PY = new Float64Array(ns);
+    for (let i = 0; i < ns; i++) {
+      const v = SV[i], sl = (v < n - 1 ? cum[v + 1] : cum[v]) - cum[v], t = sl > 1e-9 ? (S[i] - cum[v]) / sl : 0;
+      const xa = f.bx[a0 + v], ya = f.by[a0 + v], xb = v < n - 1 ? f.bx[a0 + v + 1] : xa, yb = v < n - 1 ? f.by[a0 + v + 1] : ya;
+      PX[i] = xa + (xb - xa) * t;
+      PY[i] = ya + (yb - ya) * t;
+    }
+    return { cum, L: L2, S, PX, PY };
+  }
+  function barrierTris(world2, reg, f, lx0, ly0, s, at, dir, out) {
+    const WIN = 12;
+    const pushC = (p, n, c) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], c[0], c[1], c[2]);
+    const quadC = (P0, P1, P2, P3, n0, n1, c0, c1, c2, c3) => {
+      const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
+      const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
+      if (fx * (n0[0] + n1[0]) + fy * (n0[1] + n1[1]) + fz * (n0[2] + n1[2]) >= 0) {
+        pushC(P0, n0, c0);
+        pushC(P1, n0, c1);
+        pushC(P2, n1, c2);
+        pushC(P0, n0, c0);
+        pushC(P2, n1, c2);
+        pushC(P3, n1, c3);
+      } else {
+        pushC(P0, n0, c0);
+        pushC(P2, n1, c2);
+        pushC(P1, n0, c1);
+        pushC(P0, n0, c0);
+        pushC(P3, n1, c3);
+        pushC(P2, n1, c2);
+      }
+    };
+    const pt = (Fr, a, b) => [Fr.B[0] + Fr.Ac[0] * a * Fr.k + Fr.U[0] * b, Fr.B[1] + Fr.Ac[1] * a * Fr.k + Fr.U[1] * b, Fr.B[2] + Fr.Ac[2] * a * Fr.k + Fr.U[2] * b];
+    const nrm = (Fr, na, nb) => {
+      const x = Fr.Ac[0] * na + Fr.U[0] * nb, y = Fr.Ac[1] * na + Fr.U[1] * nb, z = Fr.Ac[2] * na + Fr.U[2] * nb, l = Math.hypot(x, y, z) || 1;
+      return [x / l, y / l, z / l];
+    };
+    const neg = (v) => [-v[0], -v[1], -v[2]];
+    const pc = (T, P2, u, v) => [-(64 * T + P2 + 0.5), u, v];
+    const inTile = (x, y) => x >= lx0 && x < lx0 + s && y >= ly0 && y < ly0 + s;
+    const frame2 = (x, y, z, tx, ty, k) => ({ B: at(x, y, z, [0, 0, 0]), U: dir(x, y, z, 0, 0, 1, [0, 0, 0]), Ac: dir(x, y, z, -ty, tx, 0, [0, 0, 0]), T: dir(x, y, z, tx, ty, 0, [0, 0, 0]), k });
+    const longBox = (Fa, Fb, a0, a1, b0, b1, col) => {
+      quadC(pt(Fa, a0, b1), pt(Fa, a1, b1), pt(Fb, a1, b1), pt(Fb, a0, b1), Fa.U, Fb.U, col, col, col, col);
+      quadC(pt(Fa, a0, b0), pt(Fa, a1, b0), pt(Fb, a1, b0), pt(Fb, a0, b0), neg(Fa.U), neg(Fb.U), col, col, col, col);
+      quadC(pt(Fa, a1, b0), pt(Fa, a1, b1), pt(Fb, a1, b1), pt(Fb, a1, b0), Fa.Ac, Fb.Ac, col, col, col, col);
+      quadC(pt(Fa, a0, b0), pt(Fa, a0, b1), pt(Fb, a0, b1), pt(Fb, a0, b0), neg(Fa.Ac), neg(Fb.Ac), col, col, col, col);
+    };
+    const panel = (Fa, Fb, sa, sb, b0, b1, T, P2) => {
+      const c0 = pc(T, P2, sa, b0), c1 = pc(T, P2, sa, b1), c2 = pc(T, P2, sb, b1), c3 = pc(T, P2, sb, b0);
+      const A0 = pt(Fa, 0, b0), A1 = pt(Fa, 0, b1), B1 = pt(Fb, 0, b1), B0 = pt(Fb, 0, b0);
+      quadC(A0, A1, B1, B0, Fa.Ac, Fb.Ac, c0, c1, c2, c3);
+      quadC(A0, A1, B1, B0, neg(Fa.Ac), neg(Fb.Ac), c0, c1, c2, c3);
+    };
+    const tmp2 = { ok: false, z: 0 };
+    for (let g = 0; g < f.nB; g++) {
+      const a0 = f.bStart[g], n = f.bCount[g], kind = f.bKind[g], sub = f.bSub[g], h = f.bH[g], seed = f.bSeed[g];
+      if (n < 2) continue;
+      let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+      for (let v = a0; v < a0 + n; v++) {
+        const x = f.bx[v], y = f.by[v];
+        if (x < bx0) bx0 = x;
+        if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y;
+        if (y > by1) by1 = y;
+      }
+      if (bx1 < lx0 - WIN || bx0 > lx0 + s + WIN || by1 < ly0 - WIN || by0 > ly0 + s + WIN) continue;
+      const sm = barSamples(f, g);
+      if (!sm) continue;
+      const { cum, L: L2, S, PX, PY } = sm, ns = S.length;
+      const F = new Array(ns).fill(null);
+      for (let i = 0; i < ns; i++) {
+        const x = PX[i], y = PY[i];
+        if (x < lx0 - WIN || x > lx0 + s + WIN || y < ly0 - WIN || y > ly0 + s + WIN) continue;
+        barPoint(world2, reg.x0 + x, reg.y0 + y, tmp2);
+        if (!tmp2.ok) continue;
+        const ia = Math.max(0, i - 1), ib = Math.min(ns - 1, i + 1);
+        let tx = PX[ib] - PX[ia], ty = PY[ib] - PY[ia], tl = Math.hypot(tx, ty);
+        if (tl < 1e-6) continue;
+        tx /= tl;
+        ty /= tl;
+        let k = 1;
+        if (i > 0 && i < ns - 1) {
+          const dx = PX[i + 1] - x, dy = PY[i + 1] - y, dl = Math.hypot(dx, dy);
+          if (dl > 1e-6) k = 1 / Math.max(0.6, (tx * dx + ty * dy) / dl);
+        }
+        F[i] = frame2(reg.x0 + x, reg.y0 + y, tmp2.z, tx, ty, k);
+      }
+      if (kind !== 1) {
+        const [T, P2] = barLook(kind, sub, seed), smooth = kind === 2;
+        const Q = new Array(ns).fill(null), V2 = new Array(ns).fill(null), NQ = new Array(ns).fill(null);
+        const prof = (i) => {
+          if (Q[i]) return;
+          const q = barProfile(kind, sub, h, seed, S[i]), vv = [0], nn = [];
+          for (let j = 1; j < q.length; j++) vv.push(vv[j - 1] + Math.hypot(q[j][0] - q[j - 1][0], q[j][1] - q[j - 1][1]));
+          for (let j = 0; j + 1 < q.length; j++) {
+            const na = q[j + 1][1] - q[j][1], nb = -(q[j + 1][0] - q[j][0]), l = Math.hypot(na, nb) || 1;
+            nn.push([na / l, nb / l]);
+          }
+          Q[i] = q;
+          V2[i] = vv;
+          NQ[i] = nn;
+        };
+        const nAt = (i, j, e) => {
+          const nn = NQ[i], m = nn.length;
+          if (!smooth) return nn[e ? j - 1 : j];
+          const a = nn[Math.max(0, j - 1)], b = nn[Math.min(m - 1, j)];
+          return [a[0] + b[0], a[1] + b[1]];
+        };
+        for (let i = 0; i + 1 < ns; i++) {
+          const Fa = F[i], Fb = F[i + 1];
+          if (!Fa || !Fb) continue;
+          if (inTile((PX[i] + PX[i + 1]) / 2, (PY[i] + PY[i + 1]) / 2)) {
+            prof(i);
+            prof(i + 1);
+            const qa = Q[i], qb = Q[i + 1], va = V2[i], vb = V2[i + 1];
+            for (let j = 0; j + 1 < qa.length; j++) {
+              const n0a = nAt(i, j, 0), n1a = nAt(i, j + 1, 1), n0b = nAt(i + 1, j, 0), n1b = nAt(i + 1, j + 1, 1);
+              if (smooth) {
+                const A0 = pt(Fa, qa[j][0], qa[j][1]), A1 = pt(Fa, qa[j + 1][0], qa[j + 1][1]), B1 = pt(Fb, qb[j + 1][0], qb[j + 1][1]), B0 = pt(Fb, qb[j][0], qb[j][1]);
+                const NA0 = nrm(Fa, n0a[0], n0a[1]), NA1 = nrm(Fa, n1a[0], n1a[1]), NB1 = nrm(Fb, n1b[0], n1b[1]), NB0 = nrm(Fb, n0b[0], n0b[1]);
+                const cA0 = pc(T, P2, S[i], va[j]), cA1 = pc(T, P2, S[i], va[j + 1]), cB1 = pc(T, P2, S[i + 1], vb[j + 1]), cB0 = pc(T, P2, S[i + 1], vb[j]);
+                const ux = A1[0] - A0[0], uy = A1[1] - A0[1], uz = A1[2] - A0[2], wx = B1[0] - A0[0], wy = B1[1] - A0[1], wz = B1[2] - A0[2];
+                const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
+                if (fx * (NA0[0] + NB1[0]) + fy * (NA0[1] + NB1[1]) + fz * (NA0[2] + NB1[2]) >= 0) {
+                  pushC(A0, NA0, cA0);
+                  pushC(A1, NA1, cA1);
+                  pushC(B1, NB1, cB1);
+                  pushC(A0, NA0, cA0);
+                  pushC(B1, NB1, cB1);
+                  pushC(B0, NB0, cB0);
+                } else {
+                  pushC(A0, NA0, cA0);
+                  pushC(B1, NB1, cB1);
+                  pushC(A1, NA1, cA1);
+                  pushC(A0, NA0, cA0);
+                  pushC(B0, NB0, cB0);
+                  pushC(B1, NB1, cB1);
+                }
+              } else {
+                quadC(
+                  pt(Fa, qa[j][0], qa[j][1]),
+                  pt(Fa, qa[j + 1][0], qa[j + 1][1]),
+                  pt(Fb, qb[j + 1][0], qb[j + 1][1]),
+                  pt(Fb, qb[j][0], qb[j][1]),
+                  nrm(Fa, n0a[0], n0a[1]),
+                  nrm(Fb, n0b[0], n0b[1]),
+                  pc(T, P2, S[i], va[j]),
+                  pc(T, P2, S[i], va[j + 1]),
+                  pc(T, P2, S[i + 1], vb[j + 1]),
+                  pc(T, P2, S[i + 1], vb[j])
+                );
+              }
+            }
+          }
+        }
+        for (let i = 0; i < ns; i++) {
+          const Fe = F[i];
+          if (!Fe || !inTile(PX[i], PY[i])) continue;
+          for (const sg of [-1, 1]) {
+            const j = i + sg;
+            const open = j >= 0 && j < ns && F[j];
+            if (open) continue;
+            const other = i - sg;
+            if (other < 0 || other >= ns || !F[other]) continue;
+            prof(i);
+            const q = Q[i], m = q.length;
+            let ca = 0, cb = 0;
+            for (const p of q) {
+              ca += p[0];
+              cb += p[1];
+            }
+            ca /= m;
+            cb /= m;
+            const nT = sg > 0 ? Fe.T : neg(Fe.T), C2 = pt(Fe, ca, cb), cC = pc(T, P2, S[i] + ca, cb + 0.4);
+            for (let jj = 0; jj < m; jj++) {
+              const p0 = q[jj], p1 = q[(jj + 1) % m];
+              const A = pt(Fe, p0[0], p0[1]), B = pt(Fe, p1[0], p1[1]), cA = pc(T, P2, S[i] + p0[0], p0[1] + 0.4), cB = pc(T, P2, S[i] + p1[0], p1[1] + 0.4);
+              const ux = A[0] - C2[0], uy = A[1] - C2[1], uz = A[2] - C2[2], wx = B[0] - C2[0], wy = B[1] - C2[1], wz = B[2] - C2[2];
+              if ((uy * wz - uz * wy) * nT[0] + (uz * wx - ux * wz) * nT[1] + (ux * wy - uy * wx) * nT[2] >= 0) {
+                pushC(C2, nT, cC);
+                pushC(A, nT, cA);
+                pushC(B, nT, cB);
+              } else {
+                pushC(C2, nT, cC);
+                pushC(B, nT, cB);
+                pushC(A, nT, cA);
+              }
+            }
+          }
+        }
+        continue;
+      }
+      const fd = FENCE[sub] || FENCE[0];
+      const bcol = BARS_COL[seed < 200 ? 0 : seed < 230 ? 1 : 2];
+      const chainP = seed < 230 ? 0 : seed < 245 ? 1 : 2;
+      const boardP = sub === 2 ? 3 : sub === 7 ? 4 : seed % 3;
+      for (let i = 0; i + 1 < ns; i++) {
+        const Fa = F[i], Fb = F[i + 1];
+        if (!Fa || !Fb || !inTile((PX[i] + PX[i + 1]) / 2, (PY[i] + PY[i + 1]) / 2)) continue;
+        const sa = S[i], sb = S[i + 1];
+        if (sub === 0) {
+          panel(Fa, Fb, sa, sb, 0.03, h, BT.CHAIN, chainP);
+          longBox(Fa, Fb, -0.021, 0.021, h - 0.021, h + 0.021, C_GALV);
+        } else if (sub === 1 || sub === 2 || sub === 7) {
+          const t = 0.018, c0 = pc(BT.BOARD, boardP, sa, -0.08), c1 = pc(BT.BOARD, boardP, sa, h), c2 = pc(BT.BOARD, boardP, sb, h), c3 = pc(BT.BOARD, boardP, sb, -0.08);
+          quadC(pt(Fa, t, -0.08), pt(Fa, t, h), pt(Fb, t, h), pt(Fb, t, -0.08), Fa.Ac, Fb.Ac, c0, c1, c2, c3);
+          quadC(pt(Fa, -t, -0.08), pt(Fa, -t, h), pt(Fb, -t, h), pt(Fb, -t, -0.08), neg(Fa.Ac), neg(Fb.Ac), c0, c1, c2, c3);
+          const ct = pc(BT.BOARD, boardP, sa, h), cu = pc(BT.BOARD, boardP, sb, h);
+          quadC(pt(Fa, -t, h), pt(Fa, t, h), pt(Fb, t, h), pt(Fb, -t, h), Fa.U, Fb.U, ct, ct, cu, cu);
+        } else if (sub === 3) {
+          panel(Fa, Fb, sa, sb, 0.06, h, BT.PICKET, Math.max(1, Math.min(63, Math.round(h / 0.05))));
+          longBox(Fa, Fb, -0.06, -0.022, 0.22, 0.29, C_WHITE);
+          longBox(Fa, Fb, -0.06, -0.022, h - 0.25, h - 0.18, C_WHITE);
+        } else if (sub === 4) {
+          const nr = h <= 1 ? [0.45, 0.88] : [0.3, 0.6, 0.9];
+          for (const c of nr) longBox(Fa, Fb, -0.05, 0.05, c * h - 0.045, c * h + 0.045, C_WOOD);
+        } else if (sub === 5) {
+          panel(Fa, Fb, sa, sb, 0.1, h - 0.035, BT.BARS, seed < 200 ? 0 : seed < 230 ? 1 : 2);
+          longBox(Fa, Fb, -0.02, 0.02, h - 0.035, h, bcol);
+          longBox(Fa, Fb, -0.02, 0.02, 0.07, 0.1, bcol);
+        } else {
+          for (const c of [0.45, 0.7, 0.95]) longBox(Fa, Fb, -6e-3, 6e-3, c * h - 6e-3, c * h + 6e-3, C_WIRE);
+        }
+      }
+      const posts = [];
+      for (let v = 0; v < n; v++) {
+        let corner = v === 0 || v === n - 1;
+        if (!corner) {
+          const ax = f.bx[a0 + v] - f.bx[a0 + v - 1], ay = f.by[a0 + v] - f.by[a0 + v - 1], bx = f.bx[a0 + v + 1] - f.bx[a0 + v], by = f.by[a0 + v + 1] - f.by[a0 + v];
+          const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by);
+          corner = la > 1e-6 && lb > 1e-6 && (ax * bx + ay * by) / (la * lb) < 0.966;
+        }
+        if (corner) posts.push(cum[v]);
+      }
+      const gap = fd.gap;
+      for (let m = 1; m * gap < L2 - 0.4 * gap; m++) {
+        const sp = m * gap;
+        let near = false;
+        for (const q of posts) if (Math.abs(q - sp) < 0.4 * gap) {
+          near = true;
+          break;
+        }
+        if (!near) posts.push(sp);
+      }
+      const pcol = fd.col || bcol, pw = fd.pw, ptop = h + fd.top, pa = -fd.back;
+      for (const sp of posts) {
+        let v = 0;
+        while (v < n - 2 && cum[v + 1] < sp) v++;
+        const sl = cum[v + 1] - cum[v], t = sl > 1e-9 ? Math.min(1, Math.max(0, (sp - cum[v]) / sl)) : 0;
+        const x = f.bx[a0 + v] + (f.bx[a0 + v + 1] - f.bx[a0 + v]) * t, y = f.by[a0 + v] + (f.by[a0 + v + 1] - f.by[a0 + v]) * t;
+        if (!inTile(x, y)) continue;
+        barPoint(world2, reg.x0 + x, reg.y0 + y, tmp2);
+        if (!tmp2.ok) continue;
+        const tx = (f.bx[a0 + v + 1] - f.bx[a0 + v]) / (sl || 1), ty = (f.by[a0 + v + 1] - f.by[a0 + v]) / (sl || 1);
+        const Fr = frame2(reg.x0 + x, reg.y0 + y, tmp2.z, tx, ty, 1);
+        const c = (aa, bb, tt) => {
+          const p = pt(Fr, pa + aa, bb);
+          p[0] += Fr.T[0] * tt;
+          p[1] += Fr.T[1] * tt;
+          p[2] += Fr.T[2] * tt;
+          return p;
+        };
+        const mA = neg(Fr.Ac), mT = neg(Fr.T);
+        quadC(c(pw, -0.3, -pw), c(pw, ptop, -pw), c(pw, ptop, pw), c(pw, -0.3, pw), Fr.Ac, Fr.Ac, pcol, pcol, pcol, pcol);
+        quadC(c(-pw, -0.3, -pw), c(-pw, ptop, -pw), c(-pw, ptop, pw), c(-pw, -0.3, pw), mA, mA, pcol, pcol, pcol, pcol);
+        quadC(c(-pw, -0.3, pw), c(pw, -0.3, pw), c(pw, ptop, pw), c(-pw, ptop, pw), Fr.T, Fr.T, pcol, pcol, pcol, pcol);
+        quadC(c(-pw, -0.3, -pw), c(pw, -0.3, -pw), c(pw, ptop, -pw), c(-pw, ptop, -pw), mT, mT, pcol, pcol, pcol, pcol);
+        quadC(c(-pw, ptop, -pw), c(pw, ptop, -pw), c(pw, ptop, pw), c(-pw, ptop, pw), Fr.U, Fr.U, pcol, pcol, pcol, pcol);
+      }
+    }
   }
 
   // src/spans.js
