@@ -796,6 +796,32 @@
     const m = SIDES && reg ? SIDES.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
+  var SHOULDERS = null;
+  function setShoulders(m) {
+    SHOULDERS = m;
+  }
+  function shoulderOf(reg, ri, hw, o) {
+    o.r = 0;
+    o.l = 0;
+    o.b = 0;
+    const m = SHOULDERS && reg ? SHOULDERS.get(reg.ry * RNX + reg.rx) : null, S = m ? m.get(ri) : void 0;
+    if (!S || reg.rFlags[ri] & 8) return o;
+    const N = laneCounts(reg), st2 = N[ri * 4];
+    const n = st2 === 1 ? N[ri * 4 + 1] + N[ri * 4 + 2] + N[ri * 4 + 3] : st2 === 2 ? N[ri * 4 + 1] : reg.rFlags[ri] & 1 ? 1 : 2;
+    const tw = S[0] / 10;
+    if (!(n > 0) || tw > 4.6 * n) return o;
+    const sum = 2 * hw - Math.max(tw, st2 === 1 || st2 === 2 ? n * (reg.rCls[ri] <= 3 ? 3.35 : 2.75) : 0);
+    if (!(sum > 0)) return o;
+    const r = Math.min(15, Math.round(sum * S[3] / 25)), l = Math.min(15, Math.round(sum * (100 - S[3]) / 25));
+    o.r = r * 0.25;
+    o.l = l * 0.25;
+    o.b = r | l << 4;
+    return o;
+  }
+  function shoulderUnpaved(reg, ri, side) {
+    const m = SHOULDERS && reg ? SHOULDERS.get(reg.ry * RNX + reg.rx) : null, S = m ? m.get(ri) : void 0;
+    return S ? 38 >> S[side > 0 ? 1 : 2] & 1 : 0;
+  }
   function setLanes(m) {
     LANES = m;
     LANE_V++;
@@ -1081,10 +1107,11 @@
     }
     return o;
   }
-  function laneGeom(style, nF, nB2, c, hw, rZ, lZ, o) {
+  function laneGeom(style, nF, nB2, c, hw, rZ, lZ, o, rS = 0, lS = 0) {
+    const known = rS > 0 || lS > 0, cap = known ? 3.7 : 3.5;
     if (style === 1) {
-      const eR = hw - (rZ > 0 ? rZ : 0.25), eL = -(hw - (lZ > 0 ? lZ : 0.25));
-      const n = nF + nB2 + c, w = Math.min(3.5, (eR - eL) / Math.max(n, 1e-3));
+      const eR = hw - (rZ > 0 ? rZ : Math.max(rS, 0.25)), eL = -(hw - (lZ > 0 ? lZ : Math.max(lS, 0.25)));
+      const n = nF + nB2 + c, w = Math.min(cap, (eR - eL) / Math.max(n, 1e-3));
       const y = clamp2(0, eL + nB2 * w + c * w * 0.5, eR - nF * w - c * w * 0.5);
       o.w = w;
       o.y = y;
@@ -1092,9 +1119,16 @@
       o.cL = y - c * w * 0.5;
       o.le = o.cR;
     } else {
-      const sh = clamp2(hw - nF * 1.75, 0.25, 3), re = rZ > 0 ? hw - rZ : hw - sh;
-      const le = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
-      o.w = Math.min(3.5, (re - le) / Math.max(nF, 1e-3));
+      let re, le;
+      if (known) {
+        re = hw - (rZ > 0 ? rZ : Math.max(rS, 0.25));
+        le = -(hw - (lZ > 0 ? lZ : Math.max(lS, 0.25)));
+      } else {
+        const sh = clamp2(hw - nF * 1.75, 0.25, 3);
+        re = rZ > 0 ? hw - rZ : hw - sh;
+        le = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
+      }
+      o.w = Math.min(cap, (re - le) / Math.max(nF, 1e-3));
       o.y = le;
       o.cR = le;
       o.cL = le;
@@ -1106,12 +1140,14 @@
     return b & 3 ? 1 + (b >> 2 & 15) * 0.1 + (b >> 6 & 3) * 0.3 : 0;
   }
   var _lc = [0, 0, 0];
+  var _shA = { r: 0, l: 0, b: 0 };
   function lanesAt(reg, ri, s, o) {
     const N = laneCounts(reg), st2 = N[ri * 4], xs = xsOf(reg, ri);
     paintLanesDir(reg, ri, s, _lc);
     const hw = paintHw(reg, ri, s);
     const rZ = xs ? bikeZone(bikeByte(xs[1], xs[2], xs[3])) : 0, lZ = xs ? bikeZone(bikeByte(xs[4], xs[5], xs[6])) : 0;
-    laneGeom(st2, _lc[0], _lc[1], _lc[2], hw, rZ, lZ, o);
+    shoulderOf(reg, ri, hw, _shA);
+    laneGeom(st2, _lc[0], _lc[1], _lc[2], hw, rZ, lZ, o, _shA.r, _shA.l);
     o.style = st2;
     o.nF = _lc[0];
     o.nB = _lc[1];
@@ -4196,6 +4232,7 @@
   var POLE_GAP = 42;
   var SLOT = 6.4;
   var _lg = {};
+  var _shS = { r: 0, l: 0, b: 0 };
   var P = { x: 0, y: 0, z: 0, tx: 1, ty: 0 };
   function roadBoxes(reg) {
     if (reg.rBox) return reg.rBox;
@@ -4298,7 +4335,8 @@
         const side = -poleSide(reg, ri);
         const N = laneCounts(reg), st2 = N[ri * 4];
         if (st2 === 1 || st2 === 2) {
-          const G = laneGeom(st2, N[ri * 4 + 1], N[ri * 4 + 2], N[ri * 4 + 3], hw, 0, 0, _lg);
+          const sh = shoulderOf(reg, ri, hw, _shS);
+          const G = laneGeom(st2, N[ri * 4 + 1], N[ri * 4 + 2], N[ri * 4 + 3], hw, 0, 0, _lg, sh.r, sh.l);
           const room = st2 === 2 ? side > 0 ? hw - (G.le + N[ri * 4 + 1] * G.w) : hw + G.le : side > 0 ? hw - (G.cR + N[ri * 4 + 1] * G.w) : hw + (G.cL - N[ri * 4 + 2] * G.w);
           if (room < 2) continue;
         }
@@ -7703,6 +7741,7 @@
   }
 
   // src/decks.js
+  var _shD = { r: 0, l: 0, b: 0 };
   var PIER_GAP = 30;
   var _pier = {};
   var _abut = {};
@@ -7982,8 +8021,9 @@
       const covR = openRuns(reg, ri, lx, ly, az, lbx, lby, bz, n0, n1, hw + 0.05, runsR);
       setM(rail ? MAT.TRACK : MAT.ROADWAY);
       const LN = rail ? null : laneCounts(reg), ext = LN && LN[ri * 4] === 1 ? (LN[ri * 4 + 2] !== LN[ri * 4 + 1] ? Math.min(LN[ri * 4 + 2], 7) : 0) + (LN[ri * 4 + 3] > 0 ? 8 : 0) : 0;
+      const shb = rail ? 0 : shoulderOf(reg, ri, hw, _shD).b;
       M.W[0] = hw;
-      M.W[1] = rail ? cls === 14 ? 1 : 2 : roadKindXS(reg, ri, xs) + 256 * ext;
+      M.W[1] = rail ? cls === 14 ? 1 : 2 : roadKindXS(reg, ri, xs) + 256 * ext + 4096 * shb;
       M.W[2] = (covL > 0.3 ? 1 : 0) + (covR > 0.3 ? 2 : 0);
       M.W[3] = xs ? bikeByte(xs[1], xs[2], xs[3]) + 256 * bikeByte(xs[4], xs[5], xs[6]) : -1;
       const lift = rail ? 0 : (13 - Math.min(cls, 13)) * 3e-3 + (reg.rName[ri] & 7) * 4e-4;
@@ -8728,6 +8768,7 @@
   var surfReady = null;
   var lanesReady = null;
   var sidesReady = null;
+  var shouldersReady = null;
   var piersReady = null;
   var wallsReady = null;
   var liftedReady = null;
@@ -8796,6 +8837,14 @@
       const M = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       setSides(M);
+    }).catch(() => {
+    }) : null;
+    const hf = meta.files && meta.files.shoulders;
+    shouldersReady = hf ? fetch(vurl("data/" + hf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j || !j.r) return;
+      const M = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
+      setShoulders(M);
     }).catch(() => {
     }) : null;
     const uf = meta.files && meta.files.surf;
@@ -9242,12 +9291,16 @@
       jun[kk] = Math.round(clamp2((all + 1.5) / 6, 0, 1) * 255);
       jun[kk + 1] = Math.round(clamp2((ej + 1.5) / 6, 0, 1) * 255);
     };
-    const sideByte = (jun, kk, rg, ri, side) => {
+    const sideByte = (jun, kk, rg, ri, side, hw) => {
       const S = sidesOf(rg, ri);
-      if (!S) return;
-      const ft = side > 0 ? S[0] : S[1], kerb = S[2] >> (side > 0 ? 0 : 1) & 1;
-      jun[kk + 2] = 1 | kerb << 1 | Math.min(ft, 63) << 2;
+      if (S) jun[kk + 2] = 1 | (S[2] >> (side > 0 ? 0 : 1) & 1) << 1 | Math.min(side > 0 ? S[0] : S[1], 31) << 2;
+      const b = shoulderOf(rg, ri, hw, _shB).b;
+      if (b) {
+        jun[kk + 3] = b;
+        jun[kk + 2] |= shoulderUnpaved(rg, ri, side) << 7;
+      }
     };
+    const _shB = { r: 0, l: 0, b: 0 };
     const _ld = [0, 0, 0];
     const laneBytes = (tone, rg, ri, s2, kd, kk) => {
       const st2 = kd & 3;
@@ -9364,7 +9417,7 @@
               laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
             if (cxr) junField(jun, kk, mx, my, nr.hw, JM, cxr);
-            if (!notSt) sideByte(jun, kk, nr.reg, nr.road, nr.side);
+            if (!notSt) sideByte(jun, kk, nr.reg, nr.road, nr.side, pw);
             any = true;
           } else {
             data[k] = far;
@@ -9789,6 +9842,7 @@
       if (xsReady) await xsReady;
       if (surfReady) await surfReady;
       if (sidesReady) await sidesReady;
+      if (shouldersReady) await shouldersReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);

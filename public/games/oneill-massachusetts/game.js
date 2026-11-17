@@ -15525,6 +15525,28 @@ void main() {
   }
   var LANES = null;
   var LANE_V = 1;
+  var SHOULDERS = null;
+  function setShoulders(m) {
+    SHOULDERS = m;
+  }
+  function shoulderOf(reg, ri2, hw, o) {
+    o.r = 0;
+    o.l = 0;
+    o.b = 0;
+    const m = SHOULDERS && reg ? SHOULDERS.get(reg.ry * RNX + reg.rx) : null, S2 = m ? m.get(ri2) : void 0;
+    if (!S2 || reg.rFlags[ri2] & 8) return o;
+    const N = laneCounts(reg), st = N[ri2 * 4];
+    const n = st === 1 ? N[ri2 * 4 + 1] + N[ri2 * 4 + 2] + N[ri2 * 4 + 3] : st === 2 ? N[ri2 * 4 + 1] : reg.rFlags[ri2] & 1 ? 1 : 2;
+    const tw = S2[0] / 10;
+    if (!(n > 0) || tw > 4.6 * n) return o;
+    const sum = 2 * hw - Math.max(tw, st === 1 || st === 2 ? n * (reg.rCls[ri2] <= 3 ? 3.35 : 2.75) : 0);
+    if (!(sum > 0)) return o;
+    const r = Math.min(15, Math.round(sum * S2[3] / 25)), l = Math.min(15, Math.round(sum * (100 - S2[3]) / 25));
+    o.r = r * 0.25;
+    o.l = l * 0.25;
+    o.b = r | l << 4;
+    return o;
+  }
   function setLanes(m) {
     LANES = m;
     LANE_V++;
@@ -15762,10 +15784,11 @@ void main() {
     }
     return o;
   }
-  function laneGeom(style, nF, nB, c, hw, rZ, lZ, o) {
+  function laneGeom(style, nF, nB, c, hw, rZ, lZ, o, rS2 = 0, lS2 = 0) {
+    const known = rS2 > 0 || lS2 > 0, cap = known ? 3.7 : 3.5;
     if (style === 1) {
-      const eR = hw - (rZ > 0 ? rZ : 0.25), eL = -(hw - (lZ > 0 ? lZ : 0.25));
-      const n = nF + nB + c, w = Math.min(3.5, (eR - eL) / Math.max(n, 1e-3));
+      const eR = hw - (rZ > 0 ? rZ : Math.max(rS2, 0.25)), eL = -(hw - (lZ > 0 ? lZ : Math.max(lS2, 0.25)));
+      const n = nF + nB + c, w = Math.min(cap, (eR - eL) / Math.max(n, 1e-3));
       const y = clamp2(0, eL + nB * w + c * w * 0.5, eR - nF * w - c * w * 0.5);
       o.w = w;
       o.y = y;
@@ -15773,9 +15796,16 @@ void main() {
       o.cL = y - c * w * 0.5;
       o.le = o.cR;
     } else {
-      const sh = clamp2(hw - nF * 1.75, 0.25, 3), re = rZ > 0 ? hw - rZ : hw - sh;
-      const le2 = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
-      o.w = Math.min(3.5, (re - le2) / Math.max(nF, 1e-3));
+      let re, le2;
+      if (known) {
+        re = hw - (rZ > 0 ? rZ : Math.max(rS2, 0.25));
+        le2 = -(hw - (lZ > 0 ? lZ : Math.max(lS2, 0.25)));
+      } else {
+        const sh = clamp2(hw - nF * 1.75, 0.25, 3);
+        re = rZ > 0 ? hw - rZ : hw - sh;
+        le2 = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
+      }
+      o.w = Math.min(cap, (re - le2) / Math.max(nF, 1e-3));
       o.y = le2;
       o.cR = le2;
       o.cL = le2;
@@ -17363,15 +17393,19 @@ const vec3 KERB = vec3(0.250, 0.245, 0.240);
 // (common.js roadKind: style | lanes << 2 | ...); nlf: its lanes going its way where they are not kd's count (eased
 // toward the next way's at a joint, common.js paintLanesDir), 0 for kd's own; nbf: a two-way street's lanes the other
 // way, 0 for as many as going its way; ccf: its centre turn lane (0 to 1); bR, bL: its bike lanes on the right and the
-// left (common.js bikeByte: type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); ts:
-// metres right (+) or left (-) of its centre line; hw: its half width; along: metres along it; lw, la: a line's half
-// width and antialiasing; dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left out.  The
-// zone a bike lane takes at the kerb is left out of the travel lanes, and a buffer is two solid lines with diagonal
-// hatching between them.  The lanes are laid out as common.js laneGeom lays them (keep the two the same): 3.5 m wide,
-// or what the paving holds.  Returns how much paint covers the point; yellow says whether it is the yellow kind.
+// left (common.js bikeByte: type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); rS,
+// lS: its shoulders on the right and the left where MassDOT's inventory gives them (common.js shoulderOf; 0 where not
+// known); ts: metres right (+) or left (-) of its centre line; hw: its half width; along: metres along it; lw, la: a
+// line's half width and antialiasing; dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left
+// out.  The zone a bike lane takes at the kerb is left out of the travel lanes, and a buffer is two solid lines with
+// diagonal hatching between them; where the shoulders are known, the lanes take what is left between them and the edge
+// lines run along them.  The lanes are laid out as common.js laneGeom lays them (keep the two the same): 3.5 m wide, or
+// what the paving holds.  Returns how much paint covers the point; yellow says whether it is the yellow kind.
 float spBand(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
-float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
+float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float rS, float lS, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
   int style = kd & 3;
+  bool known = rS + lS > 0.01;
+  float cap = known ? 3.7 : 3.5;
   float nF = nlf > 0.01 ? nlf : float((kd >> 2) & 7), nB = nbf > 0.01 ? nbf : nF, dc = abs(ts);
   float rT = float(bR & 3), rW = 1.0 + float((bR >> 2) & 15) * 0.1, rZ = rT > 0.5 ? rW + float((bR >> 6) & 3) * 0.3 : 0.0;
   float lT = float(bL & 3), lW = 1.0 + float((bL >> 2) & 15) * 0.1, lZ = lT > 0.5 ? lW + float((bL >> 6) & 3) * 0.3 : 0.0;
@@ -17391,14 +17425,15 @@ float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float
     // two-way: nF lanes going the way's way right of the centre line and nB the other way left of it, a centre turn
     // lane of ccf between them (solid yellow on its outer sides, broken yellow on its inner), else a double yellow; the
     // lanes as wide as the paving holds up to 3.5 m, the centre line as near the way's line as they leave it, white
-    // edge lines (what is left over is shoulder, at most 3 m of it) and dashes between lanes going the same way
-    float eR = hw - (rZ > 0.0 ? rZ : 0.25), eL = -(hw - (lZ > 0.0 ? lZ : 0.25));
-    float w = min(3.5, (eR - eL) / max(nF + nB + ccf, 0.001));
+    // edge lines (what is left over is shoulder, at most 3 m of it unless the inventory says more) and dashes between
+    // lanes going the same way
+    float eR = hw - (rZ > 0.0 ? rZ : max(rS, 0.25)), eL = -(hw - (lZ > 0.0 ? lZ : max(lS, 0.25)));
+    float w = min(cap, (eR - eL) / max(nF + nB + ccf, 0.001));
     float y = clamp(0.0, eL + nB * w + ccf * w * 0.5, eR - nF * w - ccf * w * 0.5);
     float cR = y + ccf * w * 0.5, cL = y - ccf * w * 0.5;
     if (ccf < 0.02) { float dy = abs(ts - y); yl = max(spBand(dy, 0.0, 0.26, la) - spBand(dy, 0.0, 0.085, la), 0.0); }
     else yl = max(max(spBand(ts, cR + 0.12, lw, la), spBand(ts, cL - 0.12, lw, la)), max(spBand(ts, cR - 0.12, lw, la), spBand(ts, cL + 0.12, lw, la)) * dash);
-    float shR = clamp(hw - (cR + nF * w), 0.25, 3.0), shL = clamp(hw + (cL - nB * w), 0.25, 3.0);
+    float shR = clamp(hw - (cR + nF * w), 0.25, max(3.0, rS)), shL = clamp(hw + (cL - nB * w), 0.25, max(3.0, lS));
     wl = max(spBand(ts, rZ > 0.0 ? hw - rZ : hw - shR, lw, la) * keepR, spBand(ts, lZ > 0.0 ? -(hw - lZ) : -(hw - shL), lw, la) * keepL);
     for (float k = 1.0; k < 6.5; k += 1.0) {
       if (k < nF) dl = max(dl, spBand(ts, cR + w * k, lw, la));
@@ -17407,11 +17442,11 @@ float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float
   } else if (style == 2) {
     // one carriageway: yellow on its left edge, white on its right, dashes between lanes counted from the left (with a
     // bike lane at the kerb the travel lanes end at it, and what is left over is the left shoulder); the lanes as wide
-    // as the paving holds up to 3.5 m
+    // as the paving holds up to 3.5 m; where the inventory gives the shoulders, the lanes run between them
     float sh = clamp(hw - nF * 1.75, 0.25, 3.0);
-    float re = rZ > 0.0 ? hw - rZ : hw - sh;
-    float le = lZ > 0.0 ? -(hw - lZ) : (rZ > 0.0 ? -(hw - clamp(2.0 * hw - rZ - nF * 3.5, 0.25, 3.0)) : -(hw - sh));
-    float w = min(3.5, (re - le) / max(nF, 0.001));
+    float re = rZ > 0.0 ? hw - rZ : (known ? hw - max(rS, 0.25) : hw - sh);
+    float le = lZ > 0.0 ? -(hw - lZ) : known ? -(hw - max(lS, 0.25)) : (rZ > 0.0 ? -(hw - clamp(2.0 * hw - rZ - nF * 3.5, 0.25, 3.0)) : -(hw - sh));
+    float w = min(cap, (re - le) / max(nF, 0.001));
     yl = spBand(ts, le, lw, la) * keepL;
     wl = spBand(ts, re, lw, la) * keepR;
     for (float k = 1.0; k < 7.5; k += 1.0) { if (k < nF && le + w * k < re - 1.0) dl = max(dl, spBand(ts, le + w * k, lw, la)); }
@@ -17700,8 +17735,9 @@ void main() {
     // (the lane count too, where it eases toward the next way's at a joint, so the lines move smoothly, not a texel at a
     // time; each texel's own way's count where it does not)
     // (and the lanes the other way and the centre turn lane, likewise: worker.js laneBytes)
+    // (and the shoulders MassDOT's inventory gives it, likewise: worker.js sideByte)
     vec4 rf = vec4(0.0);
-    float nlf = 0.0, nbf = 0.0, ccf = 0.0, tbs = 0.0, tbw = 0.0;
+    float nlf = 0.0, nbf = 0.0, ccf = 0.0, tbs = 0.0, tbw = 0.0, rsf = 0.0, lsf = 0.0;
     for (int i = 0; i < 4; i++) {
       if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5) continue;
       float wi = rw4[i] + 1e-3, dph = E4[i].z - E4[own].z;
@@ -17711,9 +17747,11 @@ void main() {
       nbf += wi * (L4[i].a > 0.0 ? L4[i].a * 255.0 / 32.0 : fi);
       ccf += wi * float(int(L4[i].b * 255.0 + 0.5) >> 4) / 15.0;
       if (L4[i].r > 0.0) { tbs += wi * L4[i].r; tbw += wi; }      // (and the tone, where it is known: no texel steps)
+      int shb = int(J4[i].a * 255.0 + 0.5);
+      rsf += wi * float(shb & 15) * 0.25; lsf += wi * float(shb >> 4) * 0.25;
     }
     rf.xyz /= rf.w;
-    nlf /= rf.w; nbf /= rf.w; ccf /= rf.w;
+    nlf /= rf.w; nbf /= rf.w; ccf /= rf.w; rsf /= rf.w; lsf /= rf.w;
     float ts = rf.x, dc = abs(ts), hw = rf.y;          // ts: metres right (+) or left (-) of the centre line
     float phs = E4[own].z + rf.z;                      // cycles of 12.192 m along it
     if (hw > 0.5) {
@@ -17751,10 +17789,11 @@ void main() {
       // a kerb and a sidewalk only where it says, the sidewalk as wide as it says, whatever the land round it; elsewhere
       // both sides have them where the inventory gives the street a sidewalk on either side (kd bit 6) and the land is
       // built up.  Read from the four texels round the point, so a side's sidewalk starts and ends softly
-      float knownF = 0.0, walkP = 0.0, kerbP = 0.0, wsum = 0.0, wsw = 0.0;
+      float knownF = 0.0, walkP = 0.0, kerbP = 0.0, wsum = 0.0, wsw = 0.0, gravP = 0.0;
       for (int i = 0; i < 4; i++) {
         int sb = int(J4[i].b * 255.0 + 0.5), k6 = (int(K4[i].r * 255.0 + 0.5) >> 6) & 1;
-        float kn = float(sb & 1), wf = float(sb >> 2);
+        float kn = float(sb & 1), wf = float((sb >> 2) & 31);
+        gravP += rw4[i] * float(sb >> 7);
         knownF += rw4[i] * kn;
         walkP += rw4[i] * (kn > 0.5 ? step(0.5, wf) : float(k6));
         kerbP += rw4[i] * (kn > 0.5 ? float((sb >> 1) & 1) : float(k6));
@@ -17775,6 +17814,17 @@ void main() {
         float farW = 1.0 - 0.6 * smoothstep(120.0, 600.0, dist);
         walk *= farW; kerb *= farW;
       }
+      // a shoulder MassDOT's inventory says is not paved (compacted gravel or earth: worker.js sideByte, bit 7 of the
+      // third layer's third byte): the asphalt stops 0.15 m past the travelled way's edge, the rest of the paving on that
+      // side is the shoulder's gravel, and as much again beyond it before the verge (the paving holds half of an
+      // undivided road's shoulders: c17_roads_fix.py counts the right one only)
+      float sS = ts > 0.0 ? rsf : lsf;
+      float gU = smoothstep(0.3, 0.7, gravP) * step(0.2, sS) * (1.0 - dirt) * (1.0 - town);
+      if (gU > 0.0) {
+        float gin = gU * smoothstep(hw - sS + 0.15 - aa, hw - sS + 0.15 + aa, dc) * paved;
+        paved -= gin;
+        shoulder = max(shoulder, max(gin, gU * (1.0 - smoothstep(sS - aa, sS + aa, edge)) * (1.0 - paved)));
+      }
       float dash = smoothstep(-3.14159, -3.0, ang) * (1.0 - smoothstep(-1.62, -1.52, ang)) * step(uSize / uRoadT, 3.2);
       if (style != 3) {
         vec2 bk = K4[own].ba * 255.0 + 0.5;
@@ -17785,7 +17835,7 @@ void main() {
         float jAll = dot(rw4, vec4(J4[0].x, J4[1].x, J4[2].x, J4[3].x)) * 6.0 - 1.5;
         float jEdge = dot(rw4, vec4(J4[0].y, J4[1].y, J4[2].y, J4[3].y)) * 6.0 - 1.5;
         float keepJ = keepEdge * (1.0 - smoothstep(-aa, aa, jEdge));
-        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepJ, keepJ, yel) * vis * paved * (1.0 - smoothstep(-aa, aa, jAll));
+        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), rsf, lsf, ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepJ, keepJ, yel) * vis * paved * (1.0 - smoothstep(-aa, aa, jAll));
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
@@ -19238,8 +19288,9 @@ void main() {
     float hw = vW.x, ts = uv.y, dc = abs(ts);
     float noR = step(1.5, vW.z), noL = step(0.5, vW.z - 2.0 * noR);
     // (vW.y: the kind byte, and above it a two-way street's lanes the other way where they are not as many as going its
-    // way (bits 8-10) and its centre turn lane (bit 11): decks.js)
+    // way (bits 8-10), its centre turn lane (bit 11) and its shoulders (bits 12-19, common.js shoulderOf's byte): decks.js)
     int kv = int(vW.y + 0.5), kd = kv & 255, style = kd & 3;
+    float dRS = float((kv >> 12) & 15) * 0.25, dLS = float((kv >> 16) & 15) * 0.25;
     float nl = float((kd >> 2) & 7), dirt = float((kd >> 5) & 1);
     float aa = max(px.y, 0.03), la = max(aa, 0.02), lw = 0.075;
     float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);
@@ -19255,7 +19306,7 @@ void main() {
     if (style == 1 || style == 2 || style == 0) {
       int bw = vW.w > 0.0 ? int(vW.w + 0.5) : 0;
       float yel;
-      mark = streetPaint(kd, 0.0, float((kv >> 8) & 7), float((kv >> 11) & 1), bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
+      mark = streetPaint(kd, 0.0, float((kv >> 8) & 7), float((kv >> 11) & 1), bw & 255, bw >> 8, dRS, dLS, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
       if (yel > 0.5) markCol = vec3(0.78, 0.55, 0.06);
     }
     alb = mix(alb, markCol, mark);
@@ -23646,6 +23697,7 @@ void main() {
   var p33 = new Float64Array(3);
   var near = [];
   var _lg = {};
+  var _shT = { r: 0, l: 0, b: 0 };
   var MPH = 0.44704;
   var FAR = 460;
   var wrapD = (d) => d > C2 / 2 ? d - C2 : d < -C2 / 2 ? d + C2 : d;
@@ -23680,7 +23732,8 @@ void main() {
       const N = laneCounts(reg), st = N[ri2 * 4];
       if (st === 2 || st === 1 && !(fl & 1)) {
         const xs = xsOf(reg, ri2);
-        const G = laneGeom(st, N[ri2 * 4 + 1], N[ri2 * 4 + 2], N[ri2 * 4 + 3], hw, xs ? bikeZone(bikeByte(xs[1], xs[2], xs[3])) : 0, xs ? bikeZone(bikeByte(xs[4], xs[5], xs[6])) : 0, _lg);
+        const sh = shoulderOf(reg, ri2, hw, _shT);
+        const G = laneGeom(st, N[ri2 * 4 + 1], N[ri2 * 4 + 2], N[ri2 * 4 + 3], hw, xs ? bikeZone(bikeByte(xs[1], xs[2], xs[3])) : 0, xs ? bikeZone(bikeByte(xs[4], xs[5], xs[6])) : 0, _lg, sh.r, sh.l);
         if (st === 2) return G.le + G.w * (Math.floor(pick * Math.max(1, Math.round(N[ri2 * 4 + 1]))) + 0.5);
         const n2 = Math.max(1, Math.round(N[ri2 * 4 + (dir > 0 ? 1 : 2)]));
         let off2 = (dir > 0 ? G.cR : -G.cL) + G.w * (Math.floor(pick * n2) + 0.5);
@@ -26450,6 +26503,12 @@ void main() {
         setLanes(M);
       }).catch(() => {
       }) : null;
+      if (F.shoulders) fetch(vurl("data/" + F.shoulders.file)).then((r) => r.json()).then((j) => {
+        const M = /* @__PURE__ */ new Map();
+        for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
+        setShoulders(M);
+      }).catch(() => {
+      });
       if (F.piers) fetch(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
         setPiers(...piersFromJSON(j));
       }).catch(() => {
