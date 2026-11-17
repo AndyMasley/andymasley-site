@@ -788,6 +788,14 @@
   }
   var LANES = null;
   var LANE_V = 1;
+  var SIDES = null;
+  function setSides(m) {
+    SIDES = m;
+  }
+  function sidesOf(reg, ri) {
+    const m = SIDES && reg ? SIDES.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri) : void 0;
+  }
   function setLanes(m) {
     LANES = m;
     LANE_V++;
@@ -8399,6 +8407,7 @@
   var xsReady = null;
   var surfReady = null;
   var lanesReady = null;
+  var sidesReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -8458,6 +8467,14 @@
       const M = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       setLanes(M);
+    }).catch(() => {
+    }) : null;
+    const df = meta.files && meta.files.sides;
+    sidesReady = df ? fetch(vurl("data/" + df.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j || !j.r) return;
+      const M = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
+      setSides(M);
     }).catch(() => {
     }) : null;
     const uf = meta.files && meta.files.surf;
@@ -8898,6 +8915,12 @@
       jun[kk] = Math.round(clamp2((all + 1.5) / 6, 0, 1) * 255);
       jun[kk + 1] = Math.round(clamp2((ej + 1.5) / 6, 0, 1) * 255);
     };
+    const sideByte = (jun, kk, rg, ri, side) => {
+      const S = sidesOf(rg, ri);
+      if (!S) return;
+      const ft = side > 0 ? S[0] : S[1], kerb = S[2] >> (side > 0 ? 0 : 1) & 1;
+      jun[kk + 2] = 1 | kerb << 1 | Math.min(ft, 63) << 2;
+    };
     const _ld = [0, 0, 0];
     const laneBytes = (tone, rg, ri, s2, kd, kk) => {
       const st2 = kd & 3;
@@ -9008,6 +9031,7 @@
               laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
             if (!notSt && e < 1) junField(jun, kk, mx, my, nr.hw, JM);
+            if (!notSt) sideByte(jun, kk, nr.reg, nr.road, nr.side);
             any = true;
           } else {
             data[k] = far;
@@ -9430,6 +9454,7 @@
       if (stationsReady) await stationsReady;
       if (xsReady) await xsReady;
       if (surfReady) await surfReady;
+      if (sidesReady) await sidesReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);

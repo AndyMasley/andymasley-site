@@ -17494,14 +17494,14 @@ void main() {
     vec2 rf0 = floor(rst), rfr = rst - rf0;
     ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
     vec4 R4[4], K4[4], L4[4];
-    vec2 J4[4];
+    vec4 J4[4];
     vec3 E4[4];
     for (int i = 0; i < 4; i++) {
       ivec2 o = ivec2(i & 1, i >> 1);
       R4[i] = texelFetch(uRoad, clamp(rb + o, ivec2(0), rmx), 0);
       K4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 0), 0);
       L4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 1), 0);      // the second layer: tone, eased lane count
-      J4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 2), 0).rg;   // the third: the junction field
+      J4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 2), 0);      // the third: the junction field and the street's side
       E4[i] = roadAt(R4[i], (rfr - vec2(o)) * (uSize / (uRoadT - 1.0)));
     }
     vec4 rw4 = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
@@ -17568,13 +17568,28 @@ void main() {
       float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);    // fade lines thinner than a pixel
       float la = max(aa, 0.02);
       float ang = (fract(phs + 0.5) - 0.5) * 6.2831853;
-      // built-up streets get a granite kerb and a concrete sidewalk (set back behind a grass strip until the town is dense)
-      float town = smoothstep(0.08, 0.22, cov.r) * float((kd >> 6) & 1) * step(2.4, hw);
+      // built-up streets get a granite kerb and a concrete sidewalk (set back behind a grass strip until the town is dense).
+      // Where MassDOT's inventory gives the street's sides (worker.js sideByte: the third layer's third byte), each side has
+      // a kerb and a sidewalk only where it says, the sidewalk as wide as it says, whatever the land round it; elsewhere
+      // both sides have them where the inventory gives the street a sidewalk on either side (kd bit 6) and the land is
+      // built up.  Read from the four texels round the point, so a side's sidewalk starts and ends softly
+      float knownF = 0.0, walkP = 0.0, kerbP = 0.0, wsum = 0.0, wsw = 0.0;
+      for (int i = 0; i < 4; i++) {
+        int sb = int(J4[i].b * 255.0 + 0.5), k6 = (int(K4[i].r * 255.0 + 0.5) >> 6) & 1;
+        float kn = float(sb & 1), wf = float(sb >> 2);
+        knownF += rw4[i] * kn;
+        walkP += rw4[i] * (kn > 0.5 ? step(0.5, wf) : float(k6));
+        kerbP += rw4[i] * (kn > 0.5 ? float((sb >> 1) & 1) : float(k6));
+        if (kn > 0.5 && wf > 0.5) { wsum += rw4[i]; wsw += rw4[i] * wf * 0.3048; }
+      }
+      float gate = mix(smoothstep(0.08, 0.22, cov.r), 1.0, knownF) * step(2.4, hw);
+      float townW = smoothstep(0.3, 0.7, walkP) * gate, townK = smoothstep(0.3, 0.7, kerbP) * gate;
+      float town = max(townW, townK);
       if (town > 0.0) {
         float urban = smoothstep(0.62, 0.80, cov.r);
-        float w0 = mix(1.25, 0.17, urban), w1 = mix(2.80, 3.40, urban);
-        kerb = smoothstep(-aa, aa, edge) * (1.0 - smoothstep(0.17 - aa, 0.17 + aa, edge)) * town;
-        walk = smoothstep(w0 - aa, w0 + aa, edge) * (1.0 - smoothstep(w1 - aa, w1 + aa, edge)) * town;
+        float w0 = mix(1.25, 0.17, urban), w1 = wsum > 0.01 ? w0 + wsw / wsum : mix(2.80, 3.40, urban);
+        kerb = smoothstep(-aa, aa, edge) * (1.0 - smoothstep(0.17 - aa, 0.17 + aa, edge)) * townK;
+        walk = smoothstep(w0 - aa, w0 + aa, edge) * (1.0 - smoothstep(w1 - aa, w1 + aa, edge)) * townW;
         float jw = max(aa / 1.5, 0.010);
         joint = (1.0 - smoothstep(jw * 0.6, jw * 1.6, abs(fract(ang / 6.2831853 * 8.0 + 0.5) - 0.5))) * walk * clamp(0.02 / aa, 0.0, 1.0);
         shoulder *= 1.0 - town;
