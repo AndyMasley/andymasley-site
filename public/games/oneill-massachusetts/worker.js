@@ -804,6 +804,58 @@
     const m = LANES && reg ? LANES.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
+  var PIERS = null;
+  function setPiers(m) {
+    PIERS = m;
+  }
+  function piersOf(reg, ri) {
+    const m = PIERS && reg ? PIERS.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri) : void 0;
+  }
+  var pierHalf = (clear) => 0.55 + Math.max(0, clear - 8) * 0.04;
+  function pierShape(kind, hw, pw, clear, angle, o) {
+    const k = 1 / Math.cos(angle * Math.PI / 180), half = clamp2(hw * 0.62, 0.6, 5);
+    const wide = clear < 12 ? half : Math.max(half, hw * 0.8);
+    o.th = pierHalf(clear);
+    o.len = wide * k;
+    o.nose = kind === 2 ? o.th * 1.4 : 0;
+    o.cols = null;
+    o.cr = 0;
+    o.capT = o.th + 0.25;
+    o.capL = (hw + pw * 0.5) * k;
+    o.capD = 0.9 + Math.max(0, clear - 8) * 0.03;
+    if (kind === 1) {
+      const nc = clamp2(Math.round((2 * hw - 2) / 6.5) + 1, 2, 5), e = Math.max(0.6, hw - 1.3);
+      o.cols = [];
+      for (let i = 0; i < nc; i++) o.cols.push((-e + 2 * e * i / (nc - 1)) * k);
+      o.cr = Math.min(o.th, 0.45 + Math.max(0, clear - 8) * 0.03);
+      o.capT = 0.8;
+      o.capL = (hw + pw * 0.5 - 0.2) * k;
+      o.capD = 1.2;
+    }
+    return o;
+  }
+  function pierAt(world2, X, Y, Z, tx, ty, hw, pw, dt, angle, kind, o) {
+    const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), nx = ty, ny = -tx;
+    o.ux = tx * ca - nx * sa;
+    o.uy = ty * ca - ny * sa;
+    o.vx = nx * ca + tx * sa;
+    o.vy = ny * ca + ty * sa;
+    const L2 = Math.max(clamp2(hw * 0.62, 0.6, 5), hw * 0.8, kind === 1 ? hw - 0.6 : 0) / ca;
+    const m = Math.max(2, Math.ceil(2 * L2 / 1.5));
+    let low = 1e9;
+    for (let i = 0; i <= m; i++) {
+      const d = -L2 + 2 * L2 * i / m, g = world2.groundH(X + o.vx * d, Y + o.vy * d, true);
+      if (g < low) low = g;
+    }
+    const top = Z - dt, clear = top - low;
+    if (!(clear >= 1)) return false;
+    pierShape(kind, hw, pw, clear, angle, o);
+    o.low = low;
+    o.top = top;
+    o.clear = clear;
+    return true;
+  }
   var SURF = null;
   function setSurf(m) {
     SURF = m;
@@ -6099,10 +6151,17 @@
     out[4] = dy / dl;
     return out;
   }
-  function spanLayout(len, rec, rim0, rim1, panel) {
+  function spanLayout(len, rec, rim0, rim1, panel, PL) {
     const spans = rec[3] || 1, longest = (rec[4] || 0) / 10;
     let cuts;
-    if (rim0 && rim1 && spans > 1) {
+    if (PL) {
+      cuts = [0];
+      for (let k = 0; k < PL.length; k += 3) {
+        const s = PL[k] / 10;
+        if (s > cuts[cuts.length - 1] + 2 && s < len - 2) cuts.push(s);
+      }
+      cuts.push(len);
+    } else if (rim0 && rim1 && spans > 1) {
       const n = Math.max(1, Math.min(spans, Math.round(len / Math.max(longest * 0.6, 12))));
       cuts = Array.from({ length: n + 1 }, (_, k) => len * k / n);
     } else cuts = [0, len];
@@ -6163,7 +6222,7 @@
       const y0 = deck ? -DT : -0.25, y1 = deck ? -DT - H : H;
       const cw = rail ? 0.32 : 0.28, ch = rail ? 0.42 : 0.36;
       setM(MAT.METAL);
-      for (const [S0, S1, np] of spanLayout(len, rec, rim0, rim1, P0)) {
+      for (const [S0, S1, np] of spanLayout(len, rec, rim0, rim1, P0, piersOf(reg, ri))) {
         const pl = (S1 - S0) / np, pt = (j) => S0 + j * pl;
         const end0 = S0 > 0.5 || rim0, end1 = S1 < len - 0.5 || rim1;
         for (let j = 0; j < np; j++) {
@@ -6193,7 +6252,7 @@
     if (des === D.DECK_ARCH) {
       const stone = mat === 5;
       setM(MAT.CONCRETE);
-      for (const [S0, S1] of spanLayout(len, rec, rim0, rim1, 6)) {
+      for (const [S0, S1] of spanLayout(len, rec, rim0, rim1, 6, piersOf(reg, ri))) {
         const L2 = S1 - S0, mid = (S0 + S1) / 2;
         along(reg, ri, mid, g);
         const ground = world2.groundH(g[0], g[1], false);
@@ -7524,6 +7583,54 @@
 
   // src/decks.js
   var PIER_GAP = 30;
+  var _pier = {};
+  function drawPier(M, P2, X, Y, o, kind, setM) {
+    const base = P2(X, Y, 0);
+    M.ox = base[0];
+    M.oy = base[1];
+    M.oz = base[2];
+    M.ux = o.ux;
+    M.uz = -o.uy;
+    M.vx = o.vx;
+    M.vz = -o.vy;
+    const y0 = o.low - 1.5, y1 = o.top - o.capD, th = o.th, L2 = o.len;
+    if (kind === 3) setM(MAT.SEASTONE);
+    if (kind === 1) {
+      for (const c of o.cols) {
+        const r = o.cr, ring = [];
+        for (let i = 0; i < 8; i++) {
+          const a = (i + 0.5) * Math.PI / 4;
+          ring.push([Math.cos(a), Math.sin(a)]);
+        }
+        for (let i = 0; i < 8; i++) {
+          const A = ring[i], B = ring[i + 1 & 7], nu = (A[0] + B[0]) / 2, nv = (A[1] + B[1]) / 2;
+          const i0 = M.v(A[0] * r, y0, c + A[1] * r, nu, 0, nv, i, 0), i1 = M.v(B[0] * r, y0, c + B[1] * r, nu, 0, nv, i + 1, 0);
+          const i2 = M.v(B[0] * r, y1, c + B[1] * r, nu, 0, nv, i + 1, y1 - y0), i3 = M.v(A[0] * r, y1, c + A[1] * r, nu, 0, nv, i, y1 - y0);
+          M.quad(i0, i1, i2, i3);
+        }
+      }
+    } else if (kind === 2) {
+      M.box(-th, th, y0, y1, -L2, L2, 1 | 2);
+      const n = o.nose;
+      for (const e of [1, -1]) {
+        for (const side of [1, -1]) {
+          const nu = n * side, nv = th * e, i0 = M.v(side * th, y0, e * L2, nu, 0, nv, 0, 0), i1 = M.v(0, y0, e * (L2 + n), nu, 0, nv, n, 0);
+          const i2 = M.v(0, y1, e * (L2 + n), nu, 0, nv, n, y1 - y0), i3 = M.v(side * th, y1, e * L2, nu, 0, nv, 0, y1 - y0);
+          M.quad(i0, i1, i2, i3);
+        }
+        M.tri(M.v(th, y1, e * L2, 0, 1, 0, 0, 0), M.v(0, y1, e * (L2 + n), 0, 1, 0, 0, n), M.v(-th, y1, e * L2, 0, 1, 0, 2 * th, 0));
+      }
+    } else M.box(-th, th, y0, y1, -L2, L2, 1 | 2 | 16 | 32);
+    M.box(-o.capT, o.capT, y1, o.top, -o.capL, o.capL, 1 | 2 | 8 | 16 | 32);
+    if (kind === 3) setM(MAT.CONCRETE);
+    M.ox = 0;
+    M.oy = 0;
+    M.oz = 0;
+    M.ux = 1;
+    M.uz = 0;
+    M.vx = 0;
+    M.vz = 1;
+  }
   var EDGE_STEP = 1.5;
   var p3 = new Float64Array(3);
   var runsL = [];
@@ -7847,7 +7954,17 @@
       if (q === a0 && en & 1) cap(ax, ay, az, n0, -1, 0);
       if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1, 1);
       setM(MAT.CONCRETE);
-      for (let k = Math.ceil(s0 / PIER_GAP); k * PIER_GAP < s1; k++) {
+      const PL = piersOf(reg, ri);
+      if (PL) {
+        const sa = cum[reg.rStart[ri]];
+        for (let k = 0; k < PL.length; k += 3) {
+          const sp = sa + PL[k] / 10;
+          if (sp < s0 || sp >= s1) continue;
+          const f = (sp - s0) / (s1 - s0), X = ax + (bx - ax) * f, Y = ay + (by - ay) * f, Z = az + (bz - az) * f;
+          if (!pierAt(world2, X, Y, Z, tx, ty, hw, PW, DT, PL[k + 1], PL[k + 2], _pier)) continue;
+          drawPier(M, P2, X, Y, _pier, PL[k + 2], setM);
+        }
+      } else for (let k = Math.ceil(s0 / PIER_GAP); k * PIER_GAP < s1; k++) {
         const f = (k * PIER_GAP - s0) / (s1 - s0), X = ax + (bx - ax) * f, Y = ay + (by - ay) * f, Z = az + (bz - az) * f;
         if (spanSts && underMainSpan(X, Y)) continue;
         const half = clamp2(hw * 0.62, 0.6, 5), nx = ty, ny = -tx;
@@ -8442,6 +8559,7 @@
   var surfReady = null;
   var lanesReady = null;
   var sidesReady = null;
+  var piersReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -8517,6 +8635,14 @@
       const M = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, c]) => [+ri, c])));
       setSurf(M);
+    }).catch(() => {
+    }) : null;
+    const pf = meta.files && meta.files.piers;
+    piersReady = pf ? fetch(vurl("data/" + pf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j || !j.r) return;
+      const M = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, l]) => [+ri, l])));
+      setPiers(M);
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
@@ -9489,6 +9615,7 @@
         }
       }
       if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
+      if (m.type === "scatter" && m.kind === "decks" && piersReady) await piersReady;
       if (wallsReady) await wallsReady;
       if (liftedReady) await liftedReady;
       if (stationsReady) await stationsReady;

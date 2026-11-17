@@ -15533,6 +15533,78 @@ void main() {
     const m = LANES && reg ? LANES.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri2) : void 0;
   }
+  var PIERS = null;
+  function setPiers(m) {
+    PIERS = m;
+  }
+  function piersOf(reg, ri2) {
+    const m = PIERS && reg ? PIERS.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri2) : void 0;
+  }
+  var piersSet = () => PIERS !== null;
+  var pierHalf = (clear) => 0.55 + Math.max(0, clear - 8) * 0.04;
+  function pierShape(kind, hw, pw, clear, angle, o) {
+    const k = 1 / Math.cos(angle * Math.PI / 180), half = clamp2(hw * 0.62, 0.6, 5);
+    const wide = clear < 12 ? half : Math.max(half, hw * 0.8);
+    o.th = pierHalf(clear);
+    o.len = wide * k;
+    o.nose = kind === 2 ? o.th * 1.4 : 0;
+    o.cols = null;
+    o.cr = 0;
+    o.capT = o.th + 0.25;
+    o.capL = (hw + pw * 0.5) * k;
+    o.capD = 0.9 + Math.max(0, clear - 8) * 0.03;
+    if (kind === 1) {
+      const nc2 = clamp2(Math.round((2 * hw - 2) / 6.5) + 1, 2, 5), e = Math.max(0.6, hw - 1.3);
+      o.cols = [];
+      for (let i = 0; i < nc2; i++) o.cols.push((-e + 2 * e * i / (nc2 - 1)) * k);
+      o.cr = Math.min(o.th, 0.45 + Math.max(0, clear - 8) * 0.03);
+      o.capT = 0.8;
+      o.capL = (hw + pw * 0.5 - 0.2) * k;
+      o.capD = 1.2;
+    }
+    return o;
+  }
+  function wayPoint(reg, ri2, s29, out) {
+    const a = reg.rStart[ri2], n = reg.rCount[ri2], cum = reg.cum, t = cum[a] + s29;
+    let lo2 = a, hi2 = a + n - 1;
+    if (t <= cum[lo2]) hi2 = lo2 + 1;
+    else if (t >= cum[hi2]) lo2 = hi2 - 1;
+    else while (hi2 - lo2 > 1) {
+      const mid = lo2 + hi2 >> 1;
+      if (cum[mid] <= t) lo2 = mid;
+      else hi2 = mid;
+    }
+    const L2 = Math.max(cum[hi2] - cum[lo2], 1e-6), f = clamp2((t - cum[lo2]) / L2, 0, 1);
+    const dx2 = reg.px[hi2] - reg.px[lo2], dy2 = reg.py[hi2] - reg.py[lo2], dl = Math.hypot(dx2, dy2) || 1;
+    out[0] = reg.x0 + reg.px[lo2] + dx2 * f;
+    out[1] = reg.y0 + reg.py[lo2] + dy2 * f;
+    out[2] = reg.pz[lo2] + (reg.pz[hi2] - reg.pz[lo2]) * f;
+    out[3] = dx2 / dl;
+    out[4] = dy2 / dl;
+    return out;
+  }
+  function pierAt(world, X, Y, Z, tx2, ty2, hw, pw, dt, angle, kind, o) {
+    const a = angle * Math.PI / 180, ca2 = Math.cos(a), sa2 = Math.sin(a), nx2 = ty2, ny2 = -tx2;
+    o.ux = tx2 * ca2 - nx2 * sa2;
+    o.uy = ty2 * ca2 - ny2 * sa2;
+    o.vx = nx2 * ca2 + tx2 * sa2;
+    o.vy = ny2 * ca2 + ty2 * sa2;
+    const L2 = Math.max(clamp2(hw * 0.62, 0.6, 5), hw * 0.8, kind === 1 ? hw - 0.6 : 0) / ca2;
+    const m = Math.max(2, Math.ceil(2 * L2 / 1.5));
+    let low = 1e9;
+    for (let i = 0; i <= m; i++) {
+      const d = -L2 + 2 * L2 * i / m, g = world.groundH(X + o.vx * d, Y + o.vy * d, true);
+      if (g < low) low = g;
+    }
+    const top = Z - dt, clear = top - low;
+    if (!(clear >= 1)) return false;
+    pierShape(kind, hw, pw, clear, angle, o);
+    o.low = low;
+    o.top = top;
+    o.clear = clear;
+    return true;
+  }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri2, s29) {
     const st = reg && reg.streets, m = !st && XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null;
@@ -22098,6 +22170,43 @@ void main() {
     }
     return best;
   }
+  var _pg = [0, 0, 0, 0, 0];
+  var _po = {};
+  function pierPolys(w, reg) {
+    if (reg.pierPolys) return reg.pierPolys;
+    if (!piersSet() || !reg.nDeck) return [];
+    const out = [];
+    for (let ri2 = 0; ri2 < reg.nRoads; ri2++) {
+      if (!reg.rEnd[ri2]) continue;
+      const PL = piersOf(reg, ri2);
+      if (!PL || !PL.length) continue;
+      const rail = reg.rCls[ri2] >= 14, hw = reg.rHw[ri2], PW = rail ? 0.34 : 0.42, DT = rail ? 1.5 : DECK_T - 0.05;
+      for (let k = 0; k < PL.length; k += 3) {
+        const g = wayPoint(reg, ri2, PL[k] / 10, _pg), X = g[0], Y = g[1], kind = PL[k + 2];
+        if (X < reg.x0 || X >= reg.x0 + RS3 || Y < reg.y0 || Y >= reg.y0 + RS3) continue;
+        const o = _po;
+        if (!pierAt(w, X, Y, g[2], g[3], g[4], hw, PW, DT, PL[k + 1], kind, o)) continue;
+        const pt = (u, v) => [X + o.ux * u + o.vx * v, Y + o.uy * u + o.vy * v];
+        const add = (q) => {
+          const pts = new Float64Array(q.length * 2);
+          let cx2 = 0, cy2 = 0, rad = 0;
+          q.forEach((p, i) => {
+            pts[i * 2] = p[0];
+            pts[i * 2 + 1] = p[1];
+            cx2 += p[0] / q.length;
+            cy2 += p[1] / q.length;
+          });
+          for (const p of q) rad = Math.max(rad, Math.hypot(p[0] - cx2, p[1] - cy2));
+          out.push({ pts, n: q.length, cx: cx2, cy: cy2, rad: rad + 0.1, rings: null });
+        };
+        if (kind === 1) for (const c of o.cols) add([pt(-o.cr, c - o.cr), pt(-o.cr, c + o.cr), pt(o.cr, c + o.cr), pt(o.cr, c - o.cr)]);
+        else if (kind === 2) add([pt(0, -o.len - o.nose), pt(-o.th, -o.len), pt(-o.th, o.len), pt(0, o.len + o.nose), pt(o.th, o.len), pt(o.th, -o.len)]);
+        else add([pt(-o.th, -o.len), pt(-o.th, o.len), pt(o.th, o.len), pt(o.th, -o.len)]);
+      }
+    }
+    reg.pierPolys = out;
+    return out;
+  }
   var Player = class {
     constructor(game2) {
       this.game = game2;
@@ -22372,7 +22481,8 @@ void main() {
       return polys;
     }
     // The walls, fences and hedges within 64 m of the car (feat.js barrierStretches: the stretches drawn), each a thin
-    // box along its line as wide as it is drawn.  Kept until the car moves to another 32 m square.
+    // box along its line as wide as it is drawn, and the bridges' piers there (pierPolys).  Kept until the car moves to
+    // another 32 m square.
     barriersNear() {
       const w = this.game.world, c = this.car, gx2 = Math.floor(c.mx / 32), gy2 = Math.floor(c.my / 32);
       if (this.barCache && this.barCache.gx === gx2 && this.barCache.gy === gy2) return this.barCache.polys;
@@ -22383,6 +22493,7 @@ void main() {
         seen.add(reg);
         const rx0 = Math.max(x02, reg.x0), ry0 = Math.max(y02, reg.y0), rx1 = Math.min(x1, reg.x0 + RS3), ry1 = Math.min(y1, reg.y0 + RS3);
         if (rx1 <= rx0 || ry1 <= ry0) continue;
+        for (const P2 of pierPolys(w, reg)) if (P2.cx > x02 - 20 && P2.cx < x1 + 20 && P2.cy > y02 - 20 && P2.cy < y1 + 20) polys.push(P2);
         barrierStretches(w, reg, rx0, ry0, rx1, ry1, (ax2, ay2, bx2, by2, hw) => {
           const len = Math.hypot(bx2 - ax2, by2 - ay2);
           if (len < 0.05) return;
@@ -26223,6 +26334,12 @@ void main() {
         setLanes(M);
       }).catch(() => {
       }) : null;
+      if (F.piers) fetch(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
+        const M = /* @__PURE__ */ new Map();
+        for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, l]) => [+ri2, l])));
+        setPiers(M);
+      }).catch(() => {
+      });
       this.names = null;
       if (F.names) fetch(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
         this.names = j;
