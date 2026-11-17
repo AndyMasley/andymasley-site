@@ -393,6 +393,10 @@
       reg.rName[i] = dv.getUint32(p + 12, true);
       rS0[i] = dv.getFloat32(p + 16, true);
     }
+    const lm = LANES ? LANES.get(ry * RNX + rx) : null;
+    if (lm) {
+      for (const [ri, rec] of lm) if (rec[3] > 0 && ri < nR) reg.rHw[ri] = rec[3] / 100;
+    }
     const xs = new Int32Array(buf.slice(p, p + nP * 4));
     p += nP * 4;
     const ys = new Int32Array(buf.slice(p, p + nP * 4));
@@ -776,9 +780,20 @@
   function setXS(m, k) {
     XS = m;
     XK = k || null;
+    LANE_V++;
   }
   function xsOf(reg, ri) {
     const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri) : void 0;
+  }
+  var LANES = null;
+  var LANE_V = 1;
+  function setLanes(m) {
+    LANES = m;
+    LANE_V++;
+  }
+  function lanesOf(reg, ri) {
+    const m = LANES && reg ? LANES.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
   var SURF = null;
@@ -840,7 +855,90 @@
   function roadKindXS(reg, ri, xs) {
     let k = roadKind(reg, ri);
     if (xs && xs[0] > 0 && k & 3 && (k & 3) !== 3) k = k & ~28 | Math.min((k & 3) === 1 ? Math.max(1, xs[0] >> 1) : xs[0], 7) << 2;
+    const L2 = (k & 3) === 1 || (k & 3) === 2 ? lanesOf(reg, ri) : void 0;
+    if (L2 && L2[0] > 0) k = k & ~28 | Math.min(L2[0], 7) << 2;
     return k;
+  }
+  function laneCounts(reg) {
+    if (reg.laneN && reg.laneV === LANE_V) return reg.laneN;
+    const n = reg.nRoads, o = reg.laneN = new Float32Array(n * 4);
+    reg.laneV = LANE_V;
+    for (let ri = 0; ri < n; ri++) {
+      const k = roadKindXS(reg, ri, xsOf(reg, ri)), st2 = k & 3, nl = k >> 2 & 7, L2 = lanesOf(reg, ri);
+      if (st2 !== 1 && st2 !== 2) continue;
+      o[ri * 4] = st2;
+      o[ri * 4 + 1] = nl;
+      if (st2 === 1) {
+        o[ri * 4 + 2] = L2 ? L2[1] : nl;
+        o[ri * 4 + 3] = L2 ? L2[2] : 0;
+      }
+    }
+    return o;
+  }
+  function joinEnd(reg, ri, e, rj) {
+    const st2 = reg.rStart, cnt = reg.rCount, px = reg.px, py = reg.py, q = e ? st2[ri] + cnt[ri] - 1 : st2[ri], a = st2[rj], b = a + cnt[rj] - 1;
+    return Math.hypot(px[b] - px[q], py[b] - py[q]) < Math.hypot(px[a] - px[q], py[a] - py[q]) ? 1 : 0;
+  }
+  function paintLanesDir(reg, ri, s, o) {
+    const N = laneCounts(reg), st2 = N[ri * 4];
+    o[0] = N[ri * 4 + 1];
+    o[1] = N[ri * 4 + 2];
+    o[2] = N[ri * 4 + 3];
+    if (st2 !== 1 && st2 !== 2) return o;
+    if (!reg.endWay) endHw(reg);
+    const W = reg.endWay, a = reg.rStart[ri], L2 = reg.cum[a + reg.rCount[ri] - 1] - reg.cum[a], T = Math.min(40, 0.45 * L2);
+    const f0 = o[0], b0 = o[1], c0 = o[2];
+    for (let e = 0; e < 2; e++) {
+      const rj = W[ri * 2 + e], d = e ? L2 - s : s;
+      if (rj < 0 || d >= T || N[rj * 4] !== st2) continue;
+      const same = e !== joinEnd(reg, ri, e, rj);
+      const fj = N[rj * 4 + (same ? 1 : 2)], bj = N[rj * 4 + (same ? 2 : 1)], cj = N[rj * 4 + 3];
+      if (st2 === 2 && !same) continue;
+      if (fj === f0 && bj === b0 && cj === c0) continue;
+      const w = (1 - smoothstep(0, T, d)) / 2;
+      o[0] += (fj - f0) * w;
+      o[1] += (bj - b0) * w;
+      o[2] += (cj - c0) * w;
+    }
+    return o;
+  }
+  function laneGeom(style, nF, nB2, c, hw, rZ, lZ, o) {
+    if (style === 1) {
+      const eR = hw - (rZ > 0 ? rZ : 0.25), eL = -(hw - (lZ > 0 ? lZ : 0.25));
+      const n = nF + nB2 + c, w = Math.min(3.5, (eR - eL) / Math.max(n, 1e-3));
+      const y = clamp2(0, eL + nB2 * w + c * w * 0.5, eR - nF * w - c * w * 0.5);
+      o.w = w;
+      o.y = y;
+      o.cR = y + c * w * 0.5;
+      o.cL = y - c * w * 0.5;
+      o.le = o.cR;
+    } else {
+      const sh = clamp2(hw - nF * 1.75, 0.25, 3), re = rZ > 0 ? hw - rZ : hw - sh;
+      const le = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
+      o.w = Math.min(3.5, (re - le) / Math.max(nF, 1e-3));
+      o.y = le;
+      o.cR = le;
+      o.cL = le;
+      o.le = le;
+    }
+    return o;
+  }
+  function bikeZone(b) {
+    return b & 3 ? 1 + (b >> 2 & 15) * 0.1 + (b >> 6 & 3) * 0.3 : 0;
+  }
+  var _lc = [0, 0, 0];
+  function lanesAt(reg, ri, s, o) {
+    const N = laneCounts(reg), st2 = N[ri * 4], xs = xsOf(reg, ri);
+    paintLanesDir(reg, ri, s, _lc);
+    const hw = paintHw(reg, ri, s);
+    const rZ = xs ? bikeZone(bikeByte(xs[1], xs[2], xs[3])) : 0, lZ = xs ? bikeZone(bikeByte(xs[4], xs[5], xs[6])) : 0;
+    laneGeom(st2, _lc[0], _lc[1], _lc[2], hw, rZ, lZ, o);
+    o.style = st2;
+    o.nF = _lc[0];
+    o.nB = _lc[1];
+    o.c = _lc[2];
+    o.hw = hw;
+    return o;
   }
   function deckOwnerAt(reg, lx, ly, z, ri, thi, oi, dz, inset) {
     const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
@@ -1007,18 +1105,6 @@
     let out = hw;
     if (Math.abs(h0 - hw) > 0.15 && s < T) out += (h0 - hw) / 2 * (1 - smoothstep(0, T, s));
     if (Math.abs(h12 - hw) > 0.15 && L2 - s < T) out += (h12 - hw) / 2 * (1 - smoothstep(0, T, L2 - s));
-    return out;
-  }
-  function paintLanes(reg, ri, s, nl, laneOf) {
-    if (!reg.endWay) endHw(reg);
-    const W = reg.endWay, c = reg.endLanes || (reg.endLanes = new Float32Array(reg.nRoads * 2).fill(-1));
-    for (let e = 0; e < 2; e++) if (c[ri * 2 + e] < 0) c[ri * 2 + e] = W[ri * 2 + e] >= 0 ? laneOf(W[ri * 2 + e]) : 0;
-    const n0 = c[ri * 2], n1 = c[ri * 2 + 1];
-    if (!(n0 > 0 && n0 !== nl) && !(n1 > 0 && n1 !== nl)) return nl;
-    const a = reg.rStart[ri], L2 = reg.cum[a + reg.rCount[ri] - 1] - reg.cum[a], T = Math.min(40, 0.45 * L2);
-    let out = nl;
-    if (n0 > 0 && n0 !== nl && s < T) out += (n0 - nl) / 2 * (1 - smoothstep(0, T, s));
-    if (n1 > 0 && n1 !== nl && L2 - s < T) out += (n1 - nl) / 2 * (1 - smoothstep(0, T, L2 - s));
     return out;
   }
   function parseTone(e, nRoads) {
@@ -3869,6 +3955,7 @@
   // src/street.js
   var POLE_GAP = 42;
   var SLOT = 6.4;
+  var _lg = {};
   var P = { x: 0, y: 0, z: 0, tx: 1, ty: 0 };
   function roadBoxes(reg) {
     if (reg.rBox) return reg.rBox;
@@ -3969,6 +4056,12 @@
         if (!(cls >= 10 && cls <= 12) && !(cls === 6 || cls === 8)) continue;
         if (hw < 3.4 || reg.rFlags[ri] & 14) continue;
         const side = -poleSide(reg, ri);
+        const N = laneCounts(reg), st2 = N[ri * 4];
+        if (st2 === 1 || st2 === 2) {
+          const G = laneGeom(st2, N[ri * 4 + 1], N[ri * 4 + 2], N[ri * 4 + 3], hw, 0, 0, _lg);
+          const room = st2 === 2 ? side > 0 ? hw - (G.le + N[ri * 4 + 1] * G.w) : hw + G.le : side > 0 ? hw - (G.cR + N[ri * 4 + 1] * G.w) : hw + (G.cL - N[ri * 4 + 2] * G.w);
+          if (room < 2) continue;
+        }
         for (let k = Math.ceil((sA + 11) / SLOT); k * SLOT <= sB - 11; k++) {
           const p = pointAt(reg, ri, k * SLOT), off2 = (hw - 0.55) * side;
           const mx = reg.x0 + p.x + p.ty * off2, my = reg.y0 + p.y - p.tx * off2;
@@ -4637,7 +4730,7 @@
           const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD);
           if (hw < 2.5) continue;
           const back = (junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
-          quad2(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : 0.15, hw - 0.3, WHITE);
+          quad2(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
         }
       }
     }
@@ -4646,6 +4739,20 @@
       zD = null;
     }, WHITE);
     return new Float32Array(out);
+  }
+  function innerEdge(world2, x, y, dx, dy, zD) {
+    let o;
+    if (zD !== null) {
+      world2.nearestDeck(x, y, zD + 0.6);
+      o = world2._nd;
+    } else {
+      world2.nearestRoad(x, y);
+      o = world2._nr;
+    }
+    if (!o.reg || o.road < 0 || o.d > o.hw + 1) return 0;
+    const G = lanesAt(o.reg, o.road, o.s - o.reg.cum[o.reg.rStart[o.road]], _lg2);
+    if (G.style !== 1) return 0;
+    return o.tx * dx + o.ty * dy >= 0 ? G.cR : -G.cL;
   }
   var ARROW = {
     through: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42]],
@@ -4657,7 +4764,8 @@
   };
   var mirror = (g) => g.map((e) => e[0] === "s" ? ["s", e[1], -e[2], e[3], -e[4]] : ["h", e[1], -e[2], e[3], -e[4], e[5], e[6]]);
   var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
-  var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, drawn: 0, arrows: 0, last: null };
+  var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, count: 0, drawn: 0, arrows: 0, last: null };
+  var _lg2 = {};
   function laneArrows(world2, reg, f, lx0, ly0, s, quad2, tri2, ground, col) {
     const near = [];
     for (let q = 0; q < (f.nP || 0); q++) {
@@ -4720,14 +4828,20 @@
       const sg = world2._nr.tx * ux + world2._nr.ty * uy >= 0 ? 1 : -1, tx = world2._nr.tx * sg, ty = world2._nr.ty * sg;
       const px = mx - ux * tail, py = my - uy * tail, sd = world2._nr.side * world2._nr.d;
       const ox = px - sd * world2._nr.ty, oy = py + sd * world2._nr.tx;
-      let le, lw;
-      if (style === 1) {
-        le = 0;
-        lw = Math.min(3.5, (hw - 0.3) / n);
-      } else {
-        const sh = clamp2(hw - n * 1.75, 0.25, 3);
-        le = -(hw - sh);
-        lw = Math.min(3.5, 2 * (hw - sh) / n);
+      const G = lanesAt(world2._nr.reg, world2._nr.road, world2._nr.s - world2._nr.reg.cum[world2._nr.reg.rStart[world2._nr.road]], _lg2);
+      if (G.style !== 1 && G.style !== 2) {
+        arrowStats.style++;
+        continue;
+      }
+      if (G.style === 2 && sg < 0) {
+        arrowStats.angle++;
+        continue;
+      }
+      const nd = G.style === 2 ? G.nF : sg > 0 ? G.nF : G.nB, le = G.style === 2 ? G.le : sg > 0 ? G.cR : -G.cL;
+      let lw = G.w;
+      if (Math.abs(nd - n) > 0.25) {
+        arrowStats.count++;
+        lw = nd * G.w / n;
       }
       if (lw < 2.2) {
         arrowStats.narrow++;
@@ -7483,8 +7597,9 @@
       const covL = openRuns(reg, ri, lx, ly, az, lbx, lby, bz, n0, n1, -(hw + 0.05), runsL);
       const covR = openRuns(reg, ri, lx, ly, az, lbx, lby, bz, n0, n1, hw + 0.05, runsR);
       setM(rail ? MAT.TRACK : MAT.ROADWAY);
+      const LN = rail ? null : laneCounts(reg), ext = LN && LN[ri * 4] === 1 ? (LN[ri * 4 + 2] !== LN[ri * 4 + 1] ? Math.min(LN[ri * 4 + 2], 7) : 0) + (LN[ri * 4 + 3] > 0 ? 8 : 0) : 0;
       M.W[0] = hw;
-      M.W[1] = rail ? cls === 14 ? 1 : 2 : roadKindXS(reg, ri, xs);
+      M.W[1] = rail ? cls === 14 ? 1 : 2 : roadKindXS(reg, ri, xs) + 256 * ext;
       M.W[2] = (covL > 0.3 ? 1 : 0) + (covR > 0.3 ? 2 : 0);
       M.W[3] = xs ? bikeByte(xs[1], xs[2], xs[3]) + 256 * bikeByte(xs[4], xs[5], xs[6]) : -1;
       const lift = rail ? 0 : (13 - Math.min(cls, 13)) * 3e-3 + (reg.rName[ri] & 7) * 4e-4;
@@ -8208,6 +8323,7 @@
   var nbiReady = null;
   var xsReady = null;
   var surfReady = null;
+  var lanesReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -8259,6 +8375,14 @@
       for (const [k, v] of Object.entries(j.r)) X.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       for (const [k, v] of Object.entries(j.k || {})) K.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       setXS(X, K);
+    }).catch(() => {
+    }) : null;
+    const nf = meta.files && meta.files.lanes;
+    lanesReady = nf ? fetch(vurl("data/" + nf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j || !j.r) return;
+      const M = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
+      setLanes(M);
     }).catch(() => {
     }) : null;
     const uf = meta.files && meta.files.surf;
@@ -8424,6 +8548,7 @@
           const got = {};
           for (const dir of parts) got[dir] = fetchPart(dir, rx, ry).then((e) => ({ e }), (err) => ({ err }));
           const d = await fetchPart("r2", rx, ry);
+          if (lanesReady) await lanesReady;
           const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx, ry);
           await readParts(reg, rx, ry, parts, got);
           world.addRegion(rx, ry, reg);
@@ -8679,15 +8804,15 @@
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
-    const lanes32 = (rg, ri, s2, kd) => {
+    const _ld = [0, 0, 0];
+    const laneBytes = (tone, rg, ri, s2, kd, kk) => {
       const st2 = kd & 3;
-      if (st2 !== 1 && st2 !== 2) return 0;
-      const nl = kd >> 2 & 7;
-      const f = paintLanes(rg, ri, s2, nl, (rj) => {
-        const kj = roadKindXS(rg, rj, xsOf(rg, rj));
-        return (kj & 3) === st2 ? kj >> 2 & 7 : 0;
-      });
-      return f === nl ? 0 : Math.round(f * 32);
+      if (st2 !== 1 && st2 !== 2) return;
+      if (laneCounts(rg)[ri * 4] !== st2) return;
+      paintLanesDir(rg, ri, s2, _ld);
+      if (_ld[0] !== (kd >> 2 & 7)) tone[kk + 1] = Math.round(_ld[0] * 32);
+      if (st2 === 1 && _ld[1] !== _ld[0]) tone[kk + 3] = Math.max(1, Math.round(_ld[1] * 32));
+      if (st2 === 1 && _ld[2] > 0) tone[kk + 2] |= Math.round(_ld[2] * 15) << 4;
     };
     if (hasRoads && level >= 6) {
       const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 2), tone = kind.subarray(T * T * 4);
@@ -8732,8 +8857,8 @@
               let kd = roadKindXS(nr0.reg, nr0.road, xs0) & ~(64 | 32 | 128);
               if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
               kind[kk] = kd | 32;
-              tone[kk + 1] = lanes32(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd);
               tone[kk + 2] = surfOf(nr0.reg, nr0.road);
+              laneBytes(tone, nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd, kk);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
               kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
@@ -8777,14 +8902,14 @@
             kind[kk + 1] = Math.round(clamp2((ue + 1.5) / 6, 0, 1) * 255);
             if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[kk] |= 128;
             const xs = (kind[kk] & 3) !== 3 ? xsOf(nr.reg, nr.road) : void 0;
+            if ((kind[kk] & 3) !== 3) kind[kk] = kind[kk] & 128 | roadKindXS(nr.reg, nr.road, xs);
             if (xs) {
-              kind[kk] = kind[kk] & 128 | roadKindXS(nr.reg, nr.road, xs);
               kind[kk + 2] = bikeByte(xs[1], xs[2], xs[3]);
               kind[kk + 3] = bikeByte(xs[4], xs[5], xs[6]);
             }
             if (!notSt) {
-              tone[kk + 1] = lanes32(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk]);
               tone[kk + 2] = surfOf(nr.reg, nr.road);
+              laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
             any = true;
           } else {

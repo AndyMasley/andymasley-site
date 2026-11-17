@@ -15130,6 +15130,10 @@ void main() {
       reg.rName[i] = dv2.getUint32(p + 12, true);
       rS0[i] = dv2.getFloat32(p + 16, true);
     }
+    const lm2 = LANES ? LANES.get(ry2 * RNX + rx2) : null;
+    if (lm2) {
+      for (const [ri2, rec] of lm2) if (rec[3] > 0 && ri2 < nR) reg.rHw[ri2] = rec[3] / 100;
+    }
     const xs = new Int32Array(buf.slice(p, p + nP * 4));
     p += nP * 4;
     const ys2 = new Int32Array(buf.slice(p, p + nP * 4));
@@ -15513,6 +15517,21 @@ void main() {
   function setXS(m, k) {
     XS = m;
     XK = k || null;
+    LANE_V++;
+  }
+  function xsOf(reg, ri2) {
+    const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri2) : void 0;
+  }
+  var LANES = null;
+  var LANE_V = 1;
+  function setLanes(m) {
+    LANES = m;
+    LANE_V++;
+  }
+  function lanesOf(reg, ri2) {
+    const m = LANES && reg ? LANES.get(reg.ry * RNX + reg.rx) : null;
+    return m ? m.get(ri2) : void 0;
   }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri2, s29) {
@@ -15543,6 +15562,57 @@ void main() {
     _kerbs.mid = (_kerbs.left + _kerbs.right) / 2;
     _kerbs.hw = P2.hwMed;
     return _kerbs;
+  }
+  function bikeByte(type, bikeDm, bufDm) {
+    if (!type) return 0;
+    return type & 3 | clamp2(Math.round(bikeDm - 10), 0, 15) << 2 | clamp2(Math.round(bufDm / 3), 0, 3) << 6;
+  }
+  function roadKindXS(reg, ri2, xs) {
+    let k = roadKind(reg, ri2);
+    if (xs && xs[0] > 0 && k & 3 && (k & 3) !== 3) k = k & ~28 | Math.min((k & 3) === 1 ? Math.max(1, xs[0] >> 1) : xs[0], 7) << 2;
+    const L2 = (k & 3) === 1 || (k & 3) === 2 ? lanesOf(reg, ri2) : void 0;
+    if (L2 && L2[0] > 0) k = k & ~28 | Math.min(L2[0], 7) << 2;
+    return k;
+  }
+  function laneCounts(reg) {
+    if (reg.laneN && reg.laneV === LANE_V) return reg.laneN;
+    const n = reg.nRoads, o = reg.laneN = new Float32Array(n * 4);
+    reg.laneV = LANE_V;
+    for (let ri2 = 0; ri2 < n; ri2++) {
+      const k = roadKindXS(reg, ri2, xsOf(reg, ri2)), st = k & 3, nl = k >> 2 & 7, L2 = lanesOf(reg, ri2);
+      if (st !== 1 && st !== 2) continue;
+      o[ri2 * 4] = st;
+      o[ri2 * 4 + 1] = nl;
+      if (st === 1) {
+        o[ri2 * 4 + 2] = L2 ? L2[1] : nl;
+        o[ri2 * 4 + 3] = L2 ? L2[2] : 0;
+      }
+    }
+    return o;
+  }
+  function laneGeom(style, nF, nB, c, hw, rZ, lZ, o) {
+    if (style === 1) {
+      const eR = hw - (rZ > 0 ? rZ : 0.25), eL = -(hw - (lZ > 0 ? lZ : 0.25));
+      const n = nF + nB + c, w = Math.min(3.5, (eR - eL) / Math.max(n, 1e-3));
+      const y = clamp2(0, eL + nB * w + c * w * 0.5, eR - nF * w - c * w * 0.5);
+      o.w = w;
+      o.y = y;
+      o.cR = y + c * w * 0.5;
+      o.cL = y - c * w * 0.5;
+      o.le = o.cR;
+    } else {
+      const sh = clamp2(hw - nF * 1.75, 0.25, 3), re = rZ > 0 ? hw - rZ : hw - sh;
+      const le2 = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
+      o.w = Math.min(3.5, (re - le2) / Math.max(nF, 1e-3));
+      o.y = le2;
+      o.cR = le2;
+      o.cL = le2;
+      o.le = le2;
+    }
+    return o;
+  }
+  function bikeZone(b) {
+    return b & 3 ? 1 + (b >> 2 & 15) * 0.1 + (b >> 6 & 3) * 0.3 : 0;
   }
   function deckOwnerAt(reg, lx2, ly2, z, ri2, thi, oi2, dz, inset) {
     const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -15650,6 +15720,32 @@ void main() {
       if (l > 1e-6 && (ux2 * dx2 + uy2 * dy2) / l > (en2 & 2 ? 0 : joint)) return true;
     }
     return false;
+  }
+  function roadKind(reg, ri2) {
+    let k = reg.rKind;
+    if (!k) {
+      k = reg.rKind = new Uint8Array(reg.nRoads);
+      for (let i = 0; i < reg.nRoads; i++) {
+        const cls = reg.rCls[i], fl = reg.rFlags[i], one = fl & 1, unp = fl & 8, lanes = reg.rLanes[i];
+        if (cls >= 14) {
+          k[i] = 3 | cls - 13 << 2;
+          continue;
+        }
+        let style = 0, nl = 1;
+        if (!unp && cls <= 9) {
+          if (one) {
+            style = 2;
+            nl = lanes || (cls === 0 ? 3 : cls === 2 || cls === 4 ? 2 : 1);
+          } else {
+            style = 1;
+            nl = Math.max(1, (lanes || 2) >> 1);
+          }
+        }
+        const walk = !unp && (fl & 128) !== 0;
+        k[i] = style | Math.min(nl, 7) << 2 | (unp ? 32 : 0) | (walk ? 64 : 0);
+      }
+    }
+    return k[ri2];
   }
   var GSEG = 1472;
   var GS2 = RS3 / GSEG;
@@ -17031,20 +17127,22 @@ const vec3 KERB = vec3(0.250, 0.245, 0.240);
     /* glsl */
     `
 // A street's paint, shared by the ground (TERRAIN_FS) and the bridge decks (HOUSE_FS).  kd: the road's kind byte
-// (common.js roadKind: style | lanes << 2 | ...); nlf: its lane count eased toward the next way's where the count
-// changes at a joint (common.js paintLanes), 0 for kd's own; bR, bL: its bike lanes on the right and the left (common.js bikeByte:
-// type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); ts: metres right (+) or left
-// (-) of its centre line; hw: its half width; along: metres along it; lw, la: a line's half width and antialiasing;
-// dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left out.  The zone a bike lane takes at
-// the kerb is left out of the travel lanes, and a buffer is two solid lines with diagonal hatching between them.
-// Returns how much paint covers the point; yellow says whether it is the yellow kind.
+// (common.js roadKind: style | lanes << 2 | ...); nlf: its lanes going its way where they are not kd's count (eased
+// toward the next way's at a joint, common.js paintLanesDir), 0 for kd's own; nbf: a two-way street's lanes the other
+// way, 0 for as many as going its way; ccf: its centre turn lane (0 to 1); bR, bL: its bike lanes on the right and the
+// left (common.js bikeByte: type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); ts:
+// metres right (+) or left (-) of its centre line; hw: its half width; along: metres along it; lw, la: a line's half
+// width and antialiasing; dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left out.  The
+// zone a bike lane takes at the kerb is left out of the travel lanes, and a buffer is two solid lines with diagonal
+// hatching between them.  The lanes are laid out as common.js laneGeom lays them (keep the two the same): 3.5 m wide,
+// or what the paving holds.  Returns how much paint covers the point; yellow says whether it is the yellow kind.
 float spBand(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
-float streetPaint(int kd, float nlf, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
+float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
   int style = kd & 3;
-  float nl = nlf > 0.01 ? nlf : float((kd >> 2) & 7), dc = abs(ts);
+  float nF = nlf > 0.01 ? nlf : float((kd >> 2) & 7), nB = nbf > 0.01 ? nbf : nF, dc = abs(ts);
   float rT = float(bR & 3), rW = 1.0 + float((bR >> 2) & 15) * 0.1, rZ = rT > 0.5 ? rW + float((bR >> 6) & 3) * 0.3 : 0.0;
   float lT = float(bL & 3), lW = 1.0 + float((bL >> 2) & 15) * 0.1, lZ = lT > 0.5 ? lW + float((bL >> 6) & 3) * 0.3 : 0.0;
-  float zT = ts > 0.0 ? rT : lT, zW = ts > 0.0 ? rW : lW, zZ = ts > 0.0 ? rZ : lZ, keep = ts > 0.0 ? keepR : keepL;
+  float zT = ts > 0.0 ? rT : lT, zW = ts > 0.0 ? rW : lW, zZ = ts > 0.0 ? rZ : lZ;
   float bike = 0.0;
   yellow = 0.0;
   if (zT > 0.5) {
@@ -17057,24 +17155,36 @@ float streetPaint(int kd, float nlf, int bR, int bL, float ts, float hw, float a
   }
   float yl = 0.0, wl = 0.0, dl = 0.0;
   if (style == 1) {
-    // two-way: double yellow down the middle, white edge lines, dashes between lanes going the same way (3.5 m lanes;
-    // what is left over is shoulder)
-    float sh = clamp(hw - nl * 3.5, 0.25, 3.0);
-    yl = max(spBand(dc, 0.0, 0.26, la) - spBand(dc, 0.0, 0.085, la), 0.0);
-    wl = spBand(dc, hw - (zZ > 0.0 ? zZ : sh), lw, la) * keep;
-    for (float k = 1.0; k < 3.5; k += 1.0) { if (k < nl && (zZ <= 0.0 || 3.5 * k < hw - zZ - 1.5)) dl = max(dl, spBand(dc, 3.5 * k, lw, la)); }
+    // two-way: nF lanes going the way's way right of the centre line and nB the other way left of it, a centre turn
+    // lane of ccf between them (solid yellow on its outer sides, broken yellow on its inner), else a double yellow; the
+    // lanes as wide as the paving holds up to 3.5 m, the centre line as near the way's line as they leave it, white
+    // edge lines (what is left over is shoulder, at most 3 m of it) and dashes between lanes going the same way
+    float eR = hw - (rZ > 0.0 ? rZ : 0.25), eL = -(hw - (lZ > 0.0 ? lZ : 0.25));
+    float w = min(3.5, (eR - eL) / max(nF + nB + ccf, 0.001));
+    float y = clamp(0.0, eL + nB * w + ccf * w * 0.5, eR - nF * w - ccf * w * 0.5);
+    float cR = y + ccf * w * 0.5, cL = y - ccf * w * 0.5;
+    if (ccf < 0.02) { float dy = abs(ts - y); yl = max(spBand(dy, 0.0, 0.26, la) - spBand(dy, 0.0, 0.085, la), 0.0); }
+    else yl = max(max(spBand(ts, cR + 0.12, lw, la), spBand(ts, cL - 0.12, lw, la)), max(spBand(ts, cR - 0.12, lw, la), spBand(ts, cL + 0.12, lw, la)) * dash);
+    float shR = clamp(hw - (cR + nF * w), 0.25, 3.0), shL = clamp(hw + (cL - nB * w), 0.25, 3.0);
+    wl = max(spBand(ts, rZ > 0.0 ? hw - rZ : hw - shR, lw, la) * keepR, spBand(ts, lZ > 0.0 ? -(hw - lZ) : -(hw - shL), lw, la) * keepL);
+    for (float k = 1.0; k < 6.5; k += 1.0) {
+      if (k < nF) dl = max(dl, spBand(ts, cR + w * k, lw, la));
+      if (k < nB) dl = max(dl, spBand(ts, cL - w * k, lw, la));
+    }
   } else if (style == 2) {
     // one carriageway: yellow on its left edge, white on its right, dashes between lanes counted from the left (with a
-    // bike lane at the kerb the travel lanes end at it, and what is left over is the left shoulder)
-    float sh = clamp(hw - nl * 1.75, 0.25, 3.0);
+    // bike lane at the kerb the travel lanes end at it, and what is left over is the left shoulder); the lanes as wide
+    // as the paving holds up to 3.5 m
+    float sh = clamp(hw - nF * 1.75, 0.25, 3.0);
     float re = rZ > 0.0 ? hw - rZ : hw - sh;
-    float le = lZ > 0.0 ? -(hw - lZ) : (rZ > 0.0 ? -(hw - clamp(2.0 * hw - rZ - nl * 3.5, 0.25, 3.0)) : -(hw - sh));
+    float le = lZ > 0.0 ? -(hw - lZ) : (rZ > 0.0 ? -(hw - clamp(2.0 * hw - rZ - nF * 3.5, 0.25, 3.0)) : -(hw - sh));
+    float w = min(3.5, (re - le) / max(nF, 0.001));
     yl = spBand(ts, le, lw, la) * keepL;
     wl = spBand(ts, re, lw, la) * keepR;
-    for (float k = 1.0; k < 5.5; k += 1.0) { if (k < nl && le + 3.5 * k < re - 1.5) dl = max(dl, spBand(ts, le + 3.5 * k, lw, la)); }
+    for (float k = 1.0; k < 7.5; k += 1.0) { if (k < nF && le + w * k < re - 1.0) dl = max(dl, spBand(ts, le + w * k, lw, la)); }
   } else if (style == 0 && zT > 0.5) {
     // a street without lane lines: only its bike lane's
-    wl = spBand(dc, hw - zZ, lw, la) * keep;
+    wl = spBand(dc, hw - zZ, lw, la) * (ts > 0.0 ? keepR : keepL);
   } else return 0.0;
   dl *= dash;
   float m = max(max(max(yl, wl), dl), bike);
@@ -17353,22 +17463,26 @@ void main() {
     // centimetres a texel where it meets another, worker.js)
     // (the lane count too, where it eases toward the next way's at a joint, so the lines move smoothly, not a texel at a
     // time; each texel's own way's count where it does not)
+    // (and the lanes the other way and the centre turn lane, likewise: worker.js laneBytes)
     vec4 rf = vec4(0.0);
-    float nlf = 0.0, tbs = 0.0, tbw = 0.0;
+    float nlf = 0.0, nbf = 0.0, ccf = 0.0, tbs = 0.0, tbw = 0.0;
     for (int i = 0; i < 4; i++) {
       if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5) continue;
       float wi = rw4[i] + 1e-3, dph = E4[i].z - E4[own].z;
       rf += wi * vec4(E4[i].x, E4[i].y, dph - floor(dph + 0.5), 1.0);
-      nlf += wi * (L4[i].g > 0.0 ? L4[i].g * 255.0 / 32.0 : float((int(K4[i].r * 255.0 + 0.5) >> 2) & 7));
+      float fi = L4[i].g > 0.0 ? L4[i].g * 255.0 / 32.0 : float((int(K4[i].r * 255.0 + 0.5) >> 2) & 7);
+      nlf += wi * fi;
+      nbf += wi * (L4[i].a > 0.0 ? L4[i].a * 255.0 / 32.0 : fi);
+      ccf += wi * float(int(L4[i].b * 255.0 + 0.5) >> 4) / 15.0;
       if (L4[i].r > 0.0) { tbs += wi * L4[i].r; tbw += wi; }      // (and the tone, where it is known: no texel steps)
     }
     rf.xyz /= rf.w;
-    nlf /= rf.w;
+    nlf /= rf.w; nbf /= rf.w; ccf /= rf.w;
     float ts = rf.x, dc = abs(ts), hw = rf.y;          // ts: metres right (+) or left (-) of the centre line
     float phs = E4[own].z + rf.z;                      // cycles of 12.192 m along it
     if (hw > 0.5) {
       int kd = int(K4[own].r * 255.0 + 0.5);
-      surf = int(L4[own].b * 255.0 + 0.5);
+      surf = int(L4[own].b * 255.0 + 0.5) & 15;
       if ((kd & 3) == 3) { surfQ = uTex0 + vLoc; surfSpan = vec2(48.0); } else surfQ = vec2(fract(phs) * 12.192, ts);
       float tb = tbw > 0.0 ? tbs / tbw * 255.0 : 0.0;
       if (tb > 0.5) { roadTone = clamp(exp2((tb - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2); toneKnown = 1.0; }
@@ -17414,7 +17528,7 @@ void main() {
       if (style != 3) {
         vec2 bk = K4[own].ba * 255.0 + 0.5;
         float yel;
-        mark = streetPaint(kd & ~32, nlf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
+        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
@@ -18866,7 +18980,9 @@ void main() {
     // which edge lines are left out because another roadway joins there: 1 the left, 2 the right)
     float hw = vW.x, ts = uv.y, dc = abs(ts);
     float noR = step(1.5, vW.z), noL = step(0.5, vW.z - 2.0 * noR);
-    int kd = int(vW.y + 0.5), style = kd & 3;
+    // (vW.y: the kind byte, and above it a two-way street's lanes the other way where they are not as many as going its
+    // way (bits 8-10) and its centre turn lane (bit 11): decks.js)
+    int kv = int(vW.y + 0.5), kd = kv & 255, style = kd & 3;
     float nl = float((kd >> 2) & 7), dirt = float((kd >> 5) & 1);
     float aa = max(px.y, 0.03), la = max(aa, 0.02), lw = 0.075;
     float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);
@@ -18882,7 +18998,7 @@ void main() {
     if (style == 1 || style == 2 || style == 0) {
       int bw = vW.w > 0.0 ? int(vW.w + 0.5) : 0;
       float yel;
-      mark = streetPaint(kd, 0.0, bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
+      mark = streetPaint(kd, 0.0, float((kv >> 8) & 7), float((kv >> 11) & 1), bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
       if (yel > 0.5) markCol = vec3(0.78, 0.55, 0.06);
     }
     alb = mix(alb, markCol, mark);
@@ -23214,6 +23330,7 @@ void main() {
   var u32 = [0, 0, 0];
   var p33 = new Float64Array(3);
   var near = [];
+  var _lg = {};
   var MPH = 0.44704;
   var FAR = 460;
   var wrapD = (d) => d > C2 / 2 ? d - C2 : d < -C2 / 2 ? d + C2 : d;
@@ -23245,6 +23362,17 @@ void main() {
     // how far to the right of the centre line a car going this way along the road keeps
     lane(reg, ri2, dir, pick) {
       const hw = reg.rHw[ri2], cls = reg.rCls[ri2], fl = reg.rFlags[ri2], lanes = reg.rLanes[ri2];
+      const N = laneCounts(reg), st = N[ri2 * 4];
+      if (st === 2 || st === 1 && !(fl & 1)) {
+        const xs = xsOf(reg, ri2);
+        const G = laneGeom(st, N[ri2 * 4 + 1], N[ri2 * 4 + 2], N[ri2 * 4 + 3], hw, xs ? bikeZone(bikeByte(xs[1], xs[2], xs[3])) : 0, xs ? bikeZone(bikeByte(xs[4], xs[5], xs[6])) : 0, _lg);
+        if (st === 2) return G.le + G.w * (Math.floor(pick * Math.max(1, Math.round(N[ri2 * 4 + 1]))) + 0.5);
+        const n2 = Math.max(1, Math.round(N[ri2 * 4 + (dir > 0 ? 1 : 2)]));
+        let off2 = (dir > 0 ? G.cR : -G.cL) + G.w * (Math.floor(pick * n2) + 0.5);
+        const parking2 = (cls >= 10 && cls <= 12 || cls === 6 || cls === 8) && hw >= 3.4 && !(fl & 14);
+        if (parking2 && dir === -poleSide(reg, ri2)) off2 = Math.max(0.75, Math.min(off2, hw - 2.65));
+        return off2;
+      }
       if (fl & 1) {
         const n2 = Math.max(1, Math.min(lanes || 9, Math.round(hw * 2 / 3.6)));
         return (Math.floor(pick * n2) + 0.5) * 2 * hw / n2 - hw;
@@ -26001,6 +26129,12 @@ void main() {
         setXS(X, K);
       }).catch(() => {
       });
+      this.lanesReady = F.lanes ? fetch(vurl("data/" + F.lanes.file)).then((r) => r.json()).then((j) => {
+        const M = /* @__PURE__ */ new Map();
+        for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
+        setLanes(M);
+      }).catch(() => {
+      }) : null;
       this.names = null;
       if (F.names) fetch(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
         this.names = j;
@@ -26431,6 +26565,7 @@ void main() {
             if (!res.ok) throw new Error("region " + rx2 + "_" + ry2 + " " + res.status);
             const png = await decodePNG(await res.arrayBuffer());
             const d = png.data;
+            if (this.lanesReady) await this.lanesReady;
             const reg = parseRegion(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength), rx2, ry2);
             const parts = [];
             if (this.groundFiles.has(k)) parts.push("g3");
