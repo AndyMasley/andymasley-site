@@ -1779,12 +1779,13 @@
     // ---- junctions (items 26, 40): where a point on a street's paving also lies on the paving of a street crossing it
     // (classes 0-12 on the ground, at more than 30 degrees to it there, within 2 m of its height; a side street at a T as
     // far as its line runs, not the round end of its paving), how far inside that street's paving the point is (metres, the
-    // most of any such street; -1e9 where there is none) in o.e, and in o.big whether one it is inside ranks with this
-    // street or above it.  Asked after nearestRoad, of its road.
+    // most of any such street, down to 12 m outside it; -1e9 where there is none) in o.e, that street's half width in
+    // o.hw, and in o.big whether one it is inside ranks with this street or above it.  Asked after nearestRoad, of its road.
     crossingAt(mx, my, o) {
       const nr = this._nr, reg = nr.reg;
       o.e = -1e9;
       o.big = false;
+      o.hw = 0;
       if (!reg || nr.road < 0) return o;
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
@@ -1799,10 +1800,13 @@
         const t = ((lx - ax) * dx + (ly - ay) * dy) / l2;
         if (t < 0 || t > 1) continue;
         const ex = lx - ax - dx * t, ey = ly - ay - dy * t, ins = rHw[rj] - Math.sqrt(ex * ex + ey * ey);
-        if (ins < -1.5) continue;
+        if (ins < -12) continue;
         if (Math.abs(dx * nr.tx + dy * nr.ty) > 0.866 * Math.sqrt(l2)) continue;
         if (Math.abs(pz[pi] + (pz[pi + 1] - pz[pi]) * t - nr.z) > 2) continue;
-        if (ins > o.e) o.e = ins;
+        if (ins > o.e) {
+          o.e = ins;
+          o.hw = rHw[rj];
+        }
         if (ins > 0 && ROAD_RANK[rCls[rj]] <= mine) o.big = true;
       }
       return o;
@@ -8926,13 +8930,13 @@
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
-    const _cx = { e: 0, big: false };
-    const junField = (jun, kk, mx, my, hw, JM) => {
-      world.crossingAt(mx, my, _cx);
-      const ej = Math.max(_cx.e, -1.5), tx = world._nr.tx, ty = world._nr.ty;
+    const _cx = { e: 0, big: false, hw: 0 };
+    const junField = (jun, kk, mx, my, hw, JM, cx2) => {
+      if (!cx2) cx2 = world.crossingAt(mx, my, _cx);
+      const ej = Math.max(cx2.e, -1.5), tx = world._nr.tx, ty = world._nr.ty;
       let all = -1.5;
       if (ej > -1.5) {
-        let stop = _cx.big;
+        let stop = cx2.big;
         for (let i = 0; i < JM.sig.length && !stop; i += 2) if (Math.hypot(JM.sig[i] - mx, JM.sig[i + 1] - my) < 30) stop = true;
         if (stop) all = ej;
       }
@@ -9047,7 +9051,13 @@
             if (!notSt) tone[(b * T + a) * 4] = Math.round(toneAt(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]]));
             const kk = (b * T + a) * 4;
             kind[kk] = roadKind(nr.reg, nr.road);
-            const ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
+            let ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
+            const cxr = !notSt && e < 8 ? world.crossingAt(mx, my, _cx) : null;
+            if (cxr && cxr.e > -12) {
+              const r = clamp2(3 + 0.5 * Math.min(pw, cxr.hw), 4, 9), a0 = nr.d - pw, b0 = -cxr.e;
+              const ru = Math.max(r, Math.min(a0, b0)) - Math.hypot(Math.max(r - a0, 0), Math.max(r - b0, 0));
+              if (ru < ue) ue = ru;
+            }
             kind[kk + 1] = Math.round(clamp2((ue + 1.5) / 6, 0, 1) * 255);
             if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[kk] |= 128;
             const xs = (kind[kk] & 3) !== 3 ? xsOf(nr.reg, nr.road) : void 0;
@@ -9060,7 +9070,7 @@
               tone[kk + 2] = surfOf(nr.reg, nr.road);
               laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
-            if (!notSt && e < 1) junField(jun, kk, mx, my, nr.hw, JM);
+            if (cxr) junField(jun, kk, mx, my, nr.hw, JM, cxr);
             if (!notSt) sideByte(jun, kk, nr.reg, nr.road, nr.side);
             any = true;
           } else {

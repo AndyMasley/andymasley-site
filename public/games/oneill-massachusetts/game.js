@@ -16335,12 +16335,13 @@ void main() {
     // ---- junctions (items 26, 40): where a point on a street's paving also lies on the paving of a street crossing it
     // (classes 0-12 on the ground, at more than 30 degrees to it there, within 2 m of its height; a side street at a T as
     // far as its line runs, not the round end of its paving), how far inside that street's paving the point is (metres, the
-    // most of any such street; -1e9 where there is none) in o.e, and in o.big whether one it is inside ranks with this
-    // street or above it.  Asked after nearestRoad, of its road.
+    // most of any such street, down to 12 m outside it; -1e9 where there is none) in o.e, that street's half width in
+    // o.hw, and in o.big whether one it is inside ranks with this street or above it.  Asked after nearestRoad, of its road.
     crossingAt(mx2, my2, o) {
       const nr2 = this._nr, reg = nr2.reg;
       o.e = -1e9;
       o.big = false;
+      o.hw = 0;
       if (!reg || nr2.road < 0) return o;
       const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -16355,10 +16356,13 @@ void main() {
         const t = ((lx2 - ax2) * dx2 + (ly2 - ay2) * dy2) / l2;
         if (t < 0 || t > 1) continue;
         const ex2 = lx2 - ax2 - dx2 * t, ey2 = ly2 - ay2 - dy2 * t, ins = rHw[rj] - Math.sqrt(ex2 * ex2 + ey2 * ey2);
-        if (ins < -1.5) continue;
+        if (ins < -12) continue;
         if (Math.abs(dx2 * nr2.tx + dy2 * nr2.ty) > 0.866 * Math.sqrt(l2)) continue;
         if (Math.abs(pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t - nr2.z) > 2) continue;
-        if (ins > o.e) o.e = ins;
+        if (ins > o.e) {
+          o.e = ins;
+          o.hw = rHw[rj];
+        }
         if (ins > 0 && ROAD_RANK[rCls[rj]] <= mine) o.big = true;
       }
       return o;
