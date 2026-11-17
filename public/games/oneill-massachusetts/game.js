@@ -15534,14 +15534,26 @@ void main() {
     return m ? m.get(ri2) : void 0;
   }
   var PIERS = null;
-  function setPiers(m) {
+  var PIER_E = null;
+  function setPiers(m, e) {
     PIERS = m;
+    PIER_E = e || null;
   }
   function piersOf(reg, ri2) {
     const m = PIERS && reg ? PIERS.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri2) : void 0;
   }
+  function wayAngle(reg, ri2) {
+    const m = PIER_E && reg ? PIER_E.get(reg.ry * RNX + reg.rx) : null;
+    return m && m.get(ri2) || 0;
+  }
   var piersSet = () => PIERS !== null;
+  function piersFromJSON(j) {
+    const M = /* @__PURE__ */ new Map(), E = /* @__PURE__ */ new Map();
+    for (const [k, v] of Object.entries(j && j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, l]) => [+ri2, l])));
+    for (const [k, v] of Object.entries(j && j.e || {})) E.set(+k, new Map(Object.entries(v).map(([ri2, a]) => [+ri2, a])));
+    return [M, E];
+  }
   var pierHalf = (clear) => 0.55 + Math.max(0, clear - 8) * 0.04;
   function pierShape(kind, hw, pw, clear, angle, o) {
     const k = 1 / Math.cos(angle * Math.PI / 180), half = clamp2(hw * 0.62, 0.6, 5);
@@ -15583,6 +15595,94 @@ void main() {
     out[3] = dx2 / dl;
     out[4] = dy2 / dl;
     return out;
+  }
+  var _ab5 = [0, 0, 0, 0, 0];
+  function deckReach(reg, ri2, e, pw) {
+    const hw = reg.rHw[ri2], xs = reg.rCls[ri2] >= 14 ? void 0 : xsOf(reg, ri2);
+    if (!xs) return hw + pw;
+    const qi2 = e ? reg.rCount[ri2] - 1 : 0;
+    const prR = xs[9] && xs[9].length ? xs[9] : null, prL = xs[10] && xs[10].length ? xs[10] : null;
+    const wR = prR ? prR[qi2] / 10 : xs[7] >= 10 ? xs[7] / 10 : 0, wL = prL ? prL[qi2] / 10 : xs[8] >= 10 ? xs[8] / 10 : 0;
+    return hw + Math.max(wR, wL) + pw;
+  }
+  function abutmentAt(world, reg, ri2, e, hw, ew, dt, angle, o) {
+    const a02 = reg.rStart[ri2], len = reg.cum[a02 + reg.rCount[ri2] - 1] - reg.cum[a02];
+    if (len < 8) return false;
+    const lim = Math.min(15, len / 2 - 1), sg = e ? -1 : 1, base = e ? len : 0;
+    const gap = (d) => {
+      const g2 = wayPoint(reg, ri2, base + sg * d, _ab5), X2 = g2[0], Y2 = g2[1], nx3 = g2[4], ny3 = -g2[3], under = g2[2] - dt;
+      let m = 1e9;
+      for (const f of [-0.7, 0, 0.7]) {
+        m = Math.min(m, world.groundH(X2 + nx3 * hw * f, Y2 + ny3 * hw * f, true));
+        if (world.g.road >= 0 && world.g.edge < 1.2 && world._nr.z < g2[2] - 2) return -1e9;
+      }
+      return under - m;
+    };
+    let st = -1, low = 1e9;
+    for (let d = 0.6; d <= lim; d += 0.5) if (gap(d) >= 0.5) {
+      st = d;
+      break;
+    }
+    if (st < 0) return false;
+    const prof = [];
+    for (let d = st; d <= lim + 6; d += 0.5) {
+      const gd = gap(d);
+      if (gd < -1e8) break;
+      prof.push([d, gd]);
+    }
+    let sb = st, gb = prof.length ? prof[0][1] : 0;
+    const gmax = prof.reduce((m, p) => Math.max(m, p[1]), -1e9);
+    for (const [d, gd] of prof) if (gd >= gmax - 0.3) {
+      sb = d;
+      gb = gd;
+      break;
+    }
+    const steep = sb > st && gb - gap(st) >= 1 * (sb - st);
+    const st0 = st;
+    if (steep) st = sb;
+    const g = wayPoint(reg, ri2, base + sg * st, _ab5), X = g[0], Y = g[1], Z = g[2], tx2 = g[3] * sg, ty2 = g[4] * sg;
+    const a = angle * Math.PI / 180, ca2 = Math.cos(a), sa2 = Math.sin(a), nx2 = ty2, ny2 = -tx2;
+    o.ux = tx2 * ca2 - nx2 * sa2;
+    o.uy = ty2 * ca2 - ny2 * sa2;
+    o.vx = nx2 * ca2 + tx2 * sa2;
+    o.vy = ny2 * ca2 + ty2 * sa2;
+    o.X = X;
+    o.Y = Y;
+    o.top = Z - dt;
+    o.th = Math.min(1.2 + (st - st0), st - 0.2);
+    o.len = (ew + 0.3) / ca2;
+    for (let i = 0; i <= 6; i++) {
+      const d = -o.len + 2 * o.len * i / 6, px2 = X + o.vx * d, py2 = Y + o.vy * d, gh = world.groundH(px2, py2, true), G = world.g;
+      if (G.road >= 0 && G.edge < 0.6 && world._nr.z < Z - 2) return false;
+      if (gh < low) low = gh;
+    }
+    for (const sd2 of [-1, 1]) {
+      world.groundH(X - o.ux * o.th + o.vx * o.len * sd2, Y - o.uy * o.th + o.vy * o.len * sd2, true);
+      if (world.g.road >= 0 && world.g.edge < 0.6 && world._nr.z < Z - 2) return false;
+    }
+    o.low = low - 0.8;
+    const wl2 = clamp2(o.top - low, 2, 8), back = st + wl2;
+    o.wings = [];
+    for (const side of [-1, 1]) {
+      const sx2 = X + o.vx * o.len * side, sy2 = Y + o.vy * o.len * side;
+      const ex2 = sx2 - tx2 * back, ey2 = sy2 - ty2 * back;
+      const n = Math.max(2, Math.ceil(back / 1.5)), ps2 = [];
+      let foot = 1e9, shows = 0, road = false;
+      for (let k = 0; k <= n; k++) {
+        const f = k / n, x = sx2 + (ex2 - sx2) * f, y = sy2 + (ey2 - sy2) * f;
+        const tp2 = wayPoint(reg, ri2, base + sg * Math.max(0, st - back * f), _ab5)[2] + 0.3;
+        world.groundH(x, y, true);
+        if (world.g.road >= 0 && world.g.edge < 0.2) road = true;
+        const gh = world.groundH(x + side * o.vx * 0.6, y + side * o.vy * 0.6, true);
+        if (world.g.road >= 0 && world.g.edge < 0.3 && world._nr.z < tp2 - 2.3) road = true;
+        foot = Math.min(foot, gh);
+        shows = Math.max(shows, tp2 - gh);
+        ps2.push([x, y, tp2]);
+      }
+      if (road || shows < 0.6) continue;
+      for (let k = 0; k < n; k++) o.wings.push([ps2[k][0], ps2[k][1], ps2[k + 1][0], ps2[k + 1][1], ps2[k][2], ps2[k + 1][2], foot - 0.5, foot - 0.5, side]);
+    }
+    return true;
   }
   function pierAt(world, X, Y, Z, tx2, ty2, hw, pw, dt, angle, kind, o) {
     const a = angle * Math.PI / 180, ca2 = Math.cos(a), sa2 = Math.sin(a), nx2 = ty2, ny2 = -tx2;
@@ -16207,7 +16307,7 @@ void main() {
     // building stood in the lanes until it did.
     _mendLift(e, reg) {
       e.mended = true;
-      const C3 = e.c, n = C3.length, add = [];
+      const C3 = e.c, n = C3.length, add2 = [];
       const end = (i, s29) => s29 ? [C3[i][2], C3[i][3]] : [C3[i][0], C3[i][1]];
       const body = (i, s29) => {
         const c = C3[i], dx2 = c[2] - c[0], dy2 = c[3] - c[1], l = Math.hypot(dx2, dy2) || 1;
@@ -16243,7 +16343,7 @@ void main() {
           s29 = t;
           w = Math.max(w, nr2.hw);
         }
-        if (s29 > 0) add.push([bx2 - ox2 * 0.3, by2 - oy2 * 0.3, bx2 + ox2 * s29, by2 + oy2 * s29, Math.min(w + 0.3, hw)]);
+        if (s29 > 0) add2.push([bx2 - ox2 * 0.3, by2 - oy2 * 0.3, bx2 + ox2 * s29, by2 + oy2 * s29, Math.min(w + 0.3, hw)]);
       }
       for (let i = 0; i < n; i++) {
         const c = C3[i], dx2 = c[2] - c[0], dy2 = c[3] - c[1], l = Math.hypot(dx2, dy2);
@@ -16251,7 +16351,7 @@ void main() {
         const a = run[i * 2], z = run[i * 2 + 1];
         C3[i] = [c[0] - dx2 / l * a, c[1] - dy2 / l * a, c[2] + dx2 / l * z, c[3] + dy2 / l * z, ...c.slice(4)];
       }
-      for (const c of add) C3.push(c);
+      for (const c of add2) C3.push(c);
     }
     // ---- retaining walls (bake/c21_walls.py -> data/walls.json): OpenStreetMap's walls, each a run of points [x, y, foot,
     // top] with s (1: the high side is left of the way's direction, -1: right of it, 0: a freestanding wall) and m (0
@@ -16590,6 +16690,7 @@ void main() {
       const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
       if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return h;
       const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, cum = reg.cum;
+      const nr2 = this._nr, nrz = nr2 && nr2.road >= 0 ? nr2.z : 1e9, nre = nr2 && nr2.road >= 0 ? nr2.d - nr2.hw : 1e9;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi2 = items[q], ri2 = segR[pi2], en2 = rEnd[ri2];
         if (!en2) continue;
@@ -16613,7 +16714,8 @@ void main() {
         let along = 1e9;
         if (en2 & 1) along = sAt - cum[a02];
         if (en2 & 2) along = Math.min(along, cum[b02] - sAt);
-        const lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along) + smoothstep(0.9, 2.6, ed2) * 3;
+        let lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along) + smoothstep(0.9, 2.6, ed2) * 3;
+        if (nrz < z - 3) lim = Math.min(lim, Math.max(z - DECK_T - 0.15 - 0.5 * Math.max(0, along - 2), nrz + 0.5 * Math.max(0, nre - 1.5)) + smoothstep(0.9, 2.6, ed2) * 3);
         if (!water && h > lim) h = lim;
       }
       return h;
@@ -20560,70 +20662,70 @@ void main() {
           return g.toNonIndexed();
         };
         const P2 = [];
-        const add = (g, c, p) => P2.push(part(col(g, ...c), p));
+        const add2 = (g, c, p) => P2.push(part(col(g, ...c), p));
         const galv = [0.3, 0.31, 0.32], dark = [0.035, 0.038, 0.036], white = [0.62, 0.62, 0.6], red = [0.42, 0.025, 0.02], wood = [0.105, 0.082, 0.058];
         const head = (x, y, p) => {
-          add(box2(0.36, 1.06, 0.26, x, y, 0), dark, p);
-          add(box2(0.62, 1.3, 0.02, x, y, -0.14), dark, p);
-          [[-6, 0.33], [-7, 0], [-8, -0.33]].forEach(([code, dy2]) => add(plate(0.105, 10, 0, 0.03, x, y + dy2, 0.14), [code, 0, 0], p));
+          add2(box2(0.36, 1.06, 0.26, x, y, 0), dark, p);
+          add2(box2(0.62, 1.3, 0.02, x, y, -0.14), dark, p);
+          [[-6, 0.33], [-7, 0], [-8, -0.33]].forEach(([code, dy2]) => add2(plate(0.105, 10, 0, 0.03, x, y + dy2, 0.14), [code, 0, 0], p));
         };
-        add(box2(0.06, 2.15, 0.06, 0, 1.075, 0), galv, 0);
-        add(plate(0.4, 8, Math.PI / 8, 0.02, 0, 2.15, 0.035), white, 0);
-        add(plate(0.36, 8, Math.PI / 8, 0.02, 0, 2.15, 0.047), red, 0);
-        add(box2(0.06, 2, 0.06, 0, 1, 0), galv, 1);
-        add(plate(0.5, 3, 0, 0.02, 0, 2.08, 0.035), red, 1);
-        add(plate(0.33, 3, 0, 0.02, 0, 2.08, 0.047), white, 1);
+        add2(box2(0.06, 2.15, 0.06, 0, 1.075, 0), galv, 0);
+        add2(plate(0.4, 8, Math.PI / 8, 0.02, 0, 2.15, 0.035), white, 0);
+        add2(plate(0.36, 8, Math.PI / 8, 0.02, 0, 2.15, 0.047), red, 0);
+        add2(box2(0.06, 2, 0.06, 0, 1, 0), galv, 1);
+        add2(plate(0.5, 3, 0, 0.02, 0, 2.08, 0.035), red, 1);
+        add2(plate(0.33, 3, 0, 0.02, 0, 2.08, 0.047), white, 1);
         for (const [p, reach, heads] of [[2, 5.2, [-4.6]], [3, 9.4, [-4.6, -8.8]]]) {
-          add(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, p);
-          add(beam(0, 6.6, 0, -reach, 6.9, 0, 0.12), galv, p);
-          add(beam(0, 5.4, 0, -reach * 0.45, 6.6, 0, 0.06), galv, p);
+          add2(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, p);
+          add2(beam(0, 6.6, 0, -reach, 6.9, 0, 0.12), galv, p);
+          add2(beam(0, 5.4, 0, -reach * 0.45, 6.6, 0, 0.06), galv, p);
           for (const hx2 of heads) head(hx2, 6.05, p);
           head(0, 3.3, p);
         }
         head(0, 6.05, 27);
-        add(beam(0, 6.6, 0, -1, 6.9, 0, 0.12), galv, 28);
-        add(beam(0, 5.4, 0, -0.45, 6.6, 0, 0.06), galv, 28);
-        add(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, 29);
+        add2(beam(0, 6.6, 0, -1, 6.9, 0, 0.12), galv, 28);
+        add2(beam(0, 5.4, 0, -0.45, 6.6, 0, 0.06), galv, 28);
+        add2(cylY(0.13, 0.18, 7, 8, 0, 0, 0), galv, 29);
         head(0, 3.3, 29);
-        add(box2(0.08, 3.3, 0.08, 0, 1.65, 0), galv, 4);
+        add2(box2(0.08, 3.3, 0.08, 0, 1.65, 0), galv, 4);
         for (const a of [Math.PI / 4, -Math.PI / 4]) {
           const g = new qi(1.25, 0.23, 0.02);
           g.rotateZ(a);
           g.translate(0, 2.95, 0.05);
-          add(g.toNonIndexed(), white, 4);
+          add2(g.toNonIndexed(), white, 4);
         }
-        add(cylY(0.14, 0.15, 0.58, 10, 0, 0, 0), [0.4, 0.035, 0.025], 5);
-        add(cylY(0.15, 0.08, 0.14, 10, 0, 0.58, 0), [0.4, 0.035, 0.025], 5);
-        add(beam(-0.24, 0.42, 0, 0.24, 0.42, 0, 0.09), [0.4, 0.035, 0.025], 5);
-        add(beam(0, 0.4, 0, 0, 0.4, 0.22, 0.11), [0.4, 0.035, 0.025], 5);
-        add(box2(0.06, 2.7, 0.06, 0, 1.35, 0), galv, 6);
-        add(box2(0.46, 0.62, 0.02, 0, 2.45, 0.04), white, 6);
-        add(box2(0.46, 0.12, 0.022, 0, 2.7, 0.041), [0.05, 0.12, 0.35], 6);
-        add(box2(3.2, 2.2, 0.04, 0, 1.25, -0.75), [0.2, 0.24, 0.26], 7);
-        add(box2(0.04, 2.2, 1.4, -1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
-        add(box2(0.04, 2.2, 1.4, 1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
-        add(box2(3.4, 0.08, 1.7, 0, 2.38, 0), dark, 7);
-        for (const x of [-1.62, 1.62]) for (const z of [-0.78, 0.68]) add(box2(0.07, 2.36, 0.07, x, 1.18, z), dark, 7);
-        add(box2(2.2, 0.06, 0.4, 0, 0.45, -0.5), [0.16, 0.16, 0.17], 7);
-        add(box2(0.06, 2.7, 0.06, 2.1, 1.35, 0.6), galv, 7);
-        add(box2(0.46, 0.62, 0.02, 2.1, 2.45, 0.64), white, 7);
-        add(cylY(0.05, 0.09, 10, 8, 0, 0, 0), [0.66, 0.66, 0.64], 8);
-        add(box2(1.5, 0.95, 0.01, 0.78, 9.4, 0), [0.4, 0.04, 0.05], 8);
-        add(box2(0.62, 0.52, 0.012, 0.34, 9.61, 0), [0.04, 0.06, 0.22], 8);
-        add(box2(1.5, 0.12, 0.012, 0.78, 9.25, 0), white, 8);
-        add(cylY(0.09, 0.13, 8.6, 8, 0, 0, 0), galv, 9);
-        add(beam(0, 8.3, 0, 0, 8.55, 1.9, 0.07), galv, 9);
-        add(box2(0.28, 0.12, 0.66, 0, 8.52, 2.2), galv, 9);
+        add2(cylY(0.14, 0.15, 0.58, 10, 0, 0, 0), [0.4, 0.035, 0.025], 5);
+        add2(cylY(0.15, 0.08, 0.14, 10, 0, 0.58, 0), [0.4, 0.035, 0.025], 5);
+        add2(beam(-0.24, 0.42, 0, 0.24, 0.42, 0, 0.09), [0.4, 0.035, 0.025], 5);
+        add2(beam(0, 0.4, 0, 0, 0.4, 0.22, 0.11), [0.4, 0.035, 0.025], 5);
+        add2(box2(0.06, 2.7, 0.06, 0, 1.35, 0), galv, 6);
+        add2(box2(0.46, 0.62, 0.02, 0, 2.45, 0.04), white, 6);
+        add2(box2(0.46, 0.12, 0.022, 0, 2.7, 0.041), [0.05, 0.12, 0.35], 6);
+        add2(box2(3.2, 2.2, 0.04, 0, 1.25, -0.75), [0.2, 0.24, 0.26], 7);
+        add2(box2(0.04, 2.2, 1.4, -1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
+        add2(box2(0.04, 2.2, 1.4, 1.6, 1.25, -0.05), [0.2, 0.24, 0.26], 7);
+        add2(box2(3.4, 0.08, 1.7, 0, 2.38, 0), dark, 7);
+        for (const x of [-1.62, 1.62]) for (const z of [-0.78, 0.68]) add2(box2(0.07, 2.36, 0.07, x, 1.18, z), dark, 7);
+        add2(box2(2.2, 0.06, 0.4, 0, 0.45, -0.5), [0.16, 0.16, 0.17], 7);
+        add2(box2(0.06, 2.7, 0.06, 2.1, 1.35, 0.6), galv, 7);
+        add2(box2(0.46, 0.62, 0.02, 2.1, 2.45, 0.64), white, 7);
+        add2(cylY(0.05, 0.09, 10, 8, 0, 0, 0), [0.66, 0.66, 0.64], 8);
+        add2(box2(1.5, 0.95, 0.01, 0.78, 9.4, 0), [0.4, 0.04, 0.05], 8);
+        add2(box2(0.62, 0.52, 0.012, 0.34, 9.61, 0), [0.04, 0.06, 0.22], 8);
+        add2(box2(1.5, 0.12, 0.012, 0.78, 9.25, 0), white, 8);
+        add2(cylY(0.09, 0.13, 8.6, 8, 0, 0, 0), galv, 9);
+        add2(beam(0, 8.3, 0, 0, 8.55, 1.9, 0.07), galv, 9);
+        add2(box2(0.28, 0.12, 0.66, 0, 8.52, 2.2), galv, 9);
         {
           const g = new Yt();
           g.setAttribute("position", new me(new Float32Array([-0.11, 8.455, 1.95, 0.11, 8.455, 1.95, 0.11, 8.455, 2.45, -0.11, 8.455, 1.95, 0.11, 8.455, 2.45, -0.11, 8.455, 2.45]), 3));
           g.setAttribute("normal", new me(new Float32Array(18).map((v, i) => i % 3 === 1 ? -1 : 0), 3));
-          add(g, [-5, 0, 0], 9);
+          add2(g, [-5, 0, 0], 9);
         }
-        add(cylY(0.038, 0.042, 0.06, 8, 0, 0, 0), dark, 10);
-        add(cylY(0.036, 0.038, 0.84, 8, 0, 0.06, 0), [0.66, 0.66, 0.64], 10);
-        add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.62, 0), [0.3, 0.3, 0.29], 10);
-        add(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.76, 0), [0.3, 0.3, 0.29], 10);
+        add2(cylY(0.038, 0.042, 0.06, 8, 0, 0, 0), dark, 10);
+        add2(cylY(0.036, 0.038, 0.84, 8, 0, 0.06, 0), [0.66, 0.66, 0.64], 10);
+        add2(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.62, 0), [0.3, 0.3, 0.29], 10);
+        add2(cylY(0.0375, 0.0375, 0.07, 8, 0, 0.76, 0), [0.3, 0.3, 0.29], 10);
         const panes = (w02, w1, y02, y1, x, z) => {
           const g = new Rr(w1 * Math.SQRT2, w02 * Math.SQRT2, y1 - y02, 4, 1, true);
           g.rotateY(Math.PI / 4);
@@ -20637,79 +20739,79 @@ void main() {
           return g.toNonIndexed();
         };
         const lanternHead = (c, p, x, y02, z, w02, w1, h) => {
-          add(box2(w02 * 2 + 0.06, 0.04, w02 * 2 + 0.06, x, y02 - 0.02, z), c, p);
-          add(panes(w02, w1, y02, y02 + h, x, z), [-5, 0, 0], p);
-          for (const [sx2, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) add(beam(x + sx2 * w02, y02, z + sz * w02, x + sx2 * w1, y02 + h, z + sz * w1, 0.025), c, p);
-          add(pyramid(w1 + 0.06, 0.26, x, y02 + h, z), c, p);
-          add(cylY(0.012, 0.025, 0.16, 6, x, y02 + h + 0.24, z), c, p);
+          add2(box2(w02 * 2 + 0.06, 0.04, w02 * 2 + 0.06, x, y02 - 0.02, z), c, p);
+          add2(panes(w02, w1, y02, y02 + h, x, z), [-5, 0, 0], p);
+          for (const [sx2, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) add2(beam(x + sx2 * w02, y02, z + sz * w02, x + sx2 * w1, y02 + h, z + sz * w1, 0.025), c, p);
+          add2(pyramid(w1 + 0.06, 0.26, x, y02 + h, z), c, p);
+          add2(cylY(0.012, 0.025, 0.16, 6, x, y02 + h + 0.24, z), c, p);
         };
         const black = [0.022, 0.024, 0.025], bronze = [0.1, 0.068, 0.04], green = [0.03, 0.065, 0.04];
         [[11, black], [12, bronze], [13, green]].forEach(([p, c]) => {
-          add(cylY(0.13, 0.17, 0.85, 8, 0, 0, 0), c, p);
-          add(cylY(0.105, 0.105, 0.06, 8, 0, 0.85, 0), c, p);
-          add(cylY(0.05, 0.065, 2.75, 8, 0, 0.91, 0), c, p);
-          add(cylY(0.1, 0.07, 0.12, 8, 0, 3.66, 0), c, p);
+          add2(cylY(0.13, 0.17, 0.85, 8, 0, 0, 0), c, p);
+          add2(cylY(0.105, 0.105, 0.06, 8, 0, 0.85, 0), c, p);
+          add2(cylY(0.05, 0.065, 2.75, 8, 0, 0.91, 0), c, p);
+          add2(cylY(0.1, 0.07, 0.12, 8, 0, 3.66, 0), c, p);
           lanternHead(c, p, 0, 3.8, 0, 0.13, 0.21, 0.58);
         });
         const darkGrey = [0.12, 0.125, 0.13];
-        add(cylY(0.05, 0.075, 3.9, 8, 0, 0, 0), darkGrey, 14);
-        add(cylY(0.12, 0.08, 0.06, 10, 0, 3.86, 0), darkGrey, 14);
-        add(cylY(0.2, 0.2, 0.32, 12, 0, 3.92, 0), [-5, 0, 0], 14);
+        add2(cylY(0.05, 0.075, 3.9, 8, 0, 0, 0), darkGrey, 14);
+        add2(cylY(0.12, 0.08, 0.06, 10, 0, 3.86, 0), darkGrey, 14);
+        add2(cylY(0.2, 0.2, 0.32, 12, 0, 3.92, 0), [-5, 0, 0], 14);
         {
           const g = new Cr(0.28, 0.16, 12, 1);
           g.translate(0, 4.32, 0);
-          add(g.toNonIndexed(), darkGrey, 14);
+          add2(g.toNonIndexed(), darkGrey, 14);
         }
-        add(cylY(0.15, 0.2, 0.7, 8, 0, 0, 0), black, 15);
-        add(cylY(0.06, 0.075, 4.3, 8, 0, 0.7, 0), black, 15);
+        add2(cylY(0.15, 0.2, 0.7, 8, 0, 0, 0), black, 15);
+        add2(cylY(0.06, 0.075, 4.3, 8, 0, 0.7, 0), black, 15);
         {
           const C3 = [[0, 4.95], [0.12, 5.25], [0.38, 5.38], [0.62, 5.3], [0.74, 5.08], [0.74, 4.88]];
-          for (let k = 0; k + 1 < C3.length; k++) add(beam(0, C3[k][1], C3[k][0], 0, C3[k + 1][1], C3[k + 1][0], 0.05), black, 15);
+          for (let k = 0; k + 1 < C3.length; k++) add2(beam(0, C3[k][1], C3[k][0], 0, C3[k + 1][1], C3[k + 1][0], 0.05), black, 15);
         }
         lanternHead(black, 15, 0, 4.14, 0.74, 0.1, 0.17, 0.46);
         const slats = [0.16, 0.1, 0.055], darkGreen = [0.025, 0.045, 0.035], benchStone = [0.36, 0.35, 0.33];
         [[16, slats, true], [17, slats, false], [18, darkGreen, true], [19, darkGreen, false]].forEach(([p, c, back]) => {
           for (const x of [-0.78, 0.78]) {
-            add(box2(0.05, 0.43, 0.05, x, 0.215, 0.17), black, p);
-            add(box2(0.05, 0.43, 0.05, x, 0.215, -0.17), black, p);
-            add(box2(0.05, 0.05, 0.44, x, 0.405, 0), black, p);
-            if (back) add(beam(x, 0.43, -0.19, x, 0.86, -0.27, 0.05), black, p);
+            add2(box2(0.05, 0.43, 0.05, x, 0.215, 0.17), black, p);
+            add2(box2(0.05, 0.43, 0.05, x, 0.215, -0.17), black, p);
+            add2(box2(0.05, 0.05, 0.44, x, 0.405, 0), black, p);
+            if (back) add2(beam(x, 0.43, -0.19, x, 0.86, -0.27, 0.05), black, p);
           }
-          for (const z of [0.16, 0.055, -0.05, -0.155]) add(box2(1.8, 0.035, 0.09, 0, 0.445, z), c, p);
+          for (const z of [0.16, 0.055, -0.05, -0.155]) add2(box2(1.8, 0.035, 0.09, 0, 0.445, z), c, p);
           if (back) {
-            add(box2(1.8, 0.09, 0.03, 0, 0.62, -0.225), c, p);
-            add(box2(1.8, 0.09, 0.03, 0, 0.76, -0.25), c, p);
+            add2(box2(1.8, 0.09, 0.03, 0, 0.62, -0.225), c, p);
+            add2(box2(1.8, 0.09, 0.03, 0, 0.76, -0.25), c, p);
           }
         });
-        add(box2(1.8, 0.45, 0.45, 0, 0.225, 0), benchStone, 20);
-        add(cylY(0.105, 0.13, 0.1, 10, 0, 0, 0), black, 21);
-        add(cylY(0.085, 0.095, 0.7, 10, 0, 0.1, 0), black, 21);
-        add(cylY(0.1, 0.1, 0.05, 10, 0, 0.8, 0), black, 21);
+        add2(box2(1.8, 0.45, 0.45, 0, 0.225, 0), benchStone, 20);
+        add2(cylY(0.105, 0.13, 0.1, 10, 0, 0, 0), black, 21);
+        add2(cylY(0.085, 0.095, 0.7, 10, 0, 0.1, 0), black, 21);
+        add2(cylY(0.1, 0.1, 0.05, 10, 0, 0.8, 0), black, 21);
         {
           const g = new zr(0.09, 10, 5, 0, 2 * Math.PI, 0, Math.PI / 2);
           g.translate(0, 0.85, 0);
-          add(g.toNonIndexed(), black, 21);
+          add2(g.toNonIndexed(), black, 21);
         }
-        add(cylY(0.1, 0.1, 0.85, 12, 0, 0, 0), galv, 22);
-        add(cylY(0.102, 0.102, 0.08, 12, 0, 0.68, 0), [0.55, 0.42, 0.04], 22);
-        for (const x of [-0.375, 0.375]) add(cylY(0.03, 0.03, 0.55, 6, x, 0, 0), galv, 23);
+        add2(cylY(0.1, 0.1, 0.85, 12, 0, 0, 0), galv, 22);
+        add2(cylY(0.102, 0.102, 0.08, 12, 0, 0.68, 0), [0.55, 0.42, 0.04], 22);
+        for (const x of [-0.375, 0.375]) add2(cylY(0.03, 0.03, 0.55, 6, x, 0, 0), galv, 23);
         for (let k = 0; k < 6; k++) {
           const a02 = Math.PI * k / 6, a1 = Math.PI * (k + 1) / 6;
-          add(beam(0.375 * Math.cos(a02), 0.55 + 0.375 * Math.sin(a02), 0, 0.375 * Math.cos(a1), 0.55 + 0.375 * Math.sin(a1), 0, 0.06), galv, 23);
+          add2(beam(0.375 * Math.cos(a02), 0.55 + 0.375 * Math.sin(a02), 0, 0.375 * Math.cos(a1), 0.55 + 0.375 * Math.sin(a1), 0, 0.06), galv, 23);
         }
-        add(cylY(0.04, 0.045, 0.95, 8, 0, 0, 0), black, 24);
+        add2(cylY(0.04, 0.045, 0.95, 8, 0, 0, 0), black, 24);
         {
           const g = new qo(0.22, 0.02, 6, 16);
           g.translate(0, 0.72, 0);
-          add(g.toNonIndexed(), black, 24);
+          add2(g.toNonIndexed(), black, 24);
         }
         const dockGrey = [0.08, 0.085, 0.09], shareBlue = [0.02, 0.1, 0.32];
-        add(box2(0.75, 0.04, 0.5, 0, 0.02, 0), dockGrey, 25);
-        add(box2(0.14, 0.85, 0.22, 0, 0.45, 0.05), dockGrey, 25);
-        add(box2(0.16, 0.08, 0.24, 0, 0.9, 0.05), shareBlue, 25);
-        add(box2(0.6, 2.2, 0.3, 0, 1.1, 0), dockGrey, 26);
-        add(box2(0.62, 0.5, 0.02, 0, 1.95, 0.16), shareBlue, 26);
-        add(box2(0.5, 0.9, 0.02, 0, 1.2, 0.16), [0.5, 0.5, 0.48], 26);
+        add2(box2(0.75, 0.04, 0.5, 0, 0.02, 0), dockGrey, 25);
+        add2(box2(0.14, 0.85, 0.22, 0, 0.45, 0.05), dockGrey, 25);
+        add2(box2(0.16, 0.08, 0.24, 0, 0.9, 0.05), shareBlue, 25);
+        add2(box2(0.6, 2.2, 0.3, 0, 1.1, 0), dockGrey, 26);
+        add2(box2(0.62, 0.5, 0.02, 0, 1.95, 0.16), shareBlue, 26);
+        add2(box2(0.5, 0.9, 0.02, 0, 1.2, 0.16), [0.5, 0.5, 0.48], 26);
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1 });
@@ -22172,6 +22274,7 @@ void main() {
   }
   var _pg = [0, 0, 0, 0, 0];
   var _po = {};
+  var _ab = {};
   function pierPolys(w, reg) {
     if (reg.pierPolys) return reg.pierPolys;
     if (!piersSet() || !reg.nDeck) return [];
@@ -22179,7 +22282,7 @@ void main() {
     for (let ri2 = 0; ri2 < reg.nRoads; ri2++) {
       if (!reg.rEnd[ri2]) continue;
       const PL = piersOf(reg, ri2);
-      if (!PL || !PL.length) continue;
+      if (!PL) continue;
       const rail = reg.rCls[ri2] >= 14, hw = reg.rHw[ri2], PW = rail ? 0.34 : 0.42, DT = rail ? 1.5 : DECK_T - 0.05;
       for (let k = 0; k < PL.length; k += 3) {
         const g = wayPoint(reg, ri2, PL[k] / 10, _pg), X = g[0], Y = g[1], kind = PL[k + 2];
@@ -22187,25 +22290,38 @@ void main() {
         const o = _po;
         if (!pierAt(w, X, Y, g[2], g[3], g[4], hw, PW, DT, PL[k + 1], kind, o)) continue;
         const pt = (u, v) => [X + o.ux * u + o.vx * v, Y + o.uy * u + o.vy * v];
-        const add = (q) => {
-          const pts = new Float64Array(q.length * 2);
-          let cx2 = 0, cy2 = 0, rad = 0;
-          q.forEach((p, i) => {
-            pts[i * 2] = p[0];
-            pts[i * 2 + 1] = p[1];
-            cx2 += p[0] / q.length;
-            cy2 += p[1] / q.length;
-          });
-          for (const p of q) rad = Math.max(rad, Math.hypot(p[0] - cx2, p[1] - cy2));
-          out.push({ pts, n: q.length, cx: cx2, cy: cy2, rad: rad + 0.1, rings: null });
-        };
-        if (kind === 1) for (const c of o.cols) add([pt(-o.cr, c - o.cr), pt(-o.cr, c + o.cr), pt(o.cr, c + o.cr), pt(o.cr, c - o.cr)]);
-        else if (kind === 2) add([pt(0, -o.len - o.nose), pt(-o.th, -o.len), pt(-o.th, o.len), pt(0, o.len + o.nose), pt(o.th, o.len), pt(o.th, -o.len)]);
-        else add([pt(-o.th, -o.len), pt(-o.th, o.len), pt(o.th, o.len), pt(o.th, -o.len)]);
+        if (kind === 1) for (const c of o.cols) add(out, [pt(-o.cr, c - o.cr), pt(-o.cr, c + o.cr), pt(o.cr, c + o.cr), pt(o.cr, c - o.cr)], "pier", g[2]);
+        else if (kind === 2) add(out, [pt(0, -o.len - o.nose), pt(-o.th, -o.len), pt(-o.th, o.len), pt(0, o.len + o.nose), pt(o.th, o.len), pt(o.th, -o.len)], "pier", g[2]);
+        else add(out, [pt(-o.th, -o.len), pt(-o.th, o.len), pt(o.th, o.len), pt(o.th, -o.len)], "pier", g[2]);
+      }
+      const en2 = reg.rEnd[ri2], ang = wayAngle(reg, ri2);
+      for (const e of [0, 1]) {
+        if (!(en2 & 1 << e)) continue;
+        const a = _ab;
+        if (!abutmentAt(w, reg, ri2, e, hw, deckReach(reg, ri2, e, PW), DT, ang, a)) continue;
+        if (a.X < reg.x0 || a.X >= reg.x0 + RS3 || a.Y < reg.y0 || a.Y >= reg.y0 + RS3) continue;
+        const pt = (u, v) => [a.X + a.ux * u + a.vx * v, a.Y + a.uy * u + a.vy * v];
+        add(out, [pt(-a.th, -a.len), pt(-a.th, a.len), pt(0, a.len), pt(0, -a.len)], "seat", a.top + DT);
+        for (const [x02, y02, x1, y1, t02] of a.wings) {
+          const dx2 = x1 - x02, dy2 = y1 - y02, l = Math.hypot(dx2, dy2) || 1, nx2 = -dy2 / l * 0.2, ny2 = dx2 / l * 0.2;
+          add(out, [[x02 - nx2, y02 - ny2], [x1 - nx2, y1 - ny2], [x1 + nx2, y1 + ny2], [x02 + nx2, y02 + ny2]], "wing", t02 - 0.3);
+        }
       }
     }
     reg.pierPolys = out;
     return out;
+  }
+  function add(out, q, what, z) {
+    const pts = new Float64Array(q.length * 2);
+    let cx2 = 0, cy2 = 0, rad = 0;
+    q.forEach((p, i) => {
+      pts[i * 2] = p[0];
+      pts[i * 2 + 1] = p[1];
+      cx2 += p[0] / q.length;
+      cy2 += p[1] / q.length;
+    });
+    for (const p of q) rad = Math.max(rad, Math.hypot(p[0] - cx2, p[1] - cy2));
+    out.push({ pts, n: q.length, cx: cx2, cy: cy2, rad: rad + 0.1, rings: null, what, z });
   }
   var Player = class {
     constructor(game2) {
@@ -26335,9 +26451,7 @@ void main() {
       }).catch(() => {
       }) : null;
       if (F.piers) fetch(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
-        const M = /* @__PURE__ */ new Map();
-        for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, l]) => [+ri2, l])));
-        setPiers(M);
+        setPiers(...piersFromJSON(j));
       }).catch(() => {
       });
       this.names = null;

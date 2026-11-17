@@ -805,12 +805,24 @@
     return m ? m.get(ri) : void 0;
   }
   var PIERS = null;
-  function setPiers(m) {
+  var PIER_E = null;
+  function setPiers(m, e) {
     PIERS = m;
+    PIER_E = e || null;
   }
   function piersOf(reg, ri) {
     const m = PIERS && reg ? PIERS.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
+  }
+  function wayAngle(reg, ri) {
+    const m = PIER_E && reg ? PIER_E.get(reg.ry * RNX + reg.rx) : null;
+    return m && m.get(ri) || 0;
+  }
+  function piersFromJSON(j) {
+    const M = /* @__PURE__ */ new Map(), E = /* @__PURE__ */ new Map();
+    for (const [k, v] of Object.entries(j && j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri, l]) => [+ri, l])));
+    for (const [k, v] of Object.entries(j && j.e || {})) E.set(+k, new Map(Object.entries(v).map(([ri, a]) => [+ri, a])));
+    return [M, E];
   }
   var pierHalf = (clear) => 0.55 + Math.max(0, clear - 8) * 0.04;
   function pierShape(kind, hw, pw, clear, angle, o) {
@@ -834,6 +846,113 @@
       o.capD = 1.2;
     }
     return o;
+  }
+  function wayPoint(reg, ri, s, out) {
+    const a = reg.rStart[ri], n = reg.rCount[ri], cum = reg.cum, t = cum[a] + s;
+    let lo = a, hi = a + n - 1;
+    if (t <= cum[lo]) hi = lo + 1;
+    else if (t >= cum[hi]) lo = hi - 1;
+    else while (hi - lo > 1) {
+      const mid = lo + hi >> 1;
+      if (cum[mid] <= t) lo = mid;
+      else hi = mid;
+    }
+    const L2 = Math.max(cum[hi] - cum[lo], 1e-6), f = clamp2((t - cum[lo]) / L2, 0, 1);
+    const dx = reg.px[hi] - reg.px[lo], dy = reg.py[hi] - reg.py[lo], dl = Math.hypot(dx, dy) || 1;
+    out[0] = reg.x0 + reg.px[lo] + dx * f;
+    out[1] = reg.y0 + reg.py[lo] + dy * f;
+    out[2] = reg.pz[lo] + (reg.pz[hi] - reg.pz[lo]) * f;
+    out[3] = dx / dl;
+    out[4] = dy / dl;
+    return out;
+  }
+  var _ab5 = [0, 0, 0, 0, 0];
+  function deckReach(reg, ri, e, pw) {
+    const hw = reg.rHw[ri], xs = reg.rCls[ri] >= 14 ? void 0 : xsOf(reg, ri);
+    if (!xs) return hw + pw;
+    const qi = e ? reg.rCount[ri] - 1 : 0;
+    const prR = xs[9] && xs[9].length ? xs[9] : null, prL = xs[10] && xs[10].length ? xs[10] : null;
+    const wR = prR ? prR[qi] / 10 : xs[7] >= 10 ? xs[7] / 10 : 0, wL = prL ? prL[qi] / 10 : xs[8] >= 10 ? xs[8] / 10 : 0;
+    return hw + Math.max(wR, wL) + pw;
+  }
+  function abutmentAt(world2, reg, ri, e, hw, ew, dt, angle, o) {
+    const a0 = reg.rStart[ri], len = reg.cum[a0 + reg.rCount[ri] - 1] - reg.cum[a0];
+    if (len < 8) return false;
+    const lim = Math.min(15, len / 2 - 1), sg = e ? -1 : 1, base = e ? len : 0;
+    const gap = (d) => {
+      const g2 = wayPoint(reg, ri, base + sg * d, _ab5), X2 = g2[0], Y2 = g2[1], nx2 = g2[4], ny2 = -g2[3], under2 = g2[2] - dt;
+      let m = 1e9;
+      for (const f of [-0.7, 0, 0.7]) {
+        m = Math.min(m, world2.groundH(X2 + nx2 * hw * f, Y2 + ny2 * hw * f, true));
+        if (world2.g.road >= 0 && world2.g.edge < 1.2 && world2._nr.z < g2[2] - 2) return -1e9;
+      }
+      return under2 - m;
+    };
+    let st2 = -1, low = 1e9;
+    for (let d = 0.6; d <= lim; d += 0.5) if (gap(d) >= 0.5) {
+      st2 = d;
+      break;
+    }
+    if (st2 < 0) return false;
+    const prof = [];
+    for (let d = st2; d <= lim + 6; d += 0.5) {
+      const gd = gap(d);
+      if (gd < -1e8) break;
+      prof.push([d, gd]);
+    }
+    let sb = st2, gb = prof.length ? prof[0][1] : 0;
+    const gmax = prof.reduce((m, p) => Math.max(m, p[1]), -1e9);
+    for (const [d, gd] of prof) if (gd >= gmax - 0.3) {
+      sb = d;
+      gb = gd;
+      break;
+    }
+    const steep = sb > st2 && gb - gap(st2) >= 1 * (sb - st2);
+    const st0 = st2;
+    if (steep) st2 = sb;
+    const g = wayPoint(reg, ri, base + sg * st2, _ab5), X = g[0], Y = g[1], Z = g[2], tx = g[3] * sg, ty = g[4] * sg;
+    const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), nx = ty, ny = -tx;
+    o.ux = tx * ca - nx * sa;
+    o.uy = ty * ca - ny * sa;
+    o.vx = nx * ca + tx * sa;
+    o.vy = ny * ca + ty * sa;
+    o.X = X;
+    o.Y = Y;
+    o.top = Z - dt;
+    o.th = Math.min(1.2 + (st2 - st0), st2 - 0.2);
+    o.len = (ew + 0.3) / ca;
+    for (let i = 0; i <= 6; i++) {
+      const d = -o.len + 2 * o.len * i / 6, px = X + o.vx * d, py = Y + o.vy * d, gh = world2.groundH(px, py, true), G = world2.g;
+      if (G.road >= 0 && G.edge < 0.6 && world2._nr.z < Z - 2) return false;
+      if (gh < low) low = gh;
+    }
+    for (const sd of [-1, 1]) {
+      world2.groundH(X - o.ux * o.th + o.vx * o.len * sd, Y - o.uy * o.th + o.vy * o.len * sd, true);
+      if (world2.g.road >= 0 && world2.g.edge < 0.6 && world2._nr.z < Z - 2) return false;
+    }
+    o.low = low - 0.8;
+    const wl = clamp2(o.top - low, 2, 8), back = st2 + wl;
+    o.wings = [];
+    for (const side of [-1, 1]) {
+      const sx = X + o.vx * o.len * side, sy = Y + o.vy * o.len * side;
+      const ex = sx - tx * back, ey = sy - ty * back;
+      const n = Math.max(2, Math.ceil(back / 1.5)), ps = [];
+      let foot = 1e9, shows = 0, road = false;
+      for (let k = 0; k <= n; k++) {
+        const f = k / n, x = sx + (ex - sx) * f, y = sy + (ey - sy) * f;
+        const tp = wayPoint(reg, ri, base + sg * Math.max(0, st2 - back * f), _ab5)[2] + 0.3;
+        world2.groundH(x, y, true);
+        if (world2.g.road >= 0 && world2.g.edge < 0.2) road = true;
+        const gh = world2.groundH(x + side * o.vx * 0.6, y + side * o.vy * 0.6, true);
+        if (world2.g.road >= 0 && world2.g.edge < 0.3 && world2._nr.z < tp - 2.3) road = true;
+        foot = Math.min(foot, gh);
+        shows = Math.max(shows, tp - gh);
+        ps.push([x, y, tp]);
+      }
+      if (road || shows < 0.6) continue;
+      for (let k = 0; k < n; k++) o.wings.push([ps[k][0], ps[k][1], ps[k + 1][0], ps[k + 1][1], ps[k][2], ps[k + 1][2], foot - 0.5, foot - 0.5, side]);
+    }
+    return true;
   }
   function pierAt(world2, X, Y, Z, tx, ty, hw, pw, dt, angle, kind, o) {
     const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), nx = ty, ny = -tx;
@@ -2014,6 +2133,7 @@
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return h;
       const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, cum = reg.cum;
+      const nr = this._nr, nrz = nr && nr.road >= 0 ? nr.z : 1e9, nre = nr && nr.road >= 0 ? nr.d - nr.hw : 1e9;
       for (let q = reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri = segR[pi], en = rEnd[ri];
         if (!en) continue;
@@ -2037,7 +2157,8 @@
         let along2 = 1e9;
         if (en & 1) along2 = sAt - cum[a0];
         if (en & 2) along2 = Math.min(along2, cum[b0] - sAt);
-        const lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along2) + smoothstep(0.9, 2.6, ed) * 3;
+        let lim = z - 0.15 - (DECK_T - 0.03) * smoothstep(6, 14, along2) + smoothstep(0.9, 2.6, ed) * 3;
+        if (nrz < z - 3) lim = Math.min(lim, Math.max(z - DECK_T - 0.15 - 0.5 * Math.max(0, along2 - 2), nrz + 0.5 * Math.max(0, nre - 1.5)) + smoothstep(0.9, 2.6, ed) * 3);
         if (!water && h > lim) h = lim;
       }
       return h;
@@ -7584,6 +7705,45 @@
   // src/decks.js
   var PIER_GAP = 30;
   var _pier = {};
+  var _abut = {};
+  function drawAbutment(M, P2, o) {
+    const base = P2(o.X, o.Y, 0);
+    M.ox = base[0];
+    M.oy = base[1];
+    M.oz = base[2];
+    M.ux = o.ux;
+    M.uz = -o.uy;
+    M.vx = o.vx;
+    M.vz = -o.vy;
+    M.box(-o.th, 0, o.low, o.top, -o.len, o.len, 1 | 16 | 32);
+    M.ox = 0;
+    M.oy = 0;
+    M.oz = 0;
+    M.ux = 1;
+    M.uz = 0;
+    M.vx = 0;
+    M.vz = 1;
+    for (const [x0, y0, x1, y1, t0, t1, f0, f1, side] of o.wings) {
+      const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1;
+      let nx = dy / l, ny = -dx / l;
+      if (nx * o.vx * side + ny * o.vy * side < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      const q = (x, y, h, d) => {
+        const t = P2(x + nx * d, y + ny * d, h);
+        return [t[0], t[1], t[2]];
+      };
+      const n = P2(x0 + nx, y0 + ny, f0).slice(), c = P2(x0, y0, f0), wn = [n[0] - c[0], n[1] - c[1], n[2] - c[2]];
+      const A = q(x0, y0, f0, 0.2), B = q(x1, y1, f1, 0.2), Cc = q(x1, y1, t1, 0.2), D2 = q(x0, y0, t0, 0.2);
+      const i0 = M.v(A[0], A[1], A[2], wn[0], wn[1], wn[2], 0, 0), i1 = M.v(B[0], B[1], B[2], wn[0], wn[1], wn[2], l, 0);
+      const i2 = M.v(Cc[0], Cc[1], Cc[2], wn[0], wn[1], wn[2], l, t1 - f1), i3 = M.v(D2[0], D2[1], D2[2], wn[0], wn[1], wn[2], 0, t0 - f0);
+      M.quad(i0, i1, i2, i3);
+      const E = q(x1, y1, t1, -0.2), F = q(x0, y0, t0, -0.2);
+      const j0 = M.v(D2[0], D2[1], D2[2], 0, 1, 0, 0, 0), j1 = M.v(Cc[0], Cc[1], Cc[2], 0, 1, 0, l, 0), j2 = M.v(E[0], E[1], E[2], 0, 1, 0, l, 0.4), j3 = M.v(F[0], F[1], F[2], 0, 1, 0, 0, 0.4);
+      M.quad(j0, j1, j2, j3);
+    }
+  }
   function drawPier(M, P2, X, Y, o, kind, setM) {
     const base = P2(X, Y, 0);
     M.ox = base[0];
@@ -7953,6 +8113,15 @@
       };
       if (q === a0 && en & 1) cap(ax, ay, az, n0, -1, 0);
       if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1, 1);
+      if (piersOf(reg, ri) && (q === a0 && en & 1 || q + 1 === b0 && en & 2)) {
+        for (const e of [0, 1]) {
+          if (e === 0 ? !(q === a0 && en & 1) : !(q + 1 === b0 && en & 2)) continue;
+          if (abutmentAt(world2, reg, ri, e, hw, deckReach(reg, ri, e, PW), DT, wayAngle(reg, ri), _abut)) {
+            setM(MAT.CONCRETE);
+            drawAbutment(M, P2, _abut);
+          }
+        }
+      }
       setM(MAT.CONCRETE);
       const PL = piersOf(reg, ri);
       if (PL) {
@@ -8640,9 +8809,7 @@
     const pf = meta.files && meta.files.piers;
     piersReady = pf ? fetch(vurl("data/" + pf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
-      const M = /* @__PURE__ */ new Map();
-      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, l]) => [+ri, l])));
-      setPiers(M);
+      setPiers(...piersFromJSON(j));
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
