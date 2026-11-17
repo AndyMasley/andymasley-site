@@ -357,15 +357,15 @@ const structuredData = [
           a beef burger (~3 kg, <a href="https://www.science.org/doi/10.1126/science.aaq0216" target="_blank" rel="noopener">Poore &amp; Nemecek</a>; ~1,700 L at
           <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">15,400 L/kg beef</a>);
           a <a href="https://www.apple.com/environment/" target="_blank" rel="noopener">new smartphone (~70 kg, Apple)</a>
-          needing <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">~12,800 L</a>;
+          needing <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">~12,800 L</a> (its total water footprint, <a href="https://www.unccd.int/sites/default/files/library/587_mind-your-step-report-76803.pdf" target="_blank" rel="noopener">most of it grey water</a>);
           a <a href="https://www.levistrauss.com/wp-content/uploads/2015/03/Full-LCA-Results-Deck-FINAL.pdf" target="_blank" rel="noopener">pair of jeans (~33 kg, Levi's)</a>
           at ~10,000 L (<a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>).
         </p>
         <p>
-          <strong>How the appliance figures are derived.</strong> The coffee, PS5, microwave, shower,
-          dishwasher, and dryer carbon numbers are each that item's measured electricity (cited
-          above) times the US grid (~0.38 kg CO<sub>2</sub>/kWh), so they fall on cleaner grids.
-          Two depend heavily on assumptions: a cup of coffee is
+          <strong>How the appliance figures are derived.</strong> The PS5, microwave, dishwasher,
+          and dryer carbon numbers are each that item's measured electricity (cited above) times
+          the grid for the region you pick. Coffee and the shower don't change with the region,
+          and both depend heavily on assumptions: a cup of coffee is
           <a href="https://theconversation.com/coffee-heres-the-carbon-cost-of-your-daily-cup-and-how-to-make-it-climate-friendly-152629" target="_blank" rel="noopener">~0.05 kg black up to ~0.5 kg for a large latte</a>
           (we use ~0.2 kg), and a 10-minute hot shower is roughly 0.2 kg on a gas water heater up to
           1.5 kg on electric resistance (we use ~0.7 kg). Where a single authority does not exist,
@@ -380,9 +380,8 @@ const structuredData = [
           (~4 L), a slice of bread (~8 L), an egg (~15 L), a glass of milk (~22 L), a bowl of rice
           (~25 L), an avocado (~60 L), a handful of almonds (~120 L, as
           <a href="https://www.almonds.org/sites/default/files/2020-05/Water_footprint_plus_almonds.pdf" target="_blank" rel="noopener">each California almond takes ~12 L of irrigation</a>),
-          a cotton T-shirt (~1,500 L of its 2,700 L total is blue), a pair of jeans (~5,000 L), and a
-          <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">new smartphone</a>
-          (mostly ultrapure freshwater). The savings come from cutting irrigated products (a few
+          a cotton T-shirt (~1,500 L of its 2,700 L total is blue), and a pair of jeans (~5,000 L).
+          The savings come from cutting irrigated products (a few
           fewer cotton clothes) and outdoor watering: a typical lawn drinks roughly 20,000 gal of
           freshwater a year, so letting it go unwatered or replacing it with native plants saves most
           of that (<a href="https://www.epa.gov/watersense/landscaping-tips" target="_blank" rel="noopener">EPA WaterSense</a>).
@@ -535,12 +534,12 @@ const structuredData = [
     // Daily reference points (all things that emit, so no add/save direction)
     const DAILY_ITEMS = [
       { label: 'A cup of coffee',          c: 0.21, w: 37 },
-      { label: 'An hour on a PS5',         c: 0.08, w: 0.1 },
-      { label: '3 minutes in the microwave', c: 0.02, w: 0.05 },
+      { label: 'An hour on a PS5',         c: 0.08, w: 0.1, grid: true },
+      { label: '3 minutes in the microwave', c: 0.02, w: 0.05, grid: true },
       { label: 'A mile in a gas car',      c: 0.40, w: 0.1 },
       { label: 'A 10-minute hot shower',   c: 0.7,  w: 21 },
-      { label: 'A dishwasher load',        c: 0.5,  w: 3.5 },
-      { label: 'A dryer load',             c: 1.2,  w: 0.1 },
+      { label: 'A dishwasher load',        c: 0.5,  w: 3.5, grid: true },
+      { label: 'A dryer load',             c: 1.2,  w: 0.1, grid: true },
       { label: 'Printing a 400-page book', c: 2.7,  w: 300 },
       { label: 'A beef burger',            c: 3.0,  w: 460 },
     ];
@@ -592,7 +591,6 @@ const structuredData = [
       { label: 'A year of daily coffee',           w: 365,    dir: 'add' },
       { label: 'A cotton T-shirt',                 w: 396,    dir: 'add' },
       { label: 'A new pair of jeans',              w: 1321,   dir: 'add' },
-      { label: 'A new smartphone',                 w: 3370,   dir: 'add' },
       { label: 'A year of daily almonds',          w: 11700,  dir: 'add' },
       { label: 'Buying five fewer cotton garments (1 yr)', w: 2000, dir: 'save' },
       { label: 'Replacing a lawn with native plants', w: 15000, dir: 'save' },
@@ -688,7 +686,8 @@ const structuredData = [
       if (metric === 'carbon') return ((loc.c + home.c + drive.c + diet.c + fly.c) * 1000) / DAYS;
       return ((loc.w + home.w + drive.w + diet.w + fly.w) * GAL_TO_L) / DAYS;
     }
-    function itemBase(item, metric) { return metric === 'carbon' ? item.c * 1000 : item.w * GAL_TO_L; }
+    function gridScale(item) { return item.grid ? getLoc().grid / 380 : 1; }
+    function itemBase(item, metric) { return metric === 'carbon' ? item.c * 1000 * gridScale(item) : item.w * GAL_TO_L; }
 
     function isCodeRow(row) {
       if (row.size !== 'agent') return false;
@@ -985,7 +984,7 @@ const structuredData = [
       const fp = [['Where I live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
       let fpHtml = '';
       for (const f of fp) fpHtml += '<tr><td>' + escXml(f[0]) + '</td><td class="n">' + fmtCarbon(f[1] * 1000) + ' / yr</td></tr>';
-      const dailyRows = [{ label: 'My daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const dailyRows = [{ label: 'My daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 * gridScale(it) })));
       const addRows = [{ label: 'A year of my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'add').map((it) => ({ label: it.label, v: it.c * 1000 })));
       const cutRows = [{ label: 'Cut my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'save').map((it) => ({ label: it.label, v: it.c * 1000 })));
       const dailyWaterRows = [{ label: 'My daily AI use', v: wDay, focal: true }].concat(DAILY_WATER_ITEMS.map((it) => ({ label: it.label, v: it.w * GAL_TO_L })));
