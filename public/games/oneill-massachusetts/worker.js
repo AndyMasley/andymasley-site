@@ -780,6 +780,14 @@
     const m = XS && reg ? XS.get(reg.ry * RNX + reg.rx) : null;
     return m ? m.get(ri) : void 0;
   }
+  var SURF = null;
+  function setSurf(m) {
+    SURF = m;
+  }
+  function surfOf(reg, ri) {
+    const m = SURF && reg ? SURF.get(reg.ry * RNX + reg.rx) : null;
+    return m && m.get(ri) || 0;
+  }
   function walkW(reg, ri, s, side) {
     const xs = xsOf(reg, ri);
     if (!xs) return 0;
@@ -7359,6 +7367,7 @@
   var NBI = null;
   var nbiReady = null;
   var xsReady = null;
+  var surfReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -7407,6 +7416,14 @@
       for (const [k, v] of Object.entries(j.r)) X.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       for (const [k, v] of Object.entries(j.k || {})) K.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
       setXS(X, K);
+    }).catch(() => {
+    }) : null;
+    const uf = meta.files && meta.files.surf;
+    surfReady = uf ? fetch(vurl("data/" + uf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (!j || !j.r) return;
+      const M = /* @__PURE__ */ new Map();
+      for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, c]) => [+ri, c])));
+      setSurf(M);
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
@@ -7864,6 +7881,7 @@
               if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
               kind[kk] = kd | 32;
               tone[kk + 1] = lanes32(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd);
+              tone[kk + 2] = surfOf(nr0.reg, nr0.road);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
               kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
@@ -7875,7 +7893,10 @@
               data[k + 1] = one;
               data[k + 2] = zero;
               data[k + 3] = none;
-              if (e < 4 && nr0.reg.rCls[nr0.road] < 14) tone[(b * T + a) * 4] = Math.round(toneAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]));
+              if (e < 4 && nr0.reg.rCls[nr0.road] < 14) {
+                tone[(b * T + a) * 4] = Math.round(toneAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]));
+                tone[(b * T + a) * 4 + 2] = surfOf(nr0.reg, nr0.road);
+              }
               kind[(b * T + a) * 4] = 3 | 7 << 2 | (_pave.unpaved ? 32 : 0);
               kind[(b * T + a) * 4 + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               any = true;
@@ -7909,7 +7930,10 @@
               kind[kk + 2] = bikeByte(xs[1], xs[2], xs[3]);
               kind[kk + 3] = bikeByte(xs[4], xs[5], xs[6]);
             }
-            if (!notSt) tone[kk + 1] = lanes32(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk]);
+            if (!notSt) {
+              tone[kk + 1] = lanes32(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk]);
+              tone[kk + 2] = surfOf(nr.reg, nr.road);
+            }
             any = true;
           } else {
             data[k] = far;
@@ -8324,6 +8348,7 @@
       if (liftedReady) await liftedReady;
       if (stationsReady) await stationsReady;
       if (xsReady) await xsReady;
+      if (surfReady) await surfReady;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);

@@ -17123,6 +17123,64 @@ vec3 roadAt(vec4 t, vec2 d) {
 }
 // a street's texel that gives way to a bigger road beside it (worker.js: kind bit 7, a ramp at its gore)
 bool givesWay(vec4 k) { int q = int(k.r * 255.0 + 0.5); return (q & 128) != 0 && (q & 3) != 3; }
+// A street's own surface where OpenStreetMap gives one (bake/c54_surfaces.py; worker.js puts it in the kind texture's
+// second layer, third byte): s 1 concrete, 2 brick, 3 setts or cobblestones, 4 paving stones, 5 gravel, 6 dirt, 7 sand,
+// 8 compacted, 9 grass, 10 wood.  q: where the point is on it, metres along the street (its phase, which repeats every
+// span.x) and across it, or map metres (repeating every 48 m) on a city's surveyed paving, so each pattern's period
+// along is a whole fraction of the span.  base: the region file's paving (asphalt or dirt) with its tone, n a slow noise.
+float sPer(float size, float span) { return span / max(1.0, floor(span / size + 0.5)); }
+float sLine(float d, float hw, float px) { float w = max(hw, 0.5 * px); return (1.0 - smoothstep(w - 0.5 * px, w + 0.5 * px, d)) * min(1.0, hw / (0.5 * px)); }
+vec3 roadSurface(int s, vec2 q, vec2 span, float tone, float n) {
+  vec2 fq = fwidth(q);
+  float px = max(max(fq.x, fq.y), 1e-4);
+  if (s == 1) {
+    // concrete slabs, a joint every 4 m across the street and one down its middle
+    float la = sPer(4.0, span.x), ja = abs(fract(q.x / la + 0.5) - 0.5) * la;
+    float j = max(sLine(ja, 0.006, px), sLine(abs(q.y), 0.006, px)) * (1.0 - smoothstep(0.04, 0.1, px));
+    float slab = hash2(ivec2(int(floor(q.x / la)), int(floor(q.y / 3.6)) + 7));
+    return vec3(0.200, 0.198, 0.192) * tone * (0.9 + 0.12 * n + 0.08 * slab) * (1.0 - 0.55 * j);
+  }
+  if (s == 2 || s == 4 || s == 10) {
+    // brick: laid across the street, in courses along it; paving stones: along it, in courses across; wood: planks
+    // across it
+    vec2 sz = s == 2 ? vec2(0.1, 0.2) : s == 4 ? vec2(0.2, 0.1) : vec2(0.2, 6.0);
+    vec2 p = vec2(sPer(sz.x, span.x), sPer(sz.y, span.y));
+    vec2 c = q / p;
+    float row = floor(s == 4 ? c.y : c.x);
+    vec2 o = s == 4 ? vec2(c.x + 0.5 * mod(row, 2.0), c.y) : vec2(c.x, c.y + 0.5 * mod(row, 2.0));
+    vec2 f = fract(o) * p, id = floor(o);
+    float jm = min(min(f.x, p.x - f.x), min(f.y, p.y - f.y));
+    float far = smoothstep(0.02, 0.05, px);
+    float j = sLine(jm, s == 10 ? 0.006 : 0.004, px) * (1.0 - far);
+    float r = hash2(ivec2(id) + ivec2(s * 17, 3));
+    vec3 col = s == 2 ? vec3(0.12, 0.062, 0.045) : s == 4 ? vec3(0.17, 0.155, 0.14) : vec3(0.13, 0.10, 0.075);
+    vec3 unit = col * tone * (0.78 + 0.44 * r) * (0.92 + 0.16 * n);
+    vec3 gap = s == 2 ? vec3(0.085, 0.075, 0.065) : s == 4 ? vec3(0.10, 0.095, 0.085) : vec3(0.02, 0.018, 0.015);
+    return mix(mix(unit, col * tone * (0.95 + 0.1 * n), far), gap, j);
+  }
+  if (s == 3) {
+    // setts and cobblestones: granite blocks in courses across the street, rounded, with dark joints
+    vec2 p = vec2(sPer(0.15, span.x), sPer(0.25, span.y));
+    vec2 c = q / p;
+    float row = floor(c.x);
+    vec2 o = vec2(c.x, c.y + 0.5 * mod(row, 2.0) + 0.3 * hash2(ivec2(int(row), 41)));
+    vec2 f = fract(o), id = floor(o);
+    float e = min(min(f.x, 1.0 - f.x) * p.x, min(f.y, 1.0 - f.y) * p.y);
+    float far = smoothstep(0.025, 0.06, px);
+    float r = hash2(ivec2(id) + ivec2(5, 11)), r2 = hash2(ivec2(id) + ivec2(29, 2));
+    vec3 st = mix(vec3(0.135, 0.13, 0.125), vec3(0.15, 0.12, 0.095), step(0.75, r2)) * (0.75 + 0.5 * r);
+    st *= 0.7 + 0.3 * smoothstep(0.0, 0.05, e);
+    float j = sLine(e, 0.008, px) * (1.0 - far);
+    return mix(mix(st, vec3(0.125, 0.118, 0.11), far) * tone * (0.92 + 0.16 * n), vec3(0.035, 0.032, 0.03), j);
+  }
+  // the unpaved: gravel, dirt, sand, compacted, grass (two wheel tracks of dirt through it)
+  vec3 col = s == 5 ? vec3(0.205, 0.19, 0.165) : s == 6 ? vec3(0.15, 0.12, 0.085) : s == 7 ? vec3(0.31, 0.28, 0.21)
+    : s == 8 ? vec3(0.19, 0.165, 0.13) : vec3(0.055, 0.09, 0.03);
+  if (s == 9) col = mix(col, vec3(0.14, 0.115, 0.08), (1.0 - smoothstep(0.25, 0.45, abs(abs(q.y) - 0.8))) * 0.85);
+  float far = smoothstep(0.01, 0.025, px);
+  float speck = s == 5 ? mix(0.75 + 0.5 * hash2(ivec2(floor(q / 0.03))), 1.0, far) : 1.0;
+  return col * (0.88 + 0.24 * n) * speck;
+}
 
 // One of the nearer photos at uv (layer: 0 for 5.75 m, 1 for 2.88 m; 4,096 texels across each, wrapping) with the
 // edges between fields kept sharp: where the four texels round the point differ a lot (a field's edge), the smooth
@@ -17193,6 +17251,7 @@ void main() {
   // ---- roads painted on the carved ground
   float paved = 0.0, mark = 0.0, shoulder = 0.0, onRoadGeom = 0.0, dirt = 0.0, walk = 0.0, kerb = 0.0, joint = 0.0, bed = 0.0, river = 0.0;
   float roadTone = 1.0, toneKnown = 0.0;           // the road's own brightness over its neighbourhood's roads (measured)
+  int surf = 0; vec2 surfQ = vec2(0.0), surfSpan = vec2(12.192, 1e6);    // a street's own surface (roadSurface), and where on it
   float streetEdge = 1e3;                           // metres outside the streets' paving (in reach of the road texture)
   vec3 markCol = vec3(0.0), bedCol = vec3(0.0), airLamp = vec3(0.0);
   const vec3 yellow = vec3(0.78, 0.55, 0.06), white = vec3(0.82);
@@ -17249,6 +17308,8 @@ void main() {
     float phs = E4[own].z + rf.z;                      // cycles of 12.192 m along it
     if (hw > 0.5) {
       int kd = int(K4[own].r * 255.0 + 0.5);
+      surf = int(L4[own].b * 255.0 + 0.5);
+      if ((kd & 3) == 3) { surfQ = uTex0 + vLoc; surfSpan = vec2(48.0); } else surfQ = vec2(fract(phs) * 12.192, ts);
       float tb = tbw > 0.0 ? tbs / tbw * 255.0 : 0.0;
       if (tb > 0.5) { roadTone = clamp(exp2((tb - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2); toneKnown = 1.0; }
       int style = kd & 3;
@@ -17545,11 +17606,15 @@ void main() {
   // roads over everything
   // (each road's own tone where the photographs measured it, with a little of the noise left; else the noise alone)
   vec3 asphalt = mix(ASPHALT * roadTone, vec3(0.150, 0.125, 0.090), dirt) * mix(0.85 + 0.3 * nB, 0.94 + 0.12 * nB, toneKnown);
+  if (surf > 0 && surf <= 10) asphalt = roadSurface(surf, surfQ, surfSpan, roadTone, nB);
+  float surfHard = (surf > 0 && surf < 5) || surf == 10 ? 1.0 : 0.0;   // (paved with something other than asphalt: none of its grain)
+  float surfSoft = surf == 7 ? 0.7 : 0.0;                               // (sand: less of the soil's grain)
   land = mix(land, vec3(0.115, 0.105, 0.088), shoulder * 0.7);
   land = mix(land, asphalt, paved);
   land = mix(land, bedCol * (0.85 + 0.3 * nB), bed);
   land = mix(land, SIDEWALK * (1.0 - 0.45 * joint), walk);
   land = mix(land, KERB, kerb);
+  if (surf == 2 || surf == 3 || surf == 10) mark *= 1.0 - paved;      // (no lines are painted on brick, setts or planks)
   land = mix(land, markCol, mark);
 
   // ---- surface detail underfoot: the Webster drive's grass, leaf litter, soil, asphalt and concrete
@@ -17566,10 +17631,10 @@ void main() {
     vec3 dC = textureGrad(uMatTex, vec3(tm / 2.0, 3.0), tmx / 2.0, tmy / 2.0).rgb / 0.385;
     vec3 det = mix(dG, dF, forest * (1.0 - 0.6 * devMask));
     det = mix(det, vec3(1.0), max(sand, steep * 0.8));
-    det = mix(det, dS, max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
+    det = mix(det, mix(dS, vec3(1.0), surfSoft * paved), max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
     det = mix(det, dS, lcSoil);
     det = mix(det, mix(dA, dC, lcConc), lcPave);
-    det = mix(det, dA, paved * (1.0 - dirt));
+    det = mix(det, mix(dA, vec3(1.0), surfHard), paved * (1.0 - dirt));
     det = mix(det, dC, max(walk, kerb));
     det = mix(det, vec3(1.0), mark);
     land *= mix(vec3(1.0), clamp(det, 0.0, 3.0), kT);
@@ -17582,7 +17647,7 @@ void main() {
     relief = mix(relief, hs, max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
     relief = mix(relief, hs, lcSoil);
     relief = mix(relief, mix(ha, hc, lcConc), lcPave);
-    relief = mix(relief, ha, paved * (1.0 - dirt));
+    relief = mix(relief, ha * (1.0 - surfHard), paved * (1.0 - dirt));
     relief = mix(relief, hc, max(walk, kerb));
     hardSurface = max(max(lcPave, paved * (1.0 - dirt)), max(walk, kerb)) * (1.0 - mark) * (1.0 - bed);
     surfaceRoughness = mix(0.92, 0.84, max(lcConc * lcPave * (1.0 - paved), max(walk, kerb)));
