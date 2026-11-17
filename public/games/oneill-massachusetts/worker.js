@@ -2580,12 +2580,12 @@
       if (floorY - y0 > 0.45) wbox(du - 0.8, du + 0.8, 1.32, 1.64, yb, floorY - 0.4, 55);
     }
     if (env && cls !== CLS.GARAGE && cls !== CLS.BARN) {
-      const at = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
-      const strip = (al, wid, o0, o1) => {
+      const at = (al2, o) => [p0u + tu * al2 + nu * o, p0v + tv * al2 + nv * o];
+      const strip = (al2, wid, o0, o1) => {
         const n = Math.max(1, Math.ceil((o1 - o0) / 2.2));
         let pl = -1, pr = -1;
         for (let i = 0; i <= n; i++) {
-          const o = o0 + (o1 - o0) * i / n, L2 = at(al - wid / 2, o), Rr = at(al + wid / 2, o);
+          const o = o0 + (o1 - o0) * i / n, L2 = at(al2 - wid / 2, o), Rr = at(al2 + wid / 2, o);
           const il = M.v(L2[0], env.groundAt(L2[0], L2[1]) + 0.07, L2[1], 0, 1, 0, 0, o), ir = M.v(Rr[0], env.groundAt(Rr[0], Rr[1]) + 0.07, Rr[1], 0, 1, 0, wid, o);
           if (i > 0) M.quad(pl, pr, ir, il);
           pl = il;
@@ -2602,12 +2602,38 @@
         setM(MAT.CONCRETE);
         strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
       }
-      if (cls !== CLS.ROW && r3 < 0.74 && len > 4) {
-        const al = seed & 8 ? -1.85 : len + 1.85;
-        const Q = at(al, 0.4);
-        const run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
+      let al = NaN, run = -1, known = false, bestF = 0.6;
+      if (cls !== CLS.ROW && len > 4) {
+        const cands = [-1.85, len + 1.85, -3.6, len + 3.6];
+        for (const f of [0.2, 0.5, 0.8]) if (Math.abs(len * f - du) > 2.4) cands.push(len * f);
+        for (const c of cands) {
+          const Q = at(c, 0.4);
+          const r = env.roadEdge(Q[0], Q[1], nu, nv, 32);
+          if (r <= 2.5) continue;
+          let n = 0, imp = 0;
+          for (let o = 1; o < r - 0.5; o += 1) for (const dx of [-0.8, 0, 0.8]) {
+            const S = at(c + dx, o), k = env.lc(S[0], S[1]);
+            if (k < 0) continue;
+            n++;
+            if (k === 1) imp++;
+          }
+          if (n >= 3) known = true;
+          if (n >= 3 && imp / n >= bestF) {
+            bestF = imp / n;
+            al = c;
+            run = r;
+          }
+        }
+        if (!known && r3 < 0.74) {
+          al = seed & 8 ? -1.85 : len + 1.85;
+          const Q = at(al, 0.4);
+          run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
+        }
+      }
+      if (!Number.isNaN(al)) {
         if (run > 2.5) {
-          const back = Math.min(6.5, Math.max(3, depth * 0.6));
+          const beside = al < 0 || al > len;
+          const back = beside ? Math.min(6.5, Math.max(3, depth * 0.6)) : -0.15;
           setM(MAT.ASPHALT);
           strip(al, 2.7, -back, 0.4 + run + 0.3);
           if (r2 < 0.55) {
@@ -3641,6 +3667,10 @@
       g: 0,
       groundAt(u, v) {
         return world2.groundH(this.mx + this.ca * u - this.sa * v, this.my + this.sa * u + this.ca * v, true) - this.g;
+      },
+      // the 1 m land cover's kind at (u, v) (1: paved or roofed), -1 where it is not in memory (the worker only)
+      lc(u, v) {
+        return world2.lcAt ? world2.lcAt(this.mx + this.ca * u - this.sa * v, this.my + this.sa * u + this.ca * v) : -1;
       },
       // how far from (u, v) along (nu, nv) the nearest street's edge is, or -1 if none within `max` metres
       roadEdge(u, v, nu, nv, max) {
@@ -7414,6 +7444,7 @@
     if (m.zone) Object.assign(parts, { zone: new Uint8Array(m.zone), zoneW: m.zoneW, zoneH: m.zoneH, zoneRange: m.zoneRange });
     setVersions(meta.versions);
     world = new World(meta, parts);
+    world.lcAt = (mx, my) => lcAt(mx, my, 0);
     realBuildings = !!(meta.tiles && meta.tiles.buildings);
     measured = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
     treeFiles = new Set(meta.tiles && meta.tiles.trees ? meta.tiles.trees : []);
@@ -8373,6 +8404,13 @@
       if (m.type === "chunk" && m.level >= 6 && lcPacks.size) {
         for (let tries = 0; tries < 4; tries++) {
           const prs = lcPromises(m.ix * s, m.iy * s, s, m.level >= 7 ? 0 : 1);
+          if (!prs.length) break;
+          await Promise.all(prs);
+        }
+      }
+      if (m.type === "scatter" && m.kind === "houses" && lcPacks.size) {
+        for (let tries = 0; tries < 4; tries++) {
+          const prs = lcPromises(m.ix * s - 40, m.iy * s - 40, s + 80, 0);
           if (!prs.length) break;
           await Promise.all(prs);
         }
