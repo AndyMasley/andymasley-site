@@ -15721,6 +15721,22 @@ void main() {
     }
     return false;
   }
+  function streetsAtEnd(reg, ri2, e) {
+    const q = e ? reg.rStart[ri2] + reg.rCount[ri2] - 1 : reg.rStart[ri2], lx2 = reg.px[q], ly2 = reg.py[q], gw = reg.gw;
+    const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+    if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return 0;
+    const c = cy2 * gw + cx2, end = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, items = reg.gitems, segR = reg.segR;
+    const seen = /* @__PURE__ */ new Set();
+    for (let k = reg.gstart[c]; k < end; k++) {
+      const pi2 = items[k], rj = segR[pi2];
+      if (rj === ri2 || seen.has(rj) || reg.rCls[rj] > 12 || reg.rTun[rj]) continue;
+      const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+      let t = l2 > 0 ? ((lx2 - ax2) * dx2 + (ly2 - ay2) * dy2) / l2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      if (Math.hypot(lx2 - ax2 - dx2 * t, ly2 - ay2 - dy2 * t) <= 1) seen.add(rj);
+    }
+    return seen.size;
+  }
   function roadKind(reg, ri2) {
     let k = reg.rKind;
     if (!k) {
@@ -15739,6 +15755,14 @@ void main() {
           } else {
             style = 1;
             nl = Math.max(1, (lanes || 2) >> 1);
+          }
+        }
+        if (style === 2 && cls >= 4 && !reg.rEnd[i] && !reg.rTun[i] && reg.rCount[i] >= 2) {
+          const a = reg.rStart[i], L2 = reg.cum[a + reg.rCount[i] - 1] - reg.cum[a];
+          if (L2 < 30 && streetsAtEnd(reg, i, 0) >= 2 && streetsAtEnd(reg, i, 1) >= 2) {
+            style = 0;
+            nl = 1;
+            reg.nInside = (reg.nInside || 0) + 1;
           }
         }
         const walk = !unp && (fl & 128) !== 0;
@@ -16308,6 +16332,37 @@ void main() {
     }
     // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
     // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
+    // ---- junctions (items 26, 40): where a point on a street's paving also lies on the paving of a street crossing it
+    // (classes 0-12 on the ground, at more than 30 degrees to it there, within 2 m of its height; a side street at a T as
+    // far as its line runs, not the round end of its paving), how far inside that street's paving the point is (metres, the
+    // most of any such street; -1e9 where there is none) in o.e, and in o.big whether one it is inside ranks with this
+    // street or above it.  Asked after nearestRoad, of its road.
+    crossingAt(mx2, my2, o) {
+      const nr2 = this._nr, reg = nr2.reg;
+      o.e = -1e9;
+      o.big = false;
+      if (!reg || nr2.road < 0) return o;
+      const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, gw = reg.gw;
+      const cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
+      if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return o;
+      const c = cy2 * gw + cx2, e = reg.gstart[c + 1], px2 = reg.px, py2 = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const mine = ROAD_RANK[rCls[nr2.road]];
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi2 = items[q], rj = segR[pi2];
+        if (rj === nr2.road || rCls[rj] > 12 || reg.rEnd[rj] || reg.rTun[rj]) continue;
+        const ax2 = px2[pi2], ay2 = py2[pi2], dx2 = px2[pi2 + 1] - ax2, dy2 = py2[pi2 + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+        if (l2 < 1e-4) continue;
+        const t = ((lx2 - ax2) * dx2 + (ly2 - ay2) * dy2) / l2;
+        if (t < 0 || t > 1) continue;
+        const ex2 = lx2 - ax2 - dx2 * t, ey2 = ly2 - ay2 - dy2 * t, ins = rHw[rj] - Math.sqrt(ex2 * ex2 + ey2 * ey2);
+        if (ins < -1.5) continue;
+        if (Math.abs(dx2 * nr2.tx + dy2 * nr2.ty) > 0.866 * Math.sqrt(l2)) continue;
+        if (Math.abs(pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t - nr2.z) > 2) continue;
+        if (ins > o.e) o.e = ins;
+        if (ins > 0 && ROAD_RANK[rCls[rj]] <= mine) o.big = true;
+      }
+      return o;
+    }
     outrankedBy(mx2, my2) {
       const nr2 = this._nr, reg = nr2.reg;
       if (!reg || nr2.road < 0) return 1e9;
@@ -17239,7 +17294,8 @@ uniform sampler2D uCover;
 uniform sampler2D uAux;
 uniform sampler2D uRoad;
 uniform sampler2DArray uRoadK;  // layer 0 the marking style; layer 1 each texel's road's tone from the aerial
-                                // photographs (common.js toneAt; 0 not known).  (This shader is at the 16 texture
+                                // photographs (common.js toneAt; 0 not known) and its lanes by direction; layer 2
+                                // the junction field (worker.js junField).  (This shader is at the 16 texture
                                 // units a Mac allows: a 17th sampler kept it from compiling there and the ground
                                 // went black.)
 uniform sampler2D uTun;       // a tunnel's mouth: metres outside the tube's outline, the height of its top; with
@@ -17438,12 +17494,14 @@ void main() {
     vec2 rf0 = floor(rst), rfr = rst - rf0;
     ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
     vec4 R4[4], K4[4], L4[4];
+    vec2 J4[4];
     vec3 E4[4];
     for (int i = 0; i < 4; i++) {
       ivec2 o = ivec2(i & 1, i >> 1);
       R4[i] = texelFetch(uRoad, clamp(rb + o, ivec2(0), rmx), 0);
       K4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 0), 0);
       L4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 1), 0);      // the second layer: tone, eased lane count
+      J4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 2), 0).rg;   // the third: the junction field
       E4[i] = roadAt(R4[i], (rfr - vec2(o)) * (uSize / (uRoadT - 1.0)));
     }
     vec4 rw4 = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
@@ -17528,7 +17586,13 @@ void main() {
       if (style != 3) {
         vec2 bk = K4[own].ba * 255.0 + 0.5;
         float yel;
-        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
+        // (at a junction a street's lines stop where it runs into a street that ranks with it or above it, or one at a
+        // signal, and under a marked crossing; its edge lines stop across the mouth of any street crossing it: the
+        // junction field, worker.js junField, read from the four texels round the point like a distance)
+        float jAll = dot(rw4, vec4(J4[0].x, J4[1].x, J4[2].x, J4[3].x)) * 6.0 - 1.5;
+        float jEdge = dot(rw4, vec4(J4[0].y, J4[1].y, J4[2].y, J4[3].y)) * 6.0 - 1.5;
+        float keepJ = keepEdge * (1.0 - smoothstep(-aa, aa, jEdge));
+        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepJ, keepJ, yel) * vis * paved * (1.0 - smoothstep(-aa, aa, jAll));
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
@@ -19866,7 +19930,7 @@ void main() {
       this.dummyRoad.needsUpdate = true;
       this.dummyK = new an(new Uint8Array([0, 255, 0, 0]), 1, 1, on, cn);
       this.dummyK.needsUpdate = true;
-      this.dummyKA = new Rs(new Uint8Array([0, 255, 0, 0, 0, 0, 0, 0]), 1, 1, 2);
+      this.dummyKA = new Rs(new Uint8Array([0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 1, 1, 3);
       this.dummyKA.needsUpdate = true;
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
@@ -19926,7 +19990,7 @@ void main() {
         roadTex.magFilter = roadTex.minFilter = ye;
         roadTex.wrapS = roadTex.wrapT = rn;
         roadTex.needsUpdate = true;
-        roadKTex = new Rs(m.roadK, m.roadT, m.roadT, 2);
+        roadKTex = new Rs(m.roadK, m.roadT, m.roadT, 3);
         roadKTex.magFilter = roadKTex.minFilter = Te;
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;

@@ -1157,6 +1157,22 @@
     }
     return false;
   }
+  function streetsAtEnd(reg, ri, e) {
+    const q = e ? reg.rStart[ri] + reg.rCount[ri] - 1 : reg.rStart[ri], lx = reg.px[q], ly = reg.py[q], gw = reg.gw;
+    const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+    if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 0;
+    const c = cy * gw + cx, end = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR;
+    const seen = /* @__PURE__ */ new Set();
+    for (let k = reg.gstart[c]; k < end; k++) {
+      const pi = items[k], rj = segR[pi];
+      if (rj === ri || seen.has(rj) || reg.rCls[rj] > 12 || reg.rTun[rj]) continue;
+      const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+      let t = l2 > 0 ? ((lx - ax) * dx + (ly - ay) * dy) / l2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      if (Math.hypot(lx - ax - dx * t, ly - ay - dy * t) <= 1) seen.add(rj);
+    }
+    return seen.size;
+  }
   function roadKind(reg, ri) {
     let k = reg.rKind;
     if (!k) {
@@ -1175,6 +1191,14 @@
           } else {
             style = 1;
             nl = Math.max(1, (lanes || 2) >> 1);
+          }
+        }
+        if (style === 2 && cls >= 4 && !reg.rEnd[i] && !reg.rTun[i] && reg.rCount[i] >= 2) {
+          const a = reg.rStart[i], L2 = reg.cum[a + reg.rCount[i] - 1] - reg.cum[a];
+          if (L2 < 30 && streetsAtEnd(reg, i, 0) >= 2 && streetsAtEnd(reg, i, 1) >= 2) {
+            style = 0;
+            nl = 1;
+            reg.nInside = (reg.nInside || 0) + 1;
           }
         }
         const walk = !unp && (fl & 128) !== 0;
@@ -1744,6 +1768,37 @@
     }
     // After nearestRoad(mx, my): the edge distance from (mx, my) of the nearest roadway on the ground that outranks the one
     // found there (the highway a ramp joins, the main road at the end of a side street); 1e9 where there is none.
+    // ---- junctions (items 26, 40): where a point on a street's paving also lies on the paving of a street crossing it
+    // (classes 0-12 on the ground, at more than 30 degrees to it there, within 2 m of its height; a side street at a T as
+    // far as its line runs, not the round end of its paving), how far inside that street's paving the point is (metres, the
+    // most of any such street; -1e9 where there is none) in o.e, and in o.big whether one it is inside ranks with this
+    // street or above it.  Asked after nearestRoad, of its road.
+    crossingAt(mx, my, o) {
+      const nr = this._nr, reg = nr.reg;
+      o.e = -1e9;
+      o.big = false;
+      if (!reg || nr.road < 0) return o;
+      const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
+      const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+      if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return o;
+      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const mine = ROAD_RANK[rCls[nr.road]];
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi = items[q], rj = segR[pi];
+        if (rj === nr.road || rCls[rj] > 12 || reg.rEnd[rj] || reg.rTun[rj]) continue;
+        const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+        if (l2 < 1e-4) continue;
+        const t = ((lx - ax) * dx + (ly - ay) * dy) / l2;
+        if (t < 0 || t > 1) continue;
+        const ex = lx - ax - dx * t, ey = ly - ay - dy * t, ins = rHw[rj] - Math.sqrt(ex * ex + ey * ey);
+        if (ins < -1.5) continue;
+        if (Math.abs(dx * nr.tx + dy * nr.ty) > 0.866 * Math.sqrt(l2)) continue;
+        if (Math.abs(pz[pi] + (pz[pi + 1] - pz[pi]) * t - nr.z) > 2) continue;
+        if (ins > o.e) o.e = ins;
+        if (ins > 0 && ROAD_RANK[rCls[rj]] <= mine) o.big = true;
+      }
+      return o;
+    }
     outrankedBy(mx, my) {
       const nr = this._nr, reg = nr.reg;
       if (!reg || nr.road < 0) return 1e9;
@@ -4739,6 +4794,26 @@
       zD = null;
     }, WHITE);
     return new Float32Array(out);
+  }
+  function junctionMarks(reg, mx0, my0, s) {
+    const f = reg && reg.feat, cw = [], sig = [];
+    if (!f || !f.nP) return { cw, sig };
+    for (let i = 0; i < f.nP; i++) {
+      const k = f.kind[i];
+      if (k !== CROSSING && k !== SIGNAL) continue;
+      const x = reg.x0 + f.px[i], y = reg.y0 + f.py[i];
+      if (x < mx0 - 40 || x > mx0 + s + 40 || y < my0 - 40 || y > my0 + s + 40) continue;
+      if (k === SIGNAL) {
+        sig.push(x, y);
+        continue;
+      }
+      if (surveyPainted(reg, f.px[i], f.py[i])) continue;
+      for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) if (!f.apFoot[j]) {
+        cw.push(x, y, Math.cos(f.apH[j]), Math.sin(f.apH[j]));
+        break;
+      }
+    }
+    return { cw, sig };
   }
   function innerEdge(world2, x, y, dx, dy, zD) {
     let o;
@@ -8804,6 +8879,25 @@
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
+    const _cx = { e: 0, big: false };
+    const junField = (jun, kk, mx, my, hw, JM) => {
+      world.crossingAt(mx, my, _cx);
+      const ej = Math.max(_cx.e, -1.5), tx = world._nr.tx, ty = world._nr.ty;
+      let all = -1.5;
+      if (ej > -1.5) {
+        let stop = _cx.big;
+        for (let i = 0; i < JM.sig.length && !stop; i += 2) if (Math.hypot(JM.sig[i] - mx, JM.sig[i + 1] - my) < 30) stop = true;
+        if (stop) all = ej;
+      }
+      for (let i = 0; i < JM.cw.length; i += 4) {
+        const ux = JM.cw[i + 2], uy = JM.cw[i + 3];
+        if (Math.abs(ux * tx + uy * ty) < 0.8) continue;
+        const vx = mx - JM.cw[i], vy = my - JM.cw[i + 1];
+        if (Math.abs(vx * uy - vy * ux) < hw + 1) all = Math.max(all, 1.8 - Math.abs(vx * ux + vy * uy));
+      }
+      jun[kk] = Math.round(clamp2((all + 1.5) / 6, 0, 1) * 255);
+      jun[kk + 1] = Math.round(clamp2((ej + 1.5) / 6, 0, 1) * 255);
+    };
     const _ld = [0, 0, 0];
     const laneBytes = (tone, rg, ri, s2, kd, kk) => {
       const st2 = kd & 3;
@@ -8815,7 +8909,8 @@
       if (st2 === 1 && _ld[2] > 0) tone[kk + 2] |= Math.round(_ld[2] * 15) << 4;
     };
     if (hasRoads && level >= 6) {
-      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 2), tone = kind.subarray(T * T * 4);
+      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 3), tone = kind.subarray(T * T * 4, T * T * 8), jun = kind.subarray(T * T * 8);
+      const JM = junctionMarks(reg, mx0, my0, s);
       let any = false;
       const far = toHalf(60), one = toHalf(1), zero = toHalf(0), none = toHalf(10);
       const cyc = (v2) => toHalf(v2 - Math.floor(v2));
@@ -8859,6 +8954,7 @@
               kind[kk] = kd | 32;
               tone[kk + 2] = surfOf(nr0.reg, nr0.road);
               laneBytes(tone, nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd, kk);
+              junField(jun, kk, mx, my, kb.hw, JM);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
               kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
@@ -8911,6 +9007,7 @@
               tone[kk + 2] = surfOf(nr.reg, nr.road);
               laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
+            if (!notSt && e < 1) junField(jun, kk, mx, my, nr.hw, JM);
             any = true;
           } else {
             data[k] = far;
