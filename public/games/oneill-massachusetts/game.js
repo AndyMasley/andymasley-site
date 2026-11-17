@@ -16911,7 +16911,10 @@ uniform sampler2D uSdf;
 uniform sampler2D uCover;
 uniform sampler2D uAux;
 uniform sampler2D uRoad;
-uniform sampler2D uRoadK;
+uniform sampler2DArray uRoadK;  // layer 0 the marking style; layer 1 each texel's road's tone from the aerial
+                                // photographs (common.js toneAt; 0 not known).  (This shader is at the 16 texture
+                                // units a Mac allows: a 17th sampler kept it from compiling there and the ground
+                                // went black.)
 uniform sampler2D uTun;       // a tunnel's mouth: metres outside the tube's outline, the height of its top; with
 uniform float uHasTun;        // uHasShore, in b and a a city's surveyed shore: the distance where the survey holds, and
 uniform float uHasShore;      // where it holds (World.sdfAt), so the water is drawn to the surveyed edge
@@ -16952,6 +16955,17 @@ varying vec2 vLoc;
 varying vec2 vMap;
 
 float band(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
+
+// A road texel (worker.js: metres right of the centre line, half width, phase in 12.192 m cycles, and the direction
+// the phase grows in, the offset growing to its right; above 6.5 none) carried d metres to a point along its own road:
+// the offset, half width and phase there
+vec3 roadAt(vec4 t, vec2 d) {
+  if (t.a > 6.5) return t.rgb;
+  vec2 u = vec2(cos(t.a), sin(t.a));
+  return vec3(t.r + dot(vec2(u.y, -u.x), d), t.g, t.b + dot(u, d) / 12.192);
+}
+// a street's texel that gives way to a bigger road beside it (worker.js: kind bit 7, a ramp at its gore)
+bool givesWay(vec4 k) { int q = int(k.r * 255.0 + 0.5); return (q & 128) != 0 && (q & 3) != 3; }
 
 // One of the nearer photos at uv (layer: 0 for 5.75 m, 1 for 2.88 m; 4,096 texels across each, wrapping) with the
 // edges between fields kept sharp: where the four texels round the point differ a lot (a field's edge), the smooth
@@ -17021,30 +17035,58 @@ void main() {
 
   // ---- roads painted on the carved ground
   float paved = 0.0, mark = 0.0, shoulder = 0.0, onRoadGeom = 0.0, dirt = 0.0, walk = 0.0, kerb = 0.0, joint = 0.0, bed = 0.0, river = 0.0;
+  float roadTone = 1.0, toneKnown = 0.0;           // the road's own brightness over its neighbourhood's roads (measured)
   float streetEdge = 1e3;                           // metres outside the streets' paving (in reach of the road texture)
   vec3 markCol = vec3(0.0), bedCol = vec3(0.0), airLamp = vec3(0.0);
   const vec3 yellow = vec3(0.78, 0.55, 0.06), white = vec3(0.82);
   if (uHasRoad > 0.5) {
     vec2 ruv = vLoc / uSize * ((uRoadT - 1.0) / uRoadT) + 0.5 / uRoadT;
-    // filtered by hand: of the four texels round the point only those of the same road as the nearest one count, so
-    // where one road gives way to another (a ramp at its gore, a side street at a main road) nothing is made up
-    // between them (blending one road's distances with another's drew false lines along the join)
+    // filtered by hand.  Each of the four texels round the point is carried to it along its own road (its offset grows
+    // across the road, its phase along it), and the point is one road's: the nearest texel's, unless the point is off
+    // that road's paving and on another's, or on neither and nearer the other's edge, or on both where the nearest
+    // gives way to the other (a ramp at its gore), as the worker gives texels to roads.  Only that road's texels are
+    // averaged: blending one road's distances with another's drew false lines along the join, and taking the nearest
+    // texel's road drew a road's lines in texel-sized steps where its texels gave way to another's (the yellow lines
+    // along a narrow median zigzagged, the Pike at Weston)
     vec2 rst = ruv * uRoadT - 0.5;
     vec2 rf0 = floor(rst), rfr = rst - rf0;
     ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
-    vec4 r00 = texelFetch(uRoad, clamp(rb, ivec2(0), rmx), 0), r10 = texelFetch(uRoad, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0);
-    vec4 r01 = texelFetch(uRoad, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0), r11 = texelFetch(uRoad, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0);
-    vec4 rref = rfr.y < 0.5 ? (rfr.x < 0.5 ? r00 : r10) : (rfr.x < 0.5 ? r01 : r11);
-    vec4 rw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
-    rw *= vec4(step(abs(r00.g - rref.g), 0.004), step(abs(r10.g - rref.g), 0.004), step(abs(r01.g - rref.g), 0.004), step(abs(r11.g - rref.g), 0.004));
-    // and only texels of the same way: two ways of one width side by side (two tracks) switch where they meet, and
-    // their offsets jump there (a texel of one way is never more than about a texel's diagonal off its neighbour's)
-    float rtol = 1.6 * uSize / uRoadT;
-    rw *= vec4(step(abs(r00.r - rref.r), rtol), step(abs(r10.r - rref.r), rtol), step(abs(r01.r - rref.r), rtol), step(abs(r11.r - rref.r), rtol));
-    vec4 rf = (r00 * rw.x + r10 * rw.y + r01 * rw.z + r11 * rw.w) / max(rw.x + rw.y + rw.z + rw.w, 1e-4);
-    float ts = rf.r, dc = abs(ts), hw = rf.g;          // ts: metres right (+) or left (-) of the centre line
+    vec4 R4[4], K4[4];
+    vec3 E4[4];
+    for (int i = 0; i < 4; i++) {
+      ivec2 o = ivec2(i & 1, i >> 1);
+      R4[i] = texelFetch(uRoad, clamp(rb + o, ivec2(0), rmx), 0);
+      K4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 0), 0);
+      E4[i] = roadAt(R4[i], (rfr - vec2(o)) * (uSize / (uRoadT - 1.0)));
+    }
+    vec4 rw4 = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+    int own = rfr.y < 0.5 ? (rfr.x < 0.5 ? 0 : 1) : (rfr.x < 0.5 ? 2 : 3);
+    if (E4[own].y > 0.5) {
+      float eo = abs(E4[own].x) - E4[own].y;
+      bool yo = givesWay(K4[own]);
+      for (int i = 0; i < 4; i++) {
+        if (E4[i].y < 0.5 || (abs(E4[i].y - E4[own].y) < 0.15 && abs(E4[i].x - E4[own].x) < 0.5)) continue;
+        float ei = abs(E4[i].x) - E4[i].y;
+        bool yi = givesWay(K4[i]);
+        if (eo >= 0.0 ? ei < eo : (ei < 0.0 && yo && !yi)) { own = i; eo = ei; yo = yi; }
+      }
+    }
+    // (two texels are of one road where, carried to the point, they agree on its offset, and their widths are near:
+    // two ways side by side, two tracks, are told apart by the offset, and a highway's width eases along it by a few
+    // centimetres a texel where it meets another, worker.js)
+    vec4 rf = vec4(0.0);
+    for (int i = 0; i < 4; i++) {
+      if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5) continue;
+      float wi = rw4[i] + 1e-3, dph = E4[i].z - E4[own].z;
+      rf += wi * vec4(E4[i].x, E4[i].y, dph - floor(dph + 0.5), 1.0);
+    }
+    rf.xyz /= rf.w;
+    float ts = rf.x, dc = abs(ts), hw = rf.y;          // ts: metres right (+) or left (-) of the centre line
+    float phs = E4[own].z + rf.z;                      // cycles of 12.192 m along it
     if (hw > 0.5) {
-      int kd = int(texture2D(uRoadK, ruv).r * 255.0 + 0.5);
+      int kd = int(K4[own].r * 255.0 + 0.5);
+      float tb = texelFetch(uRoadK, ivec3(clamp(rb + ivec2(own & 1, own >> 1), ivec2(0), rmx), 1), 0).r * 255.0;
+      if (tb > 0.5) { roadTone = clamp(exp2((tb - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2); toneKnown = 1.0; }
       int style = kd & 3;
       float nl = float((kd >> 2) & 7);
       float keepEdge = 1.0 - float((kd >> 7) & 1);      // 0 where this road gives way to a bigger one beside it
@@ -17057,9 +17099,7 @@ void main() {
       if (style == 1 || style == 2) {
         // a street's paving, shoulders, kerbs and sidewalks follow the edge of all the streets' paving together, read
         // from the four texels round the point like a distance (the lines still follow this street's own centre)
-        vec4 ug = vec4(texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0).g,
-                       texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0).g);
-        vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+        vec4 ug = vec4(K4[0].g, K4[1].g, K4[2].g, K4[3].g), uw = rw4;
         if (svy) edge = dot(uw, ug) * 6.0 - 1.5;
         else if (max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995) edge = min(edge, dot(uw, ug) * 6.0 - 1.5);     // (4.5 m out it is saturated)
         streetEdge = edge;
@@ -17070,7 +17110,7 @@ void main() {
       float lw = 0.075;                                  // half width of a painted line
       float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);    // fade lines thinner than a pixel
       float la = max(aa, 0.02);
-      float ang = atan(rf.a, rf.b);
+      float ang = (fract(phs + 0.5) - 0.5) * 6.2831853;
       // built-up streets get a granite kerb and a concrete sidewalk (set back behind a grass strip until the town is dense)
       float town = smoothstep(0.08, 0.22, cov.r) * float((kd >> 6) & 1) * step(2.4, hw);
       if (town > 0.0) {
@@ -17087,7 +17127,7 @@ void main() {
       }
       float dash = smoothstep(-3.14159, -3.0, ang) * (1.0 - smoothstep(-1.62, -1.52, ang)) * step(uSize / uRoadT, 3.2);
       if (style != 3) {
-        vec2 bk = texture2D(uRoadK, ruv).ba * 255.0 + 0.5;
+        vec2 bk = K4[own].ba * 255.0 + 0.5;
         float yel;
         mark = streetPaint(kd & ~32, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
         markCol = yel > 0.5 ? yellow : white;
@@ -17120,9 +17160,7 @@ void main() {
           // a city's surveyed paving (bake/c39_streets.py, streets.js): g is the distance to its edge (metres outside it,
           // -1.5 to 4.5), read from the four texels round the point like a distance.  Its sidewalks, kerbs, islands and
           // paint are meshes over it, so the paving here is plain, with no shoulder.
-          vec4 ug = vec4(texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0).g,
-                         texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0).g, texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0).g);
-          vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+          vec4 ug = vec4(K4[0].g, K4[1].g, K4[2].g, K4[3].g), uw = rw4;
           float ue = dot(uw, ug) * 6.0 - 1.5, aaU = max(fwidth(ue) * 0.75, 0.02);
           paved = 1.0 - smoothstep(-aaU, aaU, ue);
           shoulder = 0.0; onRoadGeom = paved; streetEdge = ue;
@@ -17130,10 +17168,8 @@ void main() {
           // Where one runs into a street (into a culvert under it) the street takes the point, by the edge of all the
           // streets' paving together: the texels of the two would otherwise meet in steps across the road.  There the
           // paving is plain, and unpaved if a street's texel round the point says so.
-          vec4 k00 = texelFetch(uRoadK, clamp(rb, ivec2(0), rmx), 0), k10 = texelFetch(uRoadK, clamp(rb + ivec2(1, 0), ivec2(0), rmx), 0);
-          vec4 k01 = texelFetch(uRoadK, clamp(rb + ivec2(0, 1), ivec2(0), rmx), 0), k11 = texelFetch(uRoadK, clamp(rb + ivec2(1, 1), ivec2(0), rmx), 0);
-          vec4 ug = vec4(k00.g, k10.g, k01.g, k11.g);
-          vec4 uw = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
+          vec4 k00 = K4[0], k10 = K4[1], k01 = K4[2], k11 = K4[3];
+          vec4 ug = vec4(k00.g, k10.g, k01.g, k11.g), uw = rw4;
           float ue = max(max(ug.x, ug.y), max(ug.z, ug.w)) < 0.995 ? dot(uw, ug) * 6.0 - 1.5 : 1e3;
           float onSt = 1.0 - smoothstep(-aa, aa, ue);
           float sd = 0.0;
@@ -17343,7 +17379,8 @@ void main() {
   land = mix(land, vec3(0.30, 0.27, 0.20), (1.0 - smoothstep(0.0, 14.0, sdf)) * 0.55);
 
   // roads over everything
-  vec3 asphalt = mix(ASPHALT, vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * nB);
+  // (each road's own tone where the photographs measured it, with a little of the noise left; else the noise alone)
+  vec3 asphalt = mix(ASPHALT * roadTone, vec3(0.150, 0.125, 0.090), dirt) * mix(0.85 + 0.3 * nB, 0.94 + 0.12 * nB, toneKnown);
   land = mix(land, vec3(0.115, 0.105, 0.088), shoulder * 0.7);
   land = mix(land, asphalt, paved);
   land = mix(land, bedCol * (0.85 + 0.3 * nB), bed);
@@ -17955,7 +17992,7 @@ void main() {
   else if (mat < 13.5) vColA = vec3(0.03, 0.045, 0.06);               // glass,
   else if (mat < 14.5) vColA = vec3(0.42, 0.42, 0.42);                // hubs, plate and head lamps,
   else if (mat < 15.5) vColA = vec3(0.30, 0.02, 0.02);                // tail lamps
-  else vColA = ASPHALT;                                               // a bridge's roadway or track bed
+  else vColA = ASPHALT * (aK.w > 0.5 ? clamp(exp2((aK.x * 255.0 - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2) : 1.0);   // a bridge's roadway or track bed (its own tone where measured: decks.js)
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `
@@ -18226,7 +18263,7 @@ void main() {
     float nl = float((kd >> 2) & 7), dirt = float((kd >> 5) & 1);
     float aa = max(px.y, 0.03), la = max(aa, 0.02), lw = 0.075;
     float vis = clamp(lw / (aa * 0.75), 0.0, 1.0);
-    alb = mix(ASPHALT, vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * vnoise(uv / 9.0));
+    alb = mix(vColA, vec3(0.150, 0.125, 0.090), dirt) * (0.85 + 0.3 * vnoise(uv / 9.0));
     vec3 tex = surf(2, uv);
     alb *= mix(vec3(1.0), mix(vec3(1.0), tex, 0.55), (1.0 - smoothstep(45.0, 130.0, dist)) * (1.0 - dirt));
     relief = surfaceHeight(mix(vec3(1.0), tex, 0.55), 0.003);
@@ -19093,6 +19130,8 @@ void main() {
       this.dummyRoad.needsUpdate = true;
       this.dummyK = new an(new Uint8Array([0, 255, 0, 0]), 1, 1, on, cn);
       this.dummyK.needsUpdate = true;
+      this.dummyKA = new Rs(new Uint8Array([0, 255, 0, 0, 0, 0, 0, 0]), 1, 1, 2);
+      this.dummyKA.needsUpdate = true;
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
       this.visScatter = [];
@@ -19151,7 +19190,7 @@ void main() {
         roadTex.magFilter = roadTex.minFilter = ye;
         roadTex.wrapS = roadTex.wrapT = rn;
         roadTex.needsUpdate = true;
-        roadKTex = new an(m.roadK, m.roadT, m.roadT, on, cn);
+        roadKTex = new Rs(m.roadK, m.roadT, m.roadT, 2);
         roadKTex.magFilter = roadKTex.minFilter = Te;
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
@@ -19184,7 +19223,7 @@ void main() {
           uTex0: { value: new et(m.mx0 % 48, m.my0 % 48) },
           uHasRoad: { value: roadTex ? 1 : m.roadsChecked ? -1 : 0 },
           uRoad: { value: roadTex || this.dummyRoad },
-          uRoadK: { value: roadKTex || this.dummyK },
+          uRoadK: { value: roadKTex || this.dummyKA },
           uRoadT: { value: m.roadT },
           uHasLc: { value: lcTex ? 1 : 0 },
           uLc: { value: lcTex || this.dummyK },

@@ -752,6 +752,78 @@
     }
     reg.nMerged = moved;
   }
+  function endHw(reg) {
+    if (reg.endHw) return reg.endHw;
+    const n = reg.nRoads, E = new Float32Array(n * 2).fill(NaN), px = reg.px, py = reg.py, rStart = reg.rStart, rCount = reg.rCount;
+    const G = /* @__PURE__ */ new Map(), key2 = (x, y) => Math.floor(x) * 1e5 + Math.floor(y);
+    const ok = (ri) => reg.rCls[ri] <= 13 && rCount[ri] >= 2 && !reg.rTun[ri];
+    for (let ri = 0; ri < n; ri++) {
+      if (!ok(ri)) continue;
+      for (let e = 0; e < 2; e++) {
+        const q = e ? rStart[ri] + rCount[ri] - 1 : rStart[ri], k = key2(px[q], py[q]);
+        let l = G.get(k);
+        if (!l) G.set(k, l = []);
+        l.push(ri * 2 + e);
+      }
+    }
+    const dir = (ri, e, out) => {
+      const a = rStart[ri], b = a + rCount[ri] - 1, q = e ? b : a, r = e ? b - 1 : a + 1;
+      let dx = px[q] - px[r], dy = py[q] - py[r];
+      const l = Math.hypot(dx, dy) || 1;
+      return out ? [dx / l, dy / l] : [-dx / l, -dy / l];
+    };
+    for (let ri = 0; ri < n; ri++) {
+      if (!ok(ri)) continue;
+      for (let e = 0; e < 2; e++) {
+        const q = e ? rStart[ri] + rCount[ri] - 1 : rStart[ri], x = px[q], y = py[q];
+        let other = -1, many = false;
+        for (let j = -1; j <= 1 && !many; j++) for (let i = -1; i <= 1; i++) {
+          for (const v of G.get(key2(x + i, y + j)) || []) {
+            const rj2 = v >> 1, ej = v & 1;
+            if (rj2 === ri) continue;
+            const qj = ej ? rStart[rj2] + rCount[rj2] - 1 : rStart[rj2];
+            if (Math.hypot(px[qj] - x, py[qj] - y) > 0.6) continue;
+            if (other >= 0) {
+              many = true;
+              break;
+            }
+            other = v;
+          }
+        }
+        if (other < 0 || many) continue;
+        const rj = other >> 1, a = dir(ri, e, true), b = dir(rj, other & 1, false);
+        if (a[0] * b[0] + a[1] * b[1] >= 0.82) E[ri * 2 + e] = reg.rHw[rj];
+      }
+    }
+    return reg.endHw = E;
+  }
+  function paintHw(reg, ri, s) {
+    const E = reg.endHw || endHw(reg), hw = reg.rHw[ri], h0 = E[ri * 2], h12 = E[ri * 2 + 1];
+    if (!(Math.abs(h0 - hw) > 0.15) && !(Math.abs(h12 - hw) > 0.15)) return hw;
+    const a = reg.rStart[ri], L2 = reg.cum[a + reg.rCount[ri] - 1] - reg.cum[a], T = Math.min(40, 0.45 * L2);
+    let out = hw;
+    if (Math.abs(h0 - hw) > 0.15 && s < T) out += (h0 - hw) / 2 * (1 - smoothstep(0, T, s));
+    if (Math.abs(h12 - hw) > 0.15 && L2 - s < T) out += (h12 - hw) / 2 * (1 - smoothstep(0, T, L2 - s));
+    return out;
+  }
+  function parseTone(e, nRoads) {
+    if (e.length < 8) return null;
+    const dv = new DataView(e.buffer, e.byteOffset, e.byteLength), n = dv.getUint32(4, true);
+    if (dv.getUint32(0, true) !== 827215700 || n !== nRoads) return null;
+    const start = new Uint32Array(e.buffer.slice(e.byteOffset + 8, e.byteOffset + 8 + (n + 1) * 4));
+    return { start, b: e.subarray(8 + (n + 1) * 4, 8 + (n + 1) * 4 + start[n]) };
+  }
+  function toneAt(reg, ri, s) {
+    const T = reg.tone;
+    if (!T) return 0;
+    const a = T.start[ri], k = T.start[ri + 1] - a;
+    if (!(k > 0)) return 0;
+    const r0 = reg.rStart[ri], L2 = reg.cum[r0 + reg.rCount[ri] - 1] - reg.cum[r0];
+    const x = k * s / (L2 || 1) - 0.5, i = Math.floor(x), f = x - i;
+    const b0 = T.b[a + Math.max(0, Math.min(k - 1, i))], b1 = T.b[a + Math.max(0, Math.min(k - 1, i + 1))];
+    if (!b0 || !b1) return b0 || b1;
+    return b0 + (b1 - b0) * f;
+  }
   function onOtherWay(reg, lx, ly, z, ri, deckOnly) {
     const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
     if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return false;
@@ -4589,7 +4661,8 @@
     const look = kind === 1 ? 1 : 0, e = world2.nearestRoad(mx, my);
     if (e < 15) {
       const nr = world2._nr, R2 = nr.reg, ri = nr.road, lat = nr.side * nr.d, tx = nr.tx, ty = nr.ty;
-      let left = -nr.hw, right = nr.hw;
+      const pw = paintHw(R2, ri, nr.s - R2.cum[R2.rStart[ri]]);
+      let left = -pw, right = pw;
       const kb = R2.streets ? kerbsAt(R2, ri, nr.s - R2.cum[R2.rStart[ri]]) : null;
       if (kb) {
         left = kb.left;
@@ -4812,6 +4885,7 @@
   // src/spans.js
   var D = { SLAB: 1, GIRDER: 2, DECK_TRUSS: 3, TRUSS: 4, DECK_ARCH: 5, ARCH: 6, SUSPENSION: 7, STAYED: 8, LIFT: 9, BASCULE: 10, SWING: 11, FRAME: 12 };
   var STEEL = (mat) => mat === 2 || mat === 6;
+  var UNDER_CLEAR = 4.5;
   var _e1 = [0, 0, 0];
   var _e2 = [0, 0, 0];
   function beam(M, a, b, w, h, up) {
@@ -4931,7 +5005,16 @@
         const s1 = Math.min(s + step, len), up = upAt((s + s1) / 2);
         for (const side of [-1, 1]) {
           const o = side * (hw + PW - 0.25);
-          beam(M, at(s, o, -DT - gd / 2), at(s1, o, -DT - gd / 2), 0.22, gd / 2, up);
+          let d = gd;
+          for (const sm of [s, (s + s1) / 2, s1]) {
+            along(reg, ri, clamp2(sm, 0, len), g);
+            const X = g[0] + g[4] * o, Y = g[1] - g[3] * o, top = g[2] - DT;
+            let floor = world2.groundH(X, Y, true);
+            if (world2.nearestDeck(X, Y, top - 1) < 0.5) floor = Math.max(floor, world2._nd.z);
+            d = Math.min(d, top - floor - UNDER_CLEAR);
+          }
+          if (d < 0.25) continue;
+          beam(M, at(s, o, -DT - d / 2), at(s1, o, -DT - d / 2), 0.22, d / 2, up);
         }
       }
       return;
@@ -5897,6 +5980,13 @@
         M.M[3] = seed;
       };
       const lx = px[q], ly = py[q], lbx = px[q + 1], lby = py[q + 1];
+      let pwAt = null;
+      let tnAt = null;
+      const tone = (f) => {
+        const b = Math.round(tnAt(f));
+        M.K[0] = b;
+        M.K[3] = b > 0 ? 255 : 0;
+      };
       const strip = (f0, f1, o0, y0, o1, y1, nl, nu, tv0, tv1) => {
         const cxA = n0[0] + (n1[0] - n0[0]) * f0, cyA = n0[1] + (n1[1] - n0[1]) * f0, cxB = n0[0] + (n1[0] - n0[0]) * f1, cyB = n0[1] + (n1[1] - n0[1]) * f1;
         let uxA = u0[0] + (u1[0] - u0[0]) * f0, uyA = u0[1] + (u1[1] - u0[1]) * f0, uxB = u0[0] + (u1[0] - u0[0]) * f1, uyB = u0[1] + (u1[1] - u0[1]) * f1;
@@ -5908,10 +5998,14 @@
         const xA = ax + (bx - ax) * f0, yA = ay + (by - ay) * f0, zA = az + (bz - az) * f0, xB = ax + (bx - ax) * f1, yB = ay + (by - ay) * f1, zB = az + (bz - az) * f1;
         const sA = s0 + (s1 - s0) * f0, sB = s0 + (s1 - s0) * f1;
         const oA0 = lin(o0, f0), oA1 = lin(o1, f0), oB0 = lin(o0, f1), oB1 = lin(o1, f1);
+        if (pwAt) M.W[0] = pwAt(f0);
+        if (tnAt) tone(f0);
         let t = P2(xA + cxA * oA0, yA + cyA * oA0, zA + y0);
         const i0 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv0);
         t = P2(xA + cxA * oA1, yA + cyA * oA1, zA + y1);
         const i1 = M.v(t[0], t[1], t[2], uxA * nl, nu, -uyA * nl, sA, tv1);
+        if (pwAt) M.W[0] = pwAt(f1);
+        if (tnAt) tone(f1);
         t = P2(xB + cxB * oB1, yB + cyB * oB1, zB + y1);
         const i2 = M.v(t[0], t[1], t[2], uxB * nl, nu, -uyB * nl, sB, tv1);
         t = P2(xB + cxB * oB0, yB + cyB * oB0, zB + y0);
@@ -5956,8 +6050,13 @@
           }
         }
       }
-      if (!any) strip(0, 1, -hw, lift, hw, lift, 0, 1, -hw, hw);
-      else {
+      const sW0 = cum[q] - cum[reg.rStart[ri]], sW1 = cum[q + 1] - cum[reg.rStart[ri]];
+      if (!rail && [0, 0.5, 1].some((f) => Math.abs(paintHw(reg, ri, sW0 + (sW1 - sW0) * f) - hw) > 1e-3)) pwAt = (f) => paintHw(reg, ri, sW0 + (sW1 - sW0) * f);
+      if (!rail && reg.tone) tnAt = (f) => toneAt(reg, ri, sW0 + (sW1 - sW0) * f);
+      if (!any) {
+        const np = pwAt ? Math.max(1, Math.ceil(len / 3)) : 1;
+        for (let i = 0; i < np; i++) strip(i / np, (i + 1) / np, -hw, lift, hw, lift, 0, 1, -hw, hw);
+      } else {
         for (let ia = 0; ia < NA; ia++) {
           let c0 = -1;
           for (let ic = 0; ic <= NC; ic++) {
@@ -5975,15 +6074,23 @@
           }
         }
       }
+      pwAt = null;
+      M.W[0] = hw;
+      tnAt = null;
+      M.K[0] = M.K[3] = 0;
       setM(rail ? MAT.METAL : MAT.CONCRETE);
+      const rimA = q === reg.rStart[ri] && reg.rEnd[ri] & 1, rimB = q + 1 === reg.rStart[ri] + reg.rCount[ri] - 1 && reg.rEnd[ri] & 2;
+      const stubAtRim = (f0, f1) => (f1 - f0) * len < 3 && (rimA && f0 < 1e-3 && f1 < 1 - 1e-3 || rimB && f1 > 1 - 1e-3 && f0 > 1e-3);
       M.W[0] = 0;
       M.W[1] = 0;
       M.W[2] = 0;
       M.W[3] = -1;
       const rails = [];
+      let endL = 0, endR = 0;
       for (let i = 0; i < runsL.length; i += 2) {
         const f0 = runsL[i], f1 = runsL[i + 1];
-        if ((f1 - f0) * len < 0.1) continue;
+        if ((f1 - f0) * len < 0.1 || stubAtRim(f0, f1)) continue;
+        endL |= (f0 < 1e-3 ? 1 : 0) | (f1 > 1 - 1e-3 ? 2 : 0);
         const b = wL ? CH : 0, ph = wL ? PB : PH;
         if (wL) {
           strip(f0, f1, -hw, CH, -hw, 0, 1, 0, CH, 0);
@@ -6000,7 +6107,8 @@
       }
       for (let i = 0; i < runsR.length; i += 2) {
         const f0 = runsR[i], f1 = runsR[i + 1];
-        if ((f1 - f0) * len < 0.1) continue;
+        if ((f1 - f0) * len < 0.1 || stubAtRim(f0, f1)) continue;
+        endR |= (f0 < 1e-3 ? 1 : 0) | (f1 > 1 - 1e-3 ? 2 : 0);
         const b = wR ? CH : 0, ph = wR ? PB : PH;
         if (wR) {
           strip(f0, f1, hw, 0, hw, CH, -1, 0, 0, CH);
@@ -6036,15 +6144,20 @@
           const i3 = M.v(t[0], t[1], t[2], tx * dir, 0, -ty * dir, o0 + eL, h12 + DT);
           M.quad(i0, i1, i2, i3);
         };
+        const bit = dir < 0 ? 1 : 2;
         face(-eL, eR, -DT, 0);
-        if (wL) {
-          face(-pL2, -hw, 0, CH);
-          face(-eL, -pL2, 0, CH + PB);
-        } else face(-eL, -hw, 0, PH);
-        if (wR) {
-          face(hw, pR2, 0, CH);
-          face(pR2, eR, 0, CH + PB);
-        } else face(hw, eR, 0, PH);
+        if (endL & bit) {
+          if (wL) {
+            face(-pL2, -hw, 0, CH);
+            face(-eL, -pL2, 0, CH + PB);
+          } else face(-eL, -hw, 0, PH);
+        }
+        if (endR & bit) {
+          if (wR) {
+            face(hw, pR2, 0, CH);
+            face(pR2, eR, 0, CH + PB);
+          } else face(hw, eR, 0, PH);
+        }
       };
       if (q === a0 && en & 1) cap(ax, ay, az, n0, -1, 0);
       if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1, 1);
@@ -6614,6 +6727,7 @@
   var groundFiles = /* @__PURE__ */ new Set();
   var featFiles = /* @__PURE__ */ new Set();
   var streetFiles = /* @__PURE__ */ new Set();
+  var toneFiles = /* @__PURE__ */ new Set();
   var lcPacks = /* @__PURE__ */ new Set();
   var LCP = 8192;
   var LCQ = 2048;
@@ -6653,6 +6767,7 @@
     groundFiles = new Set(meta.tiles && meta.tiles.ground ? meta.tiles.ground : []);
     featFiles = new Set(meta.tiles && meta.tiles.feat ? meta.tiles.feat : []);
     streetFiles = new Set(meta.tiles && meta.tiles.streets ? meta.tiles.streets : []);
+    toneFiles = new Set(meta.tiles && meta.tiles.tone ? meta.tiles.tone : []);
     setDecks(meta.tiles && meta.tiles.decks);
     lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
     LCP = meta.lcPack || 8192;
@@ -6797,6 +6912,7 @@
         else if (dir === "g3") reg.ground = parseGround(e);
         else if (dir === "f1") reg.feat = parseFeat(e);
         else if (dir === "s1") reg.streets = parseStreets(e);
+        else if (dir === "tone") reg.tone = parseTone(e, reg.nRoads);
         else if (dir === "t3") {
           const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
           const magic = dv.getUint32(0, true);
@@ -6834,6 +6950,7 @@
           if (groundFiles.has(k)) parts.push("g3");
           if (featFiles.has(k)) parts.push("f1");
           if (streetFiles.has(k)) parts.push("s1");
+          if (toneFiles.has(k)) parts.push("tone");
           const got = {};
           for (const dir of parts) got[dir] = fetchPart(dir, rx, ry).then((e) => ({ e }), (err) => ({ err }));
           const d = await fetchPart("r2", rx, ry);
@@ -7084,9 +7201,10 @@
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
     if (hasRoads && level >= 6) {
-      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4);
+      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 2), tone = kind.subarray(T * T * 4);
       let any = false;
-      const far = toHalf(60), one = toHalf(1), zero = toHalf(0);
+      const far = toHalf(60), one = toHalf(1), zero = toHalf(0), none = toHalf(10);
+      const cyc = (v2) => toHalf(v2 - Math.floor(v2));
       for (let b = 0; b < T; b++) {
         const my = my0 + b / (T - 1) * s;
         for (let a = 0; a < T; a++) {
@@ -7112,11 +7230,12 @@
             }
             const tsr = Math.min(nr0.d, 60) * nr0.side;
             if (kb && tsr > kb.left - 0.6 && tsr < kb.right + 0.6) {
-              const ph = nr0.s / DASH * 2 * Math.PI, kk = (b * T + a) * 4;
+              const kk = (b * T + a) * 4;
               data[k] = toHalf(tsr - kb.mid);
               data[k + 1] = toHalf(kb.hw);
-              data[k + 2] = toHalf(Math.cos(ph));
-              data[k + 3] = toHalf(Math.sin(ph));
+              data[k + 2] = cyc(nr0.s / DASH);
+              data[k + 3] = toHalf(Math.atan2(nr0.ty, nr0.tx));
+              tone[(b * T + a) * 4] = Math.round(toneAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]));
               let kd = roadKindXS(nr0.reg, nr0.road, xs0) & ~(64 | 32 | 128);
               if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
               kind[kk] = kd | 32;
@@ -7129,31 +7248,35 @@
             if (dd < 4.5) {
               data[k] = zero;
               data[k + 1] = one;
-              data[k + 2] = one;
-              data[k + 3] = zero;
+              data[k + 2] = zero;
+              data[k + 3] = none;
+              if (e < 4 && nr0.reg.rCls[nr0.road] < 14) tone[(b * T + a) * 4] = Math.round(toneAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]));
               kind[(b * T + a) * 4] = 3 | 7 << 2 | (_pave.unpaved ? 32 : 0);
               kind[(b * T + a) * 4 + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               any = true;
             } else {
               data[k] = far;
               data[k + 1] = zero;
-              data[k + 2] = one;
-              data[k + 3] = zero;
+              data[k + 2] = zero;
+              data[k + 3] = none;
               kind[(b * T + a) * 4 + 1] = 255;
             }
             continue;
           }
           if (e < 56) {
-            const nr = world._nr, ph = nr.s / DASH * 2 * Math.PI;
+            const nr = world._nr;
             const notSt = nr.reg.rCls[nr.road] >= 14;
             const canon = notSt && (nr.tx < -1e-3 || nr.tx <= 1e-3 && nr.ty < 0) ? -1 : 1;
+            const pw = notSt ? nr.hw : paintHw(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]]);
             data[k] = toHalf(Math.min(nr.d, 60) * nr.side * canon);
-            data[k + 1] = toHalf(nr.hw + (notSt ? 8e-3 * (nr.road & 7) : 0));
-            data[k + 2] = toHalf(Math.cos(ph));
-            data[k + 3] = toHalf(Math.sin(ph));
+            data[k + 1] = toHalf(notSt ? nr.hw + 8e-3 * (nr.road & 7) : pw);
+            data[k + 2] = cyc(canon * nr.s / DASH);
+            data[k + 3] = toHalf(Math.atan2(canon * nr.ty, canon * nr.tx));
+            if (!notSt) tone[(b * T + a) * 4] = Math.round(toneAt(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]]));
             const kk = (b * T + a) * 4;
             kind[kk] = roadKind(nr.reg, nr.road);
-            kind[kk + 1] = Math.round(clamp2((nr.u + 1.5) / 6, 0, 1) * 255);
+            const ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
+            kind[kk + 1] = Math.round(clamp2((ue + 1.5) / 6, 0, 1) * 255);
             if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[kk] |= 128;
             const xs = (kind[kk] & 3) !== 3 ? xsOf(nr.reg, nr.road) : void 0;
             if (xs) {
@@ -7165,8 +7288,8 @@
           } else {
             data[k] = far;
             data[k + 1] = zero;
-            data[k + 2] = one;
-            data[k + 3] = zero;
+            data[k + 2] = zero;
+            data[k + 3] = none;
             kind[(b * T + a) * 4 + 1] = 255;
           }
         }
