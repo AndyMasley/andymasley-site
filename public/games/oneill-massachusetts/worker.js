@@ -4252,6 +4252,26 @@
       for (let i = 0; i < nCV; i++) f.cy[i] = dv.getInt32(o + i * 4, true) / 10;
       o += nCV * 4;
     }
+    f.nW = 0;
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1465012801) {
+      const nW = dv.getUint32(o + 4, true);
+      o += 16;
+      f.nW = nW;
+      f.wx = new Float32Array(nW);
+      f.wy = new Float32Array(nW);
+      f.wHd = new Float32Array(nW);
+      f.wN = new Uint8Array(nW);
+      f.wFl = new Uint8Array(nW);
+      f.wCodes = new Uint32Array(nW);
+      for (let i = 0; i < nW; i++, o += 16) {
+        f.wx[i] = dv.getInt32(o, true) / 10;
+        f.wy[i] = dv.getInt32(o + 4, true) / 10;
+        f.wHd[i] = dv.getUint16(o + 8, true) / 65536 * 2 * Math.PI;
+        f.wN[i] = dv.getUint8(o + 10);
+        f.wFl[i] = dv.getUint8(o + 11);
+        f.wCodes[i] = dv.getUint32(o + 12, true);
+      }
+    }
     f.aBox = new Float32Array(nA2 * 4);
     for (let a = 0; a < nA2; a++) {
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -4514,7 +4534,7 @@
   }
   function paintTris(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
-    if (!f || !f.nP) return new Float32Array(0);
+    if (!f || !f.nP && !f.nW) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const WHITE = [0.78, 0.78, 0.74];
@@ -4543,6 +4563,27 @@
         v(A);
         v(C2);
         v(D2);
+      }
+    };
+    const tri2 = (P1, P2, P3, col) => {
+      const V2 = [];
+      for (const [x, y] of [P1, P2, P3]) {
+        const h = surfaceH(world2, x, y, zD);
+        cyl(x, y, h + 0.03, p32);
+        cyl(x, y, h + 1.03, u3);
+        V2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2], h > (zD === null ? hNode - 2.5 : zD - 1.2)]);
+      }
+      if (!(V2[0][6] && V2[1][6] && V2[2][6])) return;
+      const v = (p) => out.push(p[0], p[1], p[2], p[3], p[4], p[5], col[0], col[1], col[2]);
+      const ccw = (P2[0] - P1[0]) * (P3[1] - P1[1]) - (P2[1] - P1[1]) * (P3[0] - P1[0]) > 0;
+      if (ccw) {
+        v(V2[0]);
+        v(V2[1]);
+        v(V2[2]);
+      } else {
+        v(V2[0]);
+        v(V2[2]);
+        v(V2[1]);
       }
     };
     for (let i = 0; i < f.nP; i++) {
@@ -4600,7 +4641,121 @@
         }
       }
     }
+    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad2, tri2, (h) => {
+      hNode = h;
+      zD = null;
+    }, WHITE);
     return new Float32Array(out);
+  }
+  var ARROW = {
+    through: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42]],
+    left: [["s", 0, 0, 1.25, 0], ["s", 1.25, 0, 1.75, -0.5], ["h", 1.75, -0.5, 0.7071, -0.7071, 0.75, 0.38]],
+    thl: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42], ["s", 0.75, 0, 1.2, -0.45], ["h", 1.2, -0.45, 0.7071, -0.7071, 0.65, 0.33]],
+    lr: [["s", 0, 0, 1.05, 0], ["s", 1.05, 0, 1.55, -0.5], ["h", 1.55, -0.5, 0.7071, -0.7071, 0.7, 0.35], ["s", 1.05, 0, 1.55, 0.5], ["h", 1.55, 0.5, 0.7071, 0.7071, 0.7, 0.35]],
+    all: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42], ["s", 0.7, 0, 1.15, -0.45], ["h", 1.15, -0.45, 0.7071, -0.7071, 0.6, 0.3], ["s", 0.7, 0, 1.15, 0.45], ["h", 1.15, 0.45, 0.7071, 0.7071, 0.6, 0.3]],
+    uturn: [["s", 0.9, 0, 1.75, 0], ["s", 1.75, 0, 2.1, -0.15], ["s", 2.1, -0.15, 2.2, -0.45], ["s", 2.2, -0.45, 2.1, -0.75], ["s", 2.1, -0.75, 1.75, -0.9], ["s", 1.75, -0.9, 1.25, -0.9], ["h", 1.25, -0.9, -1, 0, 0.75, 0.33]]
+  };
+  var mirror = (g) => g.map((e) => e[0] === "s" ? ["s", e[1], -e[2], e[3], -e[4]] : ["h", e[1], -e[2], e[3], -e[4], e[5], e[6]]);
+  var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
+  var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, drawn: 0, arrows: 0, last: null };
+  function laneArrows(world2, reg, f, lx0, ly0, s, quad2, tri2, ground, col) {
+    const near = [];
+    for (let q = 0; q < (f.nP || 0); q++) {
+      const k = f.kind[q], x = f.px[q], y = f.py[q];
+      if ((k === CROSSING || k === SIGNAL || k === STOP) && x > lx0 - 45 && x < lx0 + s + 45 && y > ly0 - 45 && y < ly0 + s + 45) near.push(q);
+    }
+    for (let i = 0; i < f.nW; i++) {
+      const ax = f.wx[i], ay = f.wy[i];
+      if (ax < lx0 || ax >= lx0 + s || ay < ly0 || ay >= ly0 + s) continue;
+      const mx = reg.x0 + ax, my = reg.y0 + ay, ux = Math.cos(f.wHd[i]), uy = Math.sin(f.wHd[i]), n = f.wN[i], codes = f.wCodes[i];
+      if (deckOwner(world2, mx - ux * 15, my - uy * 15, true) !== null) {
+        arrowStats.deck++;
+        continue;
+      }
+      if (world2.nearestRoad(mx - ux * 15, my - uy * 15) > 0.5) {
+        arrowStats.off++;
+        continue;
+      }
+      const ri = world2._nr.road, rr = world2._nr.reg, hw = world2._nr.hw;
+      if (Math.abs(world2._nr.tx * ux + world2._nr.ty * uy) < 0.8) {
+        arrowStats.angle++;
+        continue;
+      }
+      const style = roadKind(rr, ri) & 3;
+      if (style !== 1 && style !== 2) {
+        arrowStats.style++;
+        continue;
+      }
+      let b0 = -1;
+      for (let b = 0; b <= 40; b += 0.5) {
+        const x = mx - ux * b, y = my - uy * b;
+        if (!onOtherWay(rr, x - rr.x0, y - rr.y0, world2.groundH(x, y, true), ri)) {
+          b0 = b;
+          break;
+        }
+      }
+      if (b0 < 0) {
+        arrowStats.box++;
+        continue;
+      }
+      let painted = b0 + 1.7;
+      for (const q of near) {
+        const vx = mx - (reg.x0 + f.px[q]), vy = my - (reg.y0 + f.py[q]), along2 = vx * ux + vy * uy, lat = Math.abs(vx * uy - vy * ux);
+        if (along2 < -2 || along2 > 40 || lat > hw + 3) continue;
+        const k2 = f.kind[q];
+        if (k2 === CROSSING) painted = Math.max(painted, along2 + 2);
+        else if (along2 < 3) painted = Math.max(painted, b0 + 3.7);
+        else painted = Math.max(painted, along2 + 1);
+      }
+      const tip = painted + 3.5, tail = tip + 2.75;
+      const on = (b) => world2.nearestRoad(mx - ux * b, my - uy * b) <= 0.5 && (world2._nr.road === ri || Math.abs(world2._nr.tx * ux + world2._nr.ty * uy) > 0.9);
+      if (!on(tail + 3)) {
+        arrowStats.short++;
+        continue;
+      }
+      if (!on(tail)) {
+        arrowStats.short++;
+        continue;
+      }
+      const sg = world2._nr.tx * ux + world2._nr.ty * uy >= 0 ? 1 : -1, tx = world2._nr.tx * sg, ty = world2._nr.ty * sg;
+      const px = mx - ux * tail, py = my - uy * tail, sd = world2._nr.side * world2._nr.d;
+      const ox = px - sd * world2._nr.ty, oy = py + sd * world2._nr.tx;
+      let le, lw;
+      if (style === 1) {
+        le = 0;
+        lw = Math.min(3.5, (hw - 0.3) / n);
+      } else {
+        const sh = clamp2(hw - n * 1.75, 0.25, 3);
+        le = -(hw - sh);
+        lw = Math.min(3.5, 2 * (hw - sh) / n);
+      }
+      if (lw < 2.2) {
+        arrowStats.narrow++;
+        continue;
+      }
+      arrowStats.drawn++;
+      const k = Math.min(1, lw / 3.2);
+      arrowStats.last = [ox, oy, tx, ty];
+      ground(world2.groundH(ox + tx * 1.4, oy + ty * 1.4, true));
+      for (let l = 0; l < n; l++) {
+        const g = GLYPH[codes >>> 4 * l & 15];
+        if (!g) continue;
+        arrowStats.arrows++;
+        const ts = le + lw * (l + 0.5), rx = ty, ry = -tx;
+        const at = (a, c) => [ox + tx * a + rx * (ts + c * k), oy + ty * a + ry * (ts + c * k)];
+        for (const e of g) {
+          if (e[0] === "s") {
+            const A = at(e[1], e[2]), B = at(e[3], e[4]), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]);
+            if (L2 < 1e-3) continue;
+            const dx = (B[0] - A[0]) / L2, dy = (B[1] - A[1]) / L2;
+            quad2(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
+          } else {
+            const [, a, c, da, dc, len, hb] = e;
+            tri2(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
+          }
+        }
+      }
+    }
   }
   function towerKind(f, l, v) {
     const vk = f.lk[v], kv = f.lKv[l];

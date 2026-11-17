@@ -21501,6 +21501,26 @@ void main() {
       for (let i = 0; i < nCV; i++) f.cy[i] = dv2.getInt32(o + i * 4, true) / 10;
       o += nCV * 4;
     }
+    f.nW = 0;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1465012801) {
+      const nW = dv2.getUint32(o + 4, true);
+      o += 16;
+      f.nW = nW;
+      f.wx = new Float32Array(nW);
+      f.wy = new Float32Array(nW);
+      f.wHd = new Float32Array(nW);
+      f.wN = new Uint8Array(nW);
+      f.wFl = new Uint8Array(nW);
+      f.wCodes = new Uint32Array(nW);
+      for (let i = 0; i < nW; i++, o += 16) {
+        f.wx[i] = dv2.getInt32(o, true) / 10;
+        f.wy[i] = dv2.getInt32(o + 4, true) / 10;
+        f.wHd[i] = dv2.getUint16(o + 8, true) / 65536 * 2 * Math.PI;
+        f.wN[i] = dv2.getUint8(o + 10);
+        f.wFl[i] = dv2.getUint8(o + 11);
+        f.wCodes[i] = dv2.getUint32(o + 12, true);
+      }
+    }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
       let x02 = 1e9, y02 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -21518,6 +21538,16 @@ void main() {
     }
     return f;
   }
+  var ARROW = {
+    through: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42]],
+    left: [["s", 0, 0, 1.25, 0], ["s", 1.25, 0, 1.75, -0.5], ["h", 1.75, -0.5, 0.7071, -0.7071, 0.75, 0.38]],
+    thl: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42], ["s", 0.75, 0, 1.2, -0.45], ["h", 1.2, -0.45, 0.7071, -0.7071, 0.65, 0.33]],
+    lr: [["s", 0, 0, 1.05, 0], ["s", 1.05, 0, 1.55, -0.5], ["h", 1.55, -0.5, 0.7071, -0.7071, 0.7, 0.35], ["s", 1.05, 0, 1.55, 0.5], ["h", 1.55, 0.5, 0.7071, 0.7071, 0.7, 0.35]],
+    all: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42], ["s", 0.7, 0, 1.15, -0.45], ["h", 1.15, -0.45, 0.7071, -0.7071, 0.6, 0.3], ["s", 0.7, 0, 1.15, 0.45], ["h", 1.15, 0.45, 0.7071, 0.7071, 0.6, 0.3]],
+    uturn: [["s", 0.9, 0, 1.75, 0], ["s", 1.75, 0, 2.1, -0.15], ["s", 2.1, -0.15, 2.2, -0.45], ["s", 2.2, -0.45, 2.1, -0.75], ["s", 2.1, -0.75, 1.75, -0.9], ["s", 1.75, -0.9, 1.25, -0.9], ["h", 1.25, -0.9, -1, 0, 0.75, 0.33]]
+  };
+  var mirror = (g) => g.map((e) => e[0] === "s" ? ["s", e[1], -e[2], e[3], -e[4]] : ["h", e[1], -e[2], e[3], -e[4], e[5], e[6]]);
+  var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
   var HEX = [0, 1, 2, 3, 4, 5].map((k) => [-0.15 + 0.075 * Math.cos(k * Math.PI / 3), 0.92 + 0.075 * Math.sin(k * Math.PI / 3)]);
   var B_STEP = [1.5, 3, 1];
   function barPoint(world, mx2, my2, o) {
