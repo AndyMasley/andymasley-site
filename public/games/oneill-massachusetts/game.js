@@ -16971,16 +16971,17 @@ const vec3 KERB = vec3(0.250, 0.245, 0.240);
     /* glsl */
     `
 // A street's paint, shared by the ground (TERRAIN_FS) and the bridge decks (HOUSE_FS).  kd: the road's kind byte
-// (common.js roadKind: style | lanes << 2 | ...); bR, bL: its bike lanes on the right and the left (common.js bikeByte:
+// (common.js roadKind: style | lanes << 2 | ...); nlf: its lane count eased toward the next way's where the count
+// changes at a joint (common.js paintLanes), 0 for kd's own; bR, bL: its bike lanes on the right and the left (common.js bikeByte:
 // type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); ts: metres right (+) or left
 // (-) of its centre line; hw: its half width; along: metres along it; lw, la: a line's half width and antialiasing;
 // dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left out.  The zone a bike lane takes at
 // the kerb is left out of the travel lanes, and a buffer is two solid lines with diagonal hatching between them.
 // Returns how much paint covers the point; yellow says whether it is the yellow kind.
 float spBand(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
-float streetPaint(int kd, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
+float streetPaint(int kd, float nlf, int bR, int bL, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
   int style = kd & 3;
-  float nl = float((kd >> 2) & 7), dc = abs(ts);
+  float nl = nlf > 0.01 ? nlf : float((kd >> 2) & 7), dc = abs(ts);
   float rT = float(bR & 3), rW = 1.0 + float((bR >> 2) & 15) * 0.1, rZ = rT > 0.5 ? rW + float((bR >> 6) & 3) * 0.3 : 0.0;
   float lT = float(bL & 3), lW = 1.0 + float((bL >> 2) & 15) * 0.1, lZ = lT > 0.5 ? lW + float((bL >> 6) & 3) * 0.3 : 0.0;
   float zT = ts > 0.0 ? rT : lT, zW = ts > 0.0 ? rW : lW, zZ = ts > 0.0 ? rZ : lZ, keep = ts > 0.0 ? keepR : keepL;
@@ -17207,12 +17208,13 @@ void main() {
     vec2 rst = ruv * uRoadT - 0.5;
     vec2 rf0 = floor(rst), rfr = rst - rf0;
     ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
-    vec4 R4[4], K4[4];
+    vec4 R4[4], K4[4], L4[4];
     vec3 E4[4];
     for (int i = 0; i < 4; i++) {
       ivec2 o = ivec2(i & 1, i >> 1);
       R4[i] = texelFetch(uRoad, clamp(rb + o, ivec2(0), rmx), 0);
       K4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 0), 0);
+      L4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 1), 0);      // the second layer: tone, eased lane count
       E4[i] = roadAt(R4[i], (rfr - vec2(o)) * (uSize / (uRoadT - 1.0)));
     }
     vec4 rw4 = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
@@ -17230,18 +17232,24 @@ void main() {
     // (two texels are of one road where, carried to the point, they agree on its offset, and their widths are near:
     // two ways side by side, two tracks, are told apart by the offset, and a highway's width eases along it by a few
     // centimetres a texel where it meets another, worker.js)
+    // (the lane count too, where it eases toward the next way's at a joint, so the lines move smoothly, not a texel at a
+    // time; each texel's own way's count where it does not)
     vec4 rf = vec4(0.0);
+    float nlf = 0.0, tbs = 0.0, tbw = 0.0;
     for (int i = 0; i < 4; i++) {
       if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5) continue;
       float wi = rw4[i] + 1e-3, dph = E4[i].z - E4[own].z;
       rf += wi * vec4(E4[i].x, E4[i].y, dph - floor(dph + 0.5), 1.0);
+      nlf += wi * (L4[i].g > 0.0 ? L4[i].g * 255.0 / 32.0 : float((int(K4[i].r * 255.0 + 0.5) >> 2) & 7));
+      if (L4[i].r > 0.0) { tbs += wi * L4[i].r; tbw += wi; }      // (and the tone, where it is known: no texel steps)
     }
     rf.xyz /= rf.w;
+    nlf /= rf.w;
     float ts = rf.x, dc = abs(ts), hw = rf.y;          // ts: metres right (+) or left (-) of the centre line
     float phs = E4[own].z + rf.z;                      // cycles of 12.192 m along it
     if (hw > 0.5) {
       int kd = int(K4[own].r * 255.0 + 0.5);
-      float tb = texelFetch(uRoadK, ivec3(clamp(rb + ivec2(own & 1, own >> 1), ivec2(0), rmx), 1), 0).r * 255.0;
+      float tb = tbw > 0.0 ? tbs / tbw * 255.0 : 0.0;
       if (tb > 0.5) { roadTone = clamp(exp2((tb - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2); toneKnown = 1.0; }
       int style = kd & 3;
       float nl = float((kd >> 2) & 7);
@@ -17285,7 +17293,7 @@ void main() {
       if (style != 3) {
         vec2 bk = K4[own].ba * 255.0 + 0.5;
         float yel;
-        mark = streetPaint(kd & ~32, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
+        mark = streetPaint(kd & ~32, nlf, int(bk.x), int(bk.y), ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepEdge, keepEdge, yel) * vis * paved;
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
@@ -18431,7 +18439,7 @@ void main() {
     if (style == 1 || style == 2 || style == 0) {
       int bw = vW.w > 0.0 ? int(vW.w + 0.5) : 0;
       float yel;
-      mark = streetPaint(kd, bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
+      mark = streetPaint(kd, 0.0, bw & 255, bw >> 8, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
       if (yel > 0.5) markCol = vec3(0.78, 0.55, 0.06);
     }
     alb = mix(alb, markCol, mark);

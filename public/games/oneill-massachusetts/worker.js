@@ -911,6 +911,7 @@
   function endHw(reg) {
     if (reg.endHw) return reg.endHw;
     const n = reg.nRoads, E = new Float32Array(n * 2).fill(NaN), px = reg.px, py = reg.py, rStart = reg.rStart, rCount = reg.rCount;
+    const W = reg.endWay = new Int32Array(n * 2).fill(-1);
     const G = /* @__PURE__ */ new Map(), key2 = (x, y) => Math.floor(x) * 1e5 + Math.floor(y);
     const ok = (ri) => reg.rCls[ri] <= 13 && rCount[ri] >= 2 && !reg.rTun[ri];
     for (let ri = 0; ri < n; ri++) {
@@ -948,7 +949,10 @@
         }
         if (other < 0 || many) continue;
         const rj = other >> 1, a = dir(ri, e, true), b = dir(rj, other & 1, false);
-        if (a[0] * b[0] + a[1] * b[1] >= 0.82) E[ri * 2 + e] = reg.rHw[rj];
+        if (a[0] * b[0] + a[1] * b[1] >= 0.82) {
+          E[ri * 2 + e] = reg.rHw[rj];
+          W[ri * 2 + e] = rj;
+        }
       }
     }
     return reg.endHw = E;
@@ -960,6 +964,18 @@
     let out = hw;
     if (Math.abs(h0 - hw) > 0.15 && s < T) out += (h0 - hw) / 2 * (1 - smoothstep(0, T, s));
     if (Math.abs(h12 - hw) > 0.15 && L2 - s < T) out += (h12 - hw) / 2 * (1 - smoothstep(0, T, L2 - s));
+    return out;
+  }
+  function paintLanes(reg, ri, s, nl, laneOf) {
+    if (!reg.endWay) endHw(reg);
+    const W = reg.endWay, c = reg.endLanes || (reg.endLanes = new Float32Array(reg.nRoads * 2).fill(-1));
+    for (let e = 0; e < 2; e++) if (c[ri * 2 + e] < 0) c[ri * 2 + e] = W[ri * 2 + e] >= 0 ? laneOf(W[ri * 2 + e]) : 0;
+    const n0 = c[ri * 2], n1 = c[ri * 2 + 1];
+    if (!(n0 > 0 && n0 !== nl) && !(n1 > 0 && n1 !== nl)) return nl;
+    const a = reg.rStart[ri], L2 = reg.cum[a + reg.rCount[ri] - 1] - reg.cum[a], T = Math.min(40, 0.45 * L2);
+    let out = nl;
+    if (n0 > 0 && n0 !== nl && s < T) out += (n0 - nl) / 2 * (1 - smoothstep(0, T, s));
+    if (n1 > 0 && n1 !== nl && L2 - s < T) out += (n1 - nl) / 2 * (1 - smoothstep(0, T, L2 - s));
     return out;
   }
   function parseTone(e, nRoads) {
@@ -7406,6 +7422,16 @@
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
     const T = level >= 8 ? 96 : 192;
+    const lanes32 = (rg, ri, s2, kd) => {
+      const st2 = kd & 3;
+      if (st2 !== 1 && st2 !== 2) return 0;
+      const nl = kd >> 2 & 7;
+      const f = paintLanes(rg, ri, s2, nl, (rj) => {
+        const kj = roadKindXS(rg, rj, xsOf(rg, rj));
+        return (kj & 3) === st2 ? kj >> 2 & 7 : 0;
+      });
+      return f === nl ? 0 : Math.round(f * 32);
+    };
     if (hasRoads && level >= 6) {
       const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 2), tone = kind.subarray(T * T * 4);
       let any = false;
@@ -7449,6 +7475,7 @@
               let kd = roadKindXS(nr0.reg, nr0.road, xs0) & ~(64 | 32 | 128);
               if (!(kd & 3)) kd = kd & ~31 | (nr0.reg.rFlags[nr0.road] & 1 ? 2 : 1) | 1 << 2;
               kind[kk] = kd | 32;
+              tone[kk + 1] = lanes32(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
               kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
@@ -7494,6 +7521,7 @@
               kind[kk + 2] = bikeByte(xs[1], xs[2], xs[3]);
               kind[kk + 3] = bikeByte(xs[4], xs[5], xs[6]);
             }
+            if (!notSt) tone[kk + 1] = lanes32(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk]);
             any = true;
           } else {
             data[k] = far;
