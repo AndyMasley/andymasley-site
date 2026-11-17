@@ -22,6 +22,13 @@ export interface PersonalAction {
   inlineParam2?: { before: string; defaultVal: number; after: string; max?: number };
   /** If true, this action's kg is not added to the total (used for convenience toggles like "eliminate all flights") */
   excludeFromTotal?: boolean;
+  /**
+   * Driving actions overlap, so they're combined rather than added (see getEnabledPersonalSavings).
+   * milesShare is the share of the remaining driving the action takes off the road at its default
+   * setting. stage sets the order: driving less first, then short trips, then switching to an EV
+   * for whatever driving is left.
+   */
+  driving?: { stage: number; milesShare: number };
 }
 
 export function getPersonalActionMultiplier(action: PersonalAction, actionParamOverrides: Record<string, number>): number {
@@ -39,6 +46,80 @@ export function getPersonalActionCurrentValue(action: PersonalAction, actionPara
 
 export function getPersonalActionSavedKg(action: PersonalAction, actionParamOverrides: Record<string, number>): number {
   return Math.round(action.savingsKg * getPersonalActionMultiplier(action, actionParamOverrides));
+}
+
+/**
+ * What each enabled action saves, net of overlaps. Driving actions are applied in stage order,
+ * each to the driving the earlier ones leave: cutting 20% of your miles leaves 80% for an EV to
+ * clean up, so together they never save more than your driving emits. Every other action saves
+ * its own amount.
+ */
+export function getEnabledPersonalSavings(
+  actions: PersonalAction[],
+  enabled: Set<string>,
+  actionParamOverrides: Record<string, number>,
+): Map<string, number> {
+  const saved = new Map<string, number>();
+  const driving = actions
+    .filter(a => a.driving && enabled.has(a.name))
+    .sort((a, b) => a.driving!.stage - b.driving!.stage);
+  let drivingLeft = 1;
+  for (const a of driving) {
+    saved.set(a.name, Math.round(getPersonalActionSavedKg(a, actionParamOverrides) * drivingLeft));
+    drivingLeft *= 1 - Math.min(a.driving!.milesShare * getPersonalActionMultiplier(a, actionParamOverrides), 1);
+  }
+  for (const a of actions) {
+    if (!a.driving && enabled.has(a.name)) saved.set(a.name, getPersonalActionSavedKg(a, actionParamOverrides));
+  }
+  return saved;
+}
+
+/**
+ * The number an action's row shows: what it saves alongside the actions already on, as if it
+ * were switched on too (replacing any other action from its exclusive group).
+ */
+export function getPersonalActionSavedKgWith(
+  action: PersonalAction,
+  actions: PersonalAction[],
+  enabled: Set<string>,
+  actionParamOverrides: Record<string, number>,
+): number {
+  if (!action.driving) return getPersonalActionSavedKg(action, actionParamOverrides);
+  const withAction = new Set(
+    [...enabled].filter(name => {
+      if (!action.exclusiveGroup) return true;
+      return actions.find(a => a.name === name)?.exclusiveGroup !== action.exclusiveGroup;
+    }),
+  );
+  withAction.add(action.name);
+  return getEnabledPersonalSavings(actions, withAction, actionParamOverrides).get(action.name) ?? 0;
+}
+
+/**
+ * The most a set of actions can save together: everything outside an exclusive group plus the
+ * best pick (or none) from each group, net of overlaps.
+ */
+export function getMaxPersonalSavings(actions: PersonalAction[], actionParamOverrides: Record<string, number>): number {
+  const eligible = actions.filter(a => !a.excludeFromTotal);
+  const always = eligible.filter(a => !a.exclusiveGroup).map(a => a.name);
+  const groups = new Map<string, string[]>();
+  for (const a of eligible) {
+    if (a.exclusiveGroup) groups.set(a.exclusiveGroup, [...(groups.get(a.exclusiveGroup) ?? []), a.name]);
+  }
+  let best = 0;
+  const tryPicks = (remaining: string[][], picked: string[]): void => {
+    if (remaining.length === 0) {
+      let total = 0;
+      for (const kg of getEnabledPersonalSavings(eligible, new Set([...always, ...picked]), actionParamOverrides).values()) total += kg;
+      best = Math.max(best, total);
+      return;
+    }
+    const [options, ...rest] = remaining;
+    tryPicks(rest, picked);
+    for (const name of options) tryPicks(rest, [...picked, name]);
+  };
+  tryPicks([...groups.values()], []);
+  return best;
 }
 
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
@@ -87,6 +168,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership === 'gas' || baseline.carOwnership === 'hybrid',
       note: 'Savings depend on your grid — cleaner grids make EVs better',
+      driving: { stage: 3, milesShare: 0 },
     },
     {
       name: 'Cut driving 20%',
@@ -98,16 +180,18 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       note: 'Work from home, combine trips, or bike for short errands',
       exclusiveGroup: 'driving-reduction',
       inlineParam: { before: 'Cut driving ', defaultVal: 20, after: '%', max: 100 },
+      driving: { stage: 1, milesShare: 0.2 },
     },
     {
       name: 'Bike commute (replace car for commute)',
       savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(5000 * drivingRate) // ~5000 mi/yr commute
+        ? Math.round(Math.min(5000, miles) * drivingRate) // ~5000 mi/yr commute, never more than you drive
         : 0,
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none' && (baseline.urbanForm === 'urban' || baseline.urbanForm === 'suburban'),
       note: 'Assumes ~5,000 miles/yr commute replaced by bike',
       exclusiveGroup: 'driving-reduction',
+      driving: { stage: 1, milesShare: miles > 0 ? Math.min(5000, miles) / miles : 0 },
     },
     {
       name: 'Use public transit instead of driving',
@@ -118,6 +202,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.carOwnership !== 'none' && baseline.urbanForm === 'urban',
       note: 'Replace 60% of driving with transit (urban areas only)',
       exclusiveGroup: 'driving-reduction',
+      driving: { stage: 1, milesShare: 0.6 },
     },
     {
       name: 'Reduce ride-hailing/taxi 50%',
@@ -136,6 +221,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none',
       note: 'Short trips add up — 40% of US car trips are under 2 miles',
+      driving: { stage: 2, milesShare: 0.15 },
     },
 
     // ── Home ──

@@ -12,7 +12,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { computeFootprint } from '@/lib/carbon/baseline';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
-import { getPersonalActionCurrentValue, getPersonalActionSavedKg } from '@/lib/carbon/personal-actions';
+import { getEnabledPersonalSavings, getMaxPersonalSavings, getPersonalActionCurrentValue, getPersonalActionSavedKgWith } from '@/lib/carbon/personal-actions';
 import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
 import { BaselineForm } from './BaselineForm';
 
@@ -131,9 +131,10 @@ export function ImpactChart({
     onBaselineChange(preset.baseline);
   };
 
+  const enabledSavings = useMemo(() => getEnabledPersonalSavings(personalActions, enabledPersonal, actionParamOverrides), [personalActions, enabledPersonal, actionParamOverrides]);
   const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
-    return s + getPersonalActionSavedKg(a, actionParamOverrides);
-  }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
+    return s + (enabledSavings.get(a.name) ?? 0);
+  }, 0), [personalActions, enabledPersonal, enabledSavings]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
   // Sort by default kg/person (high→low) once, then keep stable when user edits values
@@ -267,26 +268,11 @@ export function ImpactChart({
               const isOpen = openCategory === group.category;
               const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).length;
               const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
-                return s + getPersonalActionSavedKg(a, actionParamOverrides);
+                return s + (enabledSavings.get(a.name) ?? 0);
               }, 0);
-              // Compute realistic max: respect exclusive groups + user's inline param overrides
-              const maxSavings = (() => {
-                const eligible = group.actions.filter(a => !a.excludeFromTotal);
-                const exclusiveGroups = new Map<string, number>();
-                let total = 0;
-                for (const a of eligible) {
-                  const kg = getPersonalActionSavedKg(a, actionParamOverrides);
-                  if (a.exclusiveGroup) {
-                    const best = exclusiveGroups.get(a.exclusiveGroup) ?? 0;
-                    exclusiveGroups.set(a.exclusiveGroup, Math.max(best, kg));
-                  } else {
-                    total += kg;
-                  }
-                }
-                for (const best of exclusiveGroups.values()) total += best;
-                // Cap at total footprint — can't save more than you emit
-                return Math.min(total, footprintKg);
-              })();
+              // Compute realistic max: respect exclusive groups, overlapping driving cuts, and user's inline param overrides.
+              // Cap at total footprint — can't save more than you emit
+              const maxSavings = Math.min(getMaxPersonalSavings(group.actions, actionParamOverrides), footprintKg);
               return (
                 <div key={group.category} style={{ marginBottom: '2px' }}>
                   <button
@@ -524,7 +510,7 @@ export function ImpactChart({
                               ) : action.name}
                             </span>
                             <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
-                                −{getPersonalActionSavedKg(action, actionParamOverrides).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
+                                −{getPersonalActionSavedKgWith(action, personalActions, enabledPersonal, actionParamOverrides).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                             </span>
                           </>
                         );
