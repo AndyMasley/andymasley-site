@@ -965,6 +965,40 @@
     }
     return reg.endHw = E;
   }
+  function dashOff(reg) {
+    if (reg.dashOff) return reg.dashOff;
+    endHw(reg);
+    const n = reg.nRoads, O = new Float32Array(n), done = new Uint8Array(n), W = reg.endWay, D2 = 12.192;
+    const st2 = reg.rStart, cnt = reg.rCount, px = reg.px, py = reg.py, cum = reg.cum;
+    const endOf = (ri, e, rj) => {
+      const q = e ? st2[ri] + cnt[ri] - 1 : st2[ri], a = st2[rj], b = a + cnt[rj] - 1;
+      return Math.hypot(px[b] - px[q], py[b] - py[q]) < Math.hypot(px[a] - px[q], py[a] - py[q]) ? 1 : 0;
+    };
+    const order = [];
+    for (let ri = 0; ri < n; ri++) if (reg.rCls[ri] <= 13 && cnt[ri] >= 2 && !reg.rTun[ri]) order.push(ri);
+    order.sort((a, b) => px[st2[a]] - px[st2[b]] || py[st2[a]] - py[st2[b]] || a - b);
+    const stack = [];
+    for (const root of order) {
+      if (done[root]) continue;
+      done[root] = 1;
+      stack.push(root);
+      while (stack.length) {
+        const ri = stack.pop();
+        for (let e = 0; e < 2; e++) {
+          const rj = W[ri * 2 + e];
+          if (rj < 0 || done[rj]) continue;
+          const ej = endOf(ri, e, rj);
+          if (W[rj * 2 + ej] !== ri) continue;
+          const ci = cum[e ? st2[ri] + cnt[ri] - 1 : st2[ri]], cj = cum[ej ? st2[rj] + cnt[rj] - 1 : st2[rj]];
+          const o = e !== ej ? ci + O[ri] - cj : 0.25 * D2 - O[ri] - ci - cj;
+          O[rj] = (o % D2 + D2) % D2;
+          done[rj] = 1;
+          stack.push(rj);
+        }
+      }
+    }
+    return reg.dashOff = O;
+  }
   function paintHw(reg, ri, s) {
     const E = reg.endHw || endHw(reg), hw = reg.rHw[ri], h0 = E[ri * 2], h12 = E[ri * 2 + 1];
     if (!(Math.abs(h0 - hw) > 0.15) && !(Math.abs(h12 - hw) > 0.15)) return hw;
@@ -6585,7 +6619,7 @@
       const wL0 = prL ? prL[qi] / 10 : xs && xs[8] >= 10 ? xs[8] / 10 : 0, wL1 = prL ? prL[qi + 1] / 10 : wL0;
       const wL = (wL0 + wL1) / 2, wR = (wR0 + wR1) / 2, CH = 0.18, PB = 0.15;
       const pL = wL0 === wL1 ? hw + wL : [hw + wL0, hw + wL1], pR = wR0 === wR1 ? hw + wR : [hw + wR0, hw + wR1];
-      const s0 = cum[q], s1 = cum[q + 1];
+      const s0 = cum[q], s1 = cum[q + 1], dOff = rail ? 0 : dashOff(reg)[ri];
       const mid = P2((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
       M.C[0] = mid[0];
       M.C[1] = mid[1];
@@ -6614,7 +6648,7 @@
         uxB /= lB;
         uyB /= lB;
         const xA = ax + (bx - ax) * f0, yA = ay + (by - ay) * f0, zA = az + (bz - az) * f0, xB = ax + (bx - ax) * f1, yB = ay + (by - ay) * f1, zB = az + (bz - az) * f1;
-        const sA = s0 + (s1 - s0) * f0, sB = s0 + (s1 - s0) * f1;
+        const sA = s0 + dOff + (s1 - s0) * f0, sB = s0 + dOff + (s1 - s0) * f1;
         const oA0 = lin(o0, f0), oA1 = lin(o1, f0), oB0 = lin(o0, f1), oB1 = lin(o1, f1);
         if (pwAt) M.W[0] = pwAt(f0);
         if (tnAt) tone(f0);
@@ -7874,7 +7908,7 @@
               const kk = (b * T + a) * 4;
               data[k] = toHalf(tsr - kb.mid);
               data[k + 1] = toHalf(kb.hw);
-              data[k + 2] = cyc(nr0.s / DASH);
+              data[k + 2] = cyc((nr0.s + dashOff(nr0.reg)[nr0.road]) / DASH);
               data[k + 3] = toHalf(Math.atan2(nr0.ty, nr0.tx));
               tone[(b * T + a) * 4] = Math.round(toneAt(nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]]));
               let kd = roadKindXS(nr0.reg, nr0.road, xs0) & ~(64 | 32 | 128);
@@ -7916,7 +7950,7 @@
             const pw = notSt ? nr.hw : paintHw(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]]);
             data[k] = toHalf(Math.min(nr.d, 60) * nr.side * canon);
             data[k + 1] = toHalf(notSt ? nr.hw + 8e-3 * (nr.road & 7) : pw);
-            data[k + 2] = cyc(canon * nr.s / DASH);
+            data[k + 2] = cyc(canon * (nr.s + (notSt ? 0 : dashOff(nr.reg)[nr.road])) / DASH);
             data[k + 3] = toHalf(Math.atan2(canon * nr.ty, canon * nr.tx));
             if (!notSt) tone[(b * T + a) * 4] = Math.round(toneAt(nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]]));
             const kk = (b * T + a) * 4;
