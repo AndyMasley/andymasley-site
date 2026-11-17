@@ -15230,12 +15230,168 @@ void main() {
         }
       }
     }
-    if (nTun) snapTunnelJoints(reg);
+    if (nTun) {
+      snapTunnelJoints(reg);
+      easePortals(reg);
+      snapTunnelMerges(reg);
+    }
     if (nDeck) {
       easeRims(reg);
       snapMerges(reg);
     }
     return reg;
+  }
+  var PORTAL_TOL = 0.5;
+  var PORTAL_G = 0.016;
+  var PORTAL_REF = 40;
+  var PORTAL_OUT = 64;
+  var PORTAL_IN = 80;
+  function easePortals(reg) {
+    const { px: px2, py: py2, pz, rStart, rCount, rTun, rCls, rHw, cum, segR, gw } = reg;
+    const endsAt = (x, y, z) => {
+      const out = [], cx2 = Math.floor((x + RM) / RCELL), cy2 = Math.floor((y + RM) / RCELL);
+      if (cx2 < 0 || cy2 < 0 || cx2 >= gw || cy2 >= gw) return out;
+      const c = cy2 * gw + cx2;
+      for (let g = reg.gstart[c]; g < reg.gstart[c + 1]; g++) {
+        const pi2 = reg.gitems[g], rj = segR[pi2];
+        if (rCls[rj] >= 14) continue;
+        const a = rStart[rj], b = a + rCount[rj] - 1;
+        for (const [q, e] of [[a, 0], [b, 1]]) {
+          if (q !== pi2 && q !== pi2 + 1 || Math.hypot(px2[q] - x, py2[q] - y) >= 0.6 || Math.abs(pz[q] - z) >= 1) continue;
+          if (!out.some((o) => o[0] === rj && o[1] === e)) out.push([rj, e]);
+        }
+      }
+      return out;
+    };
+    const walk = (ri2, e, maxD) => {
+      const a = rStart[ri2], b = a + rCount[ri2] - 1, q02 = e ? b : a, out = [];
+      for (let k = 0; k < rCount[ri2]; k++) {
+        const q = e ? b - k : a + k, d = Math.abs(cum[q] - cum[q02]);
+        out.push(q, d);
+        if (d > maxD) break;
+      }
+      return out;
+    };
+    const zAt = (w, d) => {
+      for (let k = 2; k < w.length; k += 2) if (w[k + 1] >= d) {
+        const t = (d - w[k - 1]) / Math.max(1e-6, w[k + 1] - w[k - 1]);
+        return pz[w[k - 2]] + (pz[w[k]] - pz[w[k - 2]]) * t;
+      }
+      return pz[w[w.length - 2]];
+    };
+    const reach = (w, sg, ri2, maxD, open) => {
+      const n2 = w.length / 2, last = rCount[ri2] - 1;
+      for (let k = 1; k < n2; k++) {
+        const q = w[2 * k], d = w[2 * k + 1];
+        if (d > maxD) return open ? [maxD, zAt(w, maxD), k - 1] : null;
+        if (k === last || endsAt(px2[q], py2[q], pz[q]).some((o) => o[0] !== ri2)) return [d, pz[q], k - 1];
+        if (d < PORTAL_REF) continue;
+        if (sg * (pz[q] - pz[w[2 * k + 2]]) < PORTAL_G * (w[2 * k + 3] - d)) return [d, pz[q], k - 1];
+      }
+      return null;
+    };
+    let n = 0;
+    for (let i = 0; i < reg.nRoads; i++) {
+      if (!rTun[i] || rCls[i] >= 14 || rCount[i] < 2) continue;
+      for (const e of [0, 1]) {
+        const q = e ? rStart[i] + rCount[i] - 1 : rStart[i], x = px2[q], y = py2[q];
+        if (x < -RM / 2 || y < -RM / 2 || x > RS3 + RM / 2 || y > RS3 + RM / 2) continue;
+        const ends = endsAt(x, y, pz[q]), outs = ends.filter((o) => !rTun[o[0]]), ins = ends.filter((o) => rTun[o[0]]);
+        if (outs.length !== 1 || outs[0][0] === i) continue;
+        const main = ins.reduce((m, o) => (rCls[o[0]] - rCls[m[0]] || rHw[m[0]] - rHw[o[0]] || o[0] - m[0]) < 0 ? o : m, ins[0]);
+        if (main[0] !== i || main[1] !== e) continue;
+        const [g, ge] = outs[0], wT = walk(i, e, PORTAL_IN), wG = walk(g, ge, PORTAL_OUT);
+        if (wT.length < 4 || wG.length < 4) continue;
+        const z02 = pz[q], zt = zAt(wT, PORTAL_REF), zg2 = zAt(wG, PORTAL_REF);
+        const sg = z02 - zt > PORTAL_TOL && z02 - zg2 > PORTAL_TOL ? 1 : zt - z02 > PORTAL_TOL && zg2 - z02 > PORTAL_TOL ? -1 : 0;
+        if (!sg) continue;
+        const rT = reach(wT, sg, i, PORTAL_IN, true), rG = reach(wG, sg, g, PORTAL_OUT, false);
+        if (!rT || !rG) continue;
+        const [eT, zT, nT] = rT, [eG, zG, nG] = rG;
+        const line = (u) => zG + (zT - zG) * (u + eG) / (eT + eG), dz0 = line(0) - z02;
+        for (let k = 1; k <= nT; k++) pz[wT[2 * k]] = line(wT[2 * k + 1]);
+        for (let k = 1; k <= nG; k++) pz[wG[2 * k]] = line(-wG[2 * k + 1]);
+        for (const [r, re] of ends) {
+          if (r === i || r === g) {
+            pz[re ? rStart[r] + rCount[r] - 1 : rStart[r]] = line(0);
+            continue;
+          }
+          const L2 = cum[rStart[r] + rCount[r] - 1] - cum[rStart[r]], E = Math.min(PORTAL_REF, L2), w = walk(r, re, E);
+          for (let k = 0; k < w.length; k += 2) {
+            const f = 1 - w[k + 1] / E;
+            if (f > 0) pz[w[k]] += dz0 * f * f * (3 - 2 * f);
+          }
+        }
+        n++;
+        (reg.portalsEased || (reg.portalsEased = [])).push(Math.round(reg.x0 + x), Math.round(reg.y0 + y), dz0);
+      }
+    }
+    reg.nPortals = n;
+  }
+  var TUN_MERGE_DZ = 2.5;
+  var TUN_MERGE_EASE = 80;
+  function snapTunnelMerges(reg) {
+    const { px: px2, py: py2, pz, rStart, rCount, rTun, rTunJ, rCls, rHw, cum, segR } = reg;
+    const order = [];
+    for (let i = 0; i < reg.nRoads; i++) if (rTun[i]) order.push(i);
+    if (order.length < 2) return;
+    order.sort((a, b) => rCls[a] - rCls[b] || rHw[b] - rHw[a] || a - b);
+    let moved = 0;
+    for (const i of order) {
+      const a = rStart[i], n = rCount[i];
+      const dz = new Float32Array(n), snap = new Uint8Array(n);
+      let any = false;
+      for (let k = 0; k < n; k++) {
+        const q = a + k, x = px2[q], y = py2[q], cx2 = Math.floor((x + RM) / RCELL), cy2 = Math.floor((y + RM) / RCELL);
+        if (cx2 < 0 || cy2 < 0 || cx2 >= reg.gw || cy2 >= reg.gw) continue;
+        const c = cy2 * reg.gw + cx2;
+        let best = 1e9, bz = 0;
+        for (let g = reg.gstart[c]; g < reg.gstart[c + 1]; g++) {
+          const pi2 = reg.gitems[g], rj = segR[pi2];
+          if (rj === i || !rTun[rj] || rCls[rj] >= rCls[i]) continue;
+          const ax2 = px2[pi2], ay2 = py2[pi2], ddx = px2[pi2 + 1] - ax2, ddy = py2[pi2 + 1] - ay2, l2 = ddx * ddx + ddy * ddy;
+          if (l2 < 1e-6) continue;
+          const t = clamp2(((x - ax2) * ddx + (y - ay2) * ddy) / l2, 0, 1), d = Math.hypot(x - ax2 - ddx * t, y - ay2 - ddy * t);
+          const z = pz[pi2] + (pz[pi2 + 1] - pz[pi2]) * t;
+          if (d > rHw[i] + rHw[rj] - 0.3 || Math.abs(z - pz[q]) >= TUN_MERGE_DZ || d >= best) continue;
+          const qa2 = k + 1 < n ? q : q - 1, ux2 = px2[qa2 + 1] - px2[qa2], uy2 = py2[qa2 + 1] - py2[qa2];
+          if (Math.abs(ux2 * ddx + uy2 * ddy) < 0.9 * Math.sqrt((ux2 * ux2 + uy2 * uy2) * l2)) continue;
+          best = d;
+          bz = z;
+        }
+        if (best < 1e9) {
+          dz[k] = bz - pz[q];
+          snap[k] = 1;
+          any = true;
+        }
+      }
+      if (!any) continue;
+      const b = a + n - 1, portalA = !(rTunJ[i] & 1), portalB = !(rTunJ[i] & 2);
+      for (let k = 0; k < n; k++) {
+        if (!snap[k]) {
+          let bd2 = TUN_MERGE_EASE, bk = -1;
+          for (let j = 0; j < n; j++) if (snap[j]) {
+            const d = Math.abs(cum[a + j] - cum[a + k]);
+            if (d < bd2) {
+              bd2 = d;
+              bk = j;
+            }
+          }
+          if (bk >= 0) {
+            const f = 1 - bd2 / TUN_MERGE_EASE;
+            dz[k] = dz[bk] * f * f * (3 - 2 * f);
+          }
+        }
+        const toPortal = Math.min(portalA ? cum[a + k] - cum[a] : 1e9, portalB ? cum[b] - cum[a + k] : 1e9);
+        if (toPortal < 20) dz[k] *= toPortal / 20;
+      }
+      for (let k = 0; k < n; k++) if (Math.abs(dz[k]) > 5e-3) {
+        pz[a + k] += dz[k];
+        moved++;
+      }
+      (reg.tunMerged || (reg.tunMerged = [])).push(Math.round(reg.x0 + px2[a]), Math.round(reg.y0 + py2[a]), Math.max(...dz.map(Math.abs)));
+    }
+    reg.nTunMerged = moved;
   }
   var TUN_EASE = 15;
   function snapTunnelJoints(reg) {
