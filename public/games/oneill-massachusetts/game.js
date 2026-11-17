@@ -15085,6 +15085,7 @@ void main() {
   var RREG = 72;
   var WCELL = 32;
   var WPAD = 14;
+  var SEA_PAD = 40;
   var DECK_T = 0.95;
   var DECK_JOINT = 2;
   var ROAD_RANK = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9, 10, 11, 12, 13, 22, 23, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
@@ -15763,7 +15764,14 @@ void main() {
     // signed distance to the nearest shore, metres (+ on land), saturating at +-sdfRange.  Inside a city's survey
     // (streets.js) the shore is the survey's: its own distance within 32 m of it, easing by 48 m to the water map's (held
     // on the survey's side of the shore), so the drawn water, the ground and the car all keep to the surveyed edge
+    // A seawall's land side is land however the water map has it: within SEA_PAD of the wall the distance is at least the
+    // distance to the wall (this._swHit keeps the seawall found, for groundH).
     sdfAt(mx2, my2) {
+      const s29 = this._sdfAt(mx2, my2);
+      const sw = this._swHit = this.walls && this.walls.seaCells.size ? this._seaNear(mx2, wrapY(my2)) : null;
+      return sw && sw.land > 0 && s29 < sw.sd ? s29 + (sw.sd - s29) * sw.land : s29;
+    }
+    _sdfAt(mx2, my2) {
       const c = this.sdfCoarseAt(mx2, my2);
       const wy2 = wrapY(my2), rx2 = Math.floor(mx2 / RS3);
       if (rx2 < 0 || rx2 >= RNX) return c;
@@ -16105,8 +16113,59 @@ void main() {
       const cut = Uint8Array.from(list, (w) => w.src === "cut" ? 1 : 0);
       const mouth = Float32Array.from(list, (w) => w.o > 0 ? w.o : 0);
       const mouthB = Float32Array.from(list, (w) => w.ob > 0 ? w.ob : 0);
-      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, cap, cut, mouth, mouthB, n: ws2.length / 5 };
+      const kind = Uint8Array.from(list, (w) => w.k > 0 ? w.k : 0);
+      const seaCells = /* @__PURE__ */ new Map();
+      for (let wi2 = 0; wi2 < ws2.length / 5; wi2++) {
+        if (!kind[wi2] || !ws2[wi2 * 5 + 2]) continue;
+        const a = ws2[wi2 * 5], c = ws2[wi2 * 5 + 1];
+        for (let i = a; i < a + c - 1; i++) {
+          const cx0 = Math.floor((Math.min(X[i], X[i + 1]) - SEA_PAD) / WCELL), cx1 = Math.floor((Math.max(X[i], X[i + 1]) + SEA_PAD) / WCELL);
+          const cy0 = Math.floor((Math.min(Y[i], Y[i + 1]) - SEA_PAD) / WCELL), cy1 = Math.floor((Math.max(Y[i], Y[i + 1]) + SEA_PAD) / WCELL);
+          for (let cy2 = cy0; cy2 <= cy1; cy2++) for (let cx2 = cx0; cx2 <= cx1; cx2++) {
+            const key2 = cy2 * 65536 + cx2;
+            let l = seaCells.get(key2);
+            if (!l) seaCells.set(key2, l = []);
+            l.push(i);
+          }
+        }
+      }
+      this.walls = { X, Y, F, T, Wi, ws: ws2, cells, cap, cut, mouth, mouthB, kind, seaCells, n: ws2.length / 5 };
       this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
+      this._sw = { d: 0, sd: 0, past: 0, land: 0, i: -1, w: -1 };
+    }
+    // The seawall segment nearest (mx, my) within SEA_PAD, in this._sw: d its distance, sd the signed distance from its
+    // line (+ on the land side), past how far beyond the wall's end the point lies (0 alongside it), land how strongly
+    // the point is on the wall's land side (1 behind the wall, easing to 0 over 10 m past its ends and over the last 10 m
+    // of SEA_PAD); null if there is none.
+    _seaNear(mx2, my2) {
+      const W = this.walls;
+      if (!W || !W.seaCells.size) return null;
+      const l = W.seaCells.get(Math.floor(my2 / WCELL) * 65536 + Math.floor(mx2 / WCELL));
+      if (!l) return null;
+      let best = 1e9, bi2 = -1, bt2 = 0;
+      for (let q = 0; q < l.length; q++) {
+        const i2 = l[q], ax2 = W.X[i2], ay2 = W.Y[i2], dx3 = W.X[i2 + 1] - ax2, dy3 = W.Y[i2 + 1] - ay2, l2 = dx3 * dx3 + dy3 * dy3;
+        let t = l2 > 0 ? ((mx2 - ax2) * dx3 + (my2 - ay2) * dy3) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = mx2 - ax2 - dx3 * t, ey2 = my2 - ay2 - dy3 * t, d = ex2 * ex2 + ey2 * ey2;
+        if (d < best) {
+          best = d;
+          bi2 = i2;
+          bt2 = t;
+        }
+      }
+      best = Math.sqrt(best);
+      if (bi2 < 0 || best > SEA_PAD) return null;
+      const o = this._sw, i = bi2, wi2 = W.Wi[i], a = W.ws[wi2 * 5], c = W.ws[wi2 * 5 + 1], jn2 = W.ws[wi2 * 5 + 4], sg = W.ws[wi2 * 5 + 2];
+      const dx2 = W.X[i + 1] - W.X[i], dy2 = W.Y[i + 1] - W.Y[i], len = Math.hypot(dx2, dy2) || 1, ux2 = dx2 / len, uy2 = dy2 / len;
+      o.d = best;
+      o.i = i;
+      o.w = wi2;
+      o.sd = ((mx2 - W.X[i]) * -uy2 + (my2 - W.Y[i]) * ux2) * sg;
+      const along = (mx2 - W.X[i]) * ux2 + (my2 - W.Y[i]) * uy2;
+      o.past = bt2 <= 0 && i === a && !(jn2 & 1) ? Math.max(0, -along) : bt2 >= 1 && i + 1 === a + c - 1 && !(jn2 & 2) ? Math.max(0, along - len) : 0;
+      o.land = o.sd > 0 ? (1 - smoothstep(0, 10, o.past)) * (1 - smoothstep(SEA_PAD - 10, SEA_PAD, o.sd)) : 0;
+      return o;
     }
     // The wall segment nearest (mx, my) within WPAD, in this._wl: d (the distance), sd (signed, from the segment's line:
     // + on the high side, or on the left of a freestanding wall), foot and top there, t along the segment, i its first
@@ -16204,7 +16263,7 @@ void main() {
       const gi2 = this.g || (this.g = { water: false, road: -1, reg: null, edge: 1e9, sdf: 0, web: 0, glass: false, fine: false, deck: -1e9, deckRoad: -1, deckReg: null, onDeck: false, onTunnel: false });
       mx2 = clamp2(mx2, 0, L);
       my2 = wrapY(my2);
-      const s29 = this.sdfAt(mx2, my2), lev = this.levelAt(mx2, my2);
+      const s29 = this.sdfAt(mx2, my2), lev = this.levelAt(mx2, my2), swLand = this._swHit ? this._swHit.land : 0;
       gi2.sdf = s29;
       gi2.road = -1;
       gi2.reg = null;
@@ -16238,9 +16297,9 @@ void main() {
           terr = this.baseH(mx2, my2);
           terr += ((vnoise(mx2 / 140, my2 / 140) - 0.5) * 2.4 + (vnoise(mx2 / 47 + 13.1, my2 / 47 + 7.7) - 0.5) * 0.9) * smoothstep(0, 60, s29);
         }
-        const bank = clamp2(30 + 0.6 * (terr - lev), 30, 400);
-        const A = lev + 0.3 + Math.max(terr - lev - 0.3, 0) * smoothstep(0, bank, s29);
-        h = s29 < bank ? A : A + (terr - A) * smoothstep(bank, 2 * bank, s29);
+        const bank = clamp2(30 + 0.6 * (terr - lev), 30, 400), sb = s29 + 2 * bank * swLand;
+        const A = lev + 0.3 + Math.max(terr - lev - 0.3, 0) * smoothstep(0, bank, sb);
+        h = sb < bank ? A : A + (terr - A) * smoothstep(bank, 2 * bank, sb);
       }
       const ww = this.webWeight(mx2, my2);
       if (ww > 0) {
@@ -16285,8 +16344,9 @@ void main() {
             gi2.edge = edge;
           }
         }
-        if (wl2 && wl2.d < 4 && !wl2.end && !(edge < 0.5) && !water) {
-          const k = 1 - smoothstep(2.5, 4, wl2.d);
+        const seaHold = wl2 && wl2.sd > 0 && this.walls.kind[wl2.w] > 0;
+        if (wl2 && wl2.d < (seaHold ? 9 : 4) && !wl2.end && !(edge < 0.5) && !water) {
+          const k = 1 - (seaHold ? smoothstep(6, 9, wl2.d) : smoothstep(2.5, 4, wl2.d));
           h = wl2.sd > 0 ? h + (Math.max(h, wl2.top) - h) * k : h + (Math.min(h, wl2.foot) - h) * k;
         }
         const dreg = this.regionAt(mx2, my2);
@@ -18342,6 +18402,143 @@ vec3 accentColor(float seed) {            // doors and shutters
 }
 `
   );
+  var COAST = (
+    /* glsl */
+    `
+vec2 cCells(vec2 x, out vec2 id) {
+  vec2 i = floor(x), f = x - i;
+  float d1 = 8.0, d2 = 8.0;
+  id = i;
+  for (int yy = -1; yy <= 1; yy++) for (int xx = -1; xx <= 1; xx++) {
+    vec2 g = vec2(float(xx), float(yy));
+    ivec2 c = ivec2(i + g);
+    vec2 r = g + 0.12 + 0.76 * vec2(hash2(c), hash2(c + ivec2(57, 113))) - f;
+    float d = dot(r, r);
+    if (d < d1) { d2 = d1; d1 = d; id = i + g; } else if (d < d2) d2 = d;
+  }
+  return vec2(sqrt(d1), sqrt(d2));
+}
+vec3 cBump(vec3 pos, vec3 N, float h) {
+  vec3 dpx = dFdx(pos), dpy = dFdy(pos);
+  float dhx = dFdx(h), dhy = dFdy(h);
+  vec3 r1 = cross(dpy, N), r2 = cross(N, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (dhx * r1 + dhy * r2);
+  return normalize(abs(det) * N - grad);
+}
+// a line of half width hw at distance jm, seen at px metres a pixel: thinner than a pixel, a pixel wide and fainter
+float cLine(float jm, float hw, float px) {
+  float w = max(hw, 0.5 * px);
+  return (1.0 - smoothstep(w - 0.5 * px, w + 0.5 * px, jm)) * min(1.0, hw / (0.5 * px));
+}
+// the sea on a surface at height z: wet (under mean high water, a ragged line), weed (rockweed under about mid tide)
+// and barnacles (a band under mean high water); a pond or river (a half range under 0.2) only wets a narrow band
+void cTide(float z, vec4 W, vec2 q, out float wet, out float weed, out float barn) {
+  float lev = W.x, hr = W.y, n = (vnoise(q * vec2(0.7, 2.0)) - 0.5) * 0.3 * min(hr, 1.0);
+  float mhw = lev + hr;
+  wet = 1.0 - smoothstep(mhw - 0.1 + n, mhw + 0.3 + n, z);
+  weed = hr > 0.2 ? 1.0 - smoothstep(lev + hr * 0.25 + n, lev + hr * 0.6 + n, z) : 0.0;
+  barn = hr > 0.2 ? (1.0 - smoothstep(mhw - 0.35, mhw - 0.05, z)) * smoothstep(mhw - 1.1, mhw - 0.6, z) : 0.0;
+}
+// the colour of coastal material mat at uv (metres) and height z; N bumped, rough set
+vec3 coastSurface(int mat, vec2 uv, float z, vec4 W, float seed, vec3 pos, inout vec3 N, inout float rough) {
+  vec2 fq = fwidth(uv);
+  float px = max(max(fq.x, fq.y), 1e-5);
+  float wet, weed, barn;
+  cTide(z, W, uv, wet, weed, barn);
+  vec3 c = vec3(0.25);
+  float bump = 0.0, bumpK = 0.0;
+  float sv = fract(seed * 0.6180340 + 0.137);
+  if (mat == 20) {
+    // poured concrete: the lines between lifts every 1.2 m, joints every 9.1 m, streaks run down from the top
+    c = vec3(0.30, 0.295, 0.275) * (0.86 + 0.28 * sv) * (0.86 + 0.28 * fbm3(uv * vec2(0.35, 0.5)));
+    c *= 0.86 + 0.14 * smoothstep(0.25, 0.75, fbm3(vec2(uv.x * 1.7, z * 0.09)));
+    float lift = abs(fract(z / 1.22) - 0.5) * 1.22, jt = abs(fract(uv.x / 9.14) - 0.5) * 9.14;
+    c *= 1.0 - 0.18 * cLine(0.61 - lift, 0.012, px) - 0.45 * cLine(4.57 - jt, 0.015, px);
+    bump = fbm3(uv * 7.0) * 0.004; bumpK = 1.0;
+    rough = 0.9;
+  } else if (mat == 21) {
+    // granite blocks: courses 0.6 m high, blocks 1.1-2.0 m long, joints offset course to course, each its own grey
+    float course = floor(z / 0.6), off = hash2(ivec2(int(course), 17)) * 2.0;
+    float bl = 1.1 + 0.9 * hash2(ivec2(int(course), 23));
+    float ub = (uv.x + off) / bl, bi = floor(ub);
+    float r1 = hash2(ivec2(int(bi), int(course) + 991)), r2 = hash2(ivec2(int(bi) + 7, int(course) + 13));
+    c = r1 < 0.45 ? vec3(0.27, 0.26, 0.245) : r1 < 0.7 ? vec3(0.20, 0.195, 0.185) : r1 < 0.88 ? vec3(0.31, 0.27, 0.24) : vec3(0.36, 0.35, 0.33);
+    c *= (0.8 + 0.4 * r2) * (0.88 + 0.24 * fbm3(uv * 3.1 + r1 * 9.0));
+    float ju = (0.5 - abs(fract(ub) - 0.5)) * bl, jz = (0.5 - abs(fract(z / 0.6) - 0.5)) * 0.6, jm = min(ju, jz);
+    float joint = cLine(jm, 0.018, px);
+    c = mix(c, vec3(0.05, 0.048, 0.045), joint * 0.85);
+    bump = smoothstep(0.0, 0.07, jm) * 0.03 + fbm3(uv * 9.0) * 0.006; bumpK = 1.0;
+    rough = 0.88;
+  } else if (mat == 22) {
+    // timber: boards 0.25 m wide, grey-brown and weathered, dark gaps between them
+    float bi = floor(z / 0.254), r1 = hash2(ivec2(int(bi), int(seed) + 3));
+    c = mix(vec3(0.15, 0.125, 0.10), vec3(0.21, 0.20, 0.18), sv) * (0.78 + 0.44 * r1);
+    c *= 0.84 + 0.32 * vnoise(vec2(uv.x * 0.9 + r1 * 30.0, z * 30.0));
+    float jm = (0.5 - abs(fract(z / 0.254) - 0.5)) * 0.254;
+    c = mix(c, vec3(0.03, 0.025, 0.02), cLine(jm, 0.006, px) * 0.9);
+    bump = smoothstep(0.0, 0.02, jm) * 0.01; bumpK = 1.0;
+    rough = 0.92;
+  } else if (mat == 23) {
+    // steel sheet piling: vertical pans every 0.6 m, rusted brown with orange streaks and darker steel
+    float t = fract(uv.x / 0.6);
+    float pan = smoothstep(0.08, 0.22, t) - smoothstep(0.58, 0.72, t);
+    c = mix(vec3(0.075, 0.07, 0.07), vec3(0.13, 0.075, 0.045), 0.55 + 0.45 * fbm3(uv * vec2(1.3, 0.25)));
+    c = mix(c, vec3(0.22, 0.10, 0.035), smoothstep(0.6, 0.85, fbm3(vec2(uv.x * 4.0, z * 0.12))) * 0.6);
+    bump = pan * 0.12; bumpK = 1.0;
+    rough = 0.75;
+  } else if (mat == 24) {
+    // armour stone: blocks of W.z metres heaped on the slope, each its own granite and its own facet, lit on its face
+    // and darkening into the deep gaps, where smaller stones lie wedged between the big ones
+    float S = max(W.z, 0.6);
+    vec2 q = uv / S + (vec2(vnoise(uv * 0.8 / S), vnoise(uv * 0.8 / S + 17.0)) - 0.5) * 0.55;
+    vec2 id; vec2 d = cCells(q, id);
+    float e = d.y - d.x;
+    vec2 id2; vec2 d2 = cCells(q * 2.6 + 41.0, id2);
+    float e2 = d2.y - d2.x;
+    bool small = e < 0.16 && e2 > 0.14;                 // in a big stones' gap, a small one wedged there
+    vec2 sid = small ? id2 + 733.0 : id;
+    float ee = small ? e2 * 0.55 : e;
+    float r1 = hash2(ivec2(sid) + ivec2(3, 5)), r2 = hash2(ivec2(sid) + ivec2(29, 41)), r3 = hash2(ivec2(sid) + ivec2(71, 13));
+    vec3 st = r1 < 0.40 ? vec3(0.30, 0.30, 0.295) : r1 < 0.62 ? vec3(0.21, 0.21, 0.205) : r1 < 0.80 ? vec3(0.33, 0.29, 0.27) : r1 < 0.93 ? vec3(0.39, 0.385, 0.375) : vec3(0.25, 0.23, 0.21);
+    st *= (0.74 + 0.5 * r2) * (0.84 + 0.32 * fbm3(uv * 2.9 / S + r1 * 7.0));
+    st = mix(st, vec3(0.34, 0.33, 0.28), smoothstep(0.66, 0.82, fbm3(uv * 1.6 / S + r3 * 11.0)) * (1.0 - wet) * 0.3);
+    float gap = small ? 1.0 - smoothstep(0.02, 0.10, e2) : 1.0 - smoothstep(0.07, 0.30, e);
+    float bul = smoothstep(0.0, 0.5, ee);
+    float far = smoothstep(0.08 * S, 0.3 * S, px);
+    vec3 nearC = mix(st * (0.4 + 0.6 * bul), vec3(0.01, 0.01, 0.009), gap * 0.96);
+    c = mix(nearC, vec3(0.19, 0.185, 0.18) * (0.75 + 0.35 * r2), far);
+    // each stone's face tilted its own way (some to the sun, some away), rounded to its edges
+    vec3 tilt = (vec3(r2, r3, hash2(ivec2(sid) + ivec2(5, 97))) - 0.5) * 1.5 * (1.0 - gap) * (1.0 - far * 0.6);
+    N = normalize(N + tilt - dot(tilt, N) * N);
+    bump = bul * 0.06 * S; bumpK = 1.0 - far;
+    rough = 0.92;
+  } else if (mat == 25) {
+    // deck planks across the pier: 0.15 m boards with gaps, each its own weathered grey-brown
+    float bi = floor(uv.x / 0.152), r1 = hash2(ivec2(int(bi), int(seed) + 77));
+    c = mix(vec3(0.20, 0.17, 0.135), vec3(0.25, 0.24, 0.22), sv) * (0.76 + 0.48 * r1);
+    c *= 0.86 + 0.28 * vnoise(vec2(uv.x * 40.0, uv.y * 1.3 + r1 * 20.0));
+    float jm = (0.5 - abs(fract(uv.x / 0.152) - 0.5)) * 0.152;
+    float far = smoothstep(0.03, 0.09, px);
+    c = mix(mix(c, vec3(0.02, 0.018, 0.015), cLine(jm, 0.006, px) * 0.9), vec3(0.19, 0.175, 0.15), far);
+    rough = 0.92;
+  } else {
+    // piles: dark creosoted timber, vertical grain
+    c = vec3(0.085, 0.07, 0.058) * (0.8 + 0.4 * sv) * (0.85 + 0.3 * vnoise(vec2(uv.x * 6.0, z * 0.7)));
+    rough = 0.9;
+  }
+  // the sea's marks: darker where wet, rockweed low down, a band of barnacles under high water
+  float wk = (mat == 25) ? 0.0 : 1.0;
+  c *= mix(1.0, 0.52, wet * wk);
+  vec3 weedC = vec3(0.045, 0.040, 0.016) * (0.8 + 0.4 * fbm3(uv * 1.7));
+  c = mix(c, weedC, weed * wk * smoothstep(0.35, 0.65, fbm3(uv * 0.8 + 3.0) + weed * 0.4));
+  c = mix(c, vec3(0.30, 0.29, 0.26), barn * wk * smoothstep(0.5, 0.8, vnoise(uv * 14.0)) * 0.7);
+  if (wet * wk > 0.5) rough = mix(rough, 0.72, (wet - 0.5) * 2.0);
+  if (bumpK > 0.001) N = cBump(pos, N, bump * bumpK);
+  return c;
+}
+`
+  );
   var HOUSE_VS = (
     /* glsl */
     `
@@ -18400,6 +18597,7 @@ void main() {
   else if (mat < 13.5) vColA = vec3(0.03, 0.045, 0.06);               // glass,
   else if (mat < 14.5) vColA = vec3(0.42, 0.42, 0.42);                // hubs, plate and head lamps,
   else if (mat < 15.5) vColA = vec3(0.30, 0.02, 0.02);                // tail lamps
+  else if (mat > 19.5) vColA = vec3(0.25);                         // the engineered coast (coast.js): HOUSE_FS's coastSurface
   else vColA = ASPHALT * (aK.w > 0.5 ? clamp(exp2((aK.x * 255.0 - 1.0) / 254.0 * 2.5 - 1.25), 0.45, 2.2) : 1.0);   // a bridge's roadway or track bed (its own tone where measured: decks.js)
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
@@ -18417,6 +18615,7 @@ ${SHADOW}
 ${SURFACE_SHADING}
 ${STREET_PAINT}
 ${PAVEMENT}
+${COAST}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
@@ -18730,6 +18929,8 @@ void main() {
     float rail = bandf(dc, 0.7175, 0.05, la) * clamp(0.05 / (aa * 0.6), 0.0, 1.0);
     alb = mix(vec3(0.20, 0.19, 0.175), vec3(0.075, 0.058, 0.045), tie * 0.9);
     alb = mix(alb, vec3(0.30, 0.29, 0.29), rail) * (0.85 + 0.3 * vnoise(uv / 9.0));
+  } else if (mat >= 20) {
+    alb = coastSurface(mat, uv, RC - r, vW, seed, vRel, N, roughness);
   } else if (mat >= 11) {
     glass = mat == 13 ? 1.0 : (mat == 12 ? 0.0 : 0.45);
   }
@@ -18737,7 +18938,7 @@ void main() {
   float ndl = max(dot(N, Ld), 0.0);
   float sh = sunShadow(vRel, N, Ld);
   vec3 E = sunE0 * ndl * sh + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)) * occ;
-  if (mat >= 18) {
+  if (mat == 18 || mat == 19) {
     // inside a tunnel the daylight from the nearest portal (uv.x: metres to it along the tunnels) dies away within a few
     // tens of metres, and the lamps light the rest, day and night (less after dark, when eyes have adapted)
     // (by day the lamps give about a sixth of the light outside, so a tunnel's mouth looks dark from the road)
@@ -18755,7 +18956,7 @@ void main() {
   if (glass > 0.0) {
     float fres = 0.04 + 0.96 * pow(1.0 - max(dot(V, N), 0.0), 5.0);
     col += uSkyRefl * fres * glass * 0.9;
-    if (mat >= 11) col += sunE0 * sh * pow(max(dot(N, normalize(Ld + V)), 0.0), 220.0) * 1.6 * step(0.0, dot(N, Ld));
+    if (mat >= 11 && mat <= 15) col += sunE0 * sh * pow(max(dot(N, normalize(Ld + V)), 0.0), 220.0) * 1.6 * step(0.0, dot(N, Ld));
     if (daySurface > 0.0) {
       // The current sky reflection gains a directional sky/ground balance, not a
       // fabricated reflected streetscape. Close windows also catch the sun.
@@ -21051,7 +21252,37 @@ void main() {
 
   // src/houses.js
   var CLS = { HOUSE: 0, CAPE: 1, RANCH: 2, TRIPLE: 3, GARAGE: 4, BARN: 5, APART: 6, COMM: 7, INDUS: 8, CHURCH: 9, CIVIC: 10, TOWER: 11, CANOPY: 12, RETAIL: 13, ROW: 14, MULTI: 15 };
-  var MAT = { WALL: 0, ROOF: 1, TRIM: 2, FLATROOF: 3, BRICK: 4, CONCRETE: 5, DECK: 6, RAIL: 7, METAL: 8, GLASSBOX: 9, ASPHALT: 10, CAR: 11, CARDARK: 12, CARGLASS: 13, CARPALE: 14, CARTAIL: 15, ROADWAY: 16, TRACK: 17, TUNROAD: 18, TUNWALL: 19 };
+  var MAT = {
+    WALL: 0,
+    ROOF: 1,
+    TRIM: 2,
+    FLATROOF: 3,
+    BRICK: 4,
+    CONCRETE: 5,
+    DECK: 6,
+    RAIL: 7,
+    METAL: 8,
+    GLASSBOX: 9,
+    ASPHALT: 10,
+    CAR: 11,
+    CARDARK: 12,
+    CARGLASS: 13,
+    CARPALE: 14,
+    CARTAIL: 15,
+    ROADWAY: 16,
+    TRACK: 17,
+    TUNROAD: 18,
+    TUNWALL: 19,
+    // the engineered coast (coast.js): seawalls of poured concrete, of granite blocks, of timber, of steel sheet piling;
+    // armour stone (revetments, groins, jetties, breakwaters); a pier's deck planks; piles
+    SEACONC: 20,
+    SEASTONE: 21,
+    TIMBER: 22,
+    SHEETPILE: 23,
+    ARMOR: 24,
+    PLANKS: 25,
+    PILE: 26
+  };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {
     if (!reg || !reg.nBld || cx2 < 0 || cy2 < 0 || cx2 >= reg.cells || cy2 >= reg.cells) return null;
@@ -21090,6 +21321,26 @@ void main() {
   }
   var _p3a = new Float64Array(3);
   var _p3b = new Float64Array(3);
+
+  // src/coast.js
+  function seaPieces(world, W, i) {
+    const ax2 = W.X[i], ay2 = W.Y[i], bx2 = W.X[i + 1], by2 = W.Y[i + 1], len = Math.hypot(bx2 - ax2, by2 - ay2);
+    const n = Math.max(2, Math.ceil(len / 1.5)), out = [];
+    let k02 = -1;
+    for (let k = 0; k <= n + 1; k++) {
+      const ok = k <= n && world.nearestRoad(ax2 + (bx2 - ax2) * k / n, ay2 + (by2 - ay2) * k / n) >= 0.3;
+      if (ok && k02 < 0) k02 = k;
+      if (!ok && k02 >= 0) {
+        const t02 = k02 === 0 ? 0 : (k02 - 0.5) / n, t1 = k - 1 === n ? 1 : (k - 0.5) / n;
+        if ((t1 - t02) * len > 0.5) out.push([t02, t1]);
+        k02 = -1;
+      }
+    }
+    return out;
+  }
+  var WFACE = [MAT.SEACONC, MAT.SEASTONE, MAT.BRICK, MAT.TIMBER, MAT.SHEETPILE, MAT.ARMOR];
+  var WTOP = [MAT.SEACONC, MAT.SEASTONE, MAT.BRICK, MAT.TIMBER, MAT.SEACONC, MAT.ARMOR];
+  var PIER_DECK = [MAT.PLANKS, MAT.CONCRETE, MAT.METAL];
 
   // src/feat.js
   var MAGIC = 827606342;
@@ -21221,6 +21472,34 @@ void main() {
       o += nBV * 4;
       for (let i = 0; i < nBV; i++) f.by[i] = dv2.getInt32(o + i * 4, true) / 10;
       o += nBV * 4;
+    }
+    f.nC = 0;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1396789059) {
+      const nC = dv2.getUint32(o + 4, true), nCV = dv2.getUint32(o + 8, true);
+      o += 16;
+      f.nC = nC;
+      f.cStart = new Uint32Array(nC);
+      f.cCount = new Uint32Array(nC);
+      f.cKind = new Uint8Array(nC);
+      f.cSub = new Uint8Array(nC);
+      f.cTop = new Float32Array(nC);
+      f.cW = new Float32Array(nC);
+      f.cSeed = new Uint8Array(nC);
+      for (let i = 0; i < nC; i++, o += 16) {
+        f.cStart[i] = dv2.getUint32(o, true);
+        f.cCount[i] = dv2.getUint32(o + 4, true);
+        f.cKind[i] = dv2.getUint8(o + 8);
+        f.cSub[i] = dv2.getUint8(o + 9);
+        f.cTop[i] = dv2.getInt16(o + 10, true) / 10;
+        f.cW[i] = dv2.getUint16(o + 12, true) / 10;
+        f.cSeed[i] = dv2.getUint8(o + 14);
+      }
+      f.cx = new Float32Array(nCV);
+      f.cy = new Float32Array(nCV);
+      for (let i = 0; i < nCV; i++) f.cx[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nCV * 4;
+      for (let i = 0; i < nCV; i++) f.cy[i] = dv2.getInt32(o + i * 4, true) / 10;
+      o += nCV * 4;
     }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
@@ -21506,10 +21785,12 @@ void main() {
       for (let i = s29; i < e; i++) f(i, i + 1 < e ? i + 1 : s29);
     }
   }
-  function wallPolygon(world, W, i, sw) {
-    const ax2 = W.X[i], ay2 = W.Y[i], bx2 = W.X[i + 1], by2 = W.Y[i + 1], len = Math.hypot(bx2 - ax2, by2 - ay2);
+  function wallPolygon(world, W, i, sw, t02, t1) {
+    const X02 = W.X[i], Y02 = W.Y[i], X1 = W.X[i + 1], Y1 = W.Y[i + 1], piece = t02 !== void 0;
+    const ax2 = piece ? X02 + (X1 - X02) * t02 : X02, ay2 = piece ? Y02 + (Y1 - Y02) * t02 : Y02, bx2 = piece ? X02 + (X1 - X02) * t1 : X1, by2 = piece ? Y02 + (Y1 - Y02) * t1 : Y1;
+    const len = Math.hypot(bx2 - ax2, by2 - ay2);
     if (len < 0.05) return null;
-    if (!(W.cut && W.cut[W.Wi[i]]) && (world.nearestRoad(ax2, ay2) < 0.3 || world.nearestRoad((ax2 + bx2) / 2, (ay2 + by2) / 2) < 0.3 || world.nearestRoad(bx2, by2) < 0.3)) return null;
+    if (!piece && !(W.cut && W.cut[W.Wi[i]]) && (world.nearestRoad(ax2, ay2) < 0.3 || world.nearestRoad((ax2 + bx2) / 2, (ay2 + by2) / 2) < 0.3 || world.nearestRoad(bx2, by2) < 0.3)) return null;
     const ux2 = (bx2 - ax2) / len, uy2 = (by2 - ay2) / len, sg = sw || 1, nx2 = -uy2 * sg, ny2 = ux2 * sg;
     const e02 = sw ? -0.12 : -0.2, e1 = sw ? 0.35 : 0.2;
     const pts = new Float64Array([ax2 + nx2 * e02, ay2 + ny2 * e02, bx2 + nx2 * e02, by2 + ny2 * e02, bx2 + nx2 * e1, by2 + ny2 * e1, ax2 + nx2 * e1, ay2 + ny2 * e1]);
@@ -21841,6 +22122,13 @@ void main() {
               seen.add(i);
               const wi2 = W.Wi[i], sw = W.ws[wi2 * 5 + 2];
               if (Math.max(W.T[i], W.T[i + 1]) - Math.max(W.F[i], W.F[i + 1]) < 0.4) continue;
+              if (W.kind && W.kind[wi2]) {
+                for (const [t02, t1] of seaPieces(w, W, i)) {
+                  const poly2 = wallPolygon(w, W, i, sw, t02, t1);
+                  if (poly2) polys.push(poly2);
+                }
+                continue;
+              }
               const poly = wallPolygon(w, W, i, sw);
               if (poly) polys.push(poly);
             }
@@ -25660,11 +25948,17 @@ void main() {
       this.world.onMissingRegion = (rx2, ry2) => {
         this.loadRegion(rx2, ry2);
       };
-      if (F.walls) fetch(vurl("data/" + F.walls.file)).then((r) => r.json()).then((j) => {
-        this.world.setWalls(j);
-        if (this.player) this.player.bCache = null;
-      }).catch(() => {
-      });
+      if (F.walls || F.seawalls) {
+        const getJ = (f2) => f2 ? fetch(vurl("data/" + f2.file)).then((r) => r.json()).catch(() => null) : Promise.resolve(null);
+        Promise.all([getJ(F.walls), getJ(F.seawalls)]).then(([a, b]) => {
+          const l = (a || []).concat(b || []);
+          if (l.length) {
+            this.world.setWalls(l);
+            if (this.player) this.player.bCache = null;
+          }
+        }).catch(() => {
+        });
+      }
       if (F.lifted) fetch(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
         this.world.setLifted(j);
         if (this.player) this.player.bCache = null;
