@@ -7418,7 +7418,11 @@
           const e = world.nearestRoad(mx, my);
           const sr = world.regionAt(mx, my);
           if (sr && sr.streets && streetsCovered(sr.streets, mx - sr.x0, my - sr.y0) && !(e < 3 && world._nr.reg.rCls[world._nr.road] >= 14)) {
-            const dd = streetsPaving(sr.streets, mx - sr.x0, my - sr.y0);
+            let dd = streetsPaving(sr.streets, mx - sr.x0, my - sr.y0);
+            if (e < 0 && world._nr.reg.rCls[world._nr.road] <= 3 && !(world._nr.reg.rFlags[world._nr.road] & 6) && e < dd) {
+              dd = e;
+              _pave.unpaved = false;
+            }
             const nr0 = world._nr;
             const onStreet = e < 4 && dd < 0.5 && nr0.reg.rCls[nr0.road] < 14 && !(nr0.reg.rFlags[nr0.road] & 6);
             const xs0 = onStreet ? xsOf(nr0.reg, nr0.road) : void 0;

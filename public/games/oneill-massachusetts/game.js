@@ -21147,7 +21147,8 @@ void main() {
       }
       return all[0];
     }
-    place(mx2, my2, hdgDeg = 0, snap = false, level) {
+    // (exact: just there, as a report's link gives it, not moved into a lane or out of a building)
+    place(mx2, my2, hdgDeg = 0, snap = false, level, exact = false) {
       const w = this.game.world, c = this.car;
       c.mx = clamp2(mx2, 300, L - 300);
       c.my = wrapY(my2);
@@ -21176,9 +21177,9 @@ void main() {
         nr2 = roadOn(surf);
       }
       const onStreet = street() && nr2.d < nr2.hw + 2;
-      if (onStreet) this.toLane(nr2);
+      if (onStreet && !exact) this.toLane(nr2);
       surf = this.pickSurface(c.mx, c.my, surf.z);
-      if (surf.kind === "ground" && this.clearOfBuildings(onStreet)) surf = this.pickSurface(c.mx, c.my, surf.z);
+      if (surf.kind === "ground" && !exact && this.clearOfBuildings(onStreet)) surf = this.pickSurface(c.mx, c.my, surf.z);
       c.h = surf.z;
       c.water = surf.kind === "ground" && !!surf.water;
       c.deck = surf.kind === "deck";
@@ -21615,6 +21616,42 @@ void main() {
     const cls = reg.rCls[ri2];
     return reg.rMph[ri2] || (cls <= 1 ? 65 : cls <= 3 ? 55 : cls <= 5 ? 40 : cls <= 9 ? 35 : 25);
   };
+  var CLASS = [
+    "motorway",
+    "motorway link",
+    "trunk road",
+    "trunk link",
+    "primary road",
+    "primary link",
+    "secondary road",
+    "secondary link",
+    "tertiary road",
+    "tertiary link",
+    "unclassified road",
+    "residential street",
+    "living street",
+    "service road",
+    "railway",
+    "railway siding",
+    "runway",
+    "taxiway",
+    "river",
+    "stream"
+  ];
+  function lonLat(e, n) {
+    const A = 6378137, F = 1 / 298.257222101, E2 = 2 * F - F * F, E = Math.sqrt(E2), rad = Math.PI / 180;
+    const m = (p4) => Math.cos(p4) / Math.sqrt(1 - E2 * Math.sin(p4) ** 2);
+    const t = (p4) => Math.tan(Math.PI / 4 - p4 / 2) / ((1 - E * Math.sin(p4)) / (1 + E * Math.sin(p4))) ** (E / 2);
+    const p1 = (41 + 43 / 60) * rad, p2 = (42 + 41 / 60) * rad, p02 = 41 * rad, l02 = -71.5 * rad;
+    const N = (Math.log(m(p1)) - Math.log(m(p2))) / (Math.log(t(p1)) - Math.log(t(p2))), Fc2 = m(p1) / (N * t(p1) ** N), R02 = A * Fc2 * t(p02) ** N;
+    const x = e - 2e5, y = R02 - (n - 75e4), r = Math.sign(N) * Math.hypot(x, y), tt = (r / (A * Fc2)) ** (1 / N);
+    let p = Math.PI / 2 - 2 * Math.atan(tt);
+    for (let k = 0; k < 8; k++) {
+      const sp = Math.sin(p);
+      p = Math.PI / 2 - 2 * Math.atan(tt * ((1 - E * sp) / (1 + E * sp)) ** (E / 2));
+    }
+    return [(Math.atan2(x, y) / N + l02) / rad, p / rad];
+  }
   var UI = class {
     constructor(game2) {
       this.g = game2;
@@ -21892,6 +21929,9 @@ void main() {
           case "KeyO":
             this.toggleRadio();
             break;
+          case "KeyV":
+            this.report();
+            break;
           case "Comma":
             if (g.radio && g.radio.on) {
               if (e.shiftKey) g.radio.seek(-1);
@@ -21959,6 +21999,62 @@ void main() {
       if (!swap) {
         const o = this.opener;
         (o && o.isConnected && o !== document.body ? o : this.g.canvas).focus();
+      }
+    }
+    // ---- a report of this spot (item 149 of Andy's list): a link that brings the game back to this place, level, view and
+    // time, what is here (the road and the region file's way, a deck or a tunnel), the detail and the build, copied as
+    // text, and a picture of the frame saved beside it, so "that bridge looks broken" comes with all it takes to see it
+    report() {
+      const g = this.g, p = g.player, c = p.car, f = p.fly, m = g.meta, fly = p.mode === "fly", w = g.world;
+      const mx2 = fly ? f.mx : c.mx, my2 = fly ? f.my : c.my, deg = 180 / Math.PI, r1 = (v) => v.toFixed(1), d1 = (v) => (v * deg).toFixed(1);
+      const hdg = (c.hdg * deg % 360 + 360) % 360;
+      let q = "?at=" + r1(c.mx) + "," + r1(c.my) + "," + Math.round(hdg) + "&h=" + c.h.toFixed(2);
+      if (fly) q += "&fly=" + [r1(f.mx), r1(f.my), r1(f.alt), d1(f.yaw), d1(f.pitch)].join(",");
+      else q += "&cam=" + [p.cam.kind, d1(p.cam.yaw), d1(p.cam.pitch)].join(",");
+      q += "&t=" + g.sky.hours.toFixed(2) + (g.sky.running ? "" : "&run=0") + "&q=" + g.qualityName;
+      const url = location.origin + location.pathname + q;
+      const ti2 = w.townAt(mx2, my2), t = ti2 ? m.towns[ti2 - 1] : null;
+      const [lon, lat] = lonLat(mx2 + m.E0, my2 + m.N0);
+      const el = fly ? f.alt : c.h;
+      let reg = null, ri2 = -1, on2 = "";
+      if (!fly && c.road >= 0 && c.reg) {
+        reg = c.reg;
+        ri2 = c.road;
+        on2 = c.deck ? "on a bridge deck" : c.tun ? "in a tunnel" : c.water ? "afloat" : "on the ground";
+      } else if (w.nearestRoad(mx2, my2) < 60) {
+        reg = w._nr.reg;
+        ri2 = w._nr.road;
+        on2 = "the nearest way below, " + w._nr.d.toFixed(1) + " m off its line";
+      }
+      const way = reg ? (g.names && g.names[reg.rName[ri2]] || "unnamed") + " (" + (CLASS[reg.rCls[ri2]] || "class " + reg.rCls[ri2]) + "; region " + reg.rx + "_" + reg.ry + ", way " + ri2 + "), " + on2 : "no way within 60 m";
+      const hrs = g.sky.hours, hh = Math.floor(hrs), mm = Math.floor((hrs - hh) * 60);
+      const gs2 = document.querySelector('script[src*="game.js"]'), build = gs2 && /[?&]h=([0-9a-f]+)/.exec(gs2.src);
+      const file = "massachusetts-inside-out-" + Math.round(mx2) + "-" + Math.round(my2) + ".png";
+      const text = [
+        "Massachusetts, inside out: " + (t ? t.n + ", " + t.c + " County" : this.seaName(mx2, my2)),
+        url,
+        "Place: map " + r1(mx2) + ", " + r1(my2) + " (" + lat.toFixed(5) + " N, " + (-lon).toFixed(5) + " W), " + (fly ? "flying at " : "at ") + el.toFixed(1) + " m",
+        (fly ? "Flying over " : "Driving on ") + way + (fly ? "" : ", heading " + Math.round(hdg) + "\xB0"),
+        "View: " + (fly ? "jetpack, turned " + Math.round((f.yaw * deg % 360 + 360) % 360) + "\xB0 and tilted " + Math.round(f.pitch * deg) + "\xB0" : ["chase", "hood", "wide"][p.cam.kind] + " camera, turned " + Math.round(p.cam.yaw * deg) + "\xB0 and tilted " + Math.round(p.cam.pitch * deg) + "\xB0"),
+        "Time: " + ((hh + 11) % 12 + 1) + ":" + String(mm).padStart(2, "0") + (hh < 12 ? " AM" : " PM") + (g.sky.running ? "" : ", the sun held still") + "; detail " + g.qualityName + "; " + Math.round(1e3 / g.rawMs) + " fps; build " + (build ? build[1].slice(0, 10) : "local"),
+        "Picture: " + file
+      ].join("\n");
+      g.shotCb = (blob) => {
+        if (!blob) return;
+        const a = document.createElement("a"), u = URL.createObjectURL(blob);
+        a.href = u;
+        a.download = file;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 1e4);
+      };
+      const done = (ok) => this.toast(ok ? "Report copied: a link back here, the place, the view and the time. The picture is saved as " + file + "." : "The report could not be copied; it is in the console. The picture is saved as " + file + ".");
+      console.log(text);
+      try {
+        navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+      } catch (e) {
+        done(false);
       }
     }
     sayTime() {
@@ -25221,12 +25317,22 @@ void main() {
         start = { n: "", x: a[0], y: a[1], hdg: a[2] || 0 };
         named = true;
       }
+      const num = (v) => v !== null && v !== "" && isFinite(+v), lvl = num(params.get("h")) ? +params.get("h") : NaN;
+      if (named && params.get("at") && lvl === lvl) {
+        start.h = lvl;
+        this.exactStart = true;
+      }
+      const fl = (params.get("fly") || "").split(",");
+      if (named && fl.length === 5 && fl.every(num)) this.reportFly = { fly: true, fx: +fl[0], fy: +fl[1], alt: +fl[2], yaw: +fl[3] * Math.PI / 180, pitch: +fl[4] * Math.PI / 180 };
+      const cm2 = (params.get("cam") || "").split(",");
+      if (named && cm2.length === 3 && cm2.every(num)) this.reportCam = { kind: clamp2(Math.round(+cm2[0]), 0, 2), yaw: +cm2[1] * Math.PI / 180, pitch: +cm2[2] * Math.PI / 180 };
       const saved = named || params.get("fresh") ? null : this.loadSaved();
       if (saved) start = { n: "", x: saved.cx, y: saved.cy, hdg: saved.hdg, h: saved.ch };
       this.startName = start.n.split(",")[0];
       setLoad("Reading the local streets", 0.69);
       await this.loadRegion(Math.floor(start.x / RS3), Math.floor(wrapY(start.y) / RS3));
       if (saved) this.player.place(start.x, start.y, start.hdg, false, start.h);
+      else if (this.exactStart) this.player.place(start.x, start.y, start.hdg, false, start.h, true);
       else this.player.place(start.x, start.y, start.hdg, true);
       if (params.get("lights") !== "0") this.lights.load();
       if (params.get("sky") !== "0") this.skyline.load();
@@ -25237,6 +25343,7 @@ void main() {
         this.sky.running = saved.run;
       }
       if (params.get("t")) this.sky.hours = +params.get("t");
+      if (params.get("run") === "0") this.sky.running = false;
       this.player.mode = "fly";
       const f = this.player.fly;
       f.alt = this.player.car.h + 900;
@@ -25605,13 +25712,14 @@ void main() {
       this.title = false;
       this.player.mode = "drive";
       const c = this.player.car;
-      this.player.place(c.mx, c.my, c.hdg * 180 / Math.PI, false, c.h);
+      this.player.place(c.mx, c.my, c.hdg * 180 / Math.PI, false, c.h, !!this.exactStart);
       $2("cover").classList.add("hidden");
       $2("hud").classList.remove("hidden");
       if (this.touch) $2("touch").classList.remove("hidden");
       this.canvas.focus();
-      const rs2 = this.resume;
+      const rs2 = this.resume || this.reportFly;
       this.resume = null;
+      this.reportFly = null;
       if (rs2 && rs2.fly) {
         this.ui.toggleFly();
         const f = this.player.fly;
@@ -25622,7 +25730,15 @@ void main() {
         f.pitch = rs2.pitch;
         f.vx = f.vy = f.vz = 0;
       }
-      this.ui.toast(rs2 ? "Back where you left off. 1 goes home to Webster." : "Drive anywhere. Drag to look up at the rest of the state.");
+      const rc2 = this.reportCam;
+      this.reportCam = null;
+      if (rc2) {
+        const pc2 = this.player.cam;
+        pc2.kind = rc2.kind;
+        pc2.yaw = rc2.yaw;
+        pc2.pitch = rc2.pitch;
+      }
+      this.ui.toast(this.exactStart ? "The spot from the report." : rs2 ? "Back where you left off. 1 goes home to Webster." : "Drive anywhere. Drag to look up at the rest of the state.");
     }
     // Where this browser last left the game.  Storage can be missing, empty or refused: then there is nothing to resume.
     loadSaved() {
@@ -25996,6 +26112,11 @@ void main() {
         r.render(this.scene, cam);
         this.drawCalls = calls + r.info.render.calls;
         this.drawTris = tris + r.info.render.triangles;
+        if (this.shotCb) {
+          const cb = this.shotCb;
+          this.shotCb = null;
+          r.domElement.toBlob(cb, "image/png");
+        }
       }
       cam.near = 0.3;
       cam.far = 46e4;
