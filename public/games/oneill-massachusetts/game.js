@@ -23365,6 +23365,7 @@ void main() {
           c.my = wrapY(c.my + Math.cos(c.hdg) * ds2 * R / (R - c.h));
           this.bump();
           if (this.game.traffic) this.game.traffic.bump(c);
+          if (this.game.trains) this.game.trains.bump(c);
           c.odo += Math.abs(ds2);
           const keepS = (from === "deck" || from === "tunnel") && c.wayReg ? this._keepS || (this._keepS = { reg: null, road: -1 }) : void 0;
           if (keepS) {
@@ -24499,6 +24500,11 @@ void main() {
       };
       for (const o of this.cars) if (o !== c && Math.abs(o.h - c.h) < 3) ahead(o.mx, o.my);
       if (Math.abs(pc2.h - c.h) < 3) ahead(pc2.mx, pc2.my);
+      const T = this.game.trains;
+      if (T) {
+        const S2 = T.pts;
+        for (let i = 0; i < S2.length; i += 3) if (Math.abs(S2[i + 2] - c.h) < 3) ahead(S2[i], S2[i + 1]);
+      }
       const a = s0of(reg, c.ri), b = s1of(reg, c.ri), left = c.dir > 0 ? b - c.s : c.s - a;
       if (left < 32) {
         if (c.next === void 0) c.next = this.choose(c);
@@ -25228,7 +25234,7 @@ void main() {
       band(b, o, o.h - 0.62, o.h - 0.5, col);
       cabEnd(b, o, -1, floor + 0.65, floor + 1.55, floor + 0.05, [floor + 0.2, floor + 0.5, col]);
       coupledEnd(b, o, 1);
-      out[name] = [b.geometry(), len, bz];
+      out[name] = [b.geometry(), len, bz, w];
     };
     rapid("red", 21.2, 3.05, 3.72, 1.24, 4, RED2);
     rapid("orange", 19.8, 2.82, 3.66, 1.14, 3, ORANGE);
@@ -25253,7 +25259,7 @@ void main() {
           b.box(-0.05, 0.05, 3.62, 4.35, -0.04, 0.04, BLACK);
           b.box(-0.85, 0.85, 4.33, 4.39, -0.12, 0.12, BLACK);
         }
-        return [b.geometry(), SEC, SEC / 2];
+        return [b.geometry(), SEC, SEC / 2, o.w];
       };
       out.lrvCab = lrv(true);
       out.lrvMid = lrv(false);
@@ -25268,7 +25274,7 @@ void main() {
       sides(b, Object.assign({}, o, { endM: 1.4 }), [-len / 2 + 1.6, -0.6], 1.15, 2.45, 1.5, 2.32, 1, true);
       cabEnd(b, o, -1, 1.45, 2.35, 0.95, [1.28, 1.38, MAROON]);
       cabEnd(b, o, 1, 1.6, 2.3, 0.95, [1.28, 1.38, MAROON]);
-      out.pcc = [b.geometry(), len, 4.3];
+      out.pcc = [b.geometry(), len, 4.3, o.w];
     }
     const coach = (cab) => {
       const len = 25.9, b = new Build3(), o = { len, w: 3.2, h: 4.75, y0: 0.62, body: STEEL, roof: ROOF };
@@ -25283,7 +25289,7 @@ void main() {
       if (cab) cabEnd(b, o, -1, 2.95, 3.7, 1, [2.12, 2.55, PURPLE]);
       else coupledEnd(b, o, -1);
       coupledEnd(b, o, 1);
-      return [b.geometry(), len, bz];
+      return [b.geometry(), len, bz, o.w];
     };
     out.coach = coach(false);
     out.cab = coach(true);
@@ -25301,7 +25307,7 @@ void main() {
       b.end(-1, -len / 2, -o.w / 2, o.w / 2, 0.95, 1.55, STEEL, 8e-3);
       b.end(1, len / 2, -0.9, 0.9, 1.6, 3.8, [0.1, 0.02, 0.09]);
       for (let k = 0; k < 3; k++) b.box(-0.75, 0.75, o.h - 0.02, o.h + 0.06, 1.5 + k * 2.2, 3.1 + k * 2.2, BLACK);
-      out.loco = [b.geometry(), len, 6.86];
+      out.loco = [b.geometry(), len, 6.86, o.w];
     }
     return out;
   }
@@ -25375,7 +25381,7 @@ void main() {
       this.kinds = {};
       this.meshes = [];
       for (const k in M) {
-        const [geo, len, bz] = M[k], cap = k === "pcc" ? 24 : k === "loco" || k === "cab" ? 96 : 480;
+        const [geo, len, bz, w] = M[k], cap = k === "pcc" ? 24 : k === "loco" || k === "cab" ? 96 : 480;
         const inst = new vi(new Float32Array(cap * 4), 4);
         inst.setUsage(Zm);
         geo.setAttribute("aInst", inst);
@@ -25386,7 +25392,7 @@ void main() {
         mesh.matrixAutoUpdate = false;
         mesh.visible = false;
         game2.scene.add(mesh);
-        this.kinds[k] = { mesh, inst, len, bz, cap, n: 0 };
+        this.kinds[k] = { mesh, inst, len, bz, w, cap, n: 0 };
         this.meshes.push(mesh);
       }
       this.M = new Ht();
@@ -25394,6 +25400,8 @@ void main() {
       this.skyWas = null;
       this.near = 1e9;
       this.pt = { x: 0, y: 0, i: 0 };
+      this.solid = [];
+      this.pts = [];
     }
     // the train clock, in seconds after midnight
     clock(dt) {
@@ -25482,6 +25490,9 @@ void main() {
     update(dt, camMap, camC, agl) {
       this.clock(dt);
       for (const k in this.kinds) this.kinds[k].n = 0;
+      this.solid.length = 0;
+      this.pts.length = 0;
+      this.cam = camMap;
       const reach = REACH + Math.min(agl, 3e3), cx2 = camMap[0], cy2 = camMap[1];
       let near2 = 1e9;
       const tau = this.tau, nT = this.t0.length;
@@ -25498,6 +25509,13 @@ void main() {
         if (dc2 - p.len / 2 < 1500) near2 = Math.min(near2, dc2);
         if (dc2 > reach + p.len) continue;
         this.train(p, sf2, camC, dc2 > 1200 + p.len / 2);
+        if (dc2 < 400 + p.len) {
+          const v = this.front(p, t - this.t0[i] + 1) - sf2;
+          if (v > 0.5) for (let d = 4; d < 10 * v + 8 && sf2 + d < P2.len; d += 4) {
+            const q = this.at(P2, sf2 + d);
+            this.pts.push(q.x, q.y, q.z);
+          }
+        }
       }
       this.near = near2;
       for (const k in this.kinds) {
@@ -25543,6 +25561,43 @@ void main() {
         const a = this.at(P2, sc2 + K.bz), ax2 = a.x, ay2 = a.y, ah = far ? a.z : this.height(P2, sc2 + K.bz, a);
         const b = this.at(P2, sc2 - K.bz), bx2 = b.x, by2 = b.y, bh2 = far ? b.z : this.height(P2, sc2 - K.bz, b);
         this.place(K, rev ? bx2 : ax2, rev ? by2 : ay2, rev ? bh2 : ah, rev ? ax2 : bx2, rev ? ay2 : by2, rev ? ah : bh2, lo2, hi2, camC);
+        const cx2 = (ax2 + bx2) / 2, cy2 = wrapY(by2 + wrapD3(ay2 - by2) / 2), ch = (ah + bh2) / 2;
+        if (!far && lo2 < -1e3 && hi2 > 1e3 && Math.abs(cx2 - this.cam[0]) < 400 && Math.abs(wrapD3(cy2 - this.cam[1])) < 400) {
+          const hd = Math.atan2(ax2 - bx2, wrapD3(ay2 - by2)), fx2 = Math.sin(hd), fy2 = Math.cos(hd);
+          this.solid.push(cx2, cy2, ch, hd, len / 2, K.w / 2);
+          for (let d = -len / 2 + 1.5; d < len / 2; d += 3) this.pts.push(cx2 + fx2 * d, wrapY(cy2 + fy2 * d), ch);
+        }
+      }
+    }
+    // The car you drive cannot pass through a train: it is put back outside the car it overlaps, the shortest way out
+    // (separating axes, as traffic.js bump), and loses the speed it had into it.  A train does not slow for it.
+    bump(pc2) {
+      const S2 = this.solid, HL = 2.3, HW = 0.95;
+      for (let i = 0; i < S2.length; i += 6) {
+        const dx2 = pc2.mx - S2[i], dy2 = wrapD3(pc2.my - S2[i + 1]), hl = S2[i + 4], hw = S2[i + 5];
+        if (Math.abs(dx2) > hl + 4 || Math.abs(dy2) > hl + 4 || Math.abs(pc2.h - S2[i + 2]) > 3) continue;
+        const af2 = [Math.sin(pc2.hdg), Math.cos(pc2.hdg)], bf = [Math.sin(S2[i + 3]), Math.cos(S2[i + 3])];
+        let best = 1e9, bx2 = 0, by2 = 0;
+        for (const [ax2, ay2] of [af2, [af2[1], -af2[0]], bf, [bf[1], -bf[0]]]) {
+          const ra2 = HL * Math.abs(af2[0] * ax2 + af2[1] * ay2) + HW * Math.abs(af2[1] * ax2 - af2[0] * ay2);
+          const rb = hl * Math.abs(bf[0] * ax2 + bf[1] * ay2) + hw * Math.abs(bf[1] * ax2 - bf[0] * ay2);
+          const sep = dx2 * ax2 + dy2 * ay2, ov2 = ra2 + rb - Math.abs(sep);
+          if (ov2 <= 0) {
+            best = -1;
+            break;
+          }
+          if (ov2 < best) {
+            best = ov2;
+            const sg = sep < 0 ? -1 : 1;
+            bx2 = ax2 * sg;
+            by2 = ay2 * sg;
+          }
+        }
+        if (best <= 0) continue;
+        pc2.mx = clamp2(pc2.mx + bx2 * (best + 0.01), 250, L - 250);
+        pc2.my = wrapY(pc2.my + by2 * (best + 0.01));
+        const into = -(Math.sin(pc2.hdg) * bx2 + Math.cos(pc2.hdg) * by2) * Math.sign(pc2.v || 1);
+        if (into > 0) pc2.v *= 1 - Math.min(1, into * 1.1);
       }
     }
     // one car from the point its front rides at (fx, fy, fh) to its back's (bx, by, bh)
