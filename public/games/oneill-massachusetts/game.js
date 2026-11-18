@@ -19497,6 +19497,9 @@ ${COAST}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
+#ifdef DECKS
+uniform float uHouseR;               // the houses' reach (terrain.js deckMat): past it only the decks' tiles draw in this shader
+#endif
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec2 vUV;
@@ -19686,7 +19689,15 @@ void main() {
         float open = box2(wp + intoLight, vec2(-ww, sill), vec2(ww, head), px * 1.5);
         room *= 1.0 - (1.0 - open) * (0.24 * daySurface * finishK);
       }
-      float litW = step(clad == 3 || clad == 7 || cls == 11 ? 0.45 : 0.58, wh) * dark;
+      float pLit = clad == 3 || clad == 7 || cls == 11 ? 0.55 : 0.42;
+      #ifdef DECKS
+        // a landmark past the houses' reach (landmarks.js: the decks' tiles reach much further) stands among the far
+        // boxes, so it lights about as much of its wall as they do (LIT_FS: an eighth), not a room in every other bay
+        // of a glass tower, which made it a glowing slab
+        float glassK = clamp(2.0 * ww / bw * (head - sill) / fh, 0.05, 1.0);
+        pLit = mix(pLit, clamp(0.126 / glassK, 0.08, pLit), smoothstep(uHouseR, uHouseR * 1.4, dist));
+      #endif
+      float litW = step(1.0 - pLit, wh) * dark;
       vec3 lamp = mix(vec3(1.0, 0.70, 0.36), vec3(0.95, 0.90, 0.78), step(0.8, wh2)) * (0.55 + 0.45 * wh2);
       if (store) { litW = dark * step(0.25, wh); lamp = vec3(1.0, 0.92, 0.78); }
       vec3 pane = mix(room, trim, bars * 0.9);
@@ -21545,9 +21556,9 @@ void main() {
       this.deckMat = this.game.meta.tiles && this.game.meta.tiles.decks && q.deckR ? new Rn({
         vertexShader: HOUSE_VS,
         fragmentShader: HOUSE_FS,
-        defines: Object.assign({}, this.defines),
+        defines: Object.assign({ DECKS: 1 }, this.defines),
         side: Bn,
-        uniforms: Object.assign({}, this.U, { uHouseFade: { value: new et(q.deckR - 40, q.deckR) } })
+        uniforms: Object.assign({}, this.U, { uHouseFade: { value: new et(q.deckR - 40, q.deckR) }, uHouseR: { value: this.houseR || 420 } })
       }) : null;
     }
     updateScatter(camC) {
