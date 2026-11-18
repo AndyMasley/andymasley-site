@@ -4967,6 +4967,32 @@
         dt.a[i] = dv.getUint16(o + 10, true) / 65536 * 2 * Math.PI;
       }
     }
+    f.st = null;
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1279349843) {
+      const nS = dv.getUint32(o + 4, true);
+      o += 16;
+      const st2 = f.st = {
+        n: nS,
+        x: new Float32Array(nS),
+        y: new Float32Array(nS),
+        hd: new Float32Array(nS),
+        pit: new Float32Array(nS),
+        cnt: new Uint8Array(nS),
+        fl: new Uint8Array(nS),
+        off: new Float32Array(nS),
+        len: new Float32Array(nS)
+      };
+      for (let i = 0; i < nS; i++, o += 16) {
+        st2.x[i] = dv.getInt32(o, true) / 10;
+        st2.y[i] = dv.getInt32(o + 4, true) / 10;
+        st2.hd[i] = dv.getUint16(o + 8, true) / 65536 * 2 * Math.PI;
+        st2.pit[i] = dv.getUint16(o + 10, true) / 1e3;
+        st2.cnt[i] = dv.getUint8(o + 12);
+        st2.fl[i] = dv.getUint8(o + 13);
+        st2.off[i] = dv.getUint8(o + 14) / 10;
+        st2.len[i] = dv.getUint8(o + 15) / 10;
+      }
+    }
     f.aBox = new Float32Array(nA2 * 4);
     for (let a = 0; a < nA2; a++) {
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -5783,7 +5809,7 @@
   }
   function groundPaint(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
-    if (!f || !f.nA) return new Float32Array(0);
+    if (!f || !f.nA && !f.st) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), WHITE = [0.78, 0.78, 0.74];
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const vtx5 = (x, y) => {
@@ -5943,6 +5969,20 @@
           if (yd % 5 === 0) continue;
           const p = yd / 50 * gl;
           for (const q of [-hw + 0.6, -8.13 * k, 8.13 * k, hw - 0.6]) seg(p, q - 0.3, p, q + 0.3, 0.1);
+        }
+      }
+    }
+    const st2 = f.st;
+    if (st2) {
+      const PAINT = [0.72, 0.72, 0.68];
+      for (let i = 0; i < st2.n; i++) {
+        const ux = Math.cos(st2.hd[i]), uy = Math.sin(st2.hd[i]), sd = st2.fl[i] & 1 ? 1 : -1, n = st2.cnt[i], pit = st2.pit[i];
+        const nx = sd * uy, ny = -sd * ux, ml = pit * n / 2, mxl = st2.x[i] + ux * ml + nx * (st2.off[i] + 2), myl = st2.y[i] + uy * ml + ny * (st2.off[i] + 2);
+        if (mxl < lx0 || mxl >= lx0 + s || myl < ly0 || myl >= ly0 + s || surveyPainted(reg, mxl, myl)) continue;
+        const a60 = (st2.fl[i] & 2) !== 0, dx = a60 ? 0.5 * ux + 0.866 * nx : nx, dy = a60 ? 0.5 * uy + 0.866 * ny : ny, L2 = st2.len[i];
+        for (let k = 0; k <= n; k++) {
+          const bx = reg.x0 + st2.x[i] + ux * pit * k + nx * st2.off[i], by = reg.y0 + st2.y[i] + uy * pit * k + ny * st2.off[i];
+          strip(bx, by, bx + dx * L2, by + dy * L2, 0.1, PAINT);
         }
       }
     }

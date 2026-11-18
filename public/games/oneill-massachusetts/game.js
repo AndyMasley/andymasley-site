@@ -22387,6 +22387,32 @@ void main() {
         dt.a[i] = dv2.getUint16(o + 10, true) / 65536 * 2 * Math.PI;
       }
     }
+    f.st = null;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1279349843) {
+      const nS2 = dv2.getUint32(o + 4, true);
+      o += 16;
+      const st = f.st = {
+        n: nS2,
+        x: new Float32Array(nS2),
+        y: new Float32Array(nS2),
+        hd: new Float32Array(nS2),
+        pit: new Float32Array(nS2),
+        cnt: new Uint8Array(nS2),
+        fl: new Uint8Array(nS2),
+        off: new Float32Array(nS2),
+        len: new Float32Array(nS2)
+      };
+      for (let i = 0; i < nS2; i++, o += 16) {
+        st.x[i] = dv2.getInt32(o, true) / 10;
+        st.y[i] = dv2.getInt32(o + 4, true) / 10;
+        st.hd[i] = dv2.getUint16(o + 8, true) / 65536 * 2 * Math.PI;
+        st.pit[i] = dv2.getUint16(o + 10, true) / 1e3;
+        st.cnt[i] = dv2.getUint8(o + 12);
+        st.fl[i] = dv2.getUint8(o + 13);
+        st.off[i] = dv2.getUint8(o + 14) / 10;
+        st.len[i] = dv2.getUint8(o + 15) / 10;
+      }
+    }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
       let x02 = 1e9, y02 = 1e9, x1 = -1e9, y1 = -1e9;
