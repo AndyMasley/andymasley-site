@@ -14880,19 +14880,19 @@ void main() {
     });
     const MX = Math.max(1, Math.ceil((bx1 - bx0) / IC) + 1), MY = Math.max(1, Math.ceil((by1 - by0) / IC) + 1), rowB = MX + 7 >> 3;
     const all = new Uint8Array(MY * rowB), sub = new Uint8Array(MY * rowB);
-    const band = [];
-    for (let r = 0; r < MY; r++) band.push([]);
+    const band2 = [];
+    for (let r = 0; r < MY; r++) band2.push([]);
     for (let i = 0; i < nV; i++) {
       const j = next[i], ay2 = pv2[i * 2 + 1], by2 = pv2[j * 2 + 1];
       const r02 = Math.max(0, Math.floor((Math.min(ay2, by2) - by0) / IC - 0.5)), r1 = Math.min(MY - 1, Math.ceil((Math.max(ay2, by2) - by0) / IC - 0.5));
-      for (let r = r02; r <= r1; r++) band[r].push(i);
+      for (let r = r02; r <= r1; r++) band2[r].push(i);
     }
     const xs = [], xu = [];
     for (let r = 0; r < MY; r++) {
       const y = by0 + (r + 0.5) * IC;
       xs.length = 0;
       xu.length = 0;
-      for (const i of band[r]) {
+      for (const i of band2[r]) {
         const j = next[i], ax2 = pv2[i * 2], ay2 = pv2[i * 2 + 1], bx2 = pv2[j * 2], by2 = pv2[j * 2 + 1];
         if (ay2 <= y === by2 <= y) continue;
         const x = ax2 + (y - ay2) / (by2 - ay2) * (bx2 - ax2);
@@ -16617,19 +16617,19 @@ void main() {
       e.mended = true;
       const C3 = e.c, n = C3.length, add2 = [];
       const end = (i, s29) => s29 ? [C3[i][2], C3[i][3]] : [C3[i][0], C3[i][1]];
-      const body = (i, s29) => {
+      const body2 = (i, s29) => {
         const c = C3[i], dx2 = c[2] - c[0], dy2 = c[3] - c[1], l = Math.hypot(dx2, dy2) || 1;
         return s29 ? [-dx2 / l, -dy2 / l] : [dx2 / l, dy2 / l];
       };
       const run = new Float64Array(n * 2), joined = new Uint8Array(n * 2);
       for (let i = 0; i < n; i++) for (let si2 = 0; si2 < 2; si2++) {
-        const [xi2, yi2] = end(i, si2), bi2 = body(i, si2);
+        const [xi2, yi2] = end(i, si2), bi2 = body2(i, si2);
         for (let j = 0; j < n; j++) for (let sj = 0; sj < 2; sj++) {
           if (j === i) continue;
           const [xj, yj] = end(j, sj);
           if (Math.hypot(xi2 - xj, yi2 - yj) > 0.6) continue;
           joined[i * 2 + si2] = 1;
-          const bj = body(j, sj), bend = Math.PI - Math.acos(clamp2(bi2[0] * bj[0] + bi2[1] * bj[1], -1, 1));
+          const bj = body2(j, sj), bend = Math.PI - Math.acos(clamp2(bi2[0] * bj[0] + bi2[1] * bj[1], -1, 1));
           if (bend > 1.3) continue;
           run[i * 2 + si2] = Math.max(run[i * 2 + si2], C3[i][4] * Math.tan(bend / 2) + 0.15);
         }
@@ -16641,7 +16641,7 @@ void main() {
       };
       for (let i = 0; i < n; i++) for (let si2 = 0; si2 < 2; si2++) {
         if (joined[i * 2 + si2] || C3[i][5]) continue;
-        const [x, y] = end(i, si2), b = body(i, si2), hw = C3[i][4];
+        const [x, y] = end(i, si2), b = body2(i, si2), hw = C3[i][4];
         if (!onRoad(x, y, b[0], b[1], Math.max(2, 0.5 * hw))) continue;
         const sg = nr2.tx * -b[0] + nr2.ty * -b[1] >= 0 ? 1 : -1, ox2 = nr2.tx * sg, oy2 = nr2.ty * sg;
         const bx2 = x - nr2.side * nr2.d * nr2.ty, by2 = y + nr2.side * nr2.d * nr2.tx;
@@ -19831,7 +19831,11 @@ attribute float aPart;
 attribute vec4 aInst;
 void main() {
   float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * (instanceMatrix * vec4(position * keep, 1.0));
+  vec3 pos = position;
+  #ifdef TRAIN
+    pos.z = clamp(pos.z, aInst.z, aInst.w);         // (a train going into a tunnel: trains.js)
+  #endif
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * (instanceMatrix * vec4(pos * keep, 1.0));
 }`
   );
   var TREE_VS = (
@@ -19991,16 +19995,16 @@ void main() {
       this.idx.push(a, b, c, a, c, d);
     }
     // a tapered tube of plain bark between two points
-    tube(A, B, ra2, rb, sides, col, part) {
+    tube(A, B, ra2, rb, sides2, col, part) {
       const ax2 = V(0, 0, 0).subVectors(B, A).normalize();
       const u = Math.abs(ax2.y) < 0.9 ? V(0, 1, 0).cross(ax2).normalize() : V(1, 0, 0).cross(ax2).normalize(), w = V(0, 0, 0).crossVectors(ax2, u);
       const ring = [];
-      for (let i = 0; i < sides; i++) {
-        const a = i / sides * Math.PI * 2, n = V(0, 0, 0).addScaledVector(u, Math.cos(a)).addScaledVector(w, Math.sin(a));
+      for (let i = 0; i < sides2; i++) {
+        const a = i / sides2 * Math.PI * 2, n = V(0, 0, 0).addScaledVector(u, Math.cos(a)).addScaledVector(w, Math.sin(a));
         ring.push([this.v(V(0, 0, 0).copy(A).addScaledVector(n, ra2), n, col, part, -1, -1), this.v(V(0, 0, 0).copy(B).addScaledVector(n, rb), n, col, part, -1, -1)]);
       }
-      for (let i = 0; i < sides; i++) {
-        const p = ring[i], q = ring[(i + 1) % sides];
+      for (let i = 0; i < sides2; i++) {
+        const p = ring[i], q = ring[(i + 1) % sides2];
         this.quad(p[0], q[0], q[1], p[1]);
       }
     }
@@ -20187,18 +20191,18 @@ void main() {
       }
       ico.dispose();
     }
-    trunk(a, b, ra2, rb, sides) {
+    trunk(a, b, ra2, rb, sides2) {
       const ring = [];
-      for (let i = 0; i < sides; i++) {
-        const theta = i * TAU / sides, x = Math.cos(theta), z = Math.sin(theta);
+      for (let i = 0; i < sides2; i++) {
+        const theta = i * TAU / sides2, x = Math.cos(theta), z = Math.sin(theta);
         const N = V2(x, (ra2 - rb) / (b - a), z).normalize();
         ring.push([
           this.vertex(V2(x * ra2, a, z * ra2), N, [0.07, 0.052, 0.036], 2),
           this.vertex(V2(x * rb, b, z * rb), N, [0.07, 0.052, 0.036], 2)
         ]);
       }
-      for (let i = 0; i < sides; i++) {
-        const a2 = ring[i], b2 = ring[(i + 1) % sides];
+      for (let i = 0; i < sides2; i++) {
+        const a2 = ring[i], b2 = ring[(i + 1) % sides2];
         this.idx.push(a2[0], a2[1], b2[1], a2[0], b2[1], b2[0]);
       }
     }
@@ -20217,11 +20221,11 @@ void main() {
         [10.1, 0.72],
         [11.55, 1.4]
       ];
-      const first = this.part.length, start = this.idx.length, rings = [], sides = 5;
+      const first = this.part.length, start = this.idx.length, rings = [], sides2 = 5;
       for (let k = 0; k < profile.length; k++) {
         const [y, radius] = profile[k], row = [];
-        for (let i = 0; i < sides; i++) {
-          const angle = i * TAU / sides + 0.17 + 0.065 * Math.sin(k * 1.2);
+        for (let i = 0; i < sides2; i++) {
+          const angle = i * TAU / sides2 + 0.17 + 0.065 * Math.sin(k * 1.2);
           const r = radius * (0.91 + 0.09 * Math.sin(i * 2.1 + k * 0.8));
           const px2 = Math.cos(angle) * r + 0.045 * Math.sin(k * 0.7), pz = Math.sin(angle) * r + 0.045 * Math.cos(k * 1.1);
           const shade = 0.74 + 0.23 * (y - 3.25) / 11.15;
@@ -20229,14 +20233,14 @@ void main() {
         }
         rings.push(row);
       }
-      for (let k = 1; k < rings.length; k++) for (let i = 0; i < sides; i++) {
-        const next = (i + 1) % sides, a = rings[k - 1], b = rings[k];
+      for (let k = 1; k < rings.length; k++) for (let i = 0; i < sides2; i++) {
+        const next = (i + 1) % sides2, a = rings[k - 1], b = rings[k];
         this.idx.push(a[i], b[i], b[next], a[i], b[next], a[next]);
       }
       const foot = this.vertex(V2(0, 3.2, 0), V2(0, 0, 0), [0.016, 0.038, 0.019], 1);
       const top = this.vertex(V2(0.06, 14.4, -0.03), V2(0, 0, 0), [0.022, 0.052, 0.026], 1);
-      for (let i = 0; i < sides; i++) {
-        const next = (i + 1) % sides;
+      for (let i = 0; i < sides2; i++) {
+        const next = (i + 1) % sides2;
         this.idx.push(foot, rings[0][i], rings[0][next]);
         this.idx.push(top, rings[rings.length - 1][next], rings[rings.length - 1][i]);
       }
@@ -21038,6 +21042,8 @@ void main() {
         this.trafficMat = mk(0, [1e8, 1e9], [-2, -1], { CAR: 1, GLOSS: 1, LAMPS: 1 });
         this.trafficMat.side = Mi;
         this.boatMat = this.trafficMat;
+        this.trainMat = mk(0, [1e8, 1e9], [-2, -1], { CAR: 1, GLOSS: 1, TRAIN: 1 });
+        this.trainMat.side = Mi;
       }
       this.streetR = this.game.realBuildings ? q.streetR || 0 : 0;
       if (this.streetR) {
@@ -21840,6 +21846,11 @@ varying float vAux;
 varying float vStyle;
 void main() {
   vec3 pos = position;
+  #ifdef TRAIN
+    // a car going into a tunnel: what is past the portal folds onto it (trains.js: aInst.z, aInst.w the part of its
+    // length still out)
+    pos.z = clamp(pos.z, aInst.z, aInst.w);
+  #endif
   vStyle = 0.0;
   vCol2 = vec3(0.0);
   vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
@@ -22991,8 +23002,8 @@ void main() {
       this.camMap = [0, 0, 0];
       this.weight = 1;
       const mat = (kind, extra) => new Rn({ vertexShader: LIT_VS, fragmentShader: LIT_FS, defines: Object.assign({}, defs, extra), uniforms: Object.assign({}, U, { uKind: { value: kind } }) });
-      const [body, lamps] = carGeometries();
-      this.mesh = new Ce(body, mat(0, { GLOSS: 1 }));
+      const [body2, lamps] = carGeometries();
+      this.mesh = new Ce(body2, mat(0, { GLOSS: 1 }));
       this.lamps = new Ce(lamps, mat(4));
       for (const m of [this.mesh, this.lamps]) {
         m.matrixAutoUpdate = false;
@@ -25066,6 +25077,504 @@ void main() {
     }
   };
 
+  // src/trains.js
+  var e34 = [0, 0, 0];
+  var n34 = [0, 0, 0];
+  var u34 = [0, 0, 0];
+  var p35 = new Float64Array(3);
+  var wrapD3 = (d) => d > C2 / 2 ? d - C2 : d < -C2 / 2 ? d + C2 : d;
+  var DAY = 86400;
+  var REACH = 3500;
+  var RIM = 12;
+  var motion = (line, type) => type === 2 ? [36, 0.45] : line === "Mattapan" ? [15.6, 0.9] : type === 0 ? [22.4, 1] : [24.6, 1];
+  var STEEL = [0.4, 0.41, 0.42];
+  var DOORS = [0.33, 0.34, 0.35];
+  var GLASS = [0.022, 0.03, 0.04];
+  var ROOF = [0.27, 0.27, 0.27];
+  var UNDER = [0.045, 0.045, 0.045];
+  var TRUCK = [0.025, 0.025, 0.025];
+  var BLACK = [0.018, 0.018, 0.02];
+  var LENS = [0.55, 0.55, 0.5];
+  var RED2 = [0.46, 0.02, 0.014];
+  var ORANGE = [0.66, 0.2, 0.01];
+  var BLUE = [0.01, 0.045, 0.3];
+  var GREEN = [0, 0.16, 0.05];
+  var WHITE2 = [0.6, 0.6, 0.58];
+  var PURPLE = [0.17, 0.022, 0.14];
+  var YELLOW = [0.7, 0.5, 0.02];
+  var CREAM = [0.66, 0.56, 0.36];
+  var TROLLEY = [0.6, 0.19, 0.02];
+  var MAROON = [0.13, 0.018, 0.016];
+  var Build3 = class {
+    constructor() {
+      this.p = [];
+      this.n = [];
+      this.c = [];
+    }
+    tri(a, b, c, col) {
+      let nx2 = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]), ny2 = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      const l = Math.hypot(nx2, ny2, nz) || 1;
+      nx2 /= l;
+      ny2 /= l;
+      nz /= l;
+      this.p.push(...a, ...b, ...c);
+      for (let i = 0; i < 3; i++) {
+        this.n.push(nx2, ny2, nz);
+        this.c.push(col[0], col[1], col[2]);
+      }
+    }
+    // a flat polygon facing `want`
+    flat(pts, want, col) {
+      const a = pts[0], b = pts[1], c = pts[2];
+      const nx2 = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]), ny2 = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      const back = nx2 * want[0] + ny2 * want[1] + nz * want[2] < 0;
+      for (let i = 1; i < pts.length - 1; i++) back ? this.tri(a, pts[i + 1], pts[i], col) : this.tri(a, pts[i], pts[i + 1], col);
+    }
+    box(x02, x1, y02, y1, z02, z1, col, top) {
+      this.flat([[x1, y02, z02], [x1, y1, z02], [x1, y1, z1], [x1, y02, z1]], [1, 0, 0], col);
+      this.flat([[x02, y02, z02], [x02, y1, z02], [x02, y1, z1], [x02, y02, z1]], [-1, 0, 0], col);
+      this.flat([[x02, y1, z02], [x1, y1, z02], [x1, y1, z1], [x02, y1, z1]], [0, 1, 0], top || col);
+      this.flat([[x02, y02, z1], [x1, y02, z1], [x1, y1, z1], [x02, y1, z1]], [0, 0, 1], col);
+      this.flat([[x02, y02, z02], [x1, y02, z02], [x1, y1, z02], [x02, y1, z02]], [0, 0, -1], col);
+    }
+    // a panel on a side wall (s +1 the right, -1 the left), a little proud of it so it never fights the wall
+    side(s29, x, z02, z1, y02, y1, col, lift = 0.012) {
+      const xx2 = s29 * (x + lift);
+      this.flat([[xx2, y02, z02], [xx2, y1, z02], [xx2, y1, z1], [xx2, y02, z1]], [s29, 0, 0], col);
+    }
+    // a panel on an end wall (e -1 the front, +1 the back)
+    end(e, z, x02, x1, y02, y1, col, lift = 0.012) {
+      const zz = z + e * lift;
+      this.flat([[x02, y02, zz], [x1, y02, zz], [x1, y1, zz], [x02, y1, zz]], [0, 0, e], col);
+    }
+    geometry() {
+      const g = new Yt(), n = this.p.length / 3;
+      g.setAttribute("position", new me(new Float32Array(this.p), 3));
+      g.setAttribute("normal", new me(new Float32Array(this.n), 3));
+      g.setAttribute("aCol", new me(new Float32Array(this.c), 3));
+      g.setAttribute("aPart", new me(new Float32Array(n).fill(2), 1));
+      return g;
+    }
+  };
+  function body(b, o) {
+    const hw = o.w / 2, eave = o.h - 0.38, inset = hw * 0.78, z02 = o.z0 ?? -o.len / 2, z1 = o.z1 ?? o.len / 2;
+    for (const s29 of [-1, 1]) {
+      b.flat([[s29 * hw, o.y0, z02], [s29 * hw, eave, z02], [s29 * hw, eave, z1], [s29 * hw, o.y0, z1]], [s29, 0, 0], o.body);
+      b.flat([[s29 * hw, eave, z02], [s29 * inset, o.h, z02], [s29 * inset, o.h, z1], [s29 * hw, eave, z1]], [s29, 1.5, 0], o.roof);
+    }
+    b.flat([[-inset, o.h, z02], [inset, o.h, z02], [inset, o.h, z1], [-inset, o.h, z1]], [0, 1, 0], o.roof);
+    b.flat([[-hw, o.y0, z02], [hw, o.y0, z02], [hw, o.y0, z1], [-hw, o.y0, z1]], [0, -1, 0], UNDER);
+    for (const [z, e] of [[z02, -1], [z1, 1]]) {
+      b.flat([[-hw, o.y0, z], [hw, o.y0, z], [hw, eave, z], [inset, o.h, z], [-inset, o.h, z], [-hw, eave, z]], [0, 0, e], o.endCol || o.body);
+    }
+  }
+  function running(b, o, bz) {
+    const hw = o.w / 2;
+    if (o.y0 > 0.6) b.box(-hw + 0.3, hw - 0.3, 0.42, o.y0, -o.len / 2 + 1.2, o.len / 2 - 1.2, UNDER);
+    for (const z of bz) {
+      b.box(-hw + 0.22, hw - 0.22, 0.06, 0.82, z - 1.25, z + 1.25, TRUCK);
+      for (const s29 of [-1, 1]) for (const dz of [-0.95, 0.95]) b.box(s29 * (0.72 - 0.06), s29 * (0.72 + 0.06), 0, 0.7, z + dz - 0.35, z + dz + 0.35, BLACK);
+    }
+  }
+  function sides(b, o, doorZ, dw, dTop, wy0, wy1, pane, oneSide) {
+    const hw = o.w / 2, z02 = o.z0 ?? -o.len / 2, z1 = o.z1 ?? o.len / 2, m = o.endM ?? 1.1;
+    const gaps = [z02 + m];
+    for (const z of [...doorZ].sort((a, b2) => a - b2)) gaps.push(z - dw / 2 - 0.35, z + dw / 2 + 0.35);
+    gaps.push(z1 - m);
+    for (const s29 of oneSide ? [1] : [-1, 1]) {
+      for (const z of doorZ) {
+        b.side(s29, hw, z - dw / 2, z + dw / 2, o.y0 + 0.08, dTop, o.door || DOORS);
+        for (const h of [-1, 1]) b.side(s29, hw, z + h * dw / 4 - dw / 4 + 0.06, z + h * dw / 4 + dw / 4 - 0.06, wy0 + 0.15, wy1 - 0.05, GLASS, 0.024);
+      }
+      for (let i = 0; i + 1 < gaps.length; i += 2) {
+        const a = gaps[i], c = gaps[i + 1], n = Math.max(1, Math.round((c - a) / pane)), l = (c - a) / n;
+        if (c - a < 0.6) continue;
+        for (let k = 0; k < n; k++) b.side(s29, hw, a + k * l + 0.07, a + (k + 1) * l - 0.07, wy0, wy1, GLASS);
+      }
+    }
+    if (oneSide) for (let i = 0; i + 1 < gaps.length; i += 2) {
+      const a = gaps[i], c = gaps[i + 1], n = Math.max(1, Math.round((c - a) / pane)), l = (c - a) / n;
+      for (let k = 0; k < n; k++) b.side(-1, hw, a + k * l + 0.07, a + (k + 1) * l - 0.07, wy0, wy1, GLASS);
+      for (const z of doorZ) b.side(-1, hw, z - dw / 2, z + dw / 2, wy0, wy1, GLASS);
+    }
+  }
+  function band(b, o, y02, y1, col, lift = 8e-3) {
+    const hw = o.w / 2, z02 = o.z0 ?? -o.len / 2, z1 = o.z1 ?? o.len / 2;
+    for (const s29 of [-1, 1]) b.side(s29, hw, z02, z1, y02, y1, col, lift);
+  }
+  function cabEnd(b, o, e, wy0, wy1, lampY, stripe) {
+    const hw = o.w / 2, z = e < 0 ? o.z0 ?? -o.len / 2 : o.z1 ?? o.len / 2;
+    b.end(e, z, -hw + 0.18, hw - 0.18, wy0, wy1, GLASS);
+    b.end(e, z, -hw * 0.6, hw * 0.6, wy1 + 0.08, Math.min(wy1 + 0.36, o.h - 0.45), BLACK);
+    if (stripe) b.end(e, z, -hw, hw, stripe[0], stripe[1], stripe[2], 8e-3);
+    for (const s29 of [-1, 1]) b.end(e, z, s29 * (hw - 0.55) - 0.14, s29 * (hw - 0.55) + 0.14, lampY, lampY + 0.2, LENS, 0.02);
+  }
+  function coupledEnd(b, o, e) {
+    const z = e < 0 ? o.z0 ?? -o.len / 2 : o.z1 ?? o.len / 2;
+    b.end(e, z, -0.42, 0.42, o.y0 + 0.15, o.h - 0.75, DOORS);
+    b.end(e, z, -0.3, 0.3, o.y0 + 1, o.h - 1, GLASS, 0.02);
+  }
+  function models2() {
+    const out = {};
+    const rapid = (name, len, w, h, floor, doors, col) => {
+      const b = new Build3(), o = { len, w, h, y0: floor - 0.3, body: STEEL, roof: ROOF };
+      const bz = 0.355 * len;
+      running(b, o, [-bz, bz]);
+      body(b, o);
+      const dz = [];
+      for (let i = 0; i < doors; i++) dz.push(-len / 2 + len * (i + 0.5) / doors);
+      sides(b, o, dz, 1.3, floor + 1.95, floor + 0.62, floor + 1.55, 1.6);
+      band(b, o, floor + 0.2, floor + 0.5, col);
+      band(b, o, o.h - 0.62, o.h - 0.5, col);
+      cabEnd(b, o, -1, floor + 0.65, floor + 1.55, floor + 0.05, [floor + 0.2, floor + 0.5, col]);
+      coupledEnd(b, o, 1);
+      out[name] = [b.geometry(), len, bz];
+    };
+    rapid("red", 21.2, 3.05, 3.72, 1.24, 4, RED2);
+    rapid("orange", 19.8, 2.82, 3.66, 1.14, 3, ORANGE);
+    rapid("blue", 14.8, 2.82, 3.56, 1.1, 3, BLUE);
+    const LRV = 22.6, SEC = LRV / 3;
+    {
+      const lrv = (cab) => {
+        const b = new Build3(), o = { len: SEC, w: 2.65, h: 3.55, y0: 0.32, body: WHITE2, roof: [0.5, 0.5, 0.49], z0: -SEC / 2, z1: SEC / 2 - 0.16 };
+        if (!cab) o.z0 = -SEC / 2 + 0.16;
+        running(b, Object.assign({}, o, { len: SEC + 0.8 }), [0]);
+        body(b, o);
+        band(b, o, 0.95, 2.38, BLACK, 6e-3);
+        sides(b, Object.assign({}, o, { endM: 0.5 }), [cab ? -0.6 : 0], 1.25, 2.28, 1.02, 2.3, 1.45);
+        band(b, o, 0.45, 0.82, GREEN);
+        if (cab) cabEnd(b, o, -1, 1.15, 2.45, 0.6, [0.45, 0.82, GREEN]);
+        for (const e of cab ? [1] : [-1, 1]) {
+          const z = e * SEC / 2;
+          b.box(-1.15, 1.15, 0.45, 3.2, Math.min(z, z - e * 0.18), Math.max(z, z - e * 0.18), BLACK);
+        }
+        if (!cab) {
+          b.box(-0.9, 0.9, 3.55, 3.62, -1, 1, BLACK);
+          b.box(-0.05, 0.05, 3.62, 4.35, -0.04, 0.04, BLACK);
+          b.box(-0.85, 0.85, 4.33, 4.39, -0.12, 0.12, BLACK);
+        }
+        return [b.geometry(), SEC, SEC / 2];
+      };
+      out.lrvCab = lrv(true);
+      out.lrvMid = lrv(false);
+    }
+    {
+      const len = 14.2, b = new Build3(), o = { len, w: 2.54, h: 3.12, y0: 0.62, body: TROLLEY, roof: CREAM };
+      running(b, o, [-4.3, 4.3]);
+      body(b, o);
+      band(b, o, 1.38, o.h - 0.38, CREAM);
+      band(b, o, 1.28, 1.38, MAROON);
+      band(b, o, 0.62, 0.78, BLACK);
+      sides(b, Object.assign({}, o, { endM: 1.4 }), [-len / 2 + 1.6, -0.6], 1.15, 2.45, 1.5, 2.32, 1, true);
+      cabEnd(b, o, -1, 1.45, 2.35, 0.95, [1.28, 1.38, MAROON]);
+      cabEnd(b, o, 1, 1.6, 2.3, 0.95, [1.28, 1.38, MAROON]);
+      out.pcc = [b.geometry(), len, 4.3];
+    }
+    const coach = (cab) => {
+      const len = 25.9, b = new Build3(), o = { len, w: 3.2, h: 4.75, y0: 0.62, body: STEEL, roof: ROOF };
+      const bz = 0.355 * len;
+      running(b, o, [-bz, bz]);
+      body(b, o);
+      const dz = [-len / 2 + 1.7, len / 2 - 1.7];
+      sides(b, Object.assign({}, o, { endM: 2.7 }), dz, 1.3, 2.75, 1.2, 1.95, 1.75);
+      for (const s29 of [-1, 1]) for (let z = -len / 2 + 3.4; z + 1.5 < len / 2 - 3.2; z += 1.75) b.side(s29, o.w / 2, z + 0.08, z + 1.62, 2.85, 3.6, GLASS);
+      band(b, o, 2.12, 2.55, PURPLE);
+      band(b, o, 0.66, 0.86, PURPLE);
+      if (cab) cabEnd(b, o, -1, 2.95, 3.7, 1, [2.12, 2.55, PURPLE]);
+      else coupledEnd(b, o, -1);
+      coupledEnd(b, o, 1);
+      return [b.geometry(), len, bz];
+    };
+    out.coach = coach(false);
+    out.cab = coach(true);
+    {
+      const len = 21.6, b = new Build3(), o = { len, w: 3.05, h: 4.6, y0: 0.95, body: PURPLE, roof: [0.33, 0.33, 0.34] };
+      running(b, o, [-6.86, 6.86]);
+      body(b, o);
+      band(b, o, 0.95, 1.55, STEEL);
+      band(b, o, 1.55, 1.7, YELLOW);
+      for (const s29 of [-1, 1]) {
+        b.side(s29, o.w / 2, -len / 2 + 0.9, -len / 2 + 2, 2.9, 3.6, GLASS);
+        for (let k = 0; k < 4; k++) b.side(s29, o.w / 2, -2 + k * 2.4, -0.4 + k * 2.4, 2.4, 3.9, [0.1, 0.02, 0.09]);
+      }
+      cabEnd(b, o, -1, 3, 3.75, 1.9, [1.55, 1.7, YELLOW]);
+      b.end(-1, -len / 2, -o.w / 2, o.w / 2, 0.95, 1.55, STEEL, 8e-3);
+      b.end(1, len / 2, -0.9, 0.9, 1.6, 3.8, [0.1, 0.02, 0.09]);
+      for (let k = 0; k < 3; k++) b.box(-0.75, 0.75, o.h - 0.02, o.h + 0.06, 1.5 + k * 2.2, 3.1 + k * 2.2, BLACK);
+      out.loco = [b.geometry(), len, 6.86];
+    }
+    return out;
+  }
+  function consist(line, type, dir) {
+    if (type === 2) {
+      const mid = Array.from({ length: 5 }, () => ["coach", false, 1]);
+      return dir === 0 ? [["loco", false, 0], ...mid, ["cab", true, 1]] : [["cab", false, 0], ...mid, ["loco", true, 1]];
+    }
+    if (line === "Mattapan") return [["pcc", false, 0]];
+    if (line.startsWith("Green")) {
+      const car = (g) => [["lrvCab", false, g], ["lrvMid", false, 0], ["lrvCab", true, 0]];
+      return [...car(0), ...car(0.8)];
+    }
+    const m = line === "Red" ? "red" : line === "Orange" ? "orange" : "blue";
+    return Array.from({ length: 6 }, (_, i) => [m, (i & 1) === 1, i ? 0.9 : 0]);
+  }
+  var Trains = class {
+    constructor(game2, data) {
+      this.game = game2;
+      this.lines = data.lines;
+      this.paths = data.paths.map((p) => {
+        const n = p.x.length, x = new Float64Array(n), y = new Float64Array(n), z = new Float32Array(n), cum = new Float64Array(n), code = new Uint8Array(n);
+        let ax2 = 0, ay2 = 0, az = 0;
+        for (let i = 0; i < n; i++) {
+          ax2 += p.x[i];
+          ay2 += p.y[i];
+          az += p.z[i];
+          x[i] = ax2 / 10;
+          y[i] = ay2 / 10;
+          z[i] = az / 10;
+          if (i) cum[i] = cum[i - 1] + Math.hypot(x[i] - x[i - 1], y[i] - y[i - 1]);
+        }
+        for (let i = 0, k = 0; i < p.f.length; i += 2) for (let j = 0; j < p.f[i + 1]; j++) code[k++] = p.f[i];
+        const hid = [], ends = [];
+        for (let i = 0; i < n; i++) {
+          if (code[i] === 2 && (i === 0 || code[i - 1] !== 2)) {
+            let j = i;
+            while (j + 1 < n && code[j + 1] === 2) j++;
+            hid.push(i ? cum[i - 1] : -1e9, j + 1 < n ? cum[j + 1] : 1e9);
+          }
+          if (code[i] === 1 && i && code[i - 1] === 0) ends.push(cum[i]);
+          if (code[i] === 1 && i + 1 < n && code[i + 1] === 0) ends.push(cum[i]);
+        }
+        let x02 = 1e9, x1 = -1e9, y02 = 1e9, y1 = -1e9;
+        for (let i = 0; i < n; i++) if (code[i] !== 2) {
+          x02 = Math.min(x02, x[i]);
+          x1 = Math.max(x1, x[i]);
+          y02 = Math.min(y02, y[i]);
+          y1 = Math.max(y1, y[i]);
+        }
+        return { x, y, z, cum, code, len: cum[n - 1], hid, ends: Float64Array.from(ends).sort(), box: [x02, x1, y02, y1] };
+      });
+      this.pats = data.pats.map(([pi2, li, dir, ss2, arr, dep]) => {
+        const line = this.lines[li], type = line.startsWith("CR-") || line === "CapeFlyer" ? 2 : line.startsWith("Green") || line === "Mattapan" ? 0 : 1;
+        const cars = consist(line, type, dir);
+        let tl = 0;
+        for (const [m, , gap] of cars) tl += gap + MODEL_LEN[m];
+        return { path: this.paths[pi2], s: ss2.map((v) => v / 10), arr, dep, cars, len: tl, acc: motion(line, type)[1] };
+      });
+      const T = data.trips, nT = T.length / 2;
+      this.tPat = new Int32Array(nT);
+      this.t0 = new Float64Array(nT);
+      this.t1 = new Float64Array(nT);
+      for (let i = 0; i < nT; i++) {
+        const p = this.pats[T[i * 2]];
+        this.tPat[i] = T[i * 2];
+        this.t0[i] = T[i * 2 + 1];
+        this.t1[i] = T[i * 2 + 1] + p.arr[p.arr.length - 1];
+      }
+      const t = game2.terrain, M = models2();
+      this.kinds = {};
+      this.meshes = [];
+      for (const k in M) {
+        const [geo, len, bz] = M[k], cap = k === "pcc" ? 24 : k === "loco" || k === "cab" ? 96 : 480;
+        const inst = new vi(new Float32Array(cap * 4), 4);
+        inst.setUsage(Zm);
+        geo.setAttribute("aInst", inst);
+        const mesh = new bo(geo, t.trainMat, cap);
+        mesh.instanceMatrix.setUsage(Zm);
+        mesh.count = 0;
+        mesh.frustumCulled = false;
+        mesh.matrixAutoUpdate = false;
+        mesh.visible = false;
+        game2.scene.add(mesh);
+        this.kinds[k] = { mesh, inst, len, bz, cap, n: 0 };
+        this.meshes.push(mesh);
+      }
+      this.M = new Ht();
+      this.tau = null;
+      this.skyWas = null;
+      this.near = 1e9;
+      this.pt = { x: 0, y: 0, i: 0 };
+    }
+    // the train clock, in seconds after midnight
+    clock(dt) {
+      const sky = this.game.sky, now = sky.hours * 3600;
+      if (this.tau === null) this.tau = now;
+      else {
+        let jump = now - (this.skyWas + (sky.running ? dt * sky.rate : 0));
+        jump -= Math.round(jump / DAY) * DAY;
+        let gap = now - this.tau;
+        gap -= Math.round(gap / DAY) * DAY;
+        if (Math.abs(jump) > 90 || Math.abs(gap) > 2700 && this.near > 2500) this.tau = now;
+        else this.tau += dt;
+      }
+      this.tau = (this.tau % DAY + DAY) % DAY;
+      this.skyWas = now;
+    }
+    // the point s metres along path P: this.pt.x, .y, and the segment it is on
+    at(P2, s29) {
+      const cum = P2.cum, n = cum.length;
+      s29 = s29 < 0 ? 0 : s29 > P2.len ? P2.len : s29;
+      let lo2 = 0, hi2 = n - 1;
+      while (hi2 - lo2 > 1) {
+        const m = lo2 + hi2 >> 1;
+        if (cum[m] <= s29) lo2 = m;
+        else hi2 = m;
+      }
+      const u = (s29 - cum[lo2]) / Math.max(cum[hi2] - cum[lo2], 1e-6), o = this.pt;
+      o.x = P2.x[lo2] + (P2.x[hi2] - P2.x[lo2]) * u;
+      o.y = P2.y[lo2] + (P2.y[hi2] - P2.y[lo2]) * u;
+      o.z = P2.z[lo2] + (P2.z[hi2] - P2.z[lo2]) * u;
+      o.i = lo2;
+      o.deck = P2.code[lo2] === 1 && P2.code[hi2] === 1;
+      return o;
+    }
+    // the height a train rides at s metres along path P: on a deck (or across a gap in the track the bake bridged) its
+    // own; on the ground the ground's, eased from the deck's over the first 12 m off one
+    height(P2, s29, o) {
+      if (o.deck) return o.z;
+      const w = this.game.world, g = w.groundH(clamp2(o.x, 300, L - 300), wrapY(o.y)), E = P2.ends;
+      if (!E.length) return g;
+      let lo2 = 0, hi2 = E.length;
+      while (lo2 < hi2) {
+        const m = lo2 + hi2 >> 1;
+        if (E[m] < s29) lo2 = m + 1;
+        else hi2 = m;
+      }
+      let d = 1e9;
+      if (lo2 < E.length) d = E[lo2] - s29;
+      if (lo2 > 0) d = Math.min(d, s29 - E[lo2 - 1]);
+      if (d >= RIM) return g;
+      const k = d / RIM, sm2 = k * k * (3 - 2 * k);
+      return o.z + (g - o.z) * sm2;
+    }
+    // where a train's front is, rel seconds after its first departure
+    front(p, rel) {
+      const { s: s29, arr, dep } = p, n = s29.length;
+      let pos;
+      if (rel <= dep[0]) pos = s29[0];
+      else if (rel >= arr[n - 1]) pos = s29[n - 1];
+      else {
+        let lo2 = 0, hi2 = n - 1;
+        while (hi2 - lo2 > 1) {
+          const m = lo2 + hi2 >> 1;
+          if (dep[m] <= rel) lo2 = m;
+          else hi2 = m;
+        }
+        if (rel <= arr[lo2]) pos = s29[lo2];
+        else if (rel >= arr[lo2 + 1]) pos = s29[lo2 + 1];
+        else {
+          const D = s29[lo2 + 1] - s29[lo2], T = arr[lo2 + 1] - dep[lo2], t = rel - dep[lo2], a = p.acc;
+          const disc = a * a * T * T - 4 * a * D;
+          let v, ta2;
+          if (disc >= 0) {
+            v = (a * T - Math.sqrt(disc)) / 2;
+            ta2 = v / a;
+          } else {
+            v = 2 * D / T;
+            ta2 = T / 2;
+          }
+          const r = v / Math.max(ta2, 1e-6);
+          pos = s29[lo2] + (t < ta2 ? 0.5 * r * t * t : t < T - ta2 ? 0.5 * v * ta2 + v * (t - ta2) : D - 0.5 * r * (T - t) * (T - t));
+        }
+      }
+      return clamp2(pos + p.len / 2, p.len, p.path.len);
+    }
+    update(dt, camMap, camC, agl) {
+      this.clock(dt);
+      for (const k in this.kinds) this.kinds[k].n = 0;
+      const reach = REACH + Math.min(agl, 3e3), cx2 = camMap[0], cy2 = camMap[1];
+      let near2 = 1e9;
+      const tau = this.tau, nT = this.t0.length;
+      for (let i = 0; i < nT; i++) {
+        let t = tau;
+        if (t < this.t0[i] - 90) t += DAY;
+        if (t < this.t0[i] - 90 || t > this.t1[i] + 60) continue;
+        const p = this.pats[this.tPat[i]], P2 = p.path, B = P2.box;
+        if (cx2 < B[0] - reach || cx2 > B[1] + reach) continue;
+        const dyb = Math.max(B[2] - cy2, 0, cy2 - B[3]);
+        if (Math.min(dyb, C2 - dyb) > reach) continue;
+        const sf2 = this.front(p, t - this.t0[i]);
+        const o = this.at(P2, sf2 - p.len / 2), dc2 = Math.hypot(o.x - cx2, wrapD3(o.y - cy2));
+        if (dc2 - p.len / 2 < 1500) near2 = Math.min(near2, dc2);
+        if (dc2 > reach + p.len) continue;
+        this.train(p, sf2, camC, dc2 > 1200 + p.len / 2);
+      }
+      this.near = near2;
+      for (const k in this.kinds) {
+        const K = this.kinds[k];
+        K.mesh.count = K.n;
+        K.mesh.visible = K.n > 0;
+        if (K.n) {
+          K.mesh.instanceMatrix.needsUpdate = true;
+          K.inst.needsUpdate = true;
+        }
+      }
+    }
+    // the cars of one train whose front is sf metres along its path (far: at the track's own heights, which are within
+    // a metre or so of the ground's)
+    train(p, sf2, camC, far) {
+      const P2 = p.path, H = P2.hid;
+      let s29 = sf2;
+      for (const [m, rev, gap] of p.cars) {
+        s29 -= gap;
+        const K = this.kinds[m], len = K.len, sF = s29, sB = s29 - len, sc2 = s29 - len / 2;
+        s29 -= len;
+        if (K.n >= K.cap) continue;
+        let lo2 = -1e4, hi2 = 1e4, gone = false;
+        for (let h = 0; h < H.length; h += 2) {
+          const h02 = H[h], h1 = H[h + 1];
+          if (h1 <= sB || h02 >= sF) continue;
+          if (h02 <= sB && h1 >= sF) {
+            gone = true;
+            break;
+          }
+          if (h02 > sB) {
+            const zc2 = sc2 - h02;
+            if (rev) hi2 = Math.min(hi2, -zc2);
+            else lo2 = Math.max(lo2, zc2);
+          }
+          if (h1 < sF) {
+            const zc2 = sc2 - h1;
+            if (rev) lo2 = Math.max(lo2, -zc2);
+            else hi2 = Math.min(hi2, zc2);
+          }
+        }
+        if (gone) continue;
+        const a = this.at(P2, sc2 + K.bz), ax2 = a.x, ay2 = a.y, ah = far ? a.z : this.height(P2, sc2 + K.bz, a);
+        const b = this.at(P2, sc2 - K.bz), bx2 = b.x, by2 = b.y, bh2 = far ? b.z : this.height(P2, sc2 - K.bz, b);
+        this.place(K, rev ? bx2 : ax2, rev ? by2 : ay2, rev ? bh2 : ah, rev ? ax2 : bx2, rev ? ay2 : by2, rev ? ah : bh2, lo2, hi2, camC);
+      }
+    }
+    // one car from the point its front rides at (fx, fy, fh) to its back's (bx, by, bh)
+    place(K, fx2, fy2, fh2, bx2, by2, bh2, lo2, hi2, camC) {
+      const dx2 = fx2 - bx2, dy2 = wrapD3(fy2 - by2), dz = fh2 - bh2, dl = Math.hypot(dx2, dy2) || 1, my2 = wrapY(by2 + dy2 / 2);
+      cyl((fx2 + bx2) / 2, my2, (fh2 + bh2) / 2, p35);
+      frame(my2, e34, n34, u34);
+      let fwx = (dx2 * e34[0] + dy2 * n34[0]) / dl, fwy = (dx2 * e34[1] + dy2 * n34[1]) / dl, fwz = (dx2 * e34[2] + dy2 * n34[2]) / dl;
+      const gr2 = dz / dl, fl = Math.sqrt(1 + gr2 * gr2);
+      fwx = (fwx + gr2 * u34[0]) / fl;
+      fwy = (fwy + gr2 * u34[1]) / fl;
+      fwz = (fwz + gr2 * u34[2]) / fl;
+      const ud = u34[0] * fwx + u34[1] * fwy + u34[2] * fwz;
+      let ux2 = u34[0] - ud * fwx, uy2 = u34[1] - ud * fwy, uz = u34[2] - ud * fwz;
+      const ul = Math.hypot(ux2, uy2, uz) || 1;
+      ux2 /= ul;
+      uy2 /= ul;
+      uz /= ul;
+      const rx2 = fwy * uz - fwz * uy2, ry2 = fwz * ux2 - fwx * uz, rz = fwx * uy2 - fwy * ux2;
+      const M = this.M;
+      M.set(rx2, ux2, -fwx, p35[0] - camC[0], ry2, uy2, -fwy, p35[1] - camC[1], rz, uz, -fwz, p35[2] - camC[2], 0, 0, 0, 1);
+      K.mesh.setMatrixAt(K.n, M);
+      const a = K.inst.array, q = K.n * 4;
+      a[q] = 0.5;
+      a[q + 1] = 2;
+      a[q + 2] = lo2;
+      a[q + 3] = hi2;
+      K.n++;
+    }
+  };
+  var MODEL_LEN = { red: 21.2, orange: 19.8, blue: 14.8, lrvCab: 22.6 / 3, lrvMid: 22.6 / 3, pcc: 14.2, coach: 25.9, cab: 25.9, loco: 21.6 };
+
   // src/dunkin.js
   var VS2 = (
     /* glsl */
@@ -25361,8 +25870,8 @@ void main() {
       return 24 + 20 * this.env.urban + (this.g.sky.isNight ? 4 : 0);
     }
     // every station on a frequency, strongest first: [[E, s], ...]
-    heard(band, f, mx2, my2, fast) {
-      const m = this.data && this.data.byFreq[band].get(band === "AM" ? Math.round(f) : Math.round(f * 10));
+    heard(band2, f, mx2, my2, fast) {
+      const m = this.data && this.data.byFreq[band2].get(band2 === "AM" ? Math.round(f) : Math.round(f * 10));
       if (!m) return [];
       const out = [];
       for (const s29 of m) {
@@ -25373,10 +25882,10 @@ void main() {
       return out;
     }
     // a frequency's quality for seeking (0 none .. 1 clean)
-    quality(band, f, mx2, my2) {
-      const h = this.heard(band, f, mx2, my2, false);
+    quality(band2, f, mx2, my2) {
+      const h = this.heard(band2, f, mx2, my2, false);
       if (!h.length) return 0;
-      return band === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
+      return band2 === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
     }
     // ---- controls
     async power(on2 = !this.on) {
@@ -25423,8 +25932,8 @@ void main() {
       this.shown = null;
       return this.on;
     }
-    heardBest(band, f, mx2, my2) {
-      const h = this.heard(band, f, mx2, my2, false);
+    heardBest(band2, f, mx2, my2) {
+      const h = this.heard(band2, f, mx2, my2, false);
       return h.length ? h[0][0] : 0;
     }
     setBand(b = this.band === "FM" ? "AM" : "FM") {
@@ -25622,13 +26131,13 @@ void main() {
         this.nextCheck = this.t + 0.3;
         this.sense(mx2, my2);
       }
-      const band = this.band, f = this.freq[band], am2 = band === "AM";
-      const h = this.heard(band, f, mx2, my2, true);
+      const band2 = this.band, f = this.freq[band2], am2 = band2 === "AM";
+      const h = this.heard(band2, f, mx2, my2, true);
       const A = h[0], B = h[1];
       const wantA = A && A[0] > (am2 ? this.amFloor() - 12 : 6) ? A[1] : null;
       const wantB = B && wantA && (am2 ? B[0] > this.amFloor() - 6 && A[0] - B[0] < 18 : A[0] - B[0] < 9 && B[0] > 10) ? B[1] : null;
-      if (this.lastF !== band + f) {
-        this.lastF = band + f;
+      if (this.lastF !== band2 + f) {
+        this.lastF = band2 + f;
         this.restAt = this.t;
       }
       const rested = this.t - this.restAt > 0.45;
@@ -25691,7 +26200,7 @@ void main() {
         const sA = locked ? A[1] : null, slA = sA && sl2.find((x) => x.s === sA);
         const bars = A ? Math.round(5 * (am2 ? smooth(-5, 35, A[0] - this.amFloor()) : smooth(10, 55, A[0]))) : 0;
         const info = {
-          band,
+          band: band2,
           freq: am2 ? amText(f) : fmText(f),
           bars,
           stereo: !am2 && A && A[0] > 48 && !!slA,
@@ -26060,11 +26569,11 @@ void main() {
           const l = Math.hypot(x, y, zN) || 1;
           arr.push((x * e[0] + zN * n[0] + y * u[0]) / l, (x * e[1] + zN * n[1] + y * u[1]) / l, (x * e[2] + zN * n[2] + y * u[2]) / l);
         };
-        const frustum = (out, sides, a, ra2, b, rb, c, cap) => {
+        const frustum = (out, sides2, a, ra2, b, rb, c, cap) => {
           const slope = (ra2 - rb) / Math.max(b - a, 0.01);
-          for (let k = 0; k < sides; k++) {
-            const a02 = k / sides * 2 * Math.PI + (sides === 4 ? Math.PI / 4 : 0), a1 = (k + 1) / sides * 2 * Math.PI + (sides === 4 ? Math.PI / 4 : 0);
-            const am2 = (a02 + a1) / 2, flat = sides <= 8;
+          for (let k = 0; k < sides2; k++) {
+            const a02 = k / sides2 * 2 * Math.PI + (sides2 === 4 ? Math.PI / 4 : 0), a1 = (k + 1) / sides2 * 2 * Math.PI + (sides2 === 4 ? Math.PI / 4 : 0);
+            const am2 = (a02 + a1) / 2, flat = sides2 <= 8;
             const quad = [[a02, a, ra2], [a1, a, ra2], [a1, b, rb], [a02, a, ra2], [a1, b, rb], [a02, b, rb]];
             for (const [ang, hh, rr2] of quad) {
               const nAng = flat ? am2 : ang;
@@ -26081,29 +26590,29 @@ void main() {
             }
           }
         };
-        const body = { pos: [], nor: [], col: [] }, glass = { pos: [], nor: [], col: [] };
+        const body2 = { pos: [], nor: [], col: [] }, glass = { pos: [], nor: [], col: [] };
         const pc2 = (k) => paint[k] || [0.88, 0.88, 0.85];
         if (t.pier) {
           const ph2 = Math.max(3, 0.3 * H);
-          frustum(body, 20, base - 3, r02 * 1.7, base + ph2, r02 * 1.6, pc2(t.pier), 0);
-          frustum(body, 20, base + ph2, r02 * 1.6, base + ph2 + 0.4, r02 * 1.6, pc2(t.pier), 0.01);
+          frustum(body2, 20, base - 3, r02 * 1.7, base + ph2, r02 * 1.6, pc2(t.pier), 0);
+          frustum(body2, 20, base + ph2, r02 * 1.6, base + ph2 + 0.4, r02 * 1.6, pc2(t.pier), 0.01);
           z02 = base + ph2;
         }
         const bodyTop = gallery;
-        frustum(body, t.sides, z02 - 12, r02, z02, r02, pc2(t.bands[0][2]), 0);
+        frustum(body2, t.sides, z02 - 12, r02, z02, r02, pc2(t.bands[0][2]), 0);
         for (const [f02, f1, c] of t.bands) {
           const a = z02 + (bodyTop - z02) * f02, b = z02 + (bodyTop - z02) * f1;
           const ra2 = r02 + (r1 - r02) * f02, rb = r02 + (r1 - r02) * f1;
-          frustum(body, t.sides, a, ra2, b, rb, pc2(c), 0);
+          frustum(body2, t.sides, a, ra2, b, rb, pc2(c), 0);
         }
         const black = [0.06, 0.06, 0.06];
-        frustum(body, 16, gallery, r1 + 0.7, gallery + 0.25, r1 + 0.7, black, 1e-3);
-        frustum(body, 16, gallery - 0.25, r1, gallery, r1 + 0.7, black, 0);
+        frustum(body2, 16, gallery, r1 + 0.7, gallery + 0.25, r1 + 0.7, black, 1e-3);
+        frustum(body2, 16, gallery - 0.25, r1, gallery, r1 + 0.7, black, 0);
         const lr2 = Math.max(0.8, r1 * 0.72);
         const lit = L02 ? COLS[(L02.seq[0] || [0, 0, 0])[2]] : null;
-        frustum(lit ? glass : body, 12, gallery + 0.25, lr2, gallery + 0.25 + glassH, lr2, lit ? lit.map((v) => v * 0.32) : [0.1, 0.12, 0.13], 0);
-        frustum(body, 12, gallery + 0.25 + glassH, lr2 * 1.1, top, 0.15, black, 0);
-        T.push(body);
+        frustum(lit ? glass : body2, 12, gallery + 0.25, lr2, gallery + 0.25 + glassH, lr2, lit ? lit.map((v) => v * 0.32) : [0.1, 0.12, 0.13], 0);
+        frustum(body2, 12, gallery + 0.25 + glassH, lr2 * 1.1, top, 0.15, black, 0);
+        T.push(body2);
         if (lit) Gl2.push(glass);
         if (L02) {
           L02.tower = { top, gallery };
@@ -26346,12 +26855,12 @@ void main() {
       const nReg = dv2.getUint32(4, true), nB = dv2.getUint32(8, true);
       const oR = 16, oB = oR + nReg * 20, oX = oB + nB * BS2;
       this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
-      const mat = (band) => {
+      const mat = (band2) => {
         const m = new Rn({
           vertexShader: SCATTER_VS,
           fragmentShader: LIT_FS,
           side: Mi,
-          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
+          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band2 === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
           // the tiles' own reach (it follows the camera's height) and the same lighting
           uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
         });
@@ -26363,13 +26872,13 @@ void main() {
       const M = new Ht(), V3 = new C(), Q = new ke(), Qx2 = new ke(), S2 = new C();
       const Y = new C(0, 1, 0), X = new C(1, 0, 0);
       const groups = /* @__PURE__ */ new Map();
-      const group = (band, rx2, ry2, sub) => {
-        const key2 = band + "/" + rx2 + "/" + ry2 + "/" + sub;
+      const group = (band2, rx2, ry2, sub) => {
+        const key2 = band2 + "/" + rx2 + "/" + ry2 + "/" + sub;
         let G = groups.get(key2);
         if (!G) {
-          const n = band === 1 ? 4 : 1, sx2 = band === 1 ? sub % 4 : 0, sy2 = band === 1 ? sub >> 2 : 0;
+          const n = band2 === 1 ? 4 : 1, sx2 = band2 === 1 ? sub % 4 : 0, sy2 = band2 === 1 ? sub >> 2 : 0;
           const cx2 = rx2 * RS3 + (sx2 + 0.5) * RS3 / n, cy2 = ry2 * RS3 + (sy2 + 0.5) * RS3 / n;
-          G = { band, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0 };
+          G = { band: band2, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0 };
           groups.set(key2, G);
         }
         return G;
@@ -27251,6 +27760,9 @@ void main() {
       if (nBoats > 0) fetch(vurl("data/ferries.json")).then((r) => r.ok ? r.json() : []).catch(() => []).then((routes) => {
         this.boats = new Boats(this, nBoats, routes);
       });
+      if (F.trains && params.get("trains") !== "0") fetch(vurl("data/" + F.trains.file)).then((r) => r.ok ? r.json() : null).catch(() => null).then((j) => {
+        if (j) this.trains = new Trains(this, j);
+      });
       this.webster = { state: "idle", meshes: [] };
       this.landmarks = this.buildLandmarks();
       this.dunkin = new Dunkin(this);
@@ -27358,6 +27870,7 @@ void main() {
       this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
       this.depthMat.decks = this.depthMat.houses;
       this.depthMat.rails = mk(DEPTH_RAILS_VS);
+      this.depthMat.trains = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { TRAIN: 1 }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.leaves = new Rn({ vertexShader: DEPTH_TREE_VS, fragmentShader: DEPTH_TREE_FS, uniforms: { uLeafTex: this.U.uLeafTex }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
@@ -27424,6 +27937,13 @@ void main() {
           sw.push(tm2, tm2.material);
           tm2.material = this.depthMat.cars;
         } else tm2.layers.disable(1);
+      }
+      if (this.trains) for (const m of this.trains.meshes) {
+        if (m.visible) {
+          m.layers.enable(1);
+          sw.push(m, m.material);
+          m.material = this.depthMat.trains;
+        } else m.layers.disable(1);
       }
       const r = this.renderer;
       r.setRenderTarget(this.shadowRT);
@@ -28035,6 +28555,7 @@ void main() {
       p.placeCar();
       if (this.traffic) this.traffic.update(this.title || this.paused ? 0 : dt, p.camMap, p.viewYaw, camC, p.camMap[2] - this.groundUnderCam);
       if (this.boats) this.boats.update(this.title || this.paused ? 0 : dt, p.camMap, camC, p.camMap[2] - this.groundUnderCam, this.time);
+      if (this.trains) this.trains.update(this.title || this.paused ? 0 : dt, p.camMap, camC, p.camMap[2] - this.groundUnderCam);
       this.updateWebster(camC);
       this.updateLandmarks(camC);
       if (this.dunkin) this.dunkin.update(camC);
