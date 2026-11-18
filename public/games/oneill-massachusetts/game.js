@@ -22058,6 +22058,24 @@ void main() {
         f.wCodes[i] = dv2.getUint32(o + 12, true);
       }
     }
+    f.mp = null;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1280266317) {
+      const nP2 = dv2.getUint32(o + 4, true), nS2 = dv2.getUint32(o + 8, true);
+      o += 16;
+      const mp2 = f.mp = { n: nP2, road: new Uint32Array(nP2), s: new Float32Array(nP2), side: new Int8Array(nP2), carries: new Uint8Array(nP2), next: new Int32Array(nP2), cov: /* @__PURE__ */ new Map() };
+      for (let i = 0; i < nP2; i++, o += 16) {
+        mp2.road[i] = dv2.getUint32(o, true);
+        mp2.s[i] = dv2.getFloat32(o + 4, true);
+        mp2.side[i] = dv2.getInt8(o + 8);
+        mp2.carries[i] = dv2.getUint8(o + 9);
+        mp2.next[i] = dv2.getInt32(o + 12, true);
+      }
+      for (let i = 0; i < nS2; i++, o += 12) {
+        const r = dv2.getUint32(o, true);
+        if (!mp2.cov.has(r)) mp2.cov.set(r, []);
+        mp2.cov.get(r).push(dv2.getFloat32(o + 4, true), dv2.getFloat32(o + 8, true));
+      }
+    }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
       let x02 = 1e9, y02 = 1e9, x1 = -1e9, y1 = -1e9;

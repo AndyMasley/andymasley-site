@@ -4314,10 +4314,19 @@
     const c = reg.rCls[ri], f = reg.rFlags[ri];
     return c >= 4 && c < 14 && c !== 5 && c !== 7 && c !== 9 && !(f & 6);
   };
+  function photographed(reg, ri, s) {
+    const mp = reg.feat && reg.feat.mp, iv = mp && mp.cov.get(ri);
+    if (!iv) return false;
+    for (let i = 0; i < iv.length; i += 2) if (s >= iv[i] && s <= iv[i + 1]) return true;
+    return false;
+  }
   function poleAt(world2, reg, ri, k, out) {
-    const s0 = reg.cum[reg.rStart[ri]], s1 = reg.cum[reg.rStart[ri] + reg.rCount[ri] - 1], s = k * POLE_GAP;
+    return poleAtS(world2, reg, ri, k * POLE_GAP, poleSide(reg, ri), out);
+  }
+  function poleAtS(world2, reg, ri, s, side, out) {
+    const s0 = reg.cum[reg.rStart[ri]], s1 = reg.cum[reg.rStart[ri] + reg.rCount[ri] - 1];
     if (s < s0 + 4 || s > s1 - 4) return false;
-    const p = pointAt(reg, ri, s), side = poleSide(reg, ri), off2 = (reg.rHw[ri] + 0.9) * side;
+    const p = pointAt(reg, ri, s), off2 = (reg.rHw[ri] + 0.9) * side;
     out.mx = reg.x0 + p.x + p.ty * off2;
     out.my = reg.y0 + p.y - p.tx * off2;
     out.yaw = Math.atan2(-p.tx, p.ty) + (side < 0 ? Math.PI : 0);
@@ -4342,11 +4351,12 @@
       if (kind === "poles" || kind === "wires") {
         if (!polesOn(reg, ri)) continue;
         for (let k = Math.ceil(sA / POLE_GAP); k * POLE_GAP <= sB; k++) {
+          if (photographed(reg, ri, k * POLE_GAP)) continue;
           if (!poleAt(world2, reg, ri, k, A) || !inTile(A.mx, A.my) || cityPoles(reg, A.mx, A.my)) continue;
           if (kind === "poles") {
             cyl(A.mx, A.my, A.h, p32);
             out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, hash2(k * 7 + 3, reg.rName[ri] + 11));
-          } else if (poleAt(world2, reg, ri, k + 1, B) && !cityPoles(reg, B.mx, B.my)) {
+          } else if (!photographed(reg, ri, (k + 1) * POLE_GAP) && poleAt(world2, reg, ri, k + 1, B) && !cityPoles(reg, B.mx, B.my)) {
             const span = Math.hypot(B.mx - A.mx, B.my - A.my);
             if (span > POLE_GAP * 1.6) continue;
             let clear = true;
@@ -4393,6 +4403,35 @@
           if (world2.g.water) continue;
           cyl(mx, my, h + 0.02, p32);
           out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, Math.atan2(-tx * side, ty * side), hash2(k + 31, reg.rName[ri] + k * 13));
+        }
+      }
+    }
+    const mp = reg.feat && reg.feat.mp;
+    if (mp && mp.n && (kind === "poles" || kind === "wires")) {
+      if (!mp.tile) {
+        mp.tile = new Int32Array(mp.n);
+        const TSm2 = RS2 / 64;
+        for (let i = 0; i < mp.n; i++) {
+          const ri = mp.road[i];
+          if (ri >= reg.nRoads) {
+            mp.tile[i] = -1;
+            continue;
+          }
+          const p = pointAt(reg, ri, mp.s[i]), off2 = (reg.rHw[ri] + 0.9) * mp.side[i];
+          const x = p.x + p.ty * off2, y = p.y - p.tx * off2;
+          mp.tile[i] = x < 0 || y < 0 || x >= RS2 || y >= RS2 ? -1 : Math.floor(y / TSm2) * 64 + Math.floor(x / TSm2);
+        }
+      }
+      const TSm = RS2 / 64, tk = Math.round(ly0 / TSm) * 64 + Math.round(lx0 / TSm);
+      for (let i = 0; i < mp.n; i++) {
+        if (mp.tile[i] !== tk) continue;
+        if (!poleAtS(world2, reg, mp.road[i], mp.s[i], mp.side[i], A) || cityPoles(reg, A.mx, A.my)) continue;
+        if (kind === "poles") {
+          cyl(A.mx, A.my, A.h, p32);
+          out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, mp.carries[i] === 1 ? 0.3 : mp.carries[i] === 2 ? 0.05 : 0.9);
+        } else {
+          const j = mp.next[i];
+          if (j >= 0 && j < mp.n && poleAtS(world2, reg, mp.road[j], mp.s[j], mp.side[j], B) && !cityPoles(reg, B.mx, B.my)) wireSpan(world2, A, B, cx, cy, cz, p32, out);
         }
       }
     }
@@ -4683,6 +4722,24 @@
         f.wN[i] = dv.getUint8(o + 10);
         f.wFl[i] = dv.getUint8(o + 11);
         f.wCodes[i] = dv.getUint32(o + 12, true);
+      }
+    }
+    f.mp = null;
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1280266317) {
+      const nP2 = dv.getUint32(o + 4, true), nS = dv.getUint32(o + 8, true);
+      o += 16;
+      const mp = f.mp = { n: nP2, road: new Uint32Array(nP2), s: new Float32Array(nP2), side: new Int8Array(nP2), carries: new Uint8Array(nP2), next: new Int32Array(nP2), cov: /* @__PURE__ */ new Map() };
+      for (let i = 0; i < nP2; i++, o += 16) {
+        mp.road[i] = dv.getUint32(o, true);
+        mp.s[i] = dv.getFloat32(o + 4, true);
+        mp.side[i] = dv.getInt8(o + 8);
+        mp.carries[i] = dv.getUint8(o + 9);
+        mp.next[i] = dv.getInt32(o + 12, true);
+      }
+      for (let i = 0; i < nS; i++, o += 12) {
+        const r = dv.getUint32(o, true);
+        if (!mp.cov.has(r)) mp.cov.set(r, []);
+        mp.cov.get(r).push(dv.getFloat32(o + 4, true), dv.getFloat32(o + 8, true));
       }
     }
     f.aBox = new Float32Array(nA2 * 4);
