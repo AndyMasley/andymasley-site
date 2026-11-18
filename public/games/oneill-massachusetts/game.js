@@ -14880,19 +14880,19 @@ void main() {
     });
     const MX = Math.max(1, Math.ceil((bx1 - bx0) / IC) + 1), MY = Math.max(1, Math.ceil((by1 - by0) / IC) + 1), rowB = MX + 7 >> 3;
     const all = new Uint8Array(MY * rowB), sub = new Uint8Array(MY * rowB);
-    const band2 = [];
-    for (let r = 0; r < MY; r++) band2.push([]);
+    const band3 = [];
+    for (let r = 0; r < MY; r++) band3.push([]);
     for (let i = 0; i < nV; i++) {
       const j = next[i], ay2 = pv2[i * 2 + 1], by2 = pv2[j * 2 + 1];
       const r02 = Math.max(0, Math.floor((Math.min(ay2, by2) - by0) / IC - 0.5)), r1 = Math.min(MY - 1, Math.ceil((Math.max(ay2, by2) - by0) / IC - 0.5));
-      for (let r = r02; r <= r1; r++) band2[r].push(i);
+      for (let r = r02; r <= r1; r++) band3[r].push(i);
     }
     const xs = [], xu = [];
     for (let r = 0; r < MY; r++) {
       const y = by0 + (r + 0.5) * IC;
       xs.length = 0;
       xu.length = 0;
-      for (const i of band2[r]) {
+      for (const i of band3[r]) {
         const j = next[i], ax2 = pv2[i * 2], ay2 = pv2[i * 2 + 1], bx2 = pv2[j * 2], by2 = pv2[j * 2 + 1];
         if (ay2 <= y === by2 <= y) continue;
         const x = ax2 + (y - ay2) / (by2 - ay2) * (bx2 - ax2);
@@ -24375,11 +24375,16 @@ void main() {
   var s0of = (reg, ri2) => reg.cum[reg.rStart[ri2]];
   var s1of = (reg, ri2) => reg.cum[reg.rStart[ri2] + reg.rCount[ri2] - 1];
   var carries = (reg, ri2) => reg.rCls[ri2] <= 12 && !(reg.rFlags[ri2] & 72);
+  var BANDS = 8;
+  var band = (ph2) => Math.min(BANDS - 1, Math.max(0, Math.floor(Math.log2(Math.max(ph2, 1)) / 2)));
   var Traffic = class {
     constructor(game2, max) {
       this.game = game2;
       this.max = max;
       this.cars = [];
+      this.wantBy = new Float64Array(BANDS);
+      this.cnt = new Float64Array(BANDS);
+      this.k = 1;
       const t = game2.terrain, geo = new Yt();
       for (const name in t.carGeo.attributes) geo.setAttribute(name, t.carGeo.attributes[name]);
       this.inst = new vi(new Float32Array(max * 4), 4);
@@ -24443,7 +24448,8 @@ void main() {
       const nr2 = w._nr, reg = nr2.reg, ri2 = nr2.road;
       if (!carries(reg, ri2)) return;
       const cls = reg.rCls[ri2], fl = reg.rFlags[ri2];
-      if (Math.random() * this.fMax > this.density(reg, ri2, mx2, my2) * limit(reg, ri2)) return;
+      const ph2 = this.perHour(reg, ri2, mx2, my2), bd2 = band(ph2);
+      if (Math.random() * 4 > ph2 / Math.pow(4, bd2) || this.cnt[bd2] + 0.5 > this.wantBy[bd2] * this.k) return;
       const a = s0of(reg, ri2), b = s1of(reg, ri2);
       if (b - a < 40) return;
       const hash4 = Math.random(), tall = hash4 * 7.13 % 1;
@@ -24477,7 +24483,13 @@ void main() {
       };
       c.off = this.lane(reg, ri2, c.dir, c.pick);
       this.aim(c);
-      for (const o of this.cars) if (Math.abs(o.mx - c.gx) < 24 && Math.abs(wrapD(o.my - c.gy)) < 24) return;
+      const gap = 6.6 + 0.6 * limit(reg, ri2) * MPH;
+      for (const o of this.cars) {
+        const dx2 = o.mx - c.gx, dy2 = wrapD(o.my - c.gy);
+        if (Math.abs(dx2) > gap || Math.abs(dy2) > gap || Math.abs(o.h - c.gz) > 4) continue;
+        const along = Math.abs(dx2 * c.tx + dy2 * c.ty), side = Math.abs(dx2 * c.ty - dy2 * c.tx);
+        if (along < 7 && side < 3 || side < 1.9 && o.tx * c.tx + o.ty * c.ty > 0.3) return;
+      }
       const pc2 = this.game.player.car;
       if (Math.abs(pc2.mx - c.gx) < 60 && Math.abs(wrapD(pc2.my - c.gy)) < 60) return;
       c.vmax = limit(reg, ri2) * MPH * c.keen;
@@ -24487,9 +24499,13 @@ void main() {
       c.hdg = Math.atan2(c.tx, c.ty);
       c.h = w.groundH(c.mx, c.my);
       if (w.g.water) return;
+      c.bd = bd2;
       this.cars.push(c);
+      this.cnt[bd2]++;
     }
-    // the roads to take from the end this car is heading for: the straightest most of the time, any of them otherwise
+    // the road to take from the end this car is heading for: each way that leaves from there in proportion to how many
+    // cars take it now (its vehicles an hour), the straighter ones three times as readily, so a car on a main road
+    // mostly stays on it, as the counts say the traffic does
     choose(c) {
       const w = this.game.world, reg = c.reg, sE = c.dir > 0 ? s1of(reg, c.ri) : s0of(reg, c.ri);
       const p = pointAt(reg, c.ri, sE), fx2 = p.tx * c.dir, fy2 = p.ty * c.dir, zE = p.z;
@@ -24507,8 +24523,15 @@ void main() {
         }
       }
       if (!ok.length) return null;
-      ok.sort((x, y) => y.dot - x.dot);
-      return Math.random() < 0.62 ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
+      const jx2 = reg.x0 + p.x, jy2 = wrapY(reg.y0 + p.y);
+      let tot = 0;
+      for (const o of ok) {
+        o.w = this.perHour(o.reg, o.ri, jx2, jy2) * (0.5 + Math.max(o.dot, 0));
+        tot += o.w;
+      }
+      let r = Math.random() * tot;
+      for (const o of ok) if ((r -= o.w) <= 0) return o;
+      return ok[ok.length - 1];
     }
     // move to another road (or the other way along this one), remembering where the car was so the change is eased in
     hop(c, n) {
@@ -24519,6 +24542,7 @@ void main() {
         c.s = n.s;
         c.dir = n.dir;
         c.vmax = limit(c.reg, c.ri) * MPH * c.keen;
+        c.bd = band(this.perHour(c.reg, c.ri, hx2, hy2));
       } else {
         c.dir = -c.dir;
         c.v = Math.min(c.v, 2);
@@ -24534,16 +24558,19 @@ void main() {
       while (dh < -Math.PI) dh += 2 * Math.PI;
       c.oh = dh;
     }
-    // cars a metre of the street's paving carries now: its vehicles a day, the hour's share of them, at its limit, over
-    // its paving's width
-    density(reg, ri2, mx2, my2) {
+    // vehicles an hour along the street now: its vehicles a day times the hour's share of them
+    perHour(reg, ri2, mx2, my2) {
       const m = AADT ? AADT.get(reg.ry * RNX + reg.rx) : null;
       let v = m ? m.get(ri2) : void 0;
       const cls = reg.rCls[ri2];
       if (v === void 0) {
         v = cls >= 10 ? 682 + 472 * clamp2(this.game.world.coverBilinear(mx2, my2, 0) * 2, 0, 1) : KIND_AADT[cls] * (reg.rFlags[ri2] & 1 && cls <= 3 ? 0.5 : 1);
       }
-      return v * share(this.game.sky.hours) / (limit(reg, ri2) * MPH * 3600) / Math.max(2 * reg.rHw[ri2], 3);
+      return v * share(this.game.sky.hours);
+    }
+    // cars a square metre of the street's paving carries now: its vehicles an hour at its limit, over its paving's width
+    density(reg, ri2, mx2, my2) {
+      return this.perHour(reg, ri2, mx2, my2) / (limit(reg, ri2) * MPH * 3600) / Math.max(2 * reg.rHw[ri2], 3);
     }
     // how many cars the streets within FAR of the camera carry now, from 160 points thrown at random over that disc
     // every second and a half: each one on a street's paving counts that street's cars to a square metre of it
@@ -24551,21 +24578,25 @@ void main() {
       this.tGauge = (this.tGauge || 0) - dt;
       if (this.tGauge > 0) return;
       this.tGauge = 1.5;
-      const w = this.game.world, K = 160;
+      const w = this.game.world, K = 400, by2 = this.by || (this.by = new Float64Array(BANDS));
       let sum = 0, mx2 = 0;
+      by2.fill(0);
       for (let k = 0; k < K; k++) {
         const r = FAR * Math.sqrt(Math.random()), a = Math.random() * 6.2832;
         const x = camMap[0] + Math.sin(a) * r, y = wrapY(camMap[1] + Math.cos(a) * r);
         if (x < 400 || x > L - 400 || w.nearestRoad(x, y) > 0) continue;
         const nr2 = w._nr;
         if (!carries(nr2.reg, nr2.road)) continue;
-        const d = this.density(nr2.reg, nr2.road, x, y);
+        const ph2 = this.perHour(nr2.reg, nr2.road, x, y), d = ph2 / (limit(nr2.reg, nr2.road) * MPH * 3600) / Math.max(2 * nr2.reg.rHw[nr2.road], 3);
         sum += d;
-        mx2 = Math.max(mx2, d * limit(nr2.reg, nr2.road));
+        by2[band(ph2)] += d;
+        mx2 = Math.max(mx2, ph2);
       }
-      const n = sum * Math.PI * FAR * FAR / K;
-      this.want = this.want === void 0 ? n : this.want * 0.6 + n * 0.4;
+      const f = Math.PI * FAR * FAR / K, first = this.want === void 0;
+      this.want = first ? sum * f : this.want * 0.6 + sum * f * 0.4;
+      for (let b = 0; b < BANDS; b++) this.wantBy[b] = first ? by2[b] * f : this.wantBy[b] * 0.6 + by2[b] * f * 0.4;
       this.fMax = Math.max(mx2, 1e-7);
+      for (const c of this.cars) c.bd = band(this.perHour(c.reg, c.ri, c.mx, c.my));
     }
     step(c, dt, pc2) {
       const w = this.game.world, reg = c.reg;
@@ -24576,7 +24607,10 @@ void main() {
         if (a2 <= 0.5 || a2 > look || Math.abs(dx2 * fy2 - dy2 * fx2) > 1.85 + a2 * 0.03) return;
         vt = Math.min(vt, Math.max(0, (a2 - 6.6) / 1.7));
       };
-      for (const o of this.cars) if (o !== c && Math.abs(o.h - c.h) < 3) ahead(o.mx, o.my);
+      for (const o of this.cars) {
+        const dx2 = o.mx - c.mx;
+        if (o !== c && dx2 < look && dx2 > -look && Math.abs(o.h - c.h) < 3) ahead(o.mx, o.my);
+      }
       if (Math.abs(pc2.h - c.h) < 3) ahead(pc2.mx, pc2.my);
       const T = this.game.trains;
       if (T) {
@@ -24639,7 +24673,12 @@ void main() {
         }
         this.gauge(camMap, dt);
         const want = agl > 500 ? 0 : Math.min(this.max, Math.round(this.want));
-        for (let k = 0; k < 3 && cars.length < want; k++) this.spawn(camMap[0], camMap[1], yaw);
+        if (cars.length < want) {
+          this.cnt.fill(0);
+          for (const c of cars) this.cnt[c.bd]++;
+          this.k = want / Math.max(this.want, 1e-6);
+          for (let k = 0; k < 4 && cars.length < want; k++) this.spawn(camMap[0], camMap[1], yaw);
+        }
       }
       const M = this.M, ia2 = this.inst.array;
       for (let i = 0; i < cars.length; i++) {
@@ -25283,7 +25322,7 @@ void main() {
       for (const z of doorZ) b.side(-1, hw, z - dw / 2, z + dw / 2, wy0, wy1, GLASS);
     }
   }
-  function band(b, o, y02, y1, col, lift = 8e-3) {
+  function band2(b, o, y02, y1, col, lift = 8e-3) {
     const hw = o.w / 2, z02 = o.z0 ?? -o.len / 2, z1 = o.z1 ?? o.len / 2;
     for (const s29 of [-1, 1]) b.side(s29, hw, z02, z1, y02, y1, col, lift);
   }
@@ -25309,8 +25348,8 @@ void main() {
       const dz = [];
       for (let i = 0; i < doors; i++) dz.push(-len / 2 + len * (i + 0.5) / doors);
       sides(b, o, dz, 1.3, floor + 1.95, floor + 0.62, floor + 1.55, 1.6);
-      band(b, o, floor + 0.2, floor + 0.5, col);
-      band(b, o, o.h - 0.62, o.h - 0.5, col);
+      band2(b, o, floor + 0.2, floor + 0.5, col);
+      band2(b, o, o.h - 0.62, o.h - 0.5, col);
       cabEnd(b, o, -1, floor + 0.65, floor + 1.55, floor + 0.05, [floor + 0.2, floor + 0.5, col]);
       coupledEnd(b, o, 1);
       out[name] = [b.geometry(), len, bz, w];
@@ -25325,9 +25364,9 @@ void main() {
         if (!cab) o.z0 = -SEC / 2 + 0.16;
         running(b, Object.assign({}, o, { len: SEC + 0.8 }), [0]);
         body(b, o);
-        band(b, o, 0.95, 2.38, BLACK, 6e-3);
+        band2(b, o, 0.95, 2.38, BLACK, 6e-3);
         sides(b, Object.assign({}, o, { endM: 0.5 }), [cab ? -0.6 : 0], 1.25, 2.28, 1.02, 2.3, 1.45);
-        band(b, o, 0.45, 0.82, GREEN);
+        band2(b, o, 0.45, 0.82, GREEN);
         if (cab) cabEnd(b, o, -1, 1.15, 2.45, 0.6, [0.45, 0.82, GREEN]);
         for (const e of cab ? [1] : [-1, 1]) {
           const z = e * SEC / 2;
@@ -25347,9 +25386,9 @@ void main() {
       const len = 14.2, b = new Build3(), o = { len, w: 2.54, h: 3.12, y0: 0.62, body: TROLLEY, roof: CREAM };
       running(b, o, [-4.3, 4.3]);
       body(b, o);
-      band(b, o, 1.38, o.h - 0.38, CREAM);
-      band(b, o, 1.28, 1.38, MAROON);
-      band(b, o, 0.62, 0.78, BLACK);
+      band2(b, o, 1.38, o.h - 0.38, CREAM);
+      band2(b, o, 1.28, 1.38, MAROON);
+      band2(b, o, 0.62, 0.78, BLACK);
       sides(b, Object.assign({}, o, { endM: 1.4 }), [-len / 2 + 1.6, -0.6], 1.15, 2.45, 1.5, 2.32, 1, true);
       cabEnd(b, o, -1, 1.45, 2.35, 0.95, [1.28, 1.38, MAROON]);
       cabEnd(b, o, 1, 1.6, 2.3, 0.95, [1.28, 1.38, MAROON]);
@@ -25363,8 +25402,8 @@ void main() {
       const dz = [-len / 2 + 1.7, len / 2 - 1.7];
       sides(b, Object.assign({}, o, { endM: 2.7 }), dz, 1.3, 2.75, 1.2, 1.95, 1.75);
       for (const s29 of [-1, 1]) for (let z = -len / 2 + 3.4; z + 1.5 < len / 2 - 3.2; z += 1.75) b.side(s29, o.w / 2, z + 0.08, z + 1.62, 2.85, 3.6, GLASS);
-      band(b, o, 2.12, 2.55, PURPLE);
-      band(b, o, 0.66, 0.86, PURPLE);
+      band2(b, o, 2.12, 2.55, PURPLE);
+      band2(b, o, 0.66, 0.86, PURPLE);
       if (cab) cabEnd(b, o, -1, 2.95, 3.7, 1, [2.12, 2.55, PURPLE]);
       else coupledEnd(b, o, -1);
       coupledEnd(b, o, 1);
@@ -25376,8 +25415,8 @@ void main() {
       const len = 21.6, b = new Build3(), o = { len, w: 3.05, h: 4.6, y0: 0.95, body: PURPLE, roof: [0.33, 0.33, 0.34] };
       running(b, o, [-6.86, 6.86]);
       body(b, o);
-      band(b, o, 0.95, 1.55, STEEL);
-      band(b, o, 1.55, 1.7, YELLOW);
+      band2(b, o, 0.95, 1.55, STEEL);
+      band2(b, o, 1.55, 1.7, YELLOW);
       for (const s29 of [-1, 1]) {
         b.side(s29, o.w / 2, -len / 2 + 0.9, -len / 2 + 2, 2.9, 3.6, GLASS);
         for (let k = 0; k < 4; k++) b.side(s29, o.w / 2, -2 + k * 2.4, -0.4 + k * 2.4, 2.4, 3.9, [0.1, 0.02, 0.09]);
@@ -26004,8 +26043,8 @@ void main() {
       return 24 + 20 * this.env.urban + (this.g.sky.isNight ? 4 : 0);
     }
     // every station on a frequency, strongest first: [[E, s], ...]
-    heard(band2, f, mx2, my2, fast) {
-      const m = this.data && this.data.byFreq[band2].get(band2 === "AM" ? Math.round(f) : Math.round(f * 10));
+    heard(band3, f, mx2, my2, fast) {
+      const m = this.data && this.data.byFreq[band3].get(band3 === "AM" ? Math.round(f) : Math.round(f * 10));
       if (!m) return [];
       const out = [];
       for (const s29 of m) {
@@ -26016,10 +26055,10 @@ void main() {
       return out;
     }
     // a frequency's quality for seeking (0 none .. 1 clean)
-    quality(band2, f, mx2, my2) {
-      const h = this.heard(band2, f, mx2, my2, false);
+    quality(band3, f, mx2, my2) {
+      const h = this.heard(band3, f, mx2, my2, false);
       if (!h.length) return 0;
-      return band2 === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
+      return band3 === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
     }
     // ---- controls
     async power(on2 = !this.on) {
@@ -26066,8 +26105,8 @@ void main() {
       this.shown = null;
       return this.on;
     }
-    heardBest(band2, f, mx2, my2) {
-      const h = this.heard(band2, f, mx2, my2, false);
+    heardBest(band3, f, mx2, my2) {
+      const h = this.heard(band3, f, mx2, my2, false);
       return h.length ? h[0][0] : 0;
     }
     setBand(b = this.band === "FM" ? "AM" : "FM") {
@@ -26265,13 +26304,13 @@ void main() {
         this.nextCheck = this.t + 0.3;
         this.sense(mx2, my2);
       }
-      const band2 = this.band, f = this.freq[band2], am2 = band2 === "AM";
-      const h = this.heard(band2, f, mx2, my2, true);
+      const band3 = this.band, f = this.freq[band3], am2 = band3 === "AM";
+      const h = this.heard(band3, f, mx2, my2, true);
       const A = h[0], B = h[1];
       const wantA = A && A[0] > (am2 ? this.amFloor() - 12 : 6) ? A[1] : null;
       const wantB = B && wantA && (am2 ? B[0] > this.amFloor() - 6 && A[0] - B[0] < 18 : A[0] - B[0] < 9 && B[0] > 10) ? B[1] : null;
-      if (this.lastF !== band2 + f) {
-        this.lastF = band2 + f;
+      if (this.lastF !== band3 + f) {
+        this.lastF = band3 + f;
         this.restAt = this.t;
       }
       const rested = this.t - this.restAt > 0.45;
@@ -26334,7 +26373,7 @@ void main() {
         const sA = locked ? A[1] : null, slA = sA && sl2.find((x) => x.s === sA);
         const bars = A ? Math.round(5 * (am2 ? smooth(-5, 35, A[0] - this.amFloor()) : smooth(10, 55, A[0]))) : 0;
         const info = {
-          band: band2,
+          band: band3,
           freq: am2 ? amText(f) : fmText(f),
           bars,
           stereo: !am2 && A && A[0] > 48 && !!slA,
@@ -26989,12 +27028,12 @@ void main() {
       const nReg = dv2.getUint32(4, true), nB = dv2.getUint32(8, true);
       const oR = 16, oB = oR + nReg * 20, oX = oB + nB * BS2;
       this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
-      const mat = (band2) => {
+      const mat = (band3) => {
         const m = new Rn({
           vertexShader: SCATTER_VS,
           fragmentShader: LIT_FS,
           side: Mi,
-          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band2 === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
+          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band3 === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
           // the tiles' own reach (it follows the camera's height) and the same lighting
           uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
         });
@@ -27006,13 +27045,13 @@ void main() {
       const M = new Ht(), V3 = new C(), Q = new ke(), Qx2 = new ke(), S2 = new C();
       const Y = new C(0, 1, 0), X = new C(1, 0, 0);
       const groups = /* @__PURE__ */ new Map();
-      const group = (band2, rx2, ry2, sub) => {
-        const key2 = band2 + "/" + rx2 + "/" + ry2 + "/" + sub;
+      const group = (band3, rx2, ry2, sub) => {
+        const key2 = band3 + "/" + rx2 + "/" + ry2 + "/" + sub;
         let G = groups.get(key2);
         if (!G) {
-          const n = band2 === 1 ? 4 : 1, sx2 = band2 === 1 ? sub % 4 : 0, sy2 = band2 === 1 ? sub >> 2 : 0;
+          const n = band3 === 1 ? 4 : 1, sx2 = band3 === 1 ? sub % 4 : 0, sy2 = band3 === 1 ? sub >> 2 : 0;
           const cx2 = rx2 * RS3 + (sx2 + 0.5) * RS3 / n, cy2 = ry2 * RS3 + (sy2 + 0.5) * RS3 / n;
-          G = { band: band2, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0 };
+          G = { band: band3, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0 };
           groups.set(key2, G);
         }
         return G;
@@ -27555,8 +27594,8 @@ void main() {
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
     low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 16, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
-    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 64, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
-    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 96, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
+    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 96, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 144, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {
