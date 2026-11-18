@@ -24443,7 +24443,7 @@ void main() {
       const nr2 = w._nr, reg = nr2.reg, ri2 = nr2.road;
       if (!carries(reg, ri2)) return;
       const cls = reg.rCls[ri2], fl = reg.rFlags[ri2];
-      if (Math.random() * this.dMax > this.density(reg, ri2, mx2, my2)) return;
+      if (Math.random() * this.fMax > this.density(reg, ri2, mx2, my2) * limit(reg, ri2)) return;
       const a = s0of(reg, ri2), b = s1of(reg, ri2);
       if (b - a < 40) return;
       const hash4 = Math.random(), tall = hash4 * 7.13 % 1;
@@ -24561,11 +24561,11 @@ void main() {
         if (!carries(nr2.reg, nr2.road)) continue;
         const d = this.density(nr2.reg, nr2.road, x, y);
         sum += d;
-        mx2 = Math.max(mx2, d);
+        mx2 = Math.max(mx2, d * limit(nr2.reg, nr2.road));
       }
       const n = sum * Math.PI * FAR * FAR / K;
       this.want = this.want === void 0 ? n : this.want * 0.6 + n * 0.4;
-      this.dMax = Math.max(mx2, 1e-7);
+      this.fMax = Math.max(mx2, 1e-7);
     }
     step(c, dt, pc2) {
       const w = this.game.world, reg = c.reg;
