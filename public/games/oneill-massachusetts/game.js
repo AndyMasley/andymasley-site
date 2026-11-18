@@ -18221,7 +18221,7 @@ void main() {
   // ---- the 2023 aerial photographs (aerial.js), brought to the palette: 2.88 m in the 4 x 4 tiles round the camera
   // (fading out over the last 500 m of their block), 5.75 m in the 2 x 2 regions round it (over the last 800 m), the
   // 46 m overview everywhere; kN says how much of the two nearer levels there is
-  float kN = 0.0, aerK0 = 0.0;
+  float kN = 0.0, aerK0 = 0.0, aerK1 = 0.0;
   vec3 aerN = vec3(0.0), aerF = vec3(0.0);
   vec2 aerRg = vec2(0.0);
   if (uHasAerial > 0.5) {
@@ -18241,7 +18241,7 @@ void main() {
     vec2 et = min(bt, 4.0 - bt) * (RSZ * 0.25);
     float k0 = uAer0Ok[int(st.x + 4.0 * st.y + 0.5)] * smoothstep(0.0, 500.0, min(et.x, et.y));
     kN = k0 + (1.0 - k0) * k1;
-    aerK0 = k0;
+    aerK0 = k0; aerK1 = k1;
     vec3 a1 = texture(uAerNear, vec3(rg * 0.5, 0.0)).rgb, a0 = texture(uAerNear, vec3(rg, 1.0)).rgb;
     aerN = max((k0 * a0 + (1.0 - k0) * k1 * a1) / max(kN, 1e-4) * uAerCol.x + uAerCol.yzw, vec3(0.0));
     aerF = max(texture2D(uAerial, vUv).rgb * uAerCol.x + uAerCol.yzw, vec3(0.0));
@@ -18346,7 +18346,16 @@ void main() {
   land = mix(land, vec3(0.50, 0.43, 0.29) * (0.9 + 0.2 * nC), sand);
   land = mix(land, vec3(0.15, 0.14, 0.13) * (0.8 + 0.4 * nB), steep * 0.8);
   if (kLc > 0.0) {
-    vec3 lotC = mix(vec3(0.060, 0.060, 0.062), vec3(0.185, 0.180, 0.170), lcConc) * (0.85 + 0.3 * nB);
+    // a lot, a yard or a drive: worn asphalt of one tone (it had been patches of asphalt and concrete from a 9 m noise,
+    // which mottled every lot like camouflage), lighter or darker as the photographs show the paving there taken over
+    // about 23 m, so the cars parked in them and the shadows fixed in them hardly show
+    vec3 lotC = vec3(0.100, 0.099, 0.101) * (0.93 + 0.14 * nB);
+    if (kN > 0.0 && lcPave > 0.0) {
+      vec3 b0 = texture(uAerNear, vec3(aerRg, 1.0), 3.0).rgb, b1 = texture(uAerNear, vec3(aerRg * 0.5, 0.0), 2.0).rgb;
+      vec3 ab = max((aerK0 * b0 + (1.0 - aerK0) * aerK1 * b1) / max(kN, 1e-4) * uAerCol.x + uAerCol.yzw, vec3(0.0));
+      const vec3 LUM = vec3(0.2126, 0.7152, 0.0722);
+      lotC *= mix(1.0, clamp(dot(ab, LUM) / max(dot(uPhotoMean[1], LUM), 0.003), 0.8, 1.45), kN);
+    }
     land = mix(land, lotC, lcPave);
     land = mix(land, vec3(0.16, 0.13, 0.085) * (0.85 + 0.3 * nB), lcSoil);
     // ponds and brooks too small for the water map, where the ground is level
@@ -18378,7 +18387,7 @@ void main() {
   if (kN > 0.0) {
     float kP = kN * smoothstep(30.0, 220.0, dist);
     if (uHasLc < 0.5) land = mix(land, aerN * (0.9 + 0.2 * nC), kP * 0.85);
-    else if (kLc > 0.0 && lc > 0 && lc < 18 && lc != 15) {
+    else if (kLc > 0.0 && lc > 1 && lc < 18 && lc != 15) {          // (paving takes its tone from them above)
       bool fieldKind = lc >= 3 && lc <= 5;
       vec3 aerX = aerN;
       if (fieldKind && dist < 400.0) {
@@ -18388,7 +18397,7 @@ void main() {
       }
       if (lc == 3) land = mix(land, aerX * (0.9 + 0.2 * nC), kN * kLc);
       else if (fieldKind) land = mix(land, land * clamp(aerX / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kN * kLc);
-      else land = mix(land, land * clamp(aerN / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kP * kLc * (lc == 1 ? 0.6 : 1.0));
+      else land = mix(land, land * clamp(aerN / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kP * kLc);
     }
   }
   // past where the 1 m land cover ends the ground is the photographs themselves: at 5.75 m in the 2 x 2 regions round
@@ -18431,7 +18440,7 @@ void main() {
     det = mix(det, vec3(1.0), max(sand, steep * 0.8));
     det = mix(det, mix(dS, vec3(1.0), surfSoft * paved), max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
     det = mix(det, dS, lcSoil);
-    det = mix(det, mix(dA, dC, lcConc), lcPave);
+    det = mix(det, dA, lcPave);                                         // (paving is asphalt throughout, as its colour above)
     det = mix(det, mix(dA, vec3(1.0), surfHard), paved * (1.0 - dirt));
     det = mix(det, dC, max(walk, kerb));
     det = mix(det, vec3(1.0), mark);
@@ -18444,11 +18453,11 @@ void main() {
     relief = mix(relief, 0.0, max(sand, steep * 0.8));
     relief = mix(relief, hs, max(max(shoulder * 0.7, paved * dirt), bed * 0.8));
     relief = mix(relief, hs, lcSoil);
-    relief = mix(relief, mix(ha, hc, lcConc), lcPave);
+    relief = mix(relief, ha, lcPave);
     relief = mix(relief, ha * (1.0 - surfHard), paved * (1.0 - dirt));
     relief = mix(relief, hc, max(walk, kerb));
     hardSurface = max(max(lcPave, paved * (1.0 - dirt)), max(walk, kerb)) * (1.0 - mark) * (1.0 - bed);
-    surfaceRoughness = mix(0.92, 0.84, max(lcConc * lcPave * (1.0 - paved), max(walk, kerb)));
+    surfaceRoughness = mix(0.92, 0.84, max(walk, kerb));
   }
 
   // town lines (overlay)
