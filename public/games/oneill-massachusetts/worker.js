@@ -8712,17 +8712,24 @@
     const n = p.length, idx = [], out = [];
     for (let i = 0; i < n; i++) idx.push(i);
     const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const same = (u, v) => Math.abs(u[0] - v[0]) < 1e-6 && Math.abs(u[1] - v[1]) < 1e-6;
     let guard = 0;
     while (idx.length > 3 && guard++ < 1e4) {
-      let cut = false;
+      let cut = false, best = -1, bestCr = 0;
       for (let k = 0; k < idx.length; k++) {
         const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
         const a = p[i0], b = p[i1], c = p[i2];
-        if (cr(a, b, c) <= 1e-9) continue;
+        const ck = cr(a, b, c);
+        if (ck <= 1e-9) continue;
+        if (ck > bestCr) {
+          bestCr = ck;
+          best = k;
+        }
         let inside = false;
         for (const j of idx) {
           if (j === i0 || j === i1 || j === i2) continue;
           const q = p[j];
+          if (same(q, a) || same(q, b) || same(q, c)) continue;
           if (cr(a, b, q) >= 0 && cr(b, c, q) >= 0 && cr(c, a, q) >= 0) {
             inside = true;
             break;
@@ -8734,10 +8741,34 @@
         cut = true;
         break;
       }
+      if (!cut && best >= 0) {
+        const k = best;
+        out.push([idx[(k + idx.length - 1) % idx.length], idx[k], idx[(k + 1) % idx.length]]);
+        idx.splice(k, 1);
+        cut = true;
+      }
       if (!cut) break;
     }
     if (idx.length === 3) out.push([idx[0], idx[1], idx[2]]);
     return out;
+  }
+  function cleanRing(p) {
+    const q = [];
+    for (const v of p) {
+      const l = q[q.length - 1];
+      if (!l || Math.hypot(v[0] - l[0], v[1] - l[1]) > 0.02) q.push(v);
+    }
+    while (q.length > 3 && Math.hypot(q[0][0] - q[q.length - 1][0], q[0][1] - q[q.length - 1][1]) <= 0.02) q.pop();
+    for (let i = 0; q.length > 3 && i < q.length; ) {
+      const a = q[(i + q.length - 1) % q.length], b = q[i], c = q[(i + 1) % q.length];
+      const L2 = Math.hypot(c[0] - a[0], c[1] - a[1]);
+      const off2 = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) / Math.max(L2, 1e-6);
+      if (off2 < 0.01) {
+        q.splice(i, 1);
+        if (i > 0) i--;
+      } else i++;
+    }
+    return q;
   }
   function obb2(p) {
     let best = null;
@@ -8870,6 +8901,7 @@
   function part(M, P2, e, q, g, seed) {
     let p = [];
     for (let i = 0; i + 1 < q.p.length; i += 2) p.push([q.p[i], q.p[i + 1]]);
+    p = cleanRing(p);
     if (p.length < 3) return;
     if (area2(p) < 0) p.reverse();
     const gq = g + (q.g || 0);
