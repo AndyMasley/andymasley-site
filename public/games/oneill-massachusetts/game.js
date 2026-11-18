@@ -16289,6 +16289,35 @@ void main() {
       }
       return bd2;
     }
+    // ---- solar arrays on the ground (item 69; bake/c66_solar.py -> data/solar.json, drawn by solar.js): each block's
+    // outer ring and holes ([X, Y] metres), its rows' direction (a, radians from map +x toward +y) and box, indexed by
+    // cells of DCELL
+    setSolar(list) {
+      if (!list || !list.length) {
+        this.solar = null;
+        return;
+      }
+      const B = [], cells = /* @__PURE__ */ new Map();
+      for (const e of list) {
+        const rings = [[e.x, e.y], ...e.h || []].map(([X, Y]) => [Float64Array.from(X), Float64Array.from(Y)]);
+        let x02 = 1e18, y02 = 1e18, x1 = -1e18, y1 = -1e18;
+        for (let k = 0; k < e.x.length; k++) {
+          x02 = Math.min(x02, e.x[k]);
+          x1 = Math.max(x1, e.x[k]);
+          y02 = Math.min(y02, e.y[k]);
+          y1 = Math.max(y1, e.y[k]);
+        }
+        const i = B.length;
+        B.push({ rings, a: e.a || 0, k: e.k, box: [x02, y02, x1, y1] });
+        for (let cy2 = Math.floor(y02 / DCELL); cy2 <= Math.floor(y1 / DCELL); cy2++)
+          for (let cx2 = Math.floor(x02 / DCELL); cx2 <= Math.floor(x1 / DCELL); cx2++) {
+            const k = cy2 * 65536 + cx2;
+            if (!cells.has(k)) cells.set(k, []);
+            cells.get(k).push(i);
+          }
+      }
+      this.solar = { B, cells };
+    }
     // does any dam's step or structure reach into the square (x0, y0, size)?
     damsNear(x02, y02, size) {
       if (!this.dams) return false;
@@ -19225,13 +19254,29 @@ vec3 coastSurface(int mat, vec2 uv, float z, vec4 W, float seed, vec3 pos, inout
     c = mix(vec3(0.27, 0.30, 0.29), vec3(0.66, 0.68, 0.68), streak * smoothstep(0.0, 0.8, uv.y));
     c = mix(c, vec3(0.70, 0.71, 0.71) * (0.85 + 0.3 * vnoise(uv * vec2(2.0, 3.0) - vec2(0.0, uTime * 1.2))), smoothstep(W.z - 1.8, W.z - 0.2, uv.y) * 0.9);
     rough = 0.7;
+  } else if (mat == 28) {
+    // a solar panel (solar.js; uv: metres along the row and up the slope; W.w 1 on the underside): modules 1.0 m wide
+    // and 1.7 m up the slope in silver frames, each of 6 by 10 cells of dark blue-black glass with fine grey lines;
+    // under it, grey racking and white backsheet
+    if (W.w > 0.5) { c = mix(vec3(0.24, 0.24, 0.235), vec3(0.42, 0.42, 0.41), step(0.55, fract(uv.x / 1.0))) * (0.9 + 0.2 * vnoise(uv * 2.0)); rough = 0.7; }
+    else {
+      vec2 m = uv / vec2(1.0, 1.7), f = fract(m), cf = fract(uv / vec2(1.0 / 6.0, 1.7 / 10.0));
+      float fr = min(min(f.x, 1.0 - f.x) * 1.0, min(f.y, 1.0 - f.y) * 1.7);
+      float cl = min(min(cf.x, 1.0 - cf.x) / 6.0, min(cf.y, 1.0 - cf.y) * 0.17);
+      float far = smoothstep(0.02, 0.08, px);
+      c = vec3(0.022, 0.03, 0.055) * (0.85 + 0.3 * hash2(ivec2(floor(m)) + ivec2(int(seed), 3)));
+      c = mix(c, vec3(0.10, 0.11, 0.13), cLine(cl, 0.006, px) * 0.6 * (1.0 - far));
+      c = mix(c, vec3(0.34, 0.35, 0.36), cLine(fr, 0.018, px) * (1.0 - far * 0.6));
+      c = mix(c, vec3(0.05, 0.058, 0.08), far * 0.5);
+      rough = 0.16;
+    }
   } else {
     // piles: dark creosoted timber, vertical grain
     c = vec3(0.085, 0.07, 0.058) * (0.8 + 0.4 * sv) * (0.85 + 0.3 * vnoise(vec2(uv.x * 6.0, z * 0.7)));
     rough = 0.9;
   }
   // the sea's marks: darker where wet, rockweed low down, a band of barnacles under high water
-  float wk = (mat == 25 || mat == 27) ? 0.0 : 1.0;
+  float wk = (mat == 25 || mat == 27 || mat == 28) ? 0.0 : 1.0;
   c *= mix(1.0, 0.52, wet * wk);
   vec3 weedC = vec3(0.045, 0.040, 0.016) * (0.8 + 0.4 * fbm3(uv * 1.7));
   c = mix(c, weedC, weed * wk * smoothstep(0.35, 0.65, fbm3(uv * 0.8 + 3.0) + weed * 0.4));
@@ -21993,8 +22038,9 @@ void main() {
     ARMOR: 24,
     PLANKS: 25,
     PILE: 26,
-    // water falling over a dam's spillway (dams.js)
-    FALLS: 27
+    // water falling over a dam's spillway (dams.js); a solar panel (solar.js)
+    FALLS: 27,
+    SOLAR: 28
   };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {

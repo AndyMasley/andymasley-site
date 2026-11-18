@@ -1669,6 +1669,35 @@
       }
       return bd;
     }
+    // ---- solar arrays on the ground (item 69; bake/c66_solar.py -> data/solar.json, drawn by solar.js): each block's
+    // outer ring and holes ([X, Y] metres), its rows' direction (a, radians from map +x toward +y) and box, indexed by
+    // cells of DCELL
+    setSolar(list) {
+      if (!list || !list.length) {
+        this.solar = null;
+        return;
+      }
+      const B = [], cells = /* @__PURE__ */ new Map();
+      for (const e of list) {
+        const rings = [[e.x, e.y], ...e.h || []].map(([X, Y]) => [Float64Array.from(X), Float64Array.from(Y)]);
+        let x0 = 1e18, y0 = 1e18, x1 = -1e18, y1 = -1e18;
+        for (let k = 0; k < e.x.length; k++) {
+          x0 = Math.min(x0, e.x[k]);
+          x1 = Math.max(x1, e.x[k]);
+          y0 = Math.min(y0, e.y[k]);
+          y1 = Math.max(y1, e.y[k]);
+        }
+        const i = B.length;
+        B.push({ rings, a: e.a || 0, k: e.k, box: [x0, y0, x1, y1] });
+        for (let cy = Math.floor(y0 / DCELL); cy <= Math.floor(y1 / DCELL); cy++)
+          for (let cx = Math.floor(x0 / DCELL); cx <= Math.floor(x1 / DCELL); cx++) {
+            const k = cy * 65536 + cx;
+            if (!cells.has(k)) cells.set(k, []);
+            cells.get(k).push(i);
+          }
+      }
+      this.solar = { B, cells };
+    }
     // does any dam's step or structure reach into the square (x0, y0, size)?
     damsNear(x0, y0, size) {
       if (!this.dams) return false;
@@ -2794,8 +2823,9 @@
     ARMOR: 24,
     PLANKS: 25,
     PILE: 26,
-    // water falling over a dam's spillway (dams.js)
-    FALLS: 27
+    // water falling over a dam's spillway (dams.js); a solar panel (solar.js)
+    FALLS: 27,
+    SOLAR: 28
   };
   var FLOOR = [2.75, 2.6, 2.7, 3, 2.6, 5, 3, 3.7, 7, 8, 3.9, 3.9, 4.6, 6, 3.1, 2.8];
   var FOUND = [0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0, 0.15, 0.7, 0.6];
@@ -5204,7 +5234,7 @@
     const WHITE = [0.78, 0.78, 0.74];
     let zD = null;
     let hNode = 0;
-    const quad3 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
+    const quad4 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
       for (let q = 0; q <= n; q++) {
@@ -5282,16 +5312,16 @@
         if (lines || sub === 1 || sub === 7) {
           for (const a of [-1.65, 1.35]) {
             if (sub !== 4) {
-              quad3(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
+              quad4(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
               continue;
             }
-            for (let c = -hw; c < hw - 0.2; c += 1.2) quad3(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
+            for (let c = -hw; c < hw - 0.2; c += 1.2) quad4(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
           }
         }
         if (bars) {
           const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2));
           const c0 = -nb * 0.6 + 0.3, a0 = sub === 2 ? -1.5 : -1.3, a1 = sub === 2 ? 1.5 : 1.3;
-          for (let b = 0; b < nb; b++) quad3(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
+          for (let b = 0; b < nb; b++) quad4(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
         }
       } else if (k === STOP || k === SIGNAL) {
         const junction = roadCount(f, i) >= 3;
@@ -5301,11 +5331,11 @@
           const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD);
           if (hw < 2.5) continue;
           const back = (junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
-          quad3(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
+          quad4(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
         }
       }
     }
-    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad3, tri2, (h) => {
+    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad4, tri2, (h) => {
       hNode = h;
       zD = null;
     }, WHITE);
@@ -5333,7 +5363,7 @@
         hNode = world2.groundH(mx, my, true);
         if (world2.g.water) continue;
         if (kind === 1) {
-          quad3(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
+          quad4(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
           continue;
         }
         const h0 = surfaceH(world2, mx, my, zD), gx = (surfaceH(world2, mx + 0.35, my, zD) - h0) / 0.35, gy = (surfaceH(world2, mx, my + 0.35, zD) - h0) / 0.35;
@@ -5413,7 +5443,7 @@
   var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
   var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, count: 0, drawn: 0, arrows: 0, last: null };
   var _lg2 = {};
-  function laneArrows(world2, reg, f, lx0, ly0, s, quad3, tri2, ground, col) {
+  function laneArrows(world2, reg, f, lx0, ly0, s, quad4, tri2, ground, col) {
     const near = [];
     for (let q = 0; q < (f.nP || 0); q++) {
       const k = f.kind[q], x = f.px[q], y = f.py[q];
@@ -5509,7 +5539,7 @@
             const A = at(e[1], e[2]), B = at(e[3], e[4]), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]);
             if (L2 < 1e-3) continue;
             const dx = (B[0] - A[0]) / L2, dy = (B[1] - A[1]) / L2;
-            quad3(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
+            quad4(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
           } else {
             const [, a, c, da, dc, len, hb] = e;
             tri2(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
@@ -5740,7 +5770,7 @@
     if (!f || !f.nA) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), WHITE = [0.78, 0.78, 0.74];
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
-    const vtx3 = (x, y) => {
+    const vtx4 = (x, y) => {
       const h = world2.groundH(x, y, true);
       cyl(x, y, h + 0.03, p32);
       cyl(x, y, h + 1.03, u3);
@@ -5752,10 +5782,10 @@
       if (L2 < 0.05) return;
       const ux = (x1 - x0) / L2, uy = (y1 - y0) / L2, nx = -uy * w / 2, ny = ux * w / 2;
       const n = Math.max(1, Math.ceil(L2 / 2));
-      let A = vtx3(x0 - nx, y0 - ny), B = vtx3(x0 + nx, y0 + ny);
+      let A = vtx4(x0 - nx, y0 - ny), B = vtx4(x0 + nx, y0 + ny);
       for (let k = 1; k <= n; k++) {
         const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-        const C2 = vtx3(x - nx, y - ny), D2 = vtx3(x + nx, y + ny);
+        const C2 = vtx4(x - nx, y - ny), D2 = vtx4(x + nx, y + ny);
         push(A, col);
         push(C2, col);
         push(D2, col);
@@ -6062,7 +6092,7 @@
       return r;
     };
     const push = (p, n, col) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2]);
-    const quad3 = (P0, P1, P2, P3, n0, n1, col) => {
+    const quad4 = (P0, P1, P2, P3, n0, n1, col) => {
       const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
       const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
       if (fx * (n0[0] + n1[0]) + fy * (n0[1] + n1[1]) + fz * (n0[2] + n1[2]) >= 0) {
@@ -6186,7 +6216,7 @@
               pt(Fa, ra, rb, P1);
               pt(Fb, ra, rb, P22);
               pt(Fb, qa, qb, P3);
-              quad3(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
+              quad4(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
             }
           }
           if (R2.gap) {
@@ -6205,11 +6235,11 @@
                   return r;
                 };
                 const nA2 = Fa.Ac, nU = Fa.U, nT = Fa.T, mA = [-nA2[0], -nA2[1], -nA2[2]], mT = [-nT[0], -nT[1], -nT[2]];
-                quad3(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
-                quad3(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
-                quad3(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
-                quad3(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
-                quad3(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
+                quad4(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
+                quad4(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
+                quad4(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
+                quad4(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
+                quad4(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
               }
             }
           }
@@ -6673,7 +6703,7 @@
     return out;
   }
   function spanLayout(len, rec, rim0, rim1, panel, PL) {
-    const spans = rec[3] || 1, longest = (rec[4] || 0) / 10;
+    const spans2 = rec[3] || 1, longest = (rec[4] || 0) / 10;
     let cuts;
     if (PL) {
       cuts = [0];
@@ -6682,8 +6712,8 @@
         if (s > cuts[cuts.length - 1] + 2 && s < len - 2) cuts.push(s);
       }
       cuts.push(len);
-    } else if (rim0 && rim1 && spans > 1) {
-      const n = Math.max(1, Math.min(spans, Math.round(len / Math.max(longest * 0.6, 12))));
+    } else if (rim0 && rim1 && spans2 > 1) {
+      const n = Math.max(1, Math.min(spans2, Math.round(len / Math.max(longest * 0.6, 12))));
       cuts = Array.from({ length: n + 1 }, (_, k) => len * k / n);
     } else cuts = [0, len];
     return cuts.slice(0, -1).map((c, k) => {
@@ -8231,6 +8261,162 @@
     return count;
   }
 
+  // src/solar.js
+  var PITCH2 = 5.5;
+  var DEPTH = 3.6;
+  var LOW = 0.8;
+  var RISE = Math.tan(25 * Math.PI / 180);
+  var POST = 8;
+  var RUN = 24;
+  var _n3 = [0, 0, 0];
+  function vtx3(M, P2, x, y, h, n, tu, tv) {
+    const q = P2(x, y, h);
+    return M.v(q[0], q[1], q[2], n[0], n[2], -n[1], tu, tv);
+  }
+  function quad3(M, P2, a, b, c, d, hx, hy, hz) {
+    const ux = c[0] - a[0], uy = c[1] - a[1], uz = c[2] - a[2], vx = d[0] - b[0], vy = d[1] - b[1], vz = d[2] - b[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz);
+    if (l < 1e-9) return;
+    if (nx * hx + ny * hy + nz * hz < 0) {
+      nx = -nx;
+      ny = -ny;
+      nz = -nz;
+    }
+    _n3[0] = nx / l;
+    _n3[1] = ny / l;
+    _n3[2] = nz / l;
+    M.quad(
+      vtx3(M, P2, a[0], a[1], a[2], _n3, a[3], a[4]),
+      vtx3(M, P2, b[0], b[1], b[2], _n3, b[3], b[4]),
+      vtx3(M, P2, c[0], c[1], c[2], _n3, c[3], c[4]),
+      vtx3(M, P2, d[0], d[1], d[2], _n3, d[3], d[4])
+    );
+  }
+  function setMat3(M, mat, seed, under2) {
+    M.M[0] = mat;
+    M.M[1] = 0;
+    M.M[2] = 0;
+    M.M[3] = seed & 255;
+    M.W[0] = -100;
+    M.W[1] = 0;
+    M.W[2] = 1;
+    M.W[3] = under2 ? 1 : 0;
+    M.K[0] = M.K[1] = M.K[2] = M.K[3] = 0;
+  }
+  function solarIn(world2, ix, iy, s) {
+    const S = world2.solar;
+    if (!S) return false;
+    const X0 = ix * s, Y0 = iy * s;
+    for (let cy = Math.floor(Y0 / DCELL); cy <= Math.floor((Y0 + s) / DCELL); cy++)
+      for (let cx = Math.floor(X0 / DCELL); cx <= Math.floor((X0 + s) / DCELL); cx++)
+        for (const i of S.cells.get(cy * 65536 + cx) || []) {
+          const b = S.B[i].box;
+          if (b[2] >= X0 && b[0] <= X0 + s && b[3] >= Y0 && b[1] <= Y0 + s) return true;
+        }
+    return false;
+  }
+  function spans(R2, v) {
+    const xs = [];
+    for (const [U, V2] of R2) {
+      for (let k = 0, n = U.length; k < n; k++) {
+        const a = (k + n - 1) % n, va = V2[a], vb = V2[k];
+        if (va > v !== vb > v) xs.push(U[a] + (U[k] - U[a]) * (v - va) / (vb - va));
+      }
+    }
+    xs.sort((p, q) => p - q);
+    const out = [];
+    for (let k = 0; k + 1 < xs.length; k += 2) out.push([xs[k], xs[k + 1]]);
+    return out;
+  }
+  function both(A, B) {
+    const out = [];
+    for (const [a0, a1] of A) for (const [b0, b1] of B) {
+      const l = Math.max(a0, b0), r = Math.min(a1, b1);
+      if (r > l) out.push([l, r]);
+    }
+    return out;
+  }
+  function addSolar(M, world2, ix, iy, s, P2) {
+    const S = world2.solar, X0 = ix * s, Y0 = iy * s, seen = /* @__PURE__ */ new Set();
+    let count = 0;
+    for (let cy = Math.floor(Y0 / DCELL); cy <= Math.floor((Y0 + s) / DCELL); cy++)
+      for (let cx = Math.floor(X0 / DCELL); cx <= Math.floor((X0 + s) / DCELL); cx++)
+        for (const i of S.cells.get(cy * 65536 + cx) || []) {
+          if (seen.has(i)) continue;
+          seen.add(i);
+          const b = S.B[i].box;
+          if (b[2] < X0 || b[0] > X0 + s || b[3] < Y0 || b[1] > Y0 + s) continue;
+          count += block(M, world2, P2, S.B[i], i, X0, Y0, s);
+        }
+    return count;
+  }
+  function block(M, world2, P2, B, idx, X0, Y0, s) {
+    const ux = Math.cos(B.a), uy = Math.sin(B.a);
+    let vx = -uy, vy = ux;
+    if (vy < 0) {
+      vx = -vx;
+      vy = -vy;
+    }
+    const R2 = B.rings.map(([X, Y]) => [X.map((x, k) => x * ux + Y[k] * uy), X.map((x, k) => x * vx + Y[k] * vy)]);
+    const V2 = R2[0][1];
+    let v0 = Infinity, v1 = -Infinity;
+    for (const v of V2) {
+      v0 = Math.min(v0, v);
+      v1 = Math.max(v1, v);
+    }
+    const W = v1 - v0;
+    if (W < 1.2) return 0;
+    const one = W < DEPTH + 2, d = one ? Math.min(DEPTH, W - 0.4) : DEPTH;
+    const rows = [];
+    if (one) rows.push(v0 + (W - d) / 2);
+    else for (let v = v0 + 1; v + d <= v1 - 0.5; v += PITCH2) rows.push(v);
+    const at = (u, v) => [u * ux + v * vx, u * uy + v * vy];
+    const seed = idx * 53 + 7 & 255, slope = Math.hypot(d, d * RISE);
+    let count = 0;
+    for (const rv of rows) {
+      for (const [a0, a1] of both(spans(R2, rv), spans(R2, rv + d))) {
+        const u0 = a0 + 0.5, u1 = a1 - 0.5;
+        if (u1 - u0 < 3) continue;
+        const n = Math.ceil((u1 - u0) / RUN);
+        for (let q = 0; q < n; q++) {
+          const ua = u0 + (u1 - u0) * q / n, ub = u0 + (u1 - u0) * (q + 1) / n;
+          const [mx, my] = at((ua + ub) / 2, rv + d / 2);
+          if (mx < X0 || mx >= X0 + s || my < Y0 || my >= Y0 + s) continue;
+          const F0 = at(ua, rv), F1 = at(ub, rv), B0 = at(ua, rv + d), B1 = at(ub, rv + d);
+          const g = (p) => world2.groundH(p[0], p[1], true);
+          const gF0 = g(F0), gF1 = g(F1), gB0 = g(B0), gB1 = g(B1);
+          if (world2.g.water) continue;
+          const zF0 = gF0 + LOW, zF1 = gF1 + LOW, zB0 = Math.max(gB0, gF0) + LOW + d * RISE, zB1 = Math.max(gB1, gF1) + LOW + d * RISE;
+          const q3 = P2(mx, my, (zF0 + zB1) / 2);
+          M.C[0] = q3[0];
+          M.C[1] = q3[1];
+          M.C[2] = q3[2];
+          setMat3(M, MAT.SOLAR, seed, false);
+          quad3(M, P2, [F0[0], F0[1], zF0, ua, 0], [F1[0], F1[1], zF1, ub, 0], [B1[0], B1[1], zB1, ub, slope], [B0[0], B0[1], zB0, ua, slope], -vx * 0.4, -vy * 0.4, 1);
+          setMat3(M, MAT.SOLAR, seed, true);
+          quad3(M, P2, [F0[0], F0[1], zF0 - 0.05, ua, 0], [F1[0], F1[1], zF1 - 0.05, ub, 0], [B1[0], B1[1], zB1 - 0.05, ub, slope], [B0[0], B0[1], zB0 - 0.05, ua, slope], vx * 0.4, vy * 0.4, -1);
+          setMat3(M, MAT.METAL, seed, false);
+          const k0 = Math.ceil((ua - u0) / POST - 1e-6), k1 = Math.floor((ub - u0) / POST + 1e-6);
+          for (let k = k0; k <= k1; k++) {
+            const u = u0 + k * POST, t = (u - ua) / (ub - ua || 1);
+            for (const [vv, zTop] of [[rv + 0.3, zF0 + (zF1 - zF0) * t - 0.08], [rv + d - 0.3, zB0 + (zB1 - zB0) * t - 0.4]]) {
+              const p = at(u, vv), gp = world2.groundH(p[0], p[1], true) - 0.2;
+              if (zTop - gp < 0.2) continue;
+              const c = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([su, sv]) => [p[0] + (ux * su + vx * sv) * 0.07, p[1] + (uy * su + vy * sv) * 0.07]);
+              for (let e = 0; e < 4; e++) {
+                const A = c[e], Bq = c[e + 1 & 3], hx = (A[0] + Bq[0]) / 2 - p[0], hy = (A[1] + Bq[1]) / 2 - p[1];
+                quad3(M, P2, [A[0], A[1], gp, e, gp], [Bq[0], Bq[1], gp, e + 1, gp], [Bq[0], Bq[1], zTop, e + 1, zTop], [A[0], A[1], zTop, e, zTop], hx, hy, 0);
+              }
+            }
+          }
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
   // src/decks.js
   var _shD = { r: 0, l: 0, b: 0 };
   var PIER_GAP = 30;
@@ -8379,9 +8565,10 @@
     const stn = reg ? stationsIn(ix, iy) : null;
     const coast = !!reg && coastIn(reg, ix, iy, s);
     const dams = !!reg && damsIn(world2, ix, iy, s);
-    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast || dams)) return null;
+    const sol = !!reg && solarIn(world2, ix, iy, s);
+    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast || dams || sol)) return null;
     const list = reg.nDeck && index2(reg, s).get(iy * 65536 + ix) || [];
-    if (!list.length && !reg.nTun && !walls && !stn && !coast && !dams) return null;
+    if (!list.length && !reg.nTun && !walls && !stn && !coast && !dams && !sol) return null;
     const M = new Mesh();
     const c = Math.cos(th), sn = Math.sin(th);
     const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, segR = reg.segR;
@@ -8756,6 +8943,7 @@
     if (walls) count += addWalls(M, world2, ix, iy, s, P2);
     if (coast) count += addCoast(M, world2, reg, ix, iy, s, P2);
     if (dams) count += addDams(M, world2, ix, iy, s, P2);
+    if (sol) count += addSolar(M, world2, ix, iy, s, P2);
     if (stn) count += addStations(world2, M, stn, P2);
     if (!M.n) return null;
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
@@ -9289,11 +9477,12 @@
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
     const wf = meta.files && meta.files.walls, swf = meta.files && meta.files.seawalls;
     const getJ = (f) => f ? fetch(vurl("data/" + f.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
-    const damf = meta.files && meta.files.dams;
-    wallsReady = wf || swf || damf ? Promise.all([getJ(wf), getJ(swf), getJ(damf)]).then(([a, b, d]) => {
+    const damf = meta.files && meta.files.dams, solf = meta.files && meta.files.solar;
+    wallsReady = wf || swf || damf || solf ? Promise.all([getJ(wf), getJ(swf), getJ(damf), getJ(solf)]).then(([a, b, d, so]) => {
       const l = (a || []).concat(b || []);
       if (l.length) world.setWalls(l);
       if (d && d.length) world.setDams(d);
+      if (so && so.length) world.setSolar(so);
     }).catch(() => {
     }) : null;
     const lf = meta.files && meta.files.lifted;
