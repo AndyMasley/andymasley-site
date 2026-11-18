@@ -16318,6 +16318,21 @@ void main() {
       }
       this.solar = { B, cells };
     }
+    // ---- church steeples and towers (item 70; bake/c67_steeples.py -> data/steeples.json, drawn by steeples.js): each
+    // {x, y, g, t, s, a, m, o, id}, indexed by cells of DCELL
+    setSteeples(list) {
+      if (!list || !list.length) {
+        this.steeples = null;
+        return;
+      }
+      const cells = /* @__PURE__ */ new Map();
+      list.forEach((e, i) => {
+        const k = Math.floor(e.y / DCELL) * 65536 + Math.floor(e.x / DCELL);
+        if (!cells.has(k)) cells.set(k, []);
+        cells.get(k).push(i);
+      });
+      this.steeples = { L: list, cells };
+    }
     // does any dam's step or structure reach into the square (x0, y0, size)?
     damsNear(x02, y02, size) {
       if (!this.dams) return false;
@@ -19270,13 +19285,63 @@ vec3 coastSurface(int mat, vec2 uv, float z, vec4 W, float seed, vec3 pos, inout
       c = mix(c, vec3(0.05, 0.058, 0.08), far * 0.5);
       rough = 0.16;
     }
+  } else if (mat == 29) {
+    // a church's steeple or tower (steeples.js): W.x its part (0 walls, 1 belfry, 2 spire, 3 trim), W.y its finish
+    // (0 painted wood, 1 brick, 2 stone), W.z a face's width and W.w the belfry's height (uv: along the face, and up
+    // it: from the belfry's foot there, else the height)
+    int part = int(W.x + 0.5), fin = int(W.y + 0.5);
+    vec3 white = vec3(0.66, 0.66, 0.63);
+    if (part == 2) {
+      // the spire: white shingles, or slate on a stone tower
+      float row = floor(uv.y / 0.3), shg = fract(uv.x / 0.35 + row * 0.5);
+      c = (fin == 2 ? vec3(0.075, 0.08, 0.09) : white) * (0.92 + 0.08 * step(0.06, shg));
+      c *= 1.0 - 0.15 * cLine((0.5 - abs(fract(uv.y / 0.3) - 0.5)) * 0.3, 0.008, px);
+      rough = fin == 2 ? 0.55 : 0.7;
+    } else if (part == 3) {
+      c = fin == 2 ? vec3(0.28, 0.27, 0.25) : white * 1.02;
+      rough = 0.7;
+    } else {
+      float zz = part == 1 ? uv.y : z;
+      if (fin == 1) {
+        // brick: courses 0.0762 m, bricks 0.2 m, their joints offset course to course
+        float course = floor(zz / 0.0762), bu = uv.x / 0.203 + 0.5 * mod(course, 2.0);
+        float jm = min((0.5 - abs(fract(bu) - 0.5)) * 0.203, (0.5 - abs(fract(zz / 0.0762) - 0.5)) * 0.0762);
+        float farB = smoothstep(0.01, 0.04, px);
+        c = vec3(0.30, 0.115, 0.07) * (0.85 + 0.3 * hash2(ivec2(int(floor(bu)), int(course))));
+        c = mix(c, vec3(0.42, 0.40, 0.36), cLine(jm, 0.005, px) * 0.8 * (1.0 - farB));
+        c = mix(c, vec3(0.27, 0.12, 0.08), farB);
+      } else if (fin == 2) {
+        // stone: blocks 0.5 m high and 0.9 to 1.4 m long, each its own grey
+        float course = floor(zz / 0.5), bl = 0.9 + 0.5 * hash2(ivec2(int(course), 5));
+        float bu = uv.x / bl + hash2(ivec2(int(course), 9)), bi = floor(bu);
+        c = vec3(0.30, 0.29, 0.27) * (0.82 + 0.36 * hash2(ivec2(int(bi), int(course) + 41)));
+        float jm = min((0.5 - abs(fract(bu) - 0.5)) * bl, (0.5 - abs(fract(zz / 0.5) - 0.5)) * 0.5);
+        c = mix(c, vec3(0.12, 0.115, 0.11), cLine(jm, 0.012, px) * 0.7);
+      } else {
+        // painted clapboards, 0.15 m to the weather
+        c = white * (1.0 - 0.16 * cLine((0.5 - abs(fract(zz / 0.15) - 0.5)) * 0.15, 0.006, px));
+      }
+      if (part == 1) {
+        // the belfry: on each face an opening with a round head, louvres across it, and a frame round it
+        float fw = max(W.z, 0.5), sh = max(W.w, 0.5);
+        float u = uv.x - 0.5 * fw, hw = 0.3 * fw, v0 = 0.15 * sh, v1 = max(0.82 * sh - hw, v0 + 0.3);
+        bool opening = abs(u) < hw && uv.y > v0 && (uv.y < v1 || length(vec2(u, uv.y - v1)) < hw);
+        bool framed = abs(u) < hw + 0.12 && uv.y > v0 - 0.12 && (uv.y < v1 || length(vec2(u, uv.y - v1)) < hw + 0.12);
+        if (framed && !opening) c = fin == 2 ? vec3(0.34, 0.33, 0.31) : white * 1.05;
+        if (opening) {
+          float lv = fract(uv.y / 0.16);
+          c = mix(vec3(0.03, 0.03, 0.03), white * 0.72, smoothstep(0.35, 0.55, lv) * (1.0 - smoothstep(0.85, 0.95, lv)));
+        }
+      }
+      rough = 0.8;
+    }
   } else {
     // piles: dark creosoted timber, vertical grain
     c = vec3(0.085, 0.07, 0.058) * (0.8 + 0.4 * sv) * (0.85 + 0.3 * vnoise(vec2(uv.x * 6.0, z * 0.7)));
     rough = 0.9;
   }
   // the sea's marks: darker where wet, rockweed low down, a band of barnacles under high water
-  float wk = (mat == 25 || mat == 27 || mat == 28) ? 0.0 : 1.0;
+  float wk = (mat == 25 || mat >= 27) ? 0.0 : 1.0;
   c *= mix(1.0, 0.52, wet * wk);
   vec3 weedC = vec3(0.045, 0.040, 0.016) * (0.8 + 0.4 * fbm3(uv * 1.7));
   c = mix(c, weedC, weed * wk * smoothstep(0.35, 0.65, fbm3(uv * 0.8 + 3.0) + weed * 0.4));
@@ -22038,9 +22103,10 @@ void main() {
     ARMOR: 24,
     PLANKS: 25,
     PILE: 26,
-    // water falling over a dam's spillway (dams.js); a solar panel (solar.js)
+    // water falling over a dam's spillway (dams.js); a solar panel (solar.js); a church's steeple (steeples.js)
     FALLS: 27,
-    SOLAR: 28
+    SOLAR: 28,
+    STEEPLE: 29
   };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {

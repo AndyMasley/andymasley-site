@@ -1111,10 +1111,10 @@
     return o;
   }
   function laneGeom(style, nF, nB2, c, hw, rZ, lZ, o, rS = 0, lS = 0) {
-    const known = rS > 0 || lS > 0, cap = known ? 3.7 : 3.5;
+    const known = rS > 0 || lS > 0, cap2 = known ? 3.7 : 3.5;
     if (style === 1) {
       const eR = hw - (rZ > 0 ? rZ : Math.max(rS, 0.25)), eL = -(hw - (lZ > 0 ? lZ : Math.max(lS, 0.25)));
-      const n = nF + nB2 + c, w = Math.min(cap, (eR - eL) / Math.max(n, 1e-3));
+      const n = nF + nB2 + c, w = Math.min(cap2, (eR - eL) / Math.max(n, 1e-3));
       const y = clamp2(0, eL + nB2 * w + c * w * 0.5, eR - nF * w - c * w * 0.5);
       o.w = w;
       o.y = y;
@@ -1131,7 +1131,7 @@
         re = rZ > 0 ? hw - rZ : hw - sh;
         le = lZ > 0 ? -(hw - lZ) : rZ > 0 ? -(hw - clamp2(2 * hw - rZ - nF * 3.5, 0.25, 3)) : -(hw - sh);
       }
-      o.w = Math.min(cap, (re - le) / Math.max(nF, 1e-3));
+      o.w = Math.min(cap2, (re - le) / Math.max(nF, 1e-3));
       o.y = le;
       o.cR = le;
       o.cL = le;
@@ -1698,6 +1698,21 @@
       }
       this.solar = { B, cells };
     }
+    // ---- church steeples and towers (item 70; bake/c67_steeples.py -> data/steeples.json, drawn by steeples.js): each
+    // {x, y, g, t, s, a, m, o, id}, indexed by cells of DCELL
+    setSteeples(list) {
+      if (!list || !list.length) {
+        this.steeples = null;
+        return;
+      }
+      const cells = /* @__PURE__ */ new Map();
+      list.forEach((e, i) => {
+        const k = Math.floor(e.y / DCELL) * 65536 + Math.floor(e.x / DCELL);
+        if (!cells.has(k)) cells.set(k, []);
+        cells.get(k).push(i);
+      });
+      this.steeples = { L: list, cells };
+    }
     // does any dam's step or structure reach into the square (x0, y0, size)?
     damsNear(x0, y0, size) {
       if (!this.dams) return false;
@@ -2074,7 +2089,7 @@
           }
         }
       }
-      const cap = Float32Array.from(list, (w) => w.c > 0 ? w.c : 0.35);
+      const cap2 = Float32Array.from(list, (w) => w.c > 0 ? w.c : 0.35);
       const cut = Uint8Array.from(list, (w) => w.src === "cut" ? 1 : 0);
       const mouth = Float32Array.from(list, (w) => w.o > 0 ? w.o : 0);
       const mouthB = Float32Array.from(list, (w) => w.ob > 0 ? w.ob : 0);
@@ -2094,7 +2109,7 @@
           }
         }
       }
-      this.walls = { X, Y, F, T, Wi, ws, cells, cap, cut, mouth, mouthB, kind, seaCells, n: ws.length / 5 };
+      this.walls = { X, Y, F, T, Wi, ws, cells, cap: cap2, cut, mouth, mouthB, kind, seaCells, n: ws.length / 5 };
       this._wl = { d: 0, sd: 0, foot: 0, top: 0, t: 0, i: -1, w: -1, s: 0, m: 0, ux: 1, uy: 0, nx: 0, ny: 1, end: false };
       this._sw = { d: 0, sd: 0, past: 0, land: 0, i: -1, w: -1 };
     }
@@ -2625,7 +2640,7 @@
   function carMesh(variant = 0, detail = 0) {
     const S = SPEC[variant], W = S.wheel;
     const P2 = [], N = [], M = [];
-    const tri2 = (a, b, c, na, nb, nc, m) => {
+    const tri3 = (a, b, c, na, nb, nc, m) => {
       P2.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
       N.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
       M.push(m, m, m);
@@ -2639,9 +2654,9 @@
       nz /= l;
       const back = nx * want[0] + ny * want[1] + nz * want[2] < 0;
       const n = back ? [-nx, -ny, -nz] : [nx, ny, nz];
-      for (let i = 1; i < pts.length - 1; i++) back ? tri2(a, pts[i + 1], pts[i], n, n, n, m) : tri2(a, pts[i], pts[i + 1], n, n, n, m);
+      for (let i = 1; i < pts.length - 1; i++) back ? tri3(a, pts[i + 1], pts[i], n, n, n, m) : tri3(a, pts[i], pts[i + 1], n, n, n, m);
     };
-    const box = (x0, x1, y0, y1, z0, z1, m) => {
+    const box2 = (x0, x1, y0, y1, z0, z1, m) => {
       flat2([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], [1, 0, 0], m);
       flat2([[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]], [-1, 0, 0], m);
       flat2([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], [0, 1, 0], m);
@@ -2734,10 +2749,10 @@
     for (let i = 0; i < ns - 1; i++) for (let k = 0; k < RN; k++) {
       if (!live(i, k)) continue;
       const k1 = (k + 1) % RN, m = bandMat(k, (st2[i] + st2[i + 1]) / 2);
-      tri2(G[i][k], G[i][k1], G[i + 1][k1], nrm[i][k], nrm[i][k1], nrm[i + 1][k1], m);
-      tri2(G[i][k], G[i + 1][k1], G[i + 1][k], nrm[i][k], nrm[i + 1][k1], nrm[i + 1][k], m);
+      tri3(G[i][k], G[i][k1], G[i + 1][k1], nrm[i][k], nrm[i][k1], nrm[i + 1][k1], m);
+      tri3(G[i][k], G[i + 1][k1], G[i + 1][k], nrm[i][k], nrm[i + 1][k1], nrm[i + 1][k], m);
     }
-    const cap = (r, dir) => {
+    const cap2 = (r, dir) => {
       let cy = 0;
       for (const p of r) cy += p[1];
       cy /= r.length;
@@ -2748,8 +2763,8 @@
         flat2([c, r[k], r[k1]], [0, 0, dir], CM.PAINT);
       }
     };
-    cap(G[0], -1);
-    cap(G[ns - 1], 1);
+    cap2(G[0], -1);
+    cap2(G[ns - 1], 1);
     const zF = st2[0] - 6e-3, zB = st2[ns - 1] + 6e-3;
     const wF = key(S.hw, st2[0]), bF = key(S.belt, st2[0]), uF = key(S.under, st2[0]);
     const wB = key(S.hw, st2[ns - 1]), bB = key(S.belt, st2[ns - 1]), uB = key(S.under, st2[ns - 1]);
@@ -2764,7 +2779,7 @@
       const zm = S.a0 + 0.3, wm = key(S.hw, zm), ym = key(S.belt, zm) + 0.03;
       for (const sx of [-1, 1]) {
         const xa = sx * (wm - 0.06), xb = sx * (wm + 0.15);
-        box(Math.min(xa, xb), Math.max(xa, xb), ym, ym + 0.105, zm - 0.04, zm + 0.045, CM.PAINT);
+        box2(Math.min(xa, xb), Math.max(xa, xb), ym, ym + 0.105, zm - 0.04, zm + 0.045, CM.PAINT);
       }
     }
     const seg = detail ? 20 : 10, rh = W.r * 0.6;
@@ -2775,11 +2790,11 @@
         const o0 = [xo, yc + W.r * s0, zc + W.r * c0], o1 = [xo, yc + W.r * s1, zc + W.r * c1], i0 = [xi, yc + W.r * s0, zc + W.r * c0], i1 = [xi, yc + W.r * s1, zc + W.r * c1];
         const n0 = [0, s0, c0], n1 = [0, s1, c1];
         if (sx > 0) {
-          tri2(i0, o0, o1, n0, n0, n1, CM.TYRE);
-          tri2(i0, o1, i1, n0, n1, n1, CM.TYRE);
+          tri3(i0, o0, o1, n0, n0, n1, CM.TYRE);
+          tri3(i0, o1, i1, n0, n1, n1, CM.TYRE);
         } else {
-          tri2(i0, o1, o0, n0, n1, n0, CM.TYRE);
-          tri2(i0, i1, o1, n0, n1, n1, CM.TYRE);
+          tri3(i0, o1, o0, n0, n1, n0, CM.TYRE);
+          tri3(i0, i1, o1, n0, n1, n1, CM.TYRE);
         }
         const h0 = [xo, yc + rh * s0, zc + rh * c0], h12 = [xo, yc + rh * s1, zc + rh * c1];
         flat2([o0, o1, h12, h0], [sx, 0, 0], CM.TYRE);
@@ -2823,9 +2838,10 @@
     ARMOR: 24,
     PLANKS: 25,
     PILE: 26,
-    // water falling over a dam's spillway (dams.js); a solar panel (solar.js)
+    // water falling over a dam's spillway (dams.js); a solar panel (solar.js); a church's steeple (steeples.js)
     FALLS: 27,
-    SOLAR: 28
+    SOLAR: 28,
+    STEEPLE: 29
   };
   var FLOOR = [2.75, 2.6, 2.7, 3, 2.6, 5, 3, 3.7, 7, 8, 3.9, 3.9, 4.6, 6, 3.1, 2.8];
   var FOUND = [0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0, 0.15, 0.7, 0.6];
@@ -3368,7 +3384,7 @@
     }
     return s / 2;
   }
-  function ears(P2, tri2) {
+  function ears(P2, tri3) {
     const n0 = P2.length / 3;
     if (n0 < 3) return;
     let area = 0;
@@ -3418,7 +3434,7 @@
           }
         }
         if (!ok) continue;
-        tri2(i0, i1, i2);
+        tri3(i0, i1, i2);
         idx.splice(k, 1);
         cut = true;
         break;
@@ -3426,13 +3442,13 @@
       if (!cut) break;
     }
     if (idx.length === 3) {
-      if (cross(idx[0], idx[1], idx[2]) > 1e-9) tri2(idx[0], idx[1], idx[2]);
+      if (cross(idx[0], idx[1], idx[2]) > 1e-9) tri3(idx[0], idx[1], idx[2]);
       return;
     }
     for (let k = 1; k + 1 < idx.length; k++) {
       const a = idx[0], b = idx[k], c = idx[k + 1];
       if (cross(a, b, c) <= 1e-9) continue;
-      if (inside((X(a) + X(b) + X(c)) / 3, (Y(a) + Y(b) + Y(c)) / 3)) tri2(a, b, c);
+      if (inside((X(a) + X(b) + X(c)) / 3, (Y(a) + Y(b) + Y(c)) / 3)) tri3(a, b, c);
     }
   }
   var _A = [];
@@ -4220,10 +4236,10 @@
     }
     const g = world2.groundH(mx, my, true), wg = world2.g;
     if (wg.water && !measured2) return 0;
-    let cap = 1e9;
+    let cap2 = 1e9;
     if (wg.deck > -1e8) {
-      cap = wg.deck - DECK_T - 0.8 - g;
-      if (cap < 2.6) return 0;
+      cap2 = wg.deck - DECK_T - 0.8 - g;
+      if (cap2 < 2.6) return 0;
     }
     const ca = Math.cos(a), sa = Math.sin(a);
     let gmin = g, gmax = g;
@@ -4238,7 +4254,7 @@
     const boxes = _sec;
     boxes.length = 0;
     let parsed = false;
-    if (measured2 && cap > 1e8) {
+    if (measured2 && cap2 > 1e8) {
       const dv = real.dv, o = real.base + real.off[id];
       const nv = dv.getUint8(o), ns = dv.getUint8(o + 1);
       if (ns && nv >= 3) {
@@ -4279,7 +4295,7 @@
       }
     }
     if (!parsed) {
-      const roof = cap < 1e8 ? ROOF.FLAT : list[k + 7], wallH = cap < 1e8 ? Math.min(list[k + 5], cap - 0.6) : list[k + 5];
+      const roof = cap2 < 1e8 ? ROOF.FLAT : list[k + 7], wallH = cap2 < 1e8 ? Math.min(list[k + 5], cap2 - 0.6) : list[k + 5];
       const r1 = h1(id, seed * 7 + 1);
       const flat2 = roof === ROOF.FLAT;
       const pitch = PITCH[cls] * (0.9 + 0.25 * r1) * (roof === ROOF.HIP ? 0.8 : 1);
@@ -4335,7 +4351,7 @@
       cyl(fx, fy, g + foot, P2);
       const a2 = a + (b.length > 8 ? b[8] : 0);
       const yaw = turn ? a2 + Math.PI / 2 : a2, W = turn ? bd : bw, D2 = turn ? bw : bd;
-      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap) - foot, cap < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul, wc);
+      out.push(P2[0] - cx, P2[1] - cy, P2[2] - cz, yaw, W, D2, Math.min(eave, cap2) - foot, cap2 < 1e8 ? 0 : rise, seed, cls, mat, rc, B[0] - cx, B[1] - cy, B[2] - cz, mul, wc);
     }
     return boxes.length;
   }
@@ -4404,20 +4420,20 @@
         measured2 = false;
       }
       if (reg && reg.nDeck) {
-        let cap = 1e9;
+        let cap2 = 1e9;
         for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
           const px = mx + (ca * i * w - sa * j * d) / 4, py = my + (sa * i * w + ca * j * d) / 4;
           let zmax = 1e9;
           for (let t = 0; t < 4 && world2.nearestDeck(px, py, zmax) < 0.35; t++) {
             const zd = world2._nd.z;
-            if (zd > g + 1.5) cap = Math.min(cap, zd - DECK_T - 0.8 - g);
+            if (zd > g + 1.5) cap2 = Math.min(cap2, zd - DECK_T - 0.8 - g);
             zmax = zd - 0.5;
           }
         }
-        if (cap < 2.6) continue;
-        if (cap < 1e8) {
+        if (cap2 < 2.6) continue;
+        if (cap2 < 1e8) {
           measured2 = false;
-          list[k + 5] = Math.min(list[k + 5], cap - 0.6);
+          list[k + 5] = Math.min(list[k + 5], cap2 - 0.6);
           list[k + 7] = ROOF.FLAT;
           list[k + 11] = 0;
           list[k + 9] = clamp2(Math.floor(list[k + 5] / 3), 1, Math.max(1, list[k + 9]));
@@ -4538,12 +4554,12 @@
   function streetItems(world2, reg, kind, mx0, my0, s, cx, cy, cz) {
     const out = [];
     if (!reg || !reg.nRoads) return new Float32Array(0);
-    const box = roadBoxes(reg), p32 = new Float64Array(3);
+    const box2 = roadBoxes(reg), p32 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0, pad = 60;
     const A = { mx: 0, my: 0, h: 0, yaw: 0, tx: 0, ty: 0 }, B = { mx: 0, my: 0, h: 0, yaw: 0, tx: 0, ty: 0 };
     const inTile = (mx, my) => mx >= mx0 && mx < mx0 + s && my >= my0 && my < my0 + s;
     for (let ri = 0; ri < reg.nRoads; ri++) {
-      if (box[ri * 4] > lx0 + s + pad || box[ri * 4 + 2] < lx0 - pad || box[ri * 4 + 1] > ly0 + s + pad || box[ri * 4 + 3] < ly0 - pad) continue;
+      if (box2[ri * 4] > lx0 + s + pad || box2[ri * 4 + 2] < lx0 - pad || box2[ri * 4 + 1] > ly0 + s + pad || box2[ri * 4 + 3] < ly0 - pad) continue;
       const q0 = reg.rStart[ri], sA = reg.cum[q0], sB = reg.cum[q0 + reg.rCount[ri] - 1], hw = reg.rHw[ri], cls = reg.rCls[ri];
       if (kind === "poles" || kind === "wires") {
         if (!polesOn(reg, ri)) continue;
@@ -5186,9 +5202,9 @@
         else if (zD === null && world2.nearestRoad(mx, my) < 12 && kerbSide(world2, mx, my, 0.6, ks)) put(ks.x, ks.y, ks.yaw, part, 0, 0);
         else put(mx, my, hash2(i, 7) * 6.28, part, 0, 0);
       } else if (k === BIKEPARK || k === BIKESHARE) {
-        const t = f.sub[i], cap = Math.round(f.h[i] * 2), share = k === BIKESHARE;
+        const t = f.sub[i], cap2 = Math.round(f.h[i] * 2), share = k === BIKESHARE;
         if (!share && t === 3) continue;
-        const n = share ? clamp2(cap || 15, 4, 40) : t === 2 ? clamp2(cap || 2, 1, 12) : clamp2(Math.ceil((cap || 4) / 2), 1, 12);
+        const n = share ? clamp2(cap2 || 15, 4, 40) : t === 2 ? clamp2(cap2 || 2, 1, 12) : clamp2(Math.ceil((cap2 || 4) / 2), 1, 12);
         const gap = share ? 0.75 : t === 2 ? 1.2 : 0.9, part = share ? PART.DOCK : t === 2 ? PART.BIKE_POST : PART.BIKE_HOOP;
         let x2 = mx, y2 = my, yaw = hash2(i, 13) * 6.28, tx = Math.cos(yaw), ty = Math.sin(yaw);
         if (zD === null && world2.nearestRoad(mx, my) < 15 && kerbSide(world2, mx, my, share ? -100 : 0.6, ks)) {
@@ -5234,7 +5250,7 @@
     const WHITE = [0.78, 0.78, 0.74];
     let zD = null;
     let hNode = 0;
-    const quad4 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
+    const quad5 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
       for (let q = 0; q <= n; q++) {
@@ -5259,7 +5275,7 @@
         v(D2);
       }
     };
-    const tri2 = (P1, P2, P3, col) => {
+    const tri3 = (P1, P2, P3, col) => {
       const V2 = [];
       for (const [x, y] of [P1, P2, P3]) {
         const h = surfaceH(world2, x, y, zD);
@@ -5312,16 +5328,16 @@
         if (lines || sub === 1 || sub === 7) {
           for (const a of [-1.65, 1.35]) {
             if (sub !== 4) {
-              quad4(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
+              quad5(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
               continue;
             }
-            for (let c = -hw; c < hw - 0.2; c += 1.2) quad4(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
+            for (let c = -hw; c < hw - 0.2; c += 1.2) quad5(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
           }
         }
         if (bars) {
           const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2));
           const c0 = -nb * 0.6 + 0.3, a0 = sub === 2 ? -1.5 : -1.3, a1 = sub === 2 ? 1.5 : 1.3;
-          for (let b = 0; b < nb; b++) quad4(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
+          for (let b = 0; b < nb; b++) quad5(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
         }
       } else if (k === STOP || k === SIGNAL) {
         const junction = roadCount(f, i) >= 3;
@@ -5331,11 +5347,11 @@
           const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD);
           if (hw < 2.5) continue;
           const back = (junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
-          quad4(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
+          quad5(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
         }
       }
     }
-    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad4, tri2, (h) => {
+    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad5, tri3, (h) => {
       hNode = h;
       zD = null;
     }, WHITE);
@@ -5363,7 +5379,7 @@
         hNode = world2.groundH(mx, my, true);
         if (world2.g.water) continue;
         if (kind === 1) {
-          quad4(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
+          quad5(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
           continue;
         }
         const h0 = surfaceH(world2, mx, my, zD), gx = (surfaceH(world2, mx + 0.35, my, zD) - h0) / 0.35, gy = (surfaceH(world2, mx, my + 0.35, zD) - h0) / 0.35;
@@ -5443,7 +5459,7 @@
   var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
   var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, count: 0, drawn: 0, arrows: 0, last: null };
   var _lg2 = {};
-  function laneArrows(world2, reg, f, lx0, ly0, s, quad4, tri2, ground, col) {
+  function laneArrows(world2, reg, f, lx0, ly0, s, quad5, tri3, ground, col) {
     const near = [];
     for (let q = 0; q < (f.nP || 0); q++) {
       const k = f.kind[q], x = f.px[q], y = f.py[q];
@@ -5539,10 +5555,10 @@
             const A = at(e[1], e[2]), B = at(e[3], e[4]), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]);
             if (L2 < 1e-3) continue;
             const dx = (B[0] - A[0]) / L2, dy = (B[1] - A[1]) / L2;
-            quad4(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
+            quad5(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
           } else {
             const [, a, c, da, dc, len, hb] = e;
-            tri2(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
+            tri3(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
           }
         }
       }
@@ -5770,7 +5786,7 @@
     if (!f || !f.nA) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), WHITE = [0.78, 0.78, 0.74];
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
-    const vtx4 = (x, y) => {
+    const vtx5 = (x, y) => {
       const h = world2.groundH(x, y, true);
       cyl(x, y, h + 0.03, p32);
       cyl(x, y, h + 1.03, u3);
@@ -5782,10 +5798,10 @@
       if (L2 < 0.05) return;
       const ux = (x1 - x0) / L2, uy = (y1 - y0) / L2, nx = -uy * w / 2, ny = ux * w / 2;
       const n = Math.max(1, Math.ceil(L2 / 2));
-      let A = vtx4(x0 - nx, y0 - ny), B = vtx4(x0 + nx, y0 + ny);
+      let A = vtx5(x0 - nx, y0 - ny), B = vtx5(x0 + nx, y0 + ny);
       for (let k = 1; k <= n; k++) {
         const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-        const C2 = vtx4(x - nx, y - ny), D2 = vtx4(x + nx, y + ny);
+        const C2 = vtx5(x - nx, y - ny), D2 = vtx5(x + nx, y + ny);
         push(A, col);
         push(C2, col);
         push(D2, col);
@@ -6092,7 +6108,7 @@
       return r;
     };
     const push = (p, n, col) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2]);
-    const quad4 = (P0, P1, P2, P3, n0, n1, col) => {
+    const quad5 = (P0, P1, P2, P3, n0, n1, col) => {
       const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
       const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
       if (fx * (n0[0] + n1[0]) + fy * (n0[1] + n1[1]) + fz * (n0[2] + n1[2]) >= 0) {
@@ -6111,7 +6127,7 @@
         push(P2, n1, col);
       }
     };
-    const tri2 = (P0, P1, P2, n, col) => {
+    const tri3 = (P0, P1, P2, n, col) => {
       const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
       if ((uy * wz - uz * wy) * n[0] + (uz * wx - ux * wz) * n[1] + (ux * wy - uy * wx) * n[2] >= 0) {
         push(P0, n, col);
@@ -6216,7 +6232,7 @@
               pt(Fa, ra, rb, P1);
               pt(Fb, ra, rb, P22);
               pt(Fb, qa, qb, P3);
-              quad4(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
+              quad5(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
             }
           }
           if (R2.gap) {
@@ -6235,11 +6251,11 @@
                   return r;
                 };
                 const nA2 = Fa.Ac, nU = Fa.U, nT = Fa.T, mA = [-nA2[0], -nA2[1], -nA2[2]], mT = [-nT[0], -nT[1], -nT[2]];
-                quad4(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
-                quad4(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
-                quad4(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
-                quad4(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
-                quad4(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
+                quad5(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
+                quad5(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
+                quad5(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
+                quad5(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
+                quad5(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
               }
             }
           }
@@ -6252,7 +6268,7 @@
             if (!poly.cap) continue;
             const Q = poly.pts;
             pt(Fe, Q[0][0], Q[0][1], P0);
-            for (let i = 1; i + 1 < Q.length; i++) tri2(P0, pt(Fe, Q[i][0], Q[i][1], P1), pt(Fe, Q[i + 1][0], Q[i + 1][1], P22), nT, poly.col);
+            for (let i = 1; i + 1 < Q.length; i++) tri3(P0, pt(Fe, Q[i][0], Q[i][1], P1), pt(Fe, Q[i + 1][0], Q[i + 1][1], P22), nT, poly.col);
           }
         }
       }
@@ -7769,7 +7785,7 @@
     centre(M, P2, xm, ym, (tA + tB) / 2);
     const at = (x, y, n, e, h, u, v) => [x + n[0] * e, y + n[1] * e, h, u, v];
     if (kind === 1) {
-      const e0 = -0.12, e1 = e0 + WTH[mat], cap = Math.max(W.cap ? W.cap[wi] : 0.3, 0.05), cA = tA + cap, cB = tB + cap;
+      const e0 = -0.12, e1 = e0 + WTH[mat], cap2 = Math.max(W.cap ? W.cap[wi] : 0.3, 0.05), cA = tA + cap2, cB = tB + cap2;
       setMat(M, WFACE[mat], seed, lev, half, 1);
       quad(M, P2, at(xA, yA, nA, e0, bA, s0, bA), at(xB, yB, nB, e0, bB, s1, bB), at(xB, yB, nB, e0, cB, s1, cB), at(xA, yA, nA, e0, cA, s0, cA), fx, fy, 0);
       setMat(M, WTOP[mat], seed, lev, half, 1);
@@ -7783,7 +7799,7 @@
         setMat(M, MAT.PILE, seed, lev, half, 1);
         for (let k = Math.ceil(s0 / 2.4); k * 2.4 < s1; k++) {
           const t = (k * 2.4 - s0) / len, x = xA + (xB - xA) * t, y = yA + (yB - yA) * t, n0 = nA[0] + (nB[0] - nA[0]) * t, n1 = nA[1] + (nB[1] - nA[1]) * t;
-          post2(M, P2, x + n0 * (e0 - 0.1), y + n1 * (e0 - 0.1), ux, uy, 0.15, 0.15, bA + (bB - bA) * t, tA + (tB - tA) * t + cap + 0.25);
+          post2(M, P2, x + n0 * (e0 - 0.1), y + n1 * (e0 - 0.1), ux, uy, 0.15, 0.15, bA + (bB - bA) * t, tA + (tB - tA) * t + cap2 + 0.25);
         }
       }
       return true;
@@ -8249,13 +8265,13 @@
       else setMat2(M, face, seed, dn, 0, 1);
       const fu = (Q, k2) => fall ? k2 === 2 ? 0 : len : Q.p[k2][1];
       quad2(M, P2, v(A, 2, A.sa, fu(A, 2)), v(B, 2, B.sa, fu(B, 2)), v(B, 3, B.sa, fu(B, 3)), v(A, 3, A.sa, fu(A, 3)), nx, ny, 0.3);
-      const cap = (Q, dir) => {
+      const cap2 = (Q, dir) => {
         setMat2(M, face, seed, up, 0, 1);
         const p0 = v(Q, 0, 0, Q.p[0][1]), p1 = v(Q, 1, 0, top), p2 = v(Q, 2, w, top), p32 = v(Q, 3, w + (Q.spill ? run : 0), Q.p[3][1]);
         quad2(M, P2, p0, p1, p2, p32, ux * dir, uy * dir, 0);
       };
-      if (k === 0 || !prof[k - 1]) cap(A, -1);
-      if (k + 2 === st2.length || !prof[k + 2]) cap(B, 1);
+      if (k === 0 || !prof[k - 1]) cap2(A, -1);
+      if (k + 2 === st2.length || !prof[k + 2]) cap2(B, 1);
       count++;
     }
     return count;
@@ -8417,6 +8433,127 @@
     return count;
   }
 
+  // src/steeples.js
+  var _n4 = [0, 0, 0];
+  function vtx4(M, P2, x, y, h, n, tu, tv) {
+    const q = P2(x, y, h);
+    return M.v(q[0], q[1], q[2], n[0], n[2], -n[1], tu, tv);
+  }
+  function quad4(M, P2, a, b, c, d, hx, hy, hz) {
+    const ux = c[0] - a[0], uy = c[1] - a[1], uz = c[2] - a[2], vx = d[0] - b[0], vy = d[1] - b[1], vz = d[2] - b[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz);
+    if (l < 1e-9) return;
+    if (nx * hx + ny * hy + nz * hz < 0) {
+      nx = -nx;
+      ny = -ny;
+      nz = -nz;
+    }
+    _n4[0] = nx / l;
+    _n4[1] = ny / l;
+    _n4[2] = nz / l;
+    M.quad(
+      vtx4(M, P2, a[0], a[1], a[2], _n4, a[3], a[4]),
+      vtx4(M, P2, b[0], b[1], b[2], _n4, b[3], b[4]),
+      vtx4(M, P2, c[0], c[1], c[2], _n4, c[3], c[4]),
+      vtx4(M, P2, d[0], d[1], d[2], _n4, d[3], d[4])
+    );
+  }
+  function tri2(M, P2, a, b, c, hx, hy, hz) {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz);
+    if (l < 1e-9) return;
+    if (nx * hx + ny * hy + nz * hz < 0) {
+      nx = -nx;
+      ny = -ny;
+      nz = -nz;
+    }
+    _n4[0] = nx / l;
+    _n4[1] = ny / l;
+    _n4[2] = nz / l;
+    M.tri(vtx4(M, P2, a[0], a[1], a[2], _n4, a[3], a[4]), vtx4(M, P2, b[0], b[1], b[2], _n4, b[3], b[4]), vtx4(M, P2, c[0], c[1], c[2], _n4, c[3], c[4]));
+  }
+  function setMat4(M, part, fin, w, h, seed) {
+    M.M[0] = MAT.STEEPLE;
+    M.M[1] = 0;
+    M.M[2] = 0;
+    M.M[3] = seed & 255;
+    M.W[0] = part;
+    M.W[1] = fin;
+    M.W[2] = w;
+    M.W[3] = h;
+    M.K[0] = M.K[1] = M.K[2] = M.K[3] = 0;
+  }
+  function steeplesIn(world2, ix, iy, s) {
+    const S = world2.steeples;
+    if (!S) return false;
+    const X0 = ix * s, Y0 = iy * s;
+    for (let cy = Math.floor(Y0 / DCELL); cy <= Math.floor((Y0 + s) / DCELL); cy++)
+      for (let cx = Math.floor(X0 / DCELL); cx <= Math.floor((X0 + s) / DCELL); cx++)
+        for (const i of S.cells.get(cy * 65536 + cx) || []) {
+          const e = S.L[i];
+          if (e.x >= X0 && e.x < X0 + s && e.y >= Y0 && e.y < Y0 + s) return true;
+        }
+    return false;
+  }
+  function addSteeples(M, world2, ix, iy, s, P2) {
+    const S = world2.steeples, X0 = ix * s, Y0 = iy * s;
+    let count = 0;
+    for (let cy = Math.floor(Y0 / DCELL); cy <= Math.floor((Y0 + s) / DCELL); cy++)
+      for (let cx = Math.floor(X0 / DCELL); cx <= Math.floor((X0 + s) / DCELL); cx++)
+        for (const i of S.cells.get(cy * 65536 + cx) || []) {
+          const e = S.L[i];
+          if (e.x < X0 || e.x >= X0 + s || e.y < Y0 || e.y >= Y0 + s) continue;
+          steeple(M, P2, e, i);
+          count++;
+        }
+    return count;
+  }
+  function box(M, P2, e, a, h0, h12, part, fin, seed, ux, uy, stage) {
+    const vx = -uy, vy = ux;
+    const c = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([su, sv]) => [e.x + (ux * su + vx * sv) * a, e.y + (uy * su + vy * sv) * a]);
+    setMat4(M, part, fin, 2 * a, stage ? h12 - h0 : 0, seed);
+    for (let k = 0; k < 4; k++) {
+      const A = c[k], B = c[k + 1 & 3], hx = (A[0] + B[0]) / 2 - e.x, hy = (A[1] + B[1]) / 2 - e.y;
+      const v0 = stage ? 0 : h0, v1 = stage ? h12 - h0 : h12;
+      quad4(M, P2, [A[0], A[1], h0, 0, v0], [B[0], B[1], h0, 2 * a, v0], [B[0], B[1], h12, 2 * a, v1], [A[0], A[1], h12, 0, v1], hx, hy, 0);
+    }
+    return c;
+  }
+  function cap(M, P2, c, h, fin, seed) {
+    setMat4(M, 3, fin, 1, 0, seed);
+    quad4(M, P2, [c[0][0], c[0][1], h, 0, 0], [c[1][0], c[1][1], h, 1, 0], [c[2][0], c[2][1], h, 1, 1], [c[3][0], c[3][1], h, 0, 1], 0, 0, 1);
+  }
+  function steeple(M, P2, e, i) {
+    const seed = e.id * 31 + 7 & 255, fin = e.m, ux = Math.cos(e.o || 0), uy = Math.sin(e.o || 0);
+    const q = P2(e.x, e.y, (e.g + e.t) / 2);
+    M.C[0] = q[0];
+    M.C[1] = q[1];
+    M.C[2] = q[2];
+    const a = e.a, spire = e.s < e.t - 0.5;
+    const top = spire ? e.s : e.t, bh = Math.min(5, Math.max(2.5, 0.22 * (top - e.g)));
+    const b0 = top - bh;
+    box(M, P2, e, a, e.g - 0.5, b0, 0, fin, seed, ux, uy, false);
+    const ledge = box(M, P2, e, a + 0.15, b0, b0 + 0.25, 3, fin, seed, ux, uy, false);
+    cap(M, P2, ledge, b0 + 0.25, fin, seed);
+    const ab = spire ? a * 0.9 : a;
+    box(M, P2, e, ab, b0 + 0.25, top, 1, fin, seed, ux, uy, true);
+    const corn = box(M, P2, e, ab + 0.15, top, top + 0.35, 3, fin, seed, ux, uy, false);
+    cap(M, P2, corn, top + 0.35, fin, seed);
+    if (!spire) return;
+    const r = ab * 0.92, h0 = top + 0.35, ang0 = Math.atan2(uy, ux) + Math.PI / 8;
+    setMat4(M, 2, fin, 1, 0, seed);
+    const slant = Math.hypot(e.t - h0, r);
+    for (let k = 0; k < 8; k++) {
+      const a0 = ang0 + k * Math.PI / 4, a1 = a0 + Math.PI / 4;
+      const A = [e.x + Math.cos(a0) * r, e.y + Math.sin(a0) * r, h0, 0, 0], B = [e.x + Math.cos(a1) * r, e.y + Math.sin(a1) * r, h0, 2 * r * Math.sin(Math.PI / 8), 0];
+      const T = [e.x, e.y, e.t, r * Math.sin(Math.PI / 8), slant];
+      const mx = (A[0] + B[0]) / 2 - e.x, my = (A[1] + B[1]) / 2 - e.y;
+      tri2(M, P2, A, B, T, mx, my, r / Math.max(e.t - h0, 0.1));
+    }
+  }
+
   // src/decks.js
   var _shD = { r: 0, l: 0, b: 0 };
   var PIER_GAP = 30;
@@ -8566,9 +8703,10 @@
     const coast = !!reg && coastIn(reg, ix, iy, s);
     const dams = !!reg && damsIn(world2, ix, iy, s);
     const sol = !!reg && solarIn(world2, ix, iy, s);
-    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast || dams || sol)) return null;
+    const stp = !!reg && steeplesIn(world2, ix, iy, s);
+    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast || dams || sol || stp)) return null;
     const list = reg.nDeck && index2(reg, s).get(iy * 65536 + ix) || [];
-    if (!list.length && !reg.nTun && !walls && !stn && !coast && !dams && !sol) return null;
+    if (!list.length && !reg.nTun && !walls && !stn && !coast && !dams && !sol && !stp) return null;
     const M = new Mesh();
     const c = Math.cos(th), sn = Math.sin(th);
     const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, segR = reg.segR;
@@ -8802,7 +8940,7 @@
         setM(MAT.CONCRETE);
       }
       const en = reg.rEnd[ri], a0 = reg.rStart[ri], b0 = a0 + reg.rCount[ri] - 1, pLs = pL, pRs = pR;
-      const cap = (X, Y, Z, nn, dir, f) => {
+      const cap2 = (X, Y, Z, nn, dir, f) => {
         const pL2 = lin(pLs, f), pR2 = lin(pRs, f), eL = pL2 + PW, eR = pR2 + PW;
         const face = (o0, o1, h0, h12) => {
           let t = P2(X + nn[0] * o0, Y + nn[1] * o0, Z + h0);
@@ -8830,8 +8968,8 @@
           } else face(hw, eR, 0, PH);
         }
       };
-      if (q === a0 && en & 1) cap(ax, ay, az, n0, -1, 0);
-      if (q + 1 === b0 && en & 2) cap(bx, by, bz, n1, 1, 1);
+      if (q === a0 && en & 1) cap2(ax, ay, az, n0, -1, 0);
+      if (q + 1 === b0 && en & 2) cap2(bx, by, bz, n1, 1, 1);
       if (piersOf(reg, ri) && (q === a0 && en & 1 || q + 1 === b0 && en & 2)) {
         for (const e of [0, 1]) {
           if (e === 0 ? !(q === a0 && en & 1) : !(q + 1 === b0 && en & 2)) continue;
@@ -8883,10 +9021,10 @@
         M.uz = -ty;
         M.vx = nx;
         M.vz = -ny;
-        const top = Z - DT, th2 = 0.55 + Math.max(0, clear - 8) * 0.04, cap2 = 0.9 + Math.max(0, clear - 8) * 0.03;
+        const top = Z - DT, th2 = 0.55 + Math.max(0, clear - 8) * 0.04, cap3 = 0.9 + Math.max(0, clear - 8) * 0.03;
         const wide = clear < 12 ? half : Math.max(half, hw * 0.8);
-        M.box(-th2, th2, low - 1.5, top - cap2, -wide, wide, 1 | 2 | 16 | 32);
-        M.box(-th2 - 0.25, th2 + 0.25, top - cap2, top, -(hw + PW * 0.5), hw + PW * 0.5, 1 | 2 | 8 | 16 | 32);
+        M.box(-th2, th2, low - 1.5, top - cap3, -wide, wide, 1 | 2 | 16 | 32);
+        M.box(-th2 - 0.25, th2 + 0.25, top - cap3, top, -(hw + PW * 0.5), hw + PW * 0.5, 1 | 2 | 8 | 16 | 32);
         M.ox = 0;
         M.oy = 0;
         M.oz = 0;
@@ -8944,6 +9082,7 @@
     if (coast) count += addCoast(M, world2, reg, ix, iy, s, P2);
     if (dams) count += addDams(M, world2, ix, iy, s, P2);
     if (sol) count += addSolar(M, world2, ix, iy, s, P2);
+    if (stp) count += addSteeples(M, world2, ix, iy, s, P2);
     if (stn) count += addStations(world2, M, stn, P2);
     if (!M.n) return null;
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
@@ -9083,9 +9222,9 @@
       M.quad(i0, i1, i2, i3);
       M.M[0] = mat === 2 ? MAT.BRICK : MAT.CONCRETE;
     }
-    const endCap = (x, y, wn, bot, cap, back, dir) => {
+    const endCap = (x, y, wn, bot, cap2, back, dir) => {
       const i0 = v(x, y, e0, bot, wn, ux * dir, uy * dir, 0, 0, bot), i1 = v(x, y, e1, back, wn, ux * dir, uy * dir, 0, e1 - e0, back);
-      const i2 = v(x, y, e1, cap, wn, ux * dir, uy * dir, 0, e1 - e0, cap), i3 = v(x, y, e0, cap, wn, ux * dir, uy * dir, 0, 0, cap);
+      const i2 = v(x, y, e1, cap2, wn, ux * dir, uy * dir, 0, e1 - e0, cap2), i3 = v(x, y, e0, cap2, wn, ux * dir, uy * dir, 0, 0, cap2);
       M.quad(i0, i1, i2, i3);
     };
     if (i === a && !(jn & 1)) endCap(xA, yA, wnA, botA, capA, backA, -1);
@@ -9237,7 +9376,7 @@
       }
       return h;
     };
-    const tri2 = (a, b, c, col, want) => {
+    const tri3 = (a, b, c, col, want) => {
       const P2 = [a, b, c].map(([x, y, h]) => {
         cyl(x, y, h, p32);
         return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
@@ -9277,7 +9416,7 @@
         }
         return;
       }
-      tri2([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
+      tri3([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
     };
     const ox = mx0, oy = my0;
     const raisedH = (x, y) => ground(x, y) + CURB;
@@ -9350,8 +9489,8 @@
           cyl((x0 + x1) / 2, (y0 + y1) / 2, (g0 + g1) / 2, p32);
           cyl((x0 + x1) / 2 + wx, (y0 + y1) / 2 + wy, (g0 + g1) / 2, A);
           const want = [A[0] - p32[0], A[1] - p32[1], A[2] - p32[2]];
-          tri2([x0, y0, g0 + CURB], [x1, y1, g1 - 0.03], [x1, y1, g1 + CURB], col, want);
-          tri2([x0, y0, g0 + CURB], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], col, want);
+          tri3([x0, y0, g0 + CURB], [x1, y1, g1 - 0.03], [x1, y1, g1 + CURB], col, want);
+          tri3([x0, y0, g0 + CURB], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], col, want);
         }
       }
     }
@@ -9370,8 +9509,8 @@
         for (let a = 0; a <= rows; a++) for (let b = 0; b <= cols; b++) G.push(on(...uv(a / rows, b / cols), lift));
         for (let a = 0; a < rows; a++) for (let b = 0; b < cols; b++) {
           const p = G[a * (cols + 1) + b], q = G[a * (cols + 1) + b + 1], s3 = G[(a + 1) * (cols + 1) + b], t = G[(a + 1) * (cols + 1) + b + 1];
-          tri2(p, q, t, col);
-          tri2(p, t, s3, col);
+          tri3(p, q, t, col);
+          tri3(p, t, s3, col);
         }
         return G;
       };
@@ -9389,8 +9528,8 @@
         cyl((x0 + x1) / 2, (y0 + y1) / 2, (g0 + g1) / 2, p32);
         cyl((x0 + x1) / 2 + wx, (y0 + y1) / 2 + wy, (g0 + g1) / 2, A);
         const want = [A[0] - p32[0], A[1] - p32[1], A[2] - p32[2]];
-        tri2([x0, y0, h0], [x1, y1, g1 - 0.03], [x1, y1, h12], COL.kerb, want);
-        tri2([x0, y0, h0], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], COL.kerb, want);
+        tri3([x0, y0, h0], [x1, y1, g1 - 0.03], [x1, y1, h12], COL.kerb, want);
+        tri3([x0, y0, h0], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], COL.kerb, want);
       }
       if (r.fl & 1) {
         const pv0 = 0.05, pv1 = Math.max(pv0 + 0.2, Math.min(0.66, r.D - 0.05)), pw = Math.max(0.3, hw - 0.05);
@@ -9477,12 +9616,13 @@
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
     const wf = meta.files && meta.files.walls, swf = meta.files && meta.files.seawalls;
     const getJ = (f) => f ? fetch(vurl("data/" + f.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
-    const damf = meta.files && meta.files.dams, solf = meta.files && meta.files.solar;
-    wallsReady = wf || swf || damf || solf ? Promise.all([getJ(wf), getJ(swf), getJ(damf), getJ(solf)]).then(([a, b, d, so]) => {
+    const damf = meta.files && meta.files.dams, solf = meta.files && meta.files.solar, stf = meta.files && meta.files.steeples;
+    wallsReady = wf || swf || damf || solf || stf ? Promise.all([getJ(wf), getJ(swf), getJ(damf), getJ(solf), getJ(stf)]).then(([a, b, d, so, sp]) => {
       const l = (a || []).concat(b || []);
       if (l.length) world.setWalls(l);
       if (d && d.length) world.setDams(d);
       if (so && so.length) world.setSolar(so);
+      if (sp && sp.length) world.setSteeples(sp);
     }).catch(() => {
     }) : null;
     const lf = meta.files && meta.files.lifted;
