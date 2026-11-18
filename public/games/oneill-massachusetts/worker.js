@@ -348,6 +348,9 @@
   var RREG = 72;
   var WCELL = 32;
   var WPAD = 14;
+  var DCELL = 256;
+  var DLAB = 8;
+  var DREACH = 240;
   var SEA_PAD = 40;
   var DECK_T = 0.95;
   var DECK_JOINT = 2;
@@ -1516,7 +1519,169 @@
       if (j < 0) j += H;
       const j1 = (j + 1) % H;
       const a = b[j * W + i], c = b[j * W + i + 1], d = b[j1 * W + i], e = b[j1 * W + i + 1];
-      return (a + (c - a) * tx + (d - a) * ty + (a - c - d + e) * tx * ty) * this.hScale - this.hOff;
+      const L0 = (a + (c - a) * tx + (d - a) * ty + (a - c - d + e) * tx * ty) * this.hScale - this.hOff;
+      if (this.dams) {
+        const l = this.dams.cells.get(Math.floor(wrapY(my) / DCELL) * 65536 + Math.floor(mx / DCELL));
+        if (l) return this._damLevel(mx, wrapY(my), L0, l);
+      }
+      return L0;
+    }
+    // ---- dams and weirs (item 104; bake/c65b_dams.mjs -> data/dams.json): where one holds water back across the water the
+    // game draws, the water on its upstream side stands at its upstream level and on its downstream side at its downstream
+    // level, stepping at its upstream face (0.1 m inside it), out to DREACH from its line and easing into the water map's own
+    // level (a 92 m grid, which runs from one level to the other over a hundred metres or more) from 160 m out.  Which side
+    // a bit of water is on, or a bank within 64 m of it, is the bake's: an 8 m grid filled from each side through the water
+    // with the dam as a wall (water the fills did not reach keeps the map's level); within 12 m of the dam's spillway, its
+    // line.  Each: X, Y, S (the centre line and metres along it), w (crest width), sd (+1 where the downstream side is left
+    // of the line's direction), up, dn, top, sp (the spillway's stretches along the line), the grid (x0, y0, nx, ny, lab).
+    setDams(list) {
+      if (!list || !list.length) {
+        this.dams = null;
+        return;
+      }
+      const D2 = [], cells = /* @__PURE__ */ new Map();
+      for (const e of list) {
+        const n = e.x.length, X = Float64Array.from(e.x), Y = Float64Array.from(e.y), S = new Float64Array(n);
+        for (let k = 1; k < n; k++) S[k] = S[k - 1] + Math.hypot(X[k] - X[k - 1], Y[k] - Y[k - 1]);
+        const [x0, y0, nx, ny] = e.b, lab = new Uint8Array(nx * ny);
+        for (let q = 0, o = 0; q + 1 < e.lab.length; q += 2) {
+          lab.fill(e.lab[q], o, o + e.lab[q + 1]);
+          o += e.lab[q + 1];
+        }
+        const d = {
+          X,
+          Y,
+          S,
+          len: S[n - 1],
+          w: Math.min(e.w, 6),
+          sd: e.sd,
+          up: e.up,
+          dn: e.dn,
+          top: e.top,
+          sp: e.sp,
+          k: e.k,
+          m: e.m,
+          id: e.id,
+          f: e.f,
+          x0,
+          y0,
+          nx,
+          ny,
+          lab,
+          box: [x0, y0, x0 + nx * DLAB, y0 + ny * DLAB]
+        };
+        let a0 = 1e18, b0 = 1e18, a1 = -1e18, b1 = -1e18;
+        for (let k = 0; k < n; k++) {
+          a0 = Math.min(a0, X[k]);
+          a1 = Math.max(a1, X[k]);
+          b0 = Math.min(b0, Y[k]);
+          b1 = Math.max(b1, Y[k]);
+        }
+        const m = d.w + 0.75 * (d.top - d.dn + 1.5) + 4;
+        d.sbox = [a0 - m, b0 - m, a1 + m, b1 + m];
+        const i = D2.length;
+        D2.push(d);
+        for (let cy = Math.floor(Math.min(y0, d.sbox[1]) / DCELL); cy <= Math.floor(Math.max(y0 + ny * DLAB, d.sbox[3]) / DCELL); cy++)
+          for (let cx = Math.floor(Math.min(x0, d.sbox[0]) / DCELL); cx <= Math.floor(Math.max(x0 + nx * DLAB, d.sbox[2]) / DCELL); cx++) {
+            const k = cy * 65536 + cx;
+            if (!cells.has(k)) cells.set(k, []);
+            cells.get(k).push(i);
+          }
+      }
+      this.dams = { D: D2, cells };
+    }
+    // the nearest point of dam d's line to (mx, my), into this._dn: dist, side (+1 left of its direction), s along it,
+    // the line's direction there
+    _damNear(d, mx, my) {
+      const o = this._dn || (this._dn = { dist: 0, side: 1, s: 0, tx: 1, ty: 0 }), X = d.X, Y = d.Y;
+      let best = 1e18;
+      for (let k = 0; k + 1 < X.length; k++) {
+        const ax = X[k], ay = Y[k], dx = X[k + 1] - ax, dy = Y[k + 1] - ay, l2 = dx * dx + dy * dy;
+        let t = l2 > 0 ? ((mx - ax) * dx + (my - ay) * dy) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = mx - ax - dx * t, ey = my - ay - dy * t, q = ex * ex + ey * ey;
+        if (q < best) {
+          best = q;
+          const l = Math.sqrt(l2) || 1;
+          o.side = dx * (my - ay) - dy * (mx - ax) >= 0 ? 1 : -1;
+          o.s = d.S[k] + l * t;
+          o.tx = dx / l;
+          o.ty = dy / l;
+        }
+      }
+      o.dist = Math.sqrt(best);
+      return o;
+    }
+    // is s (metres along dam d's line) within its spillway (and `pad` past its ends)?
+    _damSpill(d, s, pad) {
+      for (const [a, b] of d.sp) if (s >= a - pad && s <= b + pad) return true;
+      return false;
+    }
+    _damLevel(mx, my, L0, l) {
+      let best = null, bd = 1e9, lv = 0;
+      for (const i of l) {
+        const d = this.dams.D[i];
+        if (mx < d.box[0] || my < d.box[1] || mx >= d.box[2] || my >= d.box[3]) continue;
+        const o = this._damNear(d, mx, my);
+        if (o.dist > DREACH || o.dist >= bd) continue;
+        let v;
+        if (o.dist < 12 && this._damSpill(d, o.s, 3)) v = o.side * d.sd * o.dist > -d.w / 2 + 0.1 ? d.dn : d.up;
+        else {
+          const lb = d.lab[Math.floor((my - d.y0) / DLAB) * d.nx + Math.floor((mx - d.x0) / DLAB)];
+          if (!lb) continue;
+          v = lb === 1 ? d.up : d.dn;
+        }
+        best = d;
+        bd = o.dist;
+        lv = v;
+      }
+      if (!best) return L0;
+      return L0 + (lv - L0) * (1 - smoothstep(160, DREACH, bd));
+    }
+    // The step a dam makes in the water near (mx, my) (within `reach` of the line where its levels change, over its
+    // spillway), for the terrain's grid points to meet (worker.js genChunk, as it meets a retaining wall's face): into
+    // this._ds the signed distance from that line (+ downstream) and the normal pointing downstream; null where none
+    _damStep(mx, my, reach) {
+      const l = this.dams && this.dams.cells.get(Math.floor(wrapY(my) / DCELL) * 65536 + Math.floor(mx / DCELL));
+      if (!l) return null;
+      const out = this._ds || (this._ds = { sd: 0, nx: 0, ny: 0 });
+      let bd = 1e9;
+      for (const i of l) {
+        const d = this.dams.D[i], o = this._damNear(d, mx, wrapY(my));
+        if (!this._damSpill(d, o.s, 3)) continue;
+        const f = o.side * d.sd * o.dist - (-d.w / 2 + 0.1);
+        if (Math.abs(f) > reach || Math.abs(f) >= bd) continue;
+        bd = Math.abs(f);
+        out.sd = f;
+        out.nx = -o.ty * d.sd;
+        out.ny = o.tx * d.sd;
+      }
+      return bd < 1e9 ? out : null;
+    }
+    // how far (mx, my) is from the nearest dam's spillway (1e9 where none is near): boats keep off a dam as off a shore
+    damDist(mx, my) {
+      const l = this.dams && this.dams.cells.get(Math.floor(wrapY(my) / DCELL) * 65536 + Math.floor(mx / DCELL));
+      if (!l) return 1e9;
+      let bd = 1e9;
+      for (const i of l) {
+        const d = this.dams.D[i], o = this._damNear(d, mx, wrapY(my));
+        if (o.dist < bd && this._damSpill(d, o.s, 3)) bd = o.dist;
+      }
+      return bd;
+    }
+    // does any dam's step or structure reach into the square (x0, y0, size)?
+    damsNear(x0, y0, size) {
+      if (!this.dams) return false;
+      for (let cy = Math.floor(y0 / DCELL); cy <= Math.floor((y0 + size) / DCELL); cy++)
+        for (let cx = Math.floor(x0 / DCELL); cx <= Math.floor((x0 + size) / DCELL); cx++) {
+          const l = this.dams.cells.get(cy * 65536 + cx);
+          if (!l) continue;
+          for (const i of l) {
+            const b = this.dams.D[i].sbox;
+            if (b[2] >= x0 && b[0] <= x0 + size && b[3] >= y0 && b[1] <= y0 + size) return true;
+          }
+        }
+      return false;
     }
     // metres into the hull's glass (+ inside the window, - outside), saturating at +-zRange
     zoneAt(mx, my) {
@@ -2628,7 +2793,9 @@
     SHEETPILE: 23,
     ARMOR: 24,
     PLANKS: 25,
-    PILE: 26
+    PILE: 26,
+    // water falling over a dam's spillway (dams.js)
+    FALLS: 27
   };
   var FLOOR = [2.75, 2.6, 2.7, 3, 2.6, 5, 3, 3.7, 7, 8, 3.9, 3.9, 4.6, 6, 3.1, 2.8];
   var FOUND = [0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0, 0.15, 0.7, 0.6];
@@ -5037,7 +5204,7 @@
     const WHITE = [0.78, 0.78, 0.74];
     let zD = null;
     let hNode = 0;
-    const quad2 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
+    const quad3 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
       for (let q = 0; q <= n; q++) {
@@ -5115,16 +5282,16 @@
         if (lines || sub === 1 || sub === 7) {
           for (const a of [-1.65, 1.35]) {
             if (sub !== 4) {
-              quad2(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
+              quad3(mx, my, dx, dy, a, a + 0.3, -hw, hw, WHITE);
               continue;
             }
-            for (let c = -hw; c < hw - 0.2; c += 1.2) quad2(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
+            for (let c = -hw; c < hw - 0.2; c += 1.2) quad3(mx, my, dx, dy, a, a + 0.3, c, Math.min(c + 0.6, hw), WHITE);
           }
         }
         if (bars) {
           const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2));
           const c0 = -nb * 0.6 + 0.3, a0 = sub === 2 ? -1.5 : -1.3, a1 = sub === 2 ? 1.5 : 1.3;
-          for (let b = 0; b < nb; b++) quad2(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
+          for (let b = 0; b < nb; b++) quad3(mx, my, dx, dy, a0, a1, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, WHITE);
         }
       } else if (k === STOP || k === SIGNAL) {
         const junction = roadCount(f, i) >= 3;
@@ -5134,11 +5301,11 @@
           const hw = hwAt(world2, mx - dx * 10, my - dy * 10, zD);
           if (hw < 2.5) continue;
           const back = (junction ? junctionBack(world2, f, i, mx, my, j, zD) + (k === SIGNAL ? 2.6 : 1.6) : 0) + 0.6;
-          quad2(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
+          quad3(mx, my, dx, dy, -back - 0.45, -back, f.apOne[j] ? -hw + 0.3 : innerEdge(world2, mx - dx * (back + 0.2), my - dy * (back + 0.2), dx, dy, zD) + 0.15, hw - 0.3, WHITE);
         }
       }
     }
-    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad2, tri2, (h) => {
+    if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad3, tri2, (h) => {
       hNode = h;
       zD = null;
     }, WHITE);
@@ -5166,7 +5333,7 @@
         hNode = world2.groundH(mx, my, true);
         if (world2.g.water) continue;
         if (kind === 1) {
-          quad2(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
+          quad3(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
           continue;
         }
         const h0 = surfaceH(world2, mx, my, zD), gx = (surfaceH(world2, mx + 0.35, my, zD) - h0) / 0.35, gy = (surfaceH(world2, mx, my + 0.35, zD) - h0) / 0.35;
@@ -5246,7 +5413,7 @@
   var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
   var arrowStats = { deck: 0, off: 0, angle: 0, style: 0, box: 0, short: 0, narrow: 0, count: 0, drawn: 0, arrows: 0, last: null };
   var _lg2 = {};
-  function laneArrows(world2, reg, f, lx0, ly0, s, quad2, tri2, ground, col) {
+  function laneArrows(world2, reg, f, lx0, ly0, s, quad3, tri2, ground, col) {
     const near = [];
     for (let q = 0; q < (f.nP || 0); q++) {
       const k = f.kind[q], x = f.px[q], y = f.py[q];
@@ -5342,7 +5509,7 @@
             const A = at(e[1], e[2]), B = at(e[3], e[4]), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]);
             if (L2 < 1e-3) continue;
             const dx = (B[0] - A[0]) / L2, dy = (B[1] - A[1]) / L2;
-            quad2(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
+            quad3(A[0] - dx * 0.075, A[1] - dy * 0.075, dx, dy, 0, L2 + 0.15, -0.075, 0.075, col);
           } else {
             const [, a, c, da, dc, len, hb] = e;
             tri2(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
@@ -5573,7 +5740,7 @@
     if (!f || !f.nA) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), WHITE = [0.78, 0.78, 0.74];
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
-    const vtx2 = (x, y) => {
+    const vtx3 = (x, y) => {
       const h = world2.groundH(x, y, true);
       cyl(x, y, h + 0.03, p32);
       cyl(x, y, h + 1.03, u3);
@@ -5585,10 +5752,10 @@
       if (L2 < 0.05) return;
       const ux = (x1 - x0) / L2, uy = (y1 - y0) / L2, nx = -uy * w / 2, ny = ux * w / 2;
       const n = Math.max(1, Math.ceil(L2 / 2));
-      let A = vtx2(x0 - nx, y0 - ny), B = vtx2(x0 + nx, y0 + ny);
+      let A = vtx3(x0 - nx, y0 - ny), B = vtx3(x0 + nx, y0 + ny);
       for (let k = 1; k <= n; k++) {
         const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-        const C2 = vtx2(x - nx, y - ny), D2 = vtx2(x + nx, y + ny);
+        const C2 = vtx3(x - nx, y - ny), D2 = vtx3(x + nx, y + ny);
         push(A, col);
         push(C2, col);
         push(D2, col);
@@ -5895,7 +6062,7 @@
       return r;
     };
     const push = (p, n, col) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2]);
-    const quad2 = (P0, P1, P2, P3, n0, n1, col) => {
+    const quad3 = (P0, P1, P2, P3, n0, n1, col) => {
       const ux = P1[0] - P0[0], uy = P1[1] - P0[1], uz = P1[2] - P0[2], wx = P2[0] - P0[0], wy = P2[1] - P0[1], wz = P2[2] - P0[2];
       const fx = uy * wz - uz * wy, fy = uz * wx - ux * wz, fz = ux * wy - uy * wx;
       if (fx * (n0[0] + n1[0]) + fy * (n0[1] + n1[1]) + fz * (n0[2] + n1[2]) >= 0) {
@@ -6019,7 +6186,7 @@
               pt(Fa, ra, rb, P1);
               pt(Fb, ra, rb, P22);
               pt(Fb, qa, qb, P3);
-              quad2(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
+              quad3(P0, P1, P22, P3, nrm(Fa, na, nb, N0), nrm(Fb, na, nb, N1), poly.col);
             }
           }
           if (R2.gap) {
@@ -6038,11 +6205,11 @@
                   return r;
                 };
                 const nA2 = Fa.Ac, nU = Fa.U, nT = Fa.T, mA = [-nA2[0], -nA2[1], -nA2[2]], mT = [-nT[0], -nT[1], -nT[2]];
-                quad2(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
-                quad2(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
-                quad2(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
-                quad2(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
-                quad2(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
+                quad3(c(1, 0, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(1, 0, 1, P3), nA2, nA2, ps.col);
+                quad3(c(0, 0, 0, P0), c(0, 1, 0, P1), c(0, 1, 1, P22), c(0, 0, 1, P3), mA, mA, ps.col);
+                quad3(c(0, 0, 1, P0), c(1, 0, 1, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nT, nT, ps.col);
+                quad3(c(0, 0, 0, P0), c(1, 0, 0, P1), c(1, 1, 0, P22), c(0, 1, 0, P3), mT, mT, ps.col);
+                quad3(c(0, 1, 0, P0), c(1, 1, 0, P1), c(1, 1, 1, P22), c(0, 1, 1, P3), nU, nU, ps.col);
               }
             }
           }
@@ -7935,6 +8102,135 @@
     return 1;
   }
 
+  // src/dams.js
+  var _n2 = [0, 0, 0];
+  function vtx2(M, P2, x, y, h, n, tu, tv) {
+    const q = P2(x, y, h);
+    return M.v(q[0], q[1], q[2], n[0], n[2], -n[1], tu, tv);
+  }
+  function quad2(M, P2, a, b, c, d, hx, hy, hz) {
+    const ux = c[0] - a[0], uy = c[1] - a[1], uz = c[2] - a[2], vx = d[0] - b[0], vy = d[1] - b[1], vz = d[2] - b[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz);
+    if (l < 1e-9) return;
+    if (nx * hx + ny * hy + nz * hz < 0) {
+      nx = -nx;
+      ny = -ny;
+      nz = -nz;
+    }
+    _n2[0] = nx / l;
+    _n2[1] = ny / l;
+    _n2[2] = nz / l;
+    M.quad(
+      vtx2(M, P2, a[0], a[1], a[2], _n2, a[3], a[4]),
+      vtx2(M, P2, b[0], b[1], b[2], _n2, b[3], b[4]),
+      vtx2(M, P2, c[0], c[1], c[2], _n2, c[3], c[4]),
+      vtx2(M, P2, d[0], d[1], d[2], _n2, d[3], d[4])
+    );
+  }
+  function setMat2(M, mat, seed, lev, half, size) {
+    M.M[0] = mat;
+    M.M[1] = 0;
+    M.M[2] = 0;
+    M.M[3] = seed & 255;
+    M.W[0] = lev;
+    M.W[1] = half;
+    M.W[2] = size;
+    M.W[3] = 0;
+    M.K[0] = M.K[1] = M.K[2] = M.K[3] = 0;
+  }
+  function damsIn(world2, ix, iy, s) {
+    return !!world2.dams && world2.damsNear(ix * s, iy * s, s);
+  }
+  function stations2(X, Y, step) {
+    const out = [];
+    let s0 = 0;
+    for (let q = 0; q + 1 < X.length; q++) {
+      const dx = X[q + 1] - X[q], dy = Y[q + 1] - Y[q], l = Math.hypot(dx, dy);
+      if (l < 1e-6) continue;
+      const tx = dx / l, ty = dy / l;
+      if (!out.length) out.push([X[q], Y[q], 0, tx, ty]);
+      else {
+        const p = out[out.length - 1];
+        const ax = p[3] + tx, ay = p[4] + ty, al = Math.hypot(ax, ay) || 1;
+        p[3] = ax / al;
+        p[4] = ay / al;
+      }
+      for (let k = Math.floor(s0 / step) + 1; k * step < s0 + l - 0.25; k++) {
+        const t = k * step - s0;
+        out.push([X[q] + tx * t, Y[q] + ty * t, k * step, tx, ty]);
+      }
+      s0 += l;
+      out.push([X[q + 1], Y[q + 1], s0, tx, ty]);
+    }
+    return out;
+  }
+  function addDams(M, world2, ix, iy, s, P2) {
+    const X0 = ix * s, Y0 = iy * s, D2 = world2.dams.D, seen = /* @__PURE__ */ new Set();
+    let count = 0;
+    for (let cy = Math.floor(Y0 / DCELL); cy <= Math.floor((Y0 + s) / DCELL); cy++)
+      for (let cx = Math.floor(X0 / DCELL); cx <= Math.floor((X0 + s) / DCELL); cx++) {
+        for (const i of world2.dams.cells.get(cy * 65536 + cx) || []) {
+          if (seen.has(i)) continue;
+          seen.add(i);
+          const b = D2[i].sbox;
+          if (b[2] < X0 || b[0] > X0 + s || b[3] < Y0 || b[1] > Y0 + s) continue;
+          count += dam(M, world2, P2, D2[i], X0, Y0, s);
+        }
+      }
+    return count;
+  }
+  function dam(M, world2, P2, d, X0, Y0, s) {
+    const st2 = stations2(d.X, d.Y, 2), w = d.w, top = d.top, up = d.up, dn = d.dn, sd = d.sd;
+    const face = d.m === 2 ? MAT.SEASTONE : MAT.SEACONC, seed = d.id * 37 + 5 & 255;
+    const a = -w / 2, b = w / 2, run = 0.75 * (top - dn + 1.2);
+    const prof = st2.map(([x, y, sa, tx, ty]) => {
+      const nx = -ty * sd, ny = tx * sd;
+      if (world2._damSpill(d, sa, 0)) return { x, y, nx, ny, sa, spill: true, p: [[a, up - 1.2], [a, top], [b, top], [b + run, dn - 1.2]] };
+      const gU = world2.groundH(x + nx * (a - 0.4), y + ny * (a - 0.4), true), gD = world2.groundH(x + nx * (b + 0.4), y + ny * (b + 0.4), true);
+      if (Math.min(gU, gD) > top - 0.15) return null;
+      return { x, y, nx, ny, sa, spill: false, p: [[a, Math.min(gU, top) - 0.4], [a, top], [b, top], [b, Math.min(gD, top) - 0.4]] };
+    });
+    const at = (q, k) => {
+      const e = q.p[k][0];
+      return [q.x + q.nx * e, q.y + q.ny * e, q.p[k][1]];
+    };
+    let count = 0;
+    for (let k = 0; k + 1 < st2.length; k++) {
+      const A = prof[k], B = prof[k + 1];
+      if (!A || !B) continue;
+      const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+      if (mx < X0 || mx >= X0 + s || my < Y0 || my >= Y0 + s) continue;
+      const ux = B.x - A.x, uy = B.y - A.y, nx = (A.nx + B.nx) / 2, ny = (A.ny + B.ny) / 2;
+      const q = P2(mx, my, top);
+      M.C[0] = q[0];
+      M.C[1] = q[1];
+      M.C[2] = q[2];
+      const v = (Q, k2, u, t) => {
+        const p = at(Q, k2);
+        return [p[0], p[1], p[2], u, t];
+      };
+      setMat2(M, face, seed, up, 0, 1);
+      quad2(M, P2, v(A, 0, A.sa, A.p[0][1]), v(B, 0, B.sa, B.p[0][1]), v(B, 1, B.sa, top), v(A, 1, A.sa, top), -nx, -ny, 0);
+      setMat2(M, face, seed, A.spill && B.spill ? top : up, 0, 1);
+      quad2(M, P2, v(A, 1, A.sa, 0), v(B, 1, B.sa, 0), v(B, 2, B.sa, w), v(A, 2, A.sa, w), 0, 0, 1);
+      const fall = !!d.f && A.spill && B.spill, len = Math.hypot(run, top - dn + 1.2);
+      if (fall) setMat2(M, MAT.FALLS, seed, dn, 0, len * (top - dn) / (top - dn + 1.2));
+      else setMat2(M, face, seed, dn, 0, 1);
+      const fu = (Q, k2) => fall ? k2 === 2 ? 0 : len : Q.p[k2][1];
+      quad2(M, P2, v(A, 2, A.sa, fu(A, 2)), v(B, 2, B.sa, fu(B, 2)), v(B, 3, B.sa, fu(B, 3)), v(A, 3, A.sa, fu(A, 3)), nx, ny, 0.3);
+      const cap = (Q, dir) => {
+        setMat2(M, face, seed, up, 0, 1);
+        const p0 = v(Q, 0, 0, Q.p[0][1]), p1 = v(Q, 1, 0, top), p2 = v(Q, 2, w, top), p32 = v(Q, 3, w + (Q.spill ? run : 0), Q.p[3][1]);
+        quad2(M, P2, p0, p1, p2, p32, ux * dir, uy * dir, 0);
+      };
+      if (k === 0 || !prof[k - 1]) cap(A, -1);
+      if (k + 2 === st2.length || !prof[k + 2]) cap(B, 1);
+      count++;
+    }
+    return count;
+  }
+
   // src/decks.js
   var _shD = { r: 0, l: 0, b: 0 };
   var PIER_GAP = 30;
@@ -8082,9 +8378,10 @@
     const walls = !!reg && wallsIn(world2, ix, iy, s);
     const stn = reg ? stationsIn(ix, iy) : null;
     const coast = !!reg && coastIn(reg, ix, iy, s);
-    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast)) return null;
+    const dams = !!reg && damsIn(world2, ix, iy, s);
+    if (!reg || !(reg.nDeck || reg.nTun || walls || stn || coast || dams)) return null;
     const list = reg.nDeck && index2(reg, s).get(iy * 65536 + ix) || [];
-    if (!list.length && !reg.nTun && !walls && !stn && !coast) return null;
+    if (!list.length && !reg.nTun && !walls && !stn && !coast && !dams) return null;
     const M = new Mesh();
     const c = Math.cos(th), sn = Math.sin(th);
     const px = reg.px, py = reg.py, pz = reg.pz, cum = reg.cum, segR = reg.segR;
@@ -8458,6 +8755,7 @@
     if (reg.nTun) count += addTunnels(M, world2, reg, ix, iy, s, P2);
     if (walls) count += addWalls(M, world2, ix, iy, s, P2);
     if (coast) count += addCoast(M, world2, reg, ix, iy, s, P2);
+    if (dams) count += addDams(M, world2, ix, iy, s, P2);
     if (stn) count += addStations(world2, M, stn, P2);
     if (!M.n) return null;
     return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
@@ -8991,9 +9289,11 @@
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
     const wf = meta.files && meta.files.walls, swf = meta.files && meta.files.seawalls;
     const getJ = (f) => f ? fetch(vurl("data/" + f.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
-    wallsReady = wf || swf ? Promise.all([getJ(wf), getJ(swf)]).then(([a, b]) => {
+    const damf = meta.files && meta.files.dams;
+    wallsReady = wf || swf || damf ? Promise.all([getJ(wf), getJ(swf), getJ(damf)]).then(([a, b, d]) => {
       const l = (a || []).concat(b || []);
       if (l.length) world.setWalls(l);
+      if (d && d.length) world.setDams(d);
     }).catch(() => {
     }) : null;
     const lf = meta.files && meta.files.lifted;
@@ -9361,19 +9661,28 @@
     const cell = s / N, G = N + 3;
     const walls = !sea && cell <= 50 && wallsNear(mx0 - cell, my0 - cell, s + 2 * cell);
     const carve = cell <= 50 && (hasRoads || walls);
+    const dams = !sea && cell <= 12 && world.damsNear(mx0 - cell, my0 - cell, s + 2 * cell);
     let off2 = null, wside = null;
-    if (walls && cell <= 12) {
+    if ((walls || dams) && cell <= 12) {
       off2 = new Float32Array(G * G * 2);
       wside = new Float32Array(G * G * 4);
       for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
-        const mx = mx0 + (i - 1) * cell, my = my0 + (j - 1) * cell;
-        const wl = world._wallNear(mx, my, true);
-        if (!wl || wl.end || wl.d > 2 * cell || wl.top - wl.foot < 0.4) continue;
-        const o = (j * G + i) * 4;
-        wside[o] = wl.sd || -1e-3;
-        wside[o + 1] = wl.nx;
-        wside[o + 2] = wl.ny;
-        wside[o + 3] = 1;
+        const mx = mx0 + (i - 1) * cell, my = my0 + (j - 1) * cell, o = (j * G + i) * 4;
+        const wl = walls ? world._wallNear(mx, my, true) : null;
+        if (wl && !wl.end && wl.d <= 2 * cell && wl.top - wl.foot >= 0.4) {
+          wside[o] = wl.sd || -1e-3;
+          wside[o + 1] = wl.nx;
+          wside[o + 2] = wl.ny;
+          wside[o + 3] = 1;
+          continue;
+        }
+        const ds = dams ? world._damStep(mx, my, 2 * cell) : null;
+        if (ds) {
+          wside[o] = ds.sd || -1e-3;
+          wside[o + 1] = ds.nx;
+          wside[o + 2] = ds.ny;
+          wside[o + 3] = 1;
+        }
       }
       for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
         const o = j * G + i;

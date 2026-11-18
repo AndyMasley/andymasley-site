@@ -15085,6 +15085,9 @@ void main() {
   var RREG = 72;
   var WCELL = 32;
   var WPAD = 14;
+  var DCELL = 256;
+  var DLAB = 8;
+  var DREACH = 240;
   var SEA_PAD = 40;
   var DECK_T = 0.95;
   var DECK_JOINT = 2;
@@ -16136,7 +16139,169 @@ void main() {
       if (j < 0) j += H;
       const j1 = (j + 1) % H;
       const a = b[j * W + i], c = b[j * W + i + 1], d = b[j1 * W + i], e = b[j1 * W + i + 1];
-      return (a + (c - a) * tx2 + (d - a) * ty2 + (a - c - d + e) * tx2 * ty2) * this.hScale - this.hOff;
+      const L02 = (a + (c - a) * tx2 + (d - a) * ty2 + (a - c - d + e) * tx2 * ty2) * this.hScale - this.hOff;
+      if (this.dams) {
+        const l = this.dams.cells.get(Math.floor(wrapY(my2) / DCELL) * 65536 + Math.floor(mx2 / DCELL));
+        if (l) return this._damLevel(mx2, wrapY(my2), L02, l);
+      }
+      return L02;
+    }
+    // ---- dams and weirs (item 104; bake/c65b_dams.mjs -> data/dams.json): where one holds water back across the water the
+    // game draws, the water on its upstream side stands at its upstream level and on its downstream side at its downstream
+    // level, stepping at its upstream face (0.1 m inside it), out to DREACH from its line and easing into the water map's own
+    // level (a 92 m grid, which runs from one level to the other over a hundred metres or more) from 160 m out.  Which side
+    // a bit of water is on, or a bank within 64 m of it, is the bake's: an 8 m grid filled from each side through the water
+    // with the dam as a wall (water the fills did not reach keeps the map's level); within 12 m of the dam's spillway, its
+    // line.  Each: X, Y, S (the centre line and metres along it), w (crest width), sd (+1 where the downstream side is left
+    // of the line's direction), up, dn, top, sp (the spillway's stretches along the line), the grid (x0, y0, nx, ny, lab).
+    setDams(list) {
+      if (!list || !list.length) {
+        this.dams = null;
+        return;
+      }
+      const D = [], cells = /* @__PURE__ */ new Map();
+      for (const e of list) {
+        const n = e.x.length, X = Float64Array.from(e.x), Y = Float64Array.from(e.y), S2 = new Float64Array(n);
+        for (let k = 1; k < n; k++) S2[k] = S2[k - 1] + Math.hypot(X[k] - X[k - 1], Y[k] - Y[k - 1]);
+        const [x02, y02, nx2, ny2] = e.b, lab = new Uint8Array(nx2 * ny2);
+        for (let q = 0, o = 0; q + 1 < e.lab.length; q += 2) {
+          lab.fill(e.lab[q], o, o + e.lab[q + 1]);
+          o += e.lab[q + 1];
+        }
+        const d = {
+          X,
+          Y,
+          S: S2,
+          len: S2[n - 1],
+          w: Math.min(e.w, 6),
+          sd: e.sd,
+          up: e.up,
+          dn: e.dn,
+          top: e.top,
+          sp: e.sp,
+          k: e.k,
+          m: e.m,
+          id: e.id,
+          f: e.f,
+          x0: x02,
+          y0: y02,
+          nx: nx2,
+          ny: ny2,
+          lab,
+          box: [x02, y02, x02 + nx2 * DLAB, y02 + ny2 * DLAB]
+        };
+        let a02 = 1e18, b02 = 1e18, a1 = -1e18, b1 = -1e18;
+        for (let k = 0; k < n; k++) {
+          a02 = Math.min(a02, X[k]);
+          a1 = Math.max(a1, X[k]);
+          b02 = Math.min(b02, Y[k]);
+          b1 = Math.max(b1, Y[k]);
+        }
+        const m = d.w + 0.75 * (d.top - d.dn + 1.5) + 4;
+        d.sbox = [a02 - m, b02 - m, a1 + m, b1 + m];
+        const i = D.length;
+        D.push(d);
+        for (let cy2 = Math.floor(Math.min(y02, d.sbox[1]) / DCELL); cy2 <= Math.floor(Math.max(y02 + ny2 * DLAB, d.sbox[3]) / DCELL); cy2++)
+          for (let cx2 = Math.floor(Math.min(x02, d.sbox[0]) / DCELL); cx2 <= Math.floor(Math.max(x02 + nx2 * DLAB, d.sbox[2]) / DCELL); cx2++) {
+            const k = cy2 * 65536 + cx2;
+            if (!cells.has(k)) cells.set(k, []);
+            cells.get(k).push(i);
+          }
+      }
+      this.dams = { D, cells };
+    }
+    // the nearest point of dam d's line to (mx, my), into this._dn: dist, side (+1 left of its direction), s along it,
+    // the line's direction there
+    _damNear(d, mx2, my2) {
+      const o = this._dn || (this._dn = { dist: 0, side: 1, s: 0, tx: 1, ty: 0 }), X = d.X, Y = d.Y;
+      let best = 1e18;
+      for (let k = 0; k + 1 < X.length; k++) {
+        const ax2 = X[k], ay2 = Y[k], dx2 = X[k + 1] - ax2, dy2 = Y[k + 1] - ay2, l2 = dx2 * dx2 + dy2 * dy2;
+        let t = l2 > 0 ? ((mx2 - ax2) * dx2 + (my2 - ay2) * dy2) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = mx2 - ax2 - dx2 * t, ey2 = my2 - ay2 - dy2 * t, q = ex2 * ex2 + ey2 * ey2;
+        if (q < best) {
+          best = q;
+          const l = Math.sqrt(l2) || 1;
+          o.side = dx2 * (my2 - ay2) - dy2 * (mx2 - ax2) >= 0 ? 1 : -1;
+          o.s = d.S[k] + l * t;
+          o.tx = dx2 / l;
+          o.ty = dy2 / l;
+        }
+      }
+      o.dist = Math.sqrt(best);
+      return o;
+    }
+    // is s (metres along dam d's line) within its spillway (and `pad` past its ends)?
+    _damSpill(d, s29, pad) {
+      for (const [a, b] of d.sp) if (s29 >= a - pad && s29 <= b + pad) return true;
+      return false;
+    }
+    _damLevel(mx2, my2, L02, l) {
+      let best = null, bd2 = 1e9, lv2 = 0;
+      for (const i of l) {
+        const d = this.dams.D[i];
+        if (mx2 < d.box[0] || my2 < d.box[1] || mx2 >= d.box[2] || my2 >= d.box[3]) continue;
+        const o = this._damNear(d, mx2, my2);
+        if (o.dist > DREACH || o.dist >= bd2) continue;
+        let v;
+        if (o.dist < 12 && this._damSpill(d, o.s, 3)) v = o.side * d.sd * o.dist > -d.w / 2 + 0.1 ? d.dn : d.up;
+        else {
+          const lb = d.lab[Math.floor((my2 - d.y0) / DLAB) * d.nx + Math.floor((mx2 - d.x0) / DLAB)];
+          if (!lb) continue;
+          v = lb === 1 ? d.up : d.dn;
+        }
+        best = d;
+        bd2 = o.dist;
+        lv2 = v;
+      }
+      if (!best) return L02;
+      return L02 + (lv2 - L02) * (1 - smoothstep(160, DREACH, bd2));
+    }
+    // The step a dam makes in the water near (mx, my) (within `reach` of the line where its levels change, over its
+    // spillway), for the terrain's grid points to meet (worker.js genChunk, as it meets a retaining wall's face): into
+    // this._ds the signed distance from that line (+ downstream) and the normal pointing downstream; null where none
+    _damStep(mx2, my2, reach) {
+      const l = this.dams && this.dams.cells.get(Math.floor(wrapY(my2) / DCELL) * 65536 + Math.floor(mx2 / DCELL));
+      if (!l) return null;
+      const out = this._ds || (this._ds = { sd: 0, nx: 0, ny: 0 });
+      let bd2 = 1e9;
+      for (const i of l) {
+        const d = this.dams.D[i], o = this._damNear(d, mx2, wrapY(my2));
+        if (!this._damSpill(d, o.s, 3)) continue;
+        const f = o.side * d.sd * o.dist - (-d.w / 2 + 0.1);
+        if (Math.abs(f) > reach || Math.abs(f) >= bd2) continue;
+        bd2 = Math.abs(f);
+        out.sd = f;
+        out.nx = -o.ty * d.sd;
+        out.ny = o.tx * d.sd;
+      }
+      return bd2 < 1e9 ? out : null;
+    }
+    // how far (mx, my) is from the nearest dam's spillway (1e9 where none is near): boats keep off a dam as off a shore
+    damDist(mx2, my2) {
+      const l = this.dams && this.dams.cells.get(Math.floor(wrapY(my2) / DCELL) * 65536 + Math.floor(mx2 / DCELL));
+      if (!l) return 1e9;
+      let bd2 = 1e9;
+      for (const i of l) {
+        const d = this.dams.D[i], o = this._damNear(d, mx2, wrapY(my2));
+        if (o.dist < bd2 && this._damSpill(d, o.s, 3)) bd2 = o.dist;
+      }
+      return bd2;
+    }
+    // does any dam's step or structure reach into the square (x0, y0, size)?
+    damsNear(x02, y02, size) {
+      if (!this.dams) return false;
+      for (let cy2 = Math.floor(y02 / DCELL); cy2 <= Math.floor((y02 + size) / DCELL); cy2++)
+        for (let cx2 = Math.floor(x02 / DCELL); cx2 <= Math.floor((x02 + size) / DCELL); cx2++) {
+          const l = this.dams.cells.get(cy2 * 65536 + cx2);
+          if (!l) continue;
+          for (const i of l) {
+            const b = this.dams.D[i].sbox;
+            if (b[2] >= x02 && b[0] <= x02 + size && b[3] >= y02 && b[1] <= y02 + size) return true;
+          }
+        }
+      return false;
     }
     // metres into the hull's glass (+ inside the window, - outside), saturating at +-zRange
     zoneAt(mx2, my2) {
@@ -19051,13 +19216,22 @@ vec3 coastSurface(int mat, vec2 uv, float z, vec4 W, float seed, vec3 pos, inout
     float far = smoothstep(0.03, 0.09, px);
     c = mix(mix(c, vec3(0.02, 0.018, 0.015), cLine(jm, 0.006, px) * 0.9), vec3(0.19, 0.175, 0.15), far);
     rough = 0.92;
+  } else if (mat == 27) {
+    // water falling over a dam's spillway (dams.js; uv.y: metres down the face, W.z down to the water below): a grey-green
+    // sheet streaked white along its fall, the streaks sliding down it, and white water at its foot
+    float sl = uv.x * 1.9;
+    float n1 = vnoise(vec2(sl, uv.y * 0.32 - uTime * 1.5)), n2 = vnoise(vec2(sl * 2.6 + 9.0, uv.y * 0.75 - uTime * 2.3));
+    float streak = smoothstep(0.38, 0.82, n1 * 0.62 + n2 * 0.38);
+    c = mix(vec3(0.27, 0.30, 0.29), vec3(0.66, 0.68, 0.68), streak * smoothstep(0.0, 0.8, uv.y));
+    c = mix(c, vec3(0.70, 0.71, 0.71) * (0.85 + 0.3 * vnoise(uv * vec2(2.0, 3.0) - vec2(0.0, uTime * 1.2))), smoothstep(W.z - 1.8, W.z - 0.2, uv.y) * 0.9);
+    rough = 0.7;
   } else {
     // piles: dark creosoted timber, vertical grain
     c = vec3(0.085, 0.07, 0.058) * (0.8 + 0.4 * sv) * (0.85 + 0.3 * vnoise(vec2(uv.x * 6.0, z * 0.7)));
     rough = 0.9;
   }
   // the sea's marks: darker where wet, rockweed low down, a band of barnacles under high water
-  float wk = (mat == 25) ? 0.0 : 1.0;
+  float wk = (mat == 25 || mat == 27) ? 0.0 : 1.0;
   c *= mix(1.0, 0.52, wet * wk);
   vec3 weedC = vec3(0.045, 0.040, 0.016) * (0.8 + 0.4 * fbm3(uv * 1.7));
   c = mix(c, weedC, weed * wk * smoothstep(0.35, 0.65, fbm3(uv * 0.8 + 3.0) + weed * 0.4));
@@ -21818,7 +21992,9 @@ void main() {
     SHEETPILE: 23,
     ARMOR: 24,
     PLANKS: 25,
-    PILE: 26
+    PILE: 26,
+    // water falling over a dam's spillway (dams.js)
+    FALLS: 27
   };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {
@@ -24632,7 +24808,7 @@ void main() {
       const q = Math.random(), ang = Math.random() * 6.2832, dist = 220 + q * q * 2700;
       const mx2 = cx2 + Math.sin(ang) * dist, my2 = wrapY(cy2 + Math.cos(ang) * dist);
       if (mx2 < 600 || mx2 > L - 600) return;
-      const s29 = w.sdfAt(mx2, my2);
+      const s29 = Math.max(w.sdfAt(mx2, my2), -w.damDist(mx2, my2));
       if (s29 > -55 || w.zone && w.zoneAt(mx2, my2) > -260) return;
       const sea = w.levelAt(mx2, my2) < 0.8, r = Math.random();
       let kind = r < 0.42 ? "sail" : r < 0.74 ? "motor" : "fish", sc2 = 1;
@@ -24667,7 +24843,7 @@ void main() {
       const fx2 = Math.sin(b.hdg), fy2 = Math.cos(b.hdg), look = len * 5 + 70;
       const depth = (a, d) => {
         const x = b.mx + Math.sin(b.hdg + a) * d, y = wrapY(b.my + Math.cos(b.hdg + a) * d);
-        return x < 500 || x > L - 500 || w.zone && w.zoneAt(x, y) > -200 ? 50 : w.sdfAt(x, y);
+        return x < 500 || x > L - 500 || w.zone && w.zoneAt(x, y) > -200 ? 50 : Math.max(w.sdfAt(x, y), -w.damDist(x, y));
       };
       const need = -(len * 0.8 + 25);
       const ahead = depth(0, look);
@@ -26807,6 +26983,10 @@ void main() {
         }).catch(() => {
         });
       }
+      if (F.dams) fetch(vurl("data/" + F.dams.file)).then((r) => r.json()).then((d) => {
+        if (d && d.length) this.world.setDams(d);
+      }).catch(() => {
+      });
       if (F.lifted) fetch(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
         this.world.setLifted(j);
         if (this.player) this.player.bCache = null;
