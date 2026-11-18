@@ -16586,9 +16586,65 @@ void main() {
     // building records drawn by something else instead (data/stations.json "hide": [region, x, y] as lifted.json names
     // them): the houses and far boxes leave them out; a car still meets their walls
     setHidden(list) {
-      const m = /* @__PURE__ */ new Set();
+      const m = this.hidden || /* @__PURE__ */ new Set();
       for (const e of list || []) m.add(e[0] * 4294967296 + e[2] * 65536 + e[1]);
       this.hidden = m;
+    }
+    // the landmarks drawn from their mapped parts or the LiDAR (data/landmarks.json, bake/c73_landmark_models.py;
+    // landmarks.js), by cell; and the steeples (steeples.js) a landmark draws itself
+    setLandmarks(list, steeples) {
+      this.steepleHide = new Set(steeples || []);
+      if (!list || !list.length) {
+        this.landmarks = null;
+        return;
+      }
+      const cells = /* @__PURE__ */ new Map();
+      list.forEach((e, i) => {
+        const k = Math.floor(e.y / DCELL) * 65536 + Math.floor(e.x / DCELL);
+        if (!cells.has(k)) cells.set(k, []);
+        cells.get(k).push(i);
+      });
+      this.landmarks = { L: list, cells };
+    }
+    // what a landmark's own records are (bake/c73_landmark_models.py: data/landmarks.json "rec"): [region key, x, y (the
+    // record's 0.2 m units), class, cladding, wall colour, roof colour (RGB565), plain], -1 where the record keeps its own;
+    // applied to a region's records as it is read (applyOverrides), and plain walls (no storeys of windows) by isPlain
+    setOverrides(list) {
+      const m = /* @__PURE__ */ new Map(), P2 = this.plainRecs || /* @__PURE__ */ new Set();
+      for (const e of list || []) {
+        if (!m.has(e[0])) m.set(e[0], []);
+        m.get(e[0]).push(e);
+        if (e[7] > 0) P2.add(e[0] * 4294967296 + e[2] * 65536 + e[1]);
+      }
+      this.overrides = m;
+      this.plainRecs = P2;
+    }
+    applyOverrides(reg) {
+      const L2 = this.overrides && reg && reg.b ? this.overrides.get(regionKey(reg.rx, reg.ry)) : null;
+      if (!L2 || !L2.length) return;
+      const want = /* @__PURE__ */ new Map();
+      for (const e of L2) want.set(e[2] * 65536 + e[1], e);
+      const b = reg.b, n = reg.nBld || b.length / 12 | 0;
+      for (let i = 0; i < n; i++) {
+        const o = i * 12, e = want.get((b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8));
+        if (!e) continue;
+        if (e[3] >= 0) b[o + 8] = b[o + 8] & 240 | e[3] & 15;
+        if (e[4] >= 0) b[o + 10] = b[o + 10] & 248 | e[4] & 7;
+        if (e[5] >= 0) {
+          if (!reg.wall) reg.wall = new Uint16Array(n);
+          reg.wall[i] = e[5];
+        }
+        if (e[6] >= 0) {
+          if (!reg.roof) reg.roof = new Uint16Array(n);
+          reg.roof[i] = e[6];
+        }
+      }
+    }
+    isPlain(reg, id2) {
+      const H = this.plainRecs;
+      if (!H || !H.size || !reg || !reg.b) return false;
+      const o = id2 * 12, b = reg.b;
+      return H.has(regionKey(reg.rx, reg.ry) * 4294967296 + (b[o + 2] | b[o + 3] << 8) * 65536 + (b[o] | b[o + 1] << 8));
     }
     isHidden(reg, id2) {
       const H = this.hidden;
@@ -19499,6 +19555,7 @@ void main() {
     float len = vW.x, eave = vW.y, lf = floor(vW.z / 64.0), levels = max(vW.z - lf * 64.0, 1.0), doorU = vW.w;
     int flags = int(lf + 0.5);
     bool gableEnd = (flags & 1) != 0, front = (flags & 2) != 0, bigDoor = (flags & 4) != 0, shop = (flags & 8) != 0;
+    bool plain = (flags & 16) != 0;                 // a landmark's plain part (landmarks.js): a column, a monument's shaft
     bool house = cls <= 5 || cls >= 14;
     float found = FOUND[cls];
     float fh = max((eave - found - KNEE[cls]) / levels, 2.2);
@@ -19519,7 +19576,7 @@ void main() {
     float bi = min(floor(u / bw), nb - 1.0), bu = u - (bi + 0.5) * bw;
     float fl = floor((v - found) / fh), fv = v - found - fl * fh;
     bool deep = !house && cls != 9 && cls != 12;                 // large buildings on a slope show lower storeys downhill
-    bool inFloors = (v > found || (deep && v < found - 0.7)) && fl < levels && v < eave - 0.05;
+    bool inFloors = !plain && (v > found || (deep && v < found - 0.7)) && fl < levels && v < eave - 0.05;
     float wh = hash2(ivec2(int(bi) + int(seed) * 7 + flags * 31, int(fl) + int(len * 13.0)));
     float wh2 = hash2(ivec2(int(bi) * 3 + 11 + int(seed), int(fl) * 5 + int(len * 7.0)));
     // window shape by kind of building
@@ -19543,8 +19600,8 @@ void main() {
     // door
     float door = 0.0, doorFrame = 0.0, dw = bigDoor ? ((cls == 8 || cls == 5) ? 1.9 : 1.25) : (cls >= 6 && cls <= 13 ? 0.85 : 0.47), dh = bigDoor ? ((cls == 8 || cls == 5) ? min(fh - 0.6, 3.8) : 2.12) : 2.05;
     float du = u - doorU;
-    bool doorBay = doorU >= 0.0 && fl < 0.5 && abs(du) < bw * 0.5 && v > found - 0.05;
-    if (doorU >= 0.0 && v < found + dh + 0.3) {
+    bool doorBay = !plain && doorU >= 0.0 && fl < 0.5 && abs(du) < bw * 0.5 && v > found - 0.05;
+    if (!plain && doorU >= 0.0 && v < found + dh + 0.3) {
       door = box2(vec2(du, v - found), vec2(-dw, -0.5), vec2(dw, dh), px);
       doorFrame = box2(vec2(du, v - found), vec2(-dw - 0.11, -0.5), vec2(dw + 0.11, dh + 0.13), px) - door;
     }
@@ -19574,7 +19631,7 @@ void main() {
       shut = box2(vec2(abs(bu), fv), vec2(ww + 0.10, sill - 0.02), vec2(ww + 0.44, head + 0.02), px);
     // masonry: a band between storeys, the street-floor sign band on shops, and the cap of a parapet
     float band = 0.0;
-    if (!house && clad != 3 && clad != 4 && clad != 7) {
+    if (!house && !plain && clad != 3 && clad != 4 && clad != 7) {
       if (v > eave) band = seg(v, eave + 0.02, eave + 0.2, px.y) * 0.8;
       else if (shop && fl < 0.5) band = seg(fv, fh - 0.62, fh - 0.08, px.y);
       else if (sr2(seed) < 0.5) band = seg(fv, fh - 0.16, fh + 0.2, px.y) * 0.7;
@@ -19597,6 +19654,13 @@ void main() {
       roughness = mix(roughness, 0.91, fnd);
     }
     if (found <= 0.05) fnd = 0.0;
+    // far off, where a storey's windows are under a few pixels (a landmark drawn in the bridge decks' tiles, which reach
+    // much further than the houses': landmarks.js), their light shows as the far boxes' sparks (LIT_FS) instead of spread
+    // over the wall, which made a far tower a glowing slab at night.  Houses, drawn within a few hundred metres, never
+    // have windows that small, so they keep the windows below.
+    vec2 gqH = vec2(u / bw, (v - found) / fh);
+    vec2 fwH = fwidth(gqH);
+    float aaH = inFloors ? smoothstep(0.3, 0.8, max(fwH.x, fwH.y)) : 0.0;
     // glass: sash bars, a blind or curtain, the room behind, and light after dark
     if (gw > 0.0) {
       vec2 g = vec2(wp.x / ww, (wp.y - sill) / max(head - sill, 0.1));       // -1..1 across, 0..1 up
@@ -19632,7 +19696,7 @@ void main() {
       float glow = 0.42 + 0.58 * exp(-dot(lq, lq) * 1.3);
       if (!store && clad != 3 && clad != 7 && wh2 > 0.35) glow *= 1.0 - 0.45 * smoothstep(0.5, 0.85, abs(g.x));
       // seen from across town a window is a point of light at full strength; close to, it is turned down so it keeps its colour
-      emis += lamp * litW * gw * (1.0 - bars * 0.93) * glow * (0.5 + 0.5 * (1.0 - blind * 0.6)) * mix(0.5, 1.0, smoothstep(25.0, 170.0, dist));
+      emis += lamp * litW * gw * (1.0 - bars * 0.93) * glow * (0.5 + 0.5 * (1.0 - blind * 0.6)) * mix(0.5, 1.0, smoothstep(25.0, 170.0, dist)) * (1.0 - aaH);
       glass = gw * (1.0 - bars) * (1.0 - blind * 0.6);
     }
     // door leaf with panels, and the big doors of garages, barns and loading bays
@@ -19645,6 +19709,17 @@ void main() {
       alb = mix(alb, trim, clamp(doorFrame, 0.0, 1.0) * step(found - 0.02, v));
       alb = mix(alb, dc, door * step(found - 0.02, v));
       if (!bigDoor && house) emis += vec3(1.0, 0.78, 0.5) * dark * 0.25 * box2(vec2(abs(du), pv), vec2(0.0, dh + 0.25), vec2(0.22, dh + 0.5), px);   // porch light
+    }
+    if (aaH > 0.0 && dark > 0.001) {
+      float wppH = max(fwH.x, fwH.y), sparkH = 0.0;
+      float Lf = log2(max(2.5 * wppH, 1.0)), L0 = floor(Lf), tL = Lf - L0;
+      for (int k = 0; k < 2; k++) {
+        float sc = exp2(L0 + float(k));
+        vec2 c = gqH / sc;
+        float on = step(0.62, hash2(ivec2(floor(c)) * 7 + ivec2(int(seed) * 7 + (int(L0) + k) * 131, 17)));
+        sparkH += (k == 0 ? 1.0 - tL : tL) * on * (1.0 - smoothstep(0.22, 0.36, length(fract(c) - 0.5)));
+      }
+      emis += vec3(1.0, 0.72, 0.38) * sparkH * aaH * 1.2 * dark * 0.9;
     }
     // shade under the eave and a little grime at the ground
     occ = (0.80 + 0.20 * smoothstep(0.0, 0.7, eave - v + (gableEnd ? 1.0 : 0.0))) * (0.90 + 0.10 * smoothstep(-0.2, 0.5, v));
@@ -21485,6 +21560,7 @@ void main() {
       const kinds = [["trees", 8, q.treeR], ["clumps", 6, q.clumpR], ["buildings", 7, bldR]];
       if (this.deckMat) {
         const deckR = clamp2(Math.max(q.deckR, alt * 2.4 + 300), q.deckR, q.deckR * 2);
+        this.deckReach = deckR;
         this.deckMat.uniforms.uHouseFade.value.set(deckR - 40, deckR);
         kinds.push(["decks", 7, deckR]);
       }
@@ -27044,7 +27120,17 @@ void main() {
       const g = this.game, q = g.quality;
       if (this.loading) return this.loading;
       if (!q.skyFar || !g.realBuildings || !g.terrain.bldGeo) return this.loading = Promise.resolve(false);
-      this.loading = fetch(vurl("data/skyline.png")).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((p) => {
+      const lmf = g.meta.files && g.meta.files.landmarks;
+      const hid = lmf ? fetch(vurl("data/" + lmf.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+      this.loading = Promise.all([fetch(vurl("data/skyline.png")).then((r) => r.ok ? r.arrayBuffer() : null), hid]).then(([b, j]) => {
+        this.hide = /* @__PURE__ */ new Map();
+        for (const e of j && j.hide || []) {
+          if (e.length < 5) continue;
+          if (!this.hide.has(e[0])) this.hide.set(e[0], []);
+          this.hide.get(e[0]).push([e[3], e[4]]);
+        }
+        return b ? decodePNG(b) : null;
+      }).then((p) => {
         if (!p) return false;
         this.build(p.data);
         return true;
@@ -27063,30 +27149,33 @@ void main() {
       const nReg = dv2.getUint32(4, true), nB = dv2.getUint32(8, true);
       const oR = 16, oB = oR + nReg * 20, oX = oB + nB * BS2;
       this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
-      const mat = (band3) => {
+      this.uFadeH = { value: new et(q.deckR || 4e3, q.deckR || 4e3) };
+      const mat = (band3, hid) => {
         const m = new Rn({
           vertexShader: SCATTER_VS,
           fragmentShader: LIT_FS,
           side: Mi,
           defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band3 === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
           // the tiles' own reach (it follows the camera's height) and the same lighting
-          uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
+          uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: hid ? this.uFadeH : t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
         });
         return m;
       };
       this.mat1 = q.skyNear ? mat(1) : null;
       this.mat2 = mat(2);
+      this.matH1 = q.skyNear ? mat(1, true) : null;
+      this.matH2 = mat(2, true);
       const Cc2 = new Float64Array(3), P2 = new Float64Array(3);
       const M = new Ht(), V3 = new C(), Q = new ke(), Qx2 = new ke(), S2 = new C();
       const Y = new C(0, 1, 0), X = new C(1, 0, 0);
       const groups = /* @__PURE__ */ new Map();
-      const group = (band3, rx2, ry2, sub) => {
-        const key2 = band3 + "/" + rx2 + "/" + ry2 + "/" + sub;
+      const group = (band3, rx2, ry2, sub, hid) => {
+        const key2 = band3 + "/" + rx2 + "/" + ry2 + "/" + sub + (hid ? "h" : "");
         let G = groups.get(key2);
         if (!G) {
           const n = band3 === 1 ? 4 : 1, sx2 = band3 === 1 ? sub % 4 : 0, sy2 = band3 === 1 ? sub >> 2 : 0;
           const cx2 = rx2 * RS3 + (sx2 + 0.5) * RS3 / n, cy2 = ry2 * RS3 + (sy2 + 0.5) * RS3 / n;
-          G = { band: band3, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0 };
+          G = { band: band3, cx: cx2, cy: cy2, half: RS3 / n * 0.71 + 300, idx: [], far: 0, hid: !!hid };
           groups.set(key2, G);
         }
         return G;
@@ -27096,13 +27185,15 @@ void main() {
         const o = oR + r * 20, rx2 = dv2.getUint8(o), ry2 = dv2.getUint8(o + 1);
         const b02 = dv2.getUint32(o + 4, true), nb = dv2.getUint32(o + 8, true);
         let xi2 = dv2.getUint32(o + 12, true);
+        const hid = this.hide && this.hide.get(ry2 * 28 + rx2);
         for (let i = 0; i < nb; i++) {
           const ob = oB + (b02 + i) * BS2;
           const bx2 = (rx2 + 0.5) * RS3 + dv2.getInt16(ob, true) / 4, by2 = (ry2 + 0.5) * RS3 + dv2.getInt16(ob + 2, true) / 4;
           const nbx = dv2.getUint8(ob + 14), nfar = dv2.getUint8(ob + 15), far = dv2.getUint16(ob + 12, true) * 4;
+          const h = !!(hid && hid.some((e) => Math.abs(e[0] - bx2) < 1 && Math.abs(e[1] - by2) < 1));
           const sx2 = Math.min(3, Math.max(0, Math.floor((bx2 - rx2 * RS3) / (RS3 / 4)))), sy2 = Math.min(3, Math.max(0, Math.floor((by2 - ry2 * RS3) / (RS3 / 4))));
-          if (this.mat1) group(1, rx2, ry2, sy2 * 4 + sx2).idx.push([ob, xi2, nbx, rx2, ry2]);
-          const G2 = group(2, rx2, ry2, far * q.skyFar > 25e3 ? 1 : 0);
+          if (this.mat1) group(1, rx2, ry2, sy2 * 4 + sx2, h).idx.push([ob, xi2, nbx, rx2, ry2]);
+          const G2 = group(2, rx2, ry2, far * q.skyFar > 25e3 ? 1 : 0, h);
           G2.idx.push([ob, xi2, nfar, rx2, ry2]);
           G2.far = Math.max(G2.far, far);
           xi2 += nbx;
@@ -27116,7 +27207,7 @@ void main() {
         const thc = G.cy / R, c = Math.cos(thc), s29 = Math.sin(thc);
         const basis = new Ht().set(1, 0, 0, 0, 0, c, -s29, 0, 0, s29, c, 0, 0, 0, 0, 1);
         const inv = basis.clone().transpose();
-        const mesh = new bo(t.bldGeo, G.band === 1 ? this.mat1 : this.mat2, n);
+        const mesh = new bo(t.bldGeo, G.band === 1 ? G.hid ? this.matH1 : this.mat1 : G.hid ? this.matH2 : this.mat2, n);
         const inst = new Float32Array(n * 4), roofA = new Float32Array(n * 4), cenA = new Float32Array(n * 4), farA = new Float32Array(n), wallA = new Float32Array(n * 4);
         let k = 0;
         for (const [ob, x02, use, rx2, ry2] of G.idx) {
@@ -27158,7 +27249,7 @@ void main() {
             cenA[k * 4] = cenX;
             cenA[k * 4 + 1] = cenY;
             cenA[k * 4 + 2] = cenZ;
-            cenA[k * 4 + 3] = reach;
+            cenA[k * 4 + 3] = G.hid ? 1 : reach;
             farA[k] = far;
             k++;
           }
@@ -27186,6 +27277,8 @@ void main() {
     update(camC) {
       if (!this.ready) return;
       const near2 = this.U.uSky.value.x, sc2 = this.U.uSky.value.y;
+      const dr2 = (this.game.terrain.deckReach || this.game.quality.deckR || 4e3) + 60;
+      this.uFadeH.value.set(dr2, dr2);
       for (const ch of this.chunks) {
         const dx2 = ch.C[0] - camC[0], dy2 = ch.C[1] - camC[1], dz = ch.C[2] - camC[2];
         ch.d = Math.hypot(dx2, dy2, dz);
@@ -28509,6 +28602,7 @@ void main() {
       const e = [0, 0, 0], n = [0, 0, 0], u = [0, 0, 0], p = new Float64Array(3);
       for (const lm2 of this.meta.landmarks) {
         if (lm2.k === "light") continue;
+        if (lm2.model && !lm2.far) continue;
         const gh = this.world.groundH(lm2.x, lm2.y, false);
         let geo, kind = 0, beacon = null;
         const H = lm2.h;
@@ -28567,7 +28661,7 @@ void main() {
           }
         }
         const dx2 = it.pos[0] - camC[0], dy2 = it.pos[1] - camC[1], dz = it.pos[2] - camC[2];
-        const d = Math.hypot(dx2, dy2, dz), vis = d < 9e4;
+        const d = Math.hypot(dx2, dy2, dz), vis = d < 9e4 && (!it.lm.model || d > (this.terrain.deckReach || this.quality.deckR || 0) + 60);
         it.mesh.visible = vis;
         if (vis) {
           it.mesh.matrix.copy(it.basis);
