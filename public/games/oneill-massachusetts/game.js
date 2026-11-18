@@ -24322,6 +24322,51 @@ void main() {
   var _shT = { r: 0, l: 0, b: 0 };
   var MPH = 0.44704;
   var FAR = 460;
+  var HOURS = [
+    0.01,
+    6e-3,
+    5e-3,
+    5e-3,
+    8e-3,
+    0.02,
+    0.045,
+    0.067,
+    0.068,
+    0.054,
+    0.051,
+    0.054,
+    0.057,
+    0.057,
+    0.06,
+    0.07,
+    0.077,
+    0.078,
+    0.062,
+    0.046,
+    0.036,
+    0.03,
+    0.023,
+    0.016
+  ];
+  var HSUM = HOURS.reduce((a, b) => a + b, 0);
+  var share = (h) => {
+    const i = Math.floor(h) % 24, f = h - Math.floor(h), j = (i + 1) % 24;
+    return (HOURS[i] * (1 - f) + HOURS[j] * f) / HSUM;
+  };
+  var AADT = null;
+  function setAadt(j) {
+    const M = /* @__PURE__ */ new Map();
+    for (const [k, a] of Object.entries(j.r || {})) {
+      const m = /* @__PURE__ */ new Map();
+      for (let i = 0, ri2 = 0; i < a.length; i += 2) {
+        ri2 += a[i];
+        m.set(ri2, a[i + 1] * 10);
+      }
+      M.set(+k, m);
+    }
+    AADT = M;
+  }
+  var KIND_AADT = [4e4, 9e3, 22e3, 6e3, 12e3, 4e3, 7e3, 2500, 3500, 1500];
   var wrapD = (d) => d > C2 / 2 ? d - C2 : d < -C2 / 2 ? d + C2 : d;
   var limit = (reg, ri2) => {
     const cls = reg.rCls[ri2];
@@ -24398,7 +24443,7 @@ void main() {
       const nr2 = w._nr, reg = nr2.reg, ri2 = nr2.road;
       if (!carries(reg, ri2)) return;
       const cls = reg.rCls[ri2], fl = reg.rFlags[ri2];
-      if (Math.random() > (cls <= 3 ? 1 : cls <= 5 ? 0.9 : cls <= 7 ? 0.7 : cls <= 9 ? 0.55 : 0.22)) return;
+      if (Math.random() * this.dMax > this.density(reg, ri2, mx2, my2)) return;
       const a = s0of(reg, ri2), b = s1of(reg, ri2);
       if (b - a < 40) return;
       const hash4 = Math.random(), tall = hash4 * 7.13 % 1;
@@ -24489,6 +24534,39 @@ void main() {
       while (dh < -Math.PI) dh += 2 * Math.PI;
       c.oh = dh;
     }
+    // cars a metre of the street's paving carries now: its vehicles a day, the hour's share of them, at its limit, over
+    // its paving's width
+    density(reg, ri2, mx2, my2) {
+      const m = AADT ? AADT.get(reg.ry * RNX + reg.rx) : null;
+      let v = m ? m.get(ri2) : void 0;
+      const cls = reg.rCls[ri2];
+      if (v === void 0) {
+        v = cls >= 10 ? 682 + 472 * clamp2(this.game.world.coverBilinear(mx2, my2, 0) * 2, 0, 1) : KIND_AADT[cls] * (reg.rFlags[ri2] & 1 && cls <= 3 ? 0.5 : 1);
+      }
+      return v * share(this.game.sky.hours) / (limit(reg, ri2) * MPH * 3600) / Math.max(2 * reg.rHw[ri2], 3);
+    }
+    // how many cars the streets within FAR of the camera carry now, from 160 points thrown at random over that disc
+    // every second and a half: each one on a street's paving counts that street's cars to a square metre of it
+    gauge(camMap, dt) {
+      this.tGauge = (this.tGauge || 0) - dt;
+      if (this.tGauge > 0) return;
+      this.tGauge = 1.5;
+      const w = this.game.world, K = 160;
+      let sum = 0, mx2 = 0;
+      for (let k = 0; k < K; k++) {
+        const r = FAR * Math.sqrt(Math.random()), a = Math.random() * 6.2832;
+        const x = camMap[0] + Math.sin(a) * r, y = wrapY(camMap[1] + Math.cos(a) * r);
+        if (x < 400 || x > L - 400 || w.nearestRoad(x, y) > 0) continue;
+        const nr2 = w._nr;
+        if (!carries(nr2.reg, nr2.road)) continue;
+        const d = this.density(nr2.reg, nr2.road, x, y);
+        sum += d;
+        mx2 = Math.max(mx2, d);
+      }
+      const n = sum * Math.PI * FAR * FAR / K;
+      this.want = this.want === void 0 ? n : this.want * 0.6 + n * 0.4;
+      this.dMax = Math.max(mx2, 1e-7);
+    }
     step(c, dt, pc2) {
       const w = this.game.world, reg = c.reg;
       let vt = c.dying ? 0 : c.vmax;
@@ -24559,7 +24637,8 @@ void main() {
           if (far > FAR || c.stuck > 9) c.dying = true;
           if (c.dying && c.fade <= 0 || far > FAR + 80 || c.mx < 320 || c.mx > L - 320) cars.splice(i, 1);
         }
-        const want = agl > 500 ? 0 : Math.round(this.max * clamp2(0.3 + w.coverBilinear(camMap[0], camMap[1], 0), 0.3, 1));
+        this.gauge(camMap, dt);
+        const want = agl > 500 ? 0 : Math.min(this.max, Math.round(this.want));
         for (let k = 0; k < 3 && cars.length < want; k++) this.spawn(camMap[0], camMap[1], yaw);
       }
       const M = this.M, ia2 = this.inst.array;
@@ -27475,9 +27554,9 @@ void main() {
   // src/main.js
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
-    low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 10, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
-    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 28, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
-    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 44, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
+    low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 16, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
+    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 64, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 96, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {
@@ -27686,6 +27765,8 @@ void main() {
         for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
         setShoulders(M);
       }).catch(() => {
+      });
+      if (F.aadt) fetch(vurl("data/" + F.aadt.file)).then((r) => r.json()).then(setAadt).catch(() => {
       });
       if (F.piers) fetch(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
         setPiers(...piersFromJSON(j));
