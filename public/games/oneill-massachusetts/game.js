@@ -14874,9 +14874,9 @@ void main() {
     };
     each((c) => cnt[c + 1]++);
     for (let c = 0; c < NX2 * NY2; c++) cnt[c + 1] += cnt[c];
-    const items = new Uint32Array(cnt[NX2 * NY2]), fill = cnt.slice(0, NX2 * NY2);
+    const items = new Uint32Array(cnt[NX2 * NY2]), fill2 = cnt.slice(0, NX2 * NY2);
     each((c, i) => {
-      items[fill[c]++] = i;
+      items[fill2[c]++] = i;
     });
     const MX = Math.max(1, Math.ceil((bx1 - bx0) / IC) + 1), MY = Math.max(1, Math.ceil((by1 - by0) / IC) + 1), rowB = MX + 7 >> 3;
     const all = new Uint8Array(MY * rowB), sub = new Uint8Array(MY * rowB);
@@ -15191,14 +15191,14 @@ void main() {
     reg.fac = bflags & 4 ? new Uint16Array(buf.slice(fo2, fo2 + nB * 8)) : null;
     const gw = reg.gw = Math.ceil((RS3 + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
-    const visit = (fill) => {
+    const visit = (fill2) => {
       for (let i = 0; i < nR; i++) {
         const s0 = rStart[i], n = rCount[i];
         for (let k = 0; k < n - 1; k++) {
           const q = s0 + k, ax2 = px2[q], ay2 = py2[q], bx2 = px2[q + 1], by2 = py2[q + 1];
           const x02 = clamp2(Math.floor((Math.min(ax2, bx2) - RREG + RM) / RCELL), 0, gw - 1), x1 = clamp2(Math.floor((Math.max(ax2, bx2) + RREG + RM) / RCELL), 0, gw - 1);
           const y02 = clamp2(Math.floor((Math.min(ay2, by2) - RREG + RM) / RCELL), 0, gw - 1), y1 = clamp2(Math.floor((Math.max(ay2, by2) + RREG + RM) / RCELL), 0, gw - 1);
-          for (let y = y02; y <= y1; y++) for (let x = x02; x <= x1; x++) fill(y * gw + x, q);
+          for (let y = y02; y <= y1; y++) for (let x = x02; x <= x1; x++) fill2(y * gw + x, q);
         }
       }
     };
@@ -17746,8 +17746,20 @@ float sunShadow(vec3 rel, vec3 N, vec3 Ld) {
   sum += texture(uShadowMap, s);
   return mix(1.0, sum * 0.2, edge * uShadowInfo.z);
 }
+// one lookup (the comparison sampler's own 2 x 2 filter), for leaves, which are speckled anyway
+float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) {
+  float tm = 2.0 * uShadowInfo.y * uShadowInfo.x;
+  vec3 p = rel + N * (tm * (0.9 + 2.0 * (1.0 - clamp(dot(N, Ld), 0.0, 1.0))));
+  vec3 s = (uShadowMat * vec4(p, 1.0)).xyz;
+  vec2 e = abs(s.xy - 0.5) * 2.0;
+  float edge = 1.0 - smoothstep(0.86, 0.98, max(e.x, e.y));
+  if (edge <= 0.0 || s.z > 1.0 || s.z < 0.0) return 1.0;
+  s.z -= 0.00018;
+  return mix(1.0, texture(uShadowMap, s), edge * uShadowInfo.z);
+}
 #else
 float sunShadow(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
+float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
 #endif
 `
   );
@@ -19933,28 +19945,70 @@ void main() {
   gl_Position = projectionMatrix * viewMatrix * modelMatrix * (instanceMatrix * vec4(pos * keep, 1.0));
 }`
   );
+  var TREE_POS = (
+    /* glsl */
+    `
+attribute vec3 aOff;
+attribute vec2 aTuv;       // a spray's place in the atlas; on bark -1 - the way round the limb, and metres along it
+attribute vec2 aWind;      // how high in the tree (it sways), how far out along its spray (it flutters)
+attribute vec4 aInst;      // tint, conifer, species + 1, understory
+uniform vec2 uLod;
+bool treeVertex(out vec4 tp, out vec3 sc3) {
+  sc3 = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
+  vec3 org = instanceMatrix[3].xyz;
+  float dc = length((modelMatrix * vec4(org, 1.0)).xyz);
+  float thr = mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31));
+  #ifdef LOD_HI
+    if (dc > thr) return false;
+  #else
+    if (dc <= thr) return false;
+  #endif
+  // (no more than a quarter over the narrower of the two, so a narrow crown is not all overhanging sprays)
+  float g = min(sqrt(sc3.x * sc3.y), 1.25 * min(sc3.x, sc3.y));
+  tp = instanceMatrix * vec4(position + aOff * (g / sc3), 1.0);
+  float ph = aInst.x * 6.2832;
+  float gust = 0.6 + 0.4 * sin(uTime * 0.23 + org.x * 0.011 + org.z * 0.007);
+  float sway = (sin(uTime * 1.07 + ph) * 0.7 + sin(uTime * 2.3 + ph * 2.1) * 0.3) * gust;
+  tp.xz += vec2(0.83, 0.55) * (sway * 0.10 * aWind.x * sc3.y);
+  float fl = sin(uTime * 6.1 + dot(position, vec3(2.3, 1.7, 3.1)) + ph * 5.0) * 0.045 * aWind.y * g * gust;
+  tp.xyz += vec3(fl * 0.5, fl, fl * 0.7);
+  return true;
+}`
+  );
   var TREE_VS = (
     /* glsl */
     `
+${ATMOS}
+${TREE_POS}
 attribute vec3 aCol;
-attribute float aPart;
-attribute vec2 aTuv;
-attribute vec4 aInst;      // tint, species
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec3 vCol;
 varying vec2 vUV;
 varying float vAux;
+varying float vSp;
+varying vec3 vT;
+varying vec3 vS;
+varying vec3 vSunE;
+varying vec3 vLd;
 void main() {
-  float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
-  vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
-  vec4 wp = modelMatrix * (instanceMatrix * vec4(position * keep, 1.0));
+  vec4 tp; vec3 sc3;
+  if (!treeVertex(tp, sc3)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vec4 wp = modelMatrix * tp;
   vRel = wp.xyz;
-  // Crown radius and surveyed height scale independently: use the inverse transpose.
-  vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * (normal / max(sc * sc, vec3(0.0001)))));
+  // the air between the camera and the tree, and the lamp's light reaching it, change too little across a tree to work
+  // out for every pixel of it (a forest close up is many layers of sprays)
+  vec3 P = uCam + wp.xyz;
+  atmosphere(P, vT, vS);
+  float sd; vSunE = uSunCol * sunTrans(P, vLd, sd);
+  // leaves are lit by their crown's envelope, which scales with the anchors (the inverse transpose); bark by its own
+  // round surface, which does not
+  vec3 n = aTuv.x < -0.5 ? normal / sc3 : normal / (sc3 * sc3);
+  vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * n));
   vCol = aCol;
   vUV = aTuv;
   vAux = aInst.x;
+  vSp = aInst.z - 1.0;
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `
@@ -19973,6 +20027,28 @@ varying vec3 vNor;
 varying vec3 vCol;
 varying vec2 vUV;
 varying float vAux;
+varying float vSp;
+varying vec3 vT;
+varying vec3 vS;
+varying vec3 vSunE;
+varying vec3 vLd;
+// bark by species: a the way round the limb (0..1, the noise taken round a circle so it has no seam), s metres up it
+vec3 bark(float a, float s) {
+  vec2 q = vec2(cos(a * 6.2832), sin(a * 6.2832));
+  if (abs(vSp - 2.0) < 0.5) {
+    // birch: white, with dark lenticels across it and dark scars
+    float dash = smoothstep(0.74, 0.84, vnoise(vec2(q.x * 3.0 + 7.0, q.y * 3.0 + s * 16.0)));
+    float scar = smoothstep(0.70, 0.82, vnoise(q * 1.6 + vec2(3.1, s * 1.1)));
+    return vec3(1.0, 0.98, 0.94) * (1.0 - 0.65 * dash) * (1.0 - 0.6 * scar);
+  }
+  // ridges and furrows that wander up the trunk: deep on oak and pine, plates on pitch pine
+  float k = vSp > 5.5 ? 6.0 : (vSp > 0.5 && vSp < 1.5) || (vSp > 3.5 && vSp < 4.5) ? 8.0 : 10.0;
+  float w = vnoise(q * 1.5 + vec2(0.0, s * 0.45)) * 1.6;
+  float ridge = abs(sin(3.14159 * (a * k + w)));
+  float plate = vnoise(q * 3.0 + vec2(5.0, s * 1.6));
+  float f = smoothstep(0.2, 0.75, ridge) * (0.7 + 0.3 * plate);
+  return vec3(0.42 + 0.58 * f) * (0.9 + 0.2 * vnoise(q * 6.0 + vec2(1.0, s * 5.0)));
+}
 void main() {
   vec3 P = uCam + vRel;
   float r = length(P.yz);
@@ -19982,28 +20058,38 @@ void main() {
   vec3 N = normalize(vNor);
   vec3 alb = vCol;
   bool leaf = vUV.x > -0.5;
+  float cov = 1.0;
   if (leaf) {
     vec4 t = texture2D(uLeafTex, vUV);
-    // far off the atlas blurs toward its average cover, so the cut drops with distance and crowns stay full
-    if (t.a < mix(0.42, 0.17, smoothstep(22.0, 150.0, dist))) discard;
-    alb *= t.rgb * mix(vec3(1.16, 1.02, 0.74), vec3(0.80, 0.95, 1.0), vAux);
+    // far off the atlas blurs toward its average cover, so the cut drops with distance and crowns stay full; a spray
+    // seen edge on would be a smear, so it fades out (its face from the slope of the surface across the screen)
+    float cut = mix(0.45, 0.16, smoothstep(18.0, 170.0, dist));
+    float edge = abs(dot(normalize(cross(dFdx(vRel), dFdy(vRel))), V));
+    cut = mix(0.97, cut, smoothstep(0.08, 0.3, edge));
+    // the cut spread over a pixel, which the multisampling turns into coverage: crisp edges without stair steps
+    cov = clamp((t.a - cut) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0);
+    if (cov <= 0.0) discard;
+    alb *= t.rgb * mix(vec3(1.10, 1.03, 0.84), vec3(0.88, 0.97, 1.06), vAux);
+  } else {
+    alb *= bark(-vUV.x - 1.0, vUV.y);
   }
-  vec3 Ld; float sd; vec3 Ts = sunTrans(P, Ld, sd);
-  vec3 sunE = uSunCol * Ts;
-  float sh = sunShadow(vRel, N, Ld);
+  vec3 Ld = normalize(vLd), sunE = vSunE;
+  float sh = leaf ? sunShadowFast(vRel, N, Ld) : sunShadow(vRel, N, Ld);
   vec3 col;
   if (leaf) {
-    // leaves take light on a wrap, and glow a little when the lamp is behind them
-    float w = clamp((dot(N, Ld) + 0.5) / 1.5, 0.0, 1.0);
-    float back = pow(max(dot(-V, Ld), 0.0), 3.0) * 0.30;
-    col = alb * 1.55 * (sunE * (w * (0.65 + 0.35 * w) + back) * (0.10 + 0.90 * sh) + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)));
+    // leaves take light on a wrap; looking toward the lamp, light comes through them, yellower; a little waxy sheen
+    float ndl = dot(N, Ld);
+    float w = clamp((ndl + 0.5) / 1.5, 0.0, 1.0);
+    float tr = pow(max(dot(-V, Ld), 0.0), 4.0) * (0.30 + 0.25 * (1.0 - max(ndl, 0.0)));
+    vec3 Hh = normalize(Ld + V);
+    float spec = pow(max(dot(N, Hh), 0.0), 24.0) * 0.022;
+    col = alb * 1.55 * (sunE * (w * (0.65 + 0.35 * w) + tr * vec3(1.0, 1.12, 0.55)) * (0.10 + 0.90 * sh) + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)));
+    col += sunE * spec * sh;
   } else {
     col = alb * 1.55 * (sunE * max(dot(N, Ld), 0.0) * sh + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)));
   }
   col += alb * 1.55 * headlamp(vRel, N);
-  vec3 T, S;
-  atmosphere(P, T, S);
-  gl_FragColor = vec4(col * T + S, 1.0);
+  gl_FragColor = vec4(col * vT + vS, cov);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -20012,14 +20098,14 @@ void main() {
   var DEPTH_TREE_VS = (
     /* glsl */
     `
-attribute float aPart;
-attribute vec2 aTuv;
-attribute vec4 aInst;
+uniform float uTime;
+${TREE_POS}
 varying vec2 vUV;
 void main() {
-  float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+  vec4 tp; vec3 sc3;
+  if (!treeVertex(tp, sc3)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vUV = aTuv;
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * (instanceMatrix * vec4(position * keep, 1.0));
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * tp;
 }`
   );
   var DEPTH_TREE_FS = (
@@ -20058,7 +20144,26 @@ void main() {
 }`
   );
 
+  // src/species.js
+  var SPECIES = [
+    { name: "maple", H: 14, R: 4.3, conifer: 0, leaf: [0.045, 0.09, 0.026], bark: [0.165, 0.155, 0.14] },
+    { name: "oak", H: 15.5, R: 5.2, conifer: 0, leaf: [0.04, 0.077, 0.024], bark: [0.125, 0.115, 0.1] },
+    { name: "birch", H: 12, R: 3.1, conifer: 0, leaf: [0.056, 0.1, 0.029], bark: [0.62, 0.6, 0.55] },
+    { name: "shade tree", H: 13, R: 6.2, conifer: 0, leaf: [0.044, 0.088, 0.026], bark: [0.14, 0.13, 0.115] },
+    { name: "white pine", H: 21, R: 5.4, conifer: 1, leaf: [0.024, 0.054, 0.03], bark: [0.105, 0.09, 0.078] },
+    { name: "hemlock", H: 15, R: 3.9, conifer: 1, leaf: [0.016, 0.04, 0.02], bark: [0.12, 0.085, 0.066] },
+    { name: "pitch pine", H: 11, R: 3.9, conifer: 1, leaf: [0.029, 0.052, 0.024], bark: [0.135, 0.1, 0.078] },
+    { name: "shrub", H: 2.4, R: 1.5, conifer: 0, leaf: [0.04, 0.083, 0.024], bark: [0.11, 0.095, 0.08] }
+  ];
+  var PLAIN_H = [12.8, 14.4];
+  var PLAIN_R = [3.9, 2.9];
+  var PLAIN_LEAF = [[0.043, 0.086, 0.025], [0.019, 0.045, 0.022]];
+  var SHRUB = 7;
+
   // src/trees.js
+  var TAU = Math.PI * 2;
+  var V = (x = 0, y = 0, z = 0) => new C(x, y, z);
+  var UP = V(0, 1, 0);
   function rng(seed) {
     let s29 = seed >>> 0;
     return () => {
@@ -20068,190 +20173,439 @@ void main() {
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  var V = (x, y, z) => new C(x, y, z);
+  var smooth = (a, b, x) => {
+    const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
+    return t * t * (3 - 2 * t);
+  };
+  var across = (d) => (Math.abs(d.y) < 0.9 ? V().crossVectors(UP, d) : V(1, 0, 0).cross(d)).normalize();
+  var CELL_MEAN = [
+    [0.0633, 0.1405, 0.022],
+    [0.0478, 0.0934, 0.0209],
+    [0.1519, 0.2428, 0.0392],
+    [0.0588, 0.1311, 0.0264],
+    [0.0465, 0.1051, 0.0693],
+    [0.0307, 0.0731, 0.03],
+    [0.0879, 0.1407, 0.0323],
+    [0.0633, 0.1349, 0.0236]
+  ];
+  var TINT_MEAN = [0.99, 1, 0.95];
+  var Ellipsoid = class {
+    constructor(cy2, rx2, ry2, top = 1) {
+      this.C = V(0, cy2, 0);
+      this.rx = rx2;
+      this.ry = ry2;
+      this.top = top;
+    }
+    e(P2) {
+      let dy2 = (P2.y - this.C.y) / this.ry;
+      if (dy2 > 0) dy2 *= this.top;
+      return Math.hypot(P2.x / this.rx, dy2, P2.z / this.rx);
+    }
+    normal(P2) {
+      const k = P2.y > this.C.y ? this.top * this.top : 1;
+      return V(P2.x / (this.rx * this.rx), (P2.y - this.C.y) * k / (this.ry * this.ry), P2.z / (this.rx * this.rx)).normalize();
+    }
+    // where a ray from P along d reaches the envelope scaled by k
+    exit(P2, d, k) {
+      let a = 0, b = 4 * Math.max(this.rx, this.ry);
+      for (let i = 0; i < 40; i++) {
+        const m = (a + b) / 2;
+        if (this.e(V().copy(P2).addScaledVector(d, m)) < k) a = m;
+        else b = m;
+      }
+      return a;
+    }
+  };
+  var Cone = class {
+    // prof(f): the crown's radius as a share of R at a share f of the way from its base y0 to its top y1
+    constructor(y02, y1, R2, prof) {
+      this.y0 = y02;
+      this.y1 = y1;
+      this.R = R2;
+      this.prof = prof;
+      this.C = V(0, (y02 + y1) / 2, 0);
+    }
+    r(y) {
+      const f = (y - this.y0) / (this.y1 - this.y0);
+      return f < -0.15 || f > 1 ? 0.02 : Math.max(this.R * this.prof(Math.max(f, 0)), 0.05);
+    }
+    e(P2) {
+      return Math.hypot(P2.x, P2.z) / this.r(P2.y) + Math.max(0, P2.y - this.y1) * 2;
+    }
+    normal(P2) {
+      const dr2 = (this.r(P2.y + 0.3) - this.r(P2.y - 0.3)) / 0.6, h = Math.hypot(P2.x, P2.z) || 1;
+      return V(P2.x / h, 0.25 - dr2, P2.z / h).normalize();
+    }
+  };
   var Build = class {
-    constructor() {
+    constructor(sp) {
+      this.sp = sp;
+      this.S = SPECIES[sp];
       this.p = [];
+      this.o = [];
       this.n = [];
       this.c = [];
-      this.part = [];
       this.uv = [];
+      this.w = [];
       this.idx = [];
+      this.leaf = [];
     }
-    v(P2, N, col, part, u, v) {
-      this.p.push(P2.x, P2.y, P2.z);
+    vert(A, O, N, col, u, v, fl) {
+      this.p.push(A.x, A.y, A.z);
+      this.o.push(O.x, O.y, O.z);
       this.n.push(N.x, N.y, N.z);
       this.c.push(col[0], col[1], col[2]);
-      this.part.push(part);
       this.uv.push(u, v);
+      this.w.push(Math.pow(Math.max(A.y + O.y, 0) / this.S.H, 1.5), fl);
       return this.p.length / 3 - 1;
     }
     quad(a, b, c, d) {
       this.idx.push(a, b, c, a, c, d);
     }
-    // a tapered tube of plain bark between two points
-    tube(A, B, ra2, rb, sides2, col, part) {
-      const ax2 = V(0, 0, 0).subVectors(B, A).normalize();
-      const u = Math.abs(ax2.y) < 0.9 ? V(0, 1, 0).cross(ax2).normalize() : V(1, 0, 0).cross(ax2).normalize(), w = V(0, 0, 0).crossVectors(ax2, u);
-      const ring = [];
-      for (let i = 0; i < sides2; i++) {
-        const a = i / sides2 * Math.PI * 2, n = V(0, 0, 0).addScaledVector(u, Math.cos(a)).addScaledVector(w, Math.sin(a));
-        ring.push([this.v(V(0, 0, 0).copy(A).addScaledVector(n, ra2), n, col, part, -1, -1), this.v(V(0, 0, 0).copy(B).addScaledVector(n, rb), n, col, part, -1, -1)]);
+    // bark: a tube along a polyline, its radius given at each point; frames carried along so it does not twist
+    limb(pts, rads, sides2, shade = () => 1, fl = 0) {
+      const col = this.S.bark;
+      let U = null, len = 0;
+      const rings = [];
+      for (let k = 0; k < pts.length; k++) {
+        const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)];
+        const T = V().subVectors(b, a).normalize();
+        if (!U) U = across(T);
+        else U.addScaledVector(T, -U.dot(T)).normalize();
+        const W = V().crossVectors(T, U);
+        if (k) len += pts[k].distanceTo(pts[k - 1]);
+        const dr2 = (rads[Math.max(0, k - 1)] - rads[Math.min(pts.length - 1, k + 1)]) / Math.max(a.distanceTo(b), 1e-3);
+        const s29 = shade(pts[k]), cc2 = [col[0] * s29, col[1] * s29, col[2] * s29], ring = [];
+        for (let i = 0; i <= sides2; i++) {
+          const t = i / sides2 * TAU, d = V().addScaledVector(U, Math.cos(t)).addScaledVector(W, Math.sin(t));
+          ring.push(this.vert(pts[k], V().copy(d).multiplyScalar(rads[k]), V().copy(d).addScaledVector(T, dr2).normalize(), cc2, -1 - i / sides2, len, fl * k / (pts.length - 1)));
+        }
+        rings.push(ring);
       }
-      for (let i = 0; i < sides2; i++) {
-        const p = ring[i], q = ring[(i + 1) % sides2];
-        this.quad(p[0], q[0], q[1], p[1]);
-      }
+      for (let k = 1; k < rings.length; k++) for (let i = 0; i < sides2; i++) this.quad(rings[k - 1][i], rings[k - 1][i + 1], rings[k][i + 1], rings[k][i]);
     }
-    // A bough can bend once along its length. The middle row breaks the flat sheet silhouette without another
-    // overlapping alpha card. Smaller tapered tips, mixed rolls and separate clusters leave natural sky holes.
-    card(base, U, S2, w, h, u02, u1, part, nrmOf, shadeOf, gain, bend = 0) {
-      const face = V(0, 0, 0).crossVectors(S2, U).normalize();
-      const rows = bend ? [[0, 0.86, 0], [0.54, 1, bend], [1, 0.8, bend * 0.2]] : [[0, 1, 0], [1, 1, 0]], ids = [];
-      for (const [v, width, offset] of rows) {
+    // a spray on a card: its stem at base, reaching h along U, its face F (a unit vector across U); bend lifts its middle
+    card(base, U, F, w, h, cell, flip, crown, bend = 0, ao2 = 1) {
+      const S2 = V().crossVectors(U, F).normalize(), cx2 = cell % 4, cy2 = cell >> 2, ids = [];
+      const rows = bend ? [[0, 0], [0.5, bend], [1, bend * 0.3]] : [[0, 0], [1, 0]];
+      for (const [t, off] of rows) {
         const row = [];
         for (let side = 0; side < 2; side++) {
-          const P2 = V(0, 0, 0).copy(base).addScaledVector(U, h * v).addScaledVector(S2, (side - 0.5) * w * width).addScaledVector(face, h * offset);
-          const s29 = shadeOf(P2);
-          row.push(this.v(P2, nrmOf(P2, face), [gain[0] * s29, gain[1] * s29, gain[2] * s29], part, side ? u1 : u02, v));
+          const O = V().addScaledVector(U, h * t).addScaledVector(S2, (side - 0.5) * w).addScaledVector(F, h * off);
+          const P2 = V().copy(base).add(O), cn2 = crown.normal(P2);
+          const Fo2 = F.dot(cn2) < 0 ? V().copy(F).negate() : F;
+          const N = V().copy(cn2).multiplyScalar(0.72).addScaledVector(Fo2, 0.28).normalize();
+          const a = ao2 * (0.36 + 0.64 * smooth(0.2, 1, crown.e(P2))) * (0.8 + 0.2 * smooth(-1, 1, (P2.y - crown.C.y) / (crown.ry || (crown.y1 - crown.y0) / 2)));
+          let su = side ? 0.996 : 4e-3;
+          if (flip) su = 1 - su;
+          row.push(this.vert(base, O, N, [a, a, a], (cx2 + su) / 4, (1 - cy2) / 2 + (4e-3 + 0.99 * t) / 2, t));
+          this.leaf.push(row[row.length - 1]);
         }
         ids.push(row);
       }
       for (let i = 1; i < ids.length; i++) this.quad(ids[i - 1][0], ids[i - 1][1], ids[i][1], ids[i][0]);
     }
-    // worker.js scales measured trees by TREE_H / TREE_R. Fit the authored branch geometry to those same
-    // dimensions, about the shared trunk's join, and transform its normals with the inverse transpose.
-    fit(part, height, radius, join) {
-      let top = join, reach = 0;
-      for (let i = 0; i < this.part.length; i++) if (this.part[i] === part) {
-        top = Math.max(top, this.p[i * 3 + 1]);
-        reach = Math.max(reach, Math.hypot(this.p[i * 3], this.p[i * 3 + 2]));
+    // Scale the anchors so the tree (anchors plus offsets) is exactly H tall and reaches R from its trunk, then colour the
+    // leaves so the crown averages its species' colour.  Offsets stay as they are: they are fitted by the instance.  The
+    // far level of detail takes the near one's scale (fit), so the two share their limbs.
+    finish(cell, fit) {
+      const { H, R: R2, leaf } = this.S, n = this.p.length / 3, k = [1, 1];
+      for (let it = 0; it < (fit ? 1 : 5); it++) {
+        let top = 0, reach = 0;
+        for (let i = 0; i < n; i++) {
+          const j = i * 3;
+          top = Math.max(top, this.p[j + 1] + this.o[j + 1]);
+          reach = Math.max(reach, Math.hypot(this.p[j] + this.o[j], this.p[j + 2] + this.o[j + 2]));
+        }
+        const sy2 = fit ? fit[1] : H / top, sx2 = fit ? fit[0] : R2 / reach;
+        k[0] *= sx2;
+        k[1] *= sy2;
+        for (let i = 0; i < n; i++) {
+          const j = i * 3;
+          this.p[j] *= sx2;
+          this.p[j + 1] *= sy2;
+          this.p[j + 2] *= sx2;
+        }
       }
-      const sy2 = (height - join) / (top - join), sx2 = radius / reach;
-      for (let i = 0; i < this.part.length; i++) if (this.part[i] === part) {
-        const j = i * 3;
-        this.p[j] *= sx2;
-        this.p[j + 1] = join + (this.p[j + 1] - join) * sy2;
-        this.p[j + 2] *= sx2;
-        const N = V(this.n[j] / sx2, this.n[j + 1] / sy2, this.n[j + 2] / sx2).normalize();
-        this.n[j] = N.x;
-        this.n[j + 1] = N.y;
-        this.n[j + 2] = N.z;
-      }
-    }
-    geometry() {
+      this.fit = k;
+      let ao2 = 0;
+      for (const i of this.leaf) ao2 += this.c[i * 3];
+      ao2 /= Math.max(this.leaf.length, 1);
+      const m = CELL_MEAN[cell], gain = [0, 1, 2].map((k2) => leaf[k2] / (m[k2] * ao2 * TINT_MEAN[k2]));
+      for (const i of this.leaf) for (let k2 = 0; k2 < 3; k2++) this.c[i * 3 + k2] *= gain[k2];
       const g = new Yt();
       g.setAttribute("position", new me(new Float32Array(this.p), 3));
+      g.setAttribute("aOff", new me(new Float32Array(this.o), 3));
       g.setAttribute("normal", new me(new Float32Array(this.n), 3));
       g.setAttribute("aCol", new me(new Float32Array(this.c), 3));
-      g.setAttribute("aPart", new me(new Float32Array(this.part), 1));
       g.setAttribute("aTuv", new me(new Float32Array(this.uv), 2));
-      g.setIndex(new me(new Uint16Array(this.idx), 1));
+      g.setAttribute("aWind", new me(new Float32Array(this.w), 2));
+      g.setIndex(new me(n < 65536 ? new Uint16Array(this.idx) : new Uint32Array(this.idx), 1));
+      g.computeBoundingBox();
+      g.boundingBox.expandByScalar(0.6);
+      g.userData.fit = k;
       return g;
     }
   };
-  var LEAF = [0.86, 1.28, 2];
-  var NEEDLE = [1.12, 0.98, 2.3];
-  var BARK = [0.085, 0.066, 0.048];
-  function leafTreeGeometry() {
-    const B = new Build(), r = rng(20261115);
-    const sym = () => r() * 2 - 1;
-    const rv2 = () => V(sym(), sym(), sym()), TAU2 = Math.PI * 2, JOIN = 3.2;
-    const UV = [[1e-3, 0.499], [0.501, 0.999]];
-    B.tube(V(0, -0.5, 0), V(0, 0.7, 0), 0.52, 0.36, 7, BARK, 2);
-    B.tube(V(0, 0.7, 0), V(0, JOIN, 0), 0.36, 0.29, 7, BARK, 2);
-    const leader = [V(0, JOIN, 0), V(-0.14, 5.5, 0.11), V(0.19, 8.2, -0.12), V(-0.15, 11.5, 0.22)];
-    for (let i = 1; i < leader.length; i++) B.tube(leader[i - 1], leader[i], 0.29 - (i - 1) * 0.085, i === 3 ? 0.025 : 0.29 - i * 0.085, 5, BARK, 0);
-    const clusters = [
-      [-1.8, 7.1, 0.8, 1.65, 1.75, 1.5],
-      [1.65, 7.75, 1.3, 1.7, 1.75, 1.55],
-      [0.75, 7.1, -1.85, 1.65, 1.65, 1.6],
-      [-1.65, 9.15, -1.25, 1.6, 1.7, 1.55],
-      [0.85, 9.35, 1.65, 1.6, 1.8, 1.45],
-      [1.6, 10.1, -0.75, 1.5, 1.6, 1.5],
-      [-0.85, 10.6, 0.85, 1.55, 1.65, 1.45],
-      [0.15, 11.3, -0.35, 1.3, 1.4, 1.25]
-    ];
-    for (let k = 0; k < clusters.length; k++) {
-      const [x, y, z, rx2, ry2, rz] = clusters[k];
-      const fork = V(0.02, 4.15 + k * 0.56, 0.02), elbow = V(x * 0.53, y - 1.55, z * 0.53), tip = V(x * 0.93, y - 0.18, z * 0.93);
-      B.tube(fork, elbow, 0.13 - k * 7e-3, 0.065, 4, BARK, 0);
-      B.tube(elbow, tip, 0.065, 0.018, 3, BARK, 0);
-      if (k % 2 === 0) {
-        B.tube(elbow, V(x + z * 0.3, y + 0.45, z - x * 0.3), 0.048, 0.012, 3, BARK, 0);
+  function curve(A, B, lift, wig, rnd, n = 3) {
+    const d = V().subVectors(B, A), L2 = d.length(), side = across(d.clone().normalize()), pts = [A.clone()];
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      pts.push(V().copy(A).addScaledVector(d, t).addScaledVector(UP, lift * L2 * Math.sin(Math.PI * t)).addScaledVector(side, wig * L2 * (rnd() - 0.5)).addScaledVector(V().crossVectors(d, side).normalize(), wig * L2 * 0.6 * (rnd() - 0.5)));
+    }
+    pts.push(B.clone());
+    return pts;
+  }
+  var taper = (pts, r02, r1) => {
+    const n = pts.length - 1;
+    return pts.map((_, i) => r02 + (r1 - r02) * i / n);
+  };
+  var dirFrom = (az, polar) => V(Math.cos(az) * Math.sin(polar), Math.cos(polar), Math.sin(az) * Math.sin(polar));
+  function broadleaf(sp, o) {
+    const { H, R: R2 } = SPECIES[sp], r = rng(9100 + sp * 77), sk = { stems: [], limbs: [], clusters: [] };
+    const crown = new Ellipsoid(o.crown[0] * H, R2, o.crown[1] * H, o.top || 1);
+    sk.crown = crown;
+    const ov2 = 0.75 * o.h, lim = new Ellipsoid(o.crown[0] * H, Math.max(R2 - ov2, R2 * 0.4), Math.max(o.crown[1] * H - ov2 * 0.6, o.crown[1] * H * 0.5), o.top || 1);
+    const stems = o.stems || 1;
+    for (let s29 = 0; s29 < stems; s29++) {
+      const az = s29 * TAU / stems + 0.6, lean = stems > 2 ? 0.14 + 0.05 * r() : stems > 1 ? 0.08 + 0.04 * r() : 0.03;
+      const top = V(Math.cos(az) * Math.sin(lean) * H * o.lead, H * o.lead, Math.sin(az) * Math.sin(lean) * H * o.lead);
+      const foot = V(Math.cos(az) * 0.12 * (stems > 1 ? 1 : 0), -0.35, Math.sin(az) * 0.12 * (stems > 1 ? 1 : 0));
+      const yb = o.base * H, kink = V().lerpVectors(foot, top, (yb + 0.35) / (top.y + 0.35)).add(V((r() - 0.5) * 0.25, 0, (r() - 0.5) * 0.25));
+      const pts = [foot, V().lerpVectors(foot, kink, 0.12), V().lerpVectors(foot, kink, 0.45), kink, ...curve(kink, top, 0.02, o.wig * 0.3, r, 3).slice(1)];
+      const tr2 = o.trunk / Math.sqrt(stems), rads = pts.map((P2, i) => i === 0 ? tr2 * 1.55 : P2.y < yb ? tr2 * (1.12 - 0.12 * P2.y / yb) : tr2 * Math.max(0.12, 1 - 0.88 * (P2.y - yb) / (top.y - yb)));
+      rads[pts.length - 1] = 0.025;
+      sk.stems.push({ pts, rads, level: 0 });
+      const nl = Math.round(o.limbs / stems);
+      for (let k = 0; k < nl; k++) {
+        const f = (k + 0.5 * r()) / nl, y = yb + (top.y - yb) * (0.02 + 0.8 * f);
+        const at = pathAt(pts, y);
+        const az2 = k * 2.39996 + s29 * 1.3 + (r() - 0.5) * 0.5 + (stems > 1 ? az : 0);
+        const polar = o.polar[0] + (o.polar[1] - o.polar[0]) * f + (r() - 0.5) * 0.18;
+        let d = dirFrom(az2, polar);
+        if (stems > 1) d.add(V(Math.cos(az), 0, Math.sin(az)).multiplyScalar(0.35)).normalize();
+        const L2 = lim.exit(at, d, o.reach || 0.9);
+        if (L2 < 0.12 * R2) continue;
+        const end = V().copy(at).addScaledVector(d, L2);
+        const lp2 = curve(at, end, o.lift, o.wig, r, 3), lr2 = Math.min(stemR(pts, rads, y) * 0.62, 0.1 + 0.05 * L2 / R2);
+        sk.limbs.push({ pts: lp2, rads: taper(lp2, lr2, 0.02), level: 1 });
+        const tipD = V().subVectors(lp2[3], lp2[2]).normalize();
+        sk.clusters.push({ Q: end, D: tipD, level: 1, tip: true });
+        sk.clusters.push({ Q: lp2[2].clone(), D: V().copy(d).add(V(0, 0.25, 0)).normalize(), level: 1, tip: false });
+        for (let j = 0; j < o.sec; j++) {
+          const t = 0.32 + 0.58 * (j + 0.3 * r()) / o.sec, Q = pathAt3(lp2, t), side = across(d).multiplyScalar(j % 2 ? 1 : -1);
+          const bd2 = V().copy(d).addScaledVector(side, 0.8 + 0.4 * r()).addScaledVector(UP, (o.blift || 0.3) + 0.2 * (r() - 0.5)).normalize();
+          const bl = Math.min(lim.exit(Q, bd2, 1), L2 * (0.42 + 0.14 * r()));
+          if (bl < 0.08 * R2) continue;
+          const B = V().copy(Q).addScaledVector(bd2, bl), bp2 = curve(Q, B, o.droop ? -o.droop : 0.08, o.wig * 0.8, r, 2);
+          sk.limbs.push({ pts: bp2, rads: taper(bp2, Math.min(lr2 * 0.5, 0.05), 0.012), level: 2 });
+          sk.clusters.push({ Q: B, D: V().subVectors(bp2[2], bp2[1]).normalize(), level: 2, tip: true });
+        }
       }
-      const nrmB = (P2, face) => {
-        const local = V((P2.x - x) / rx2, (P2.y - y) / ry2 + 0.22, (P2.z - z) / rz).normalize();
-        const outer = V(P2.x / 3.9, (P2.y - 8.4) / 4.3 + 0.3, P2.z / 3.9).normalize();
-        if (face.dot(local) < 0) face = V(0, 0, 0).copy(face).negate();
-        return local.multiplyScalar(0.48).addScaledVector(outer, 0.36).addScaledVector(face, 0.16).normalize();
-      };
-      const gain = 0.91 + r() * 0.15;
-      const shadeB = (P2) => {
-        const e = Math.min(V((P2.x - x) / rx2, (P2.y - y) / ry2, (P2.z - z) / rz).length(), 1);
-        return gain * (0.61 + 0.33 * e) * (0.91 + 0.09 * Math.max(-1, Math.min(1, (P2.y - y) / ry2)));
-      };
-      for (let i = 0; i < 6; i++) {
-        const a = i * 2.39996323 + k * 1.71, dy2 = 1 - (i + 0.5) / 3, radial = Math.sqrt(1 - dy2 * dy2);
-        const d = V(Math.cos(a) * radial, dy2, Math.sin(a) * radial);
-        const pc2 = V(x + d.x * rx2 * 0.58, y + d.y * ry2 * 0.58, z + d.z * rz * 0.58);
-        const normal = V(0, 0, 0).copy(d).addScaledVector(rv2(), 0.32).normalize();
-        const U = V(0, 0.9, 0).addScaledVector(d, 0.6).addScaledVector(rv2(), 0.3);
-        U.addScaledVector(normal, -U.dot(normal)).normalize();
-        const S2 = V(0, 0, 0).crossVectors(U, normal).normalize(), h = 2.25 + r() * 0.55, w = h * (0.95 + r() * 0.15);
-        const uv2 = r() < 0.5 ? UV[0] : [UV[0][1], UV[0][0]];
-        B.card(pc2.addScaledVector(U, -h * 0.48), U, S2, w, h, ...uv2, 0, nrmB, shadeB, LEAF, k >= 5 || i === 1 || i === 4 ? 0.09 + r() * 0.04 : 0);
-      }
-      for (let j = 0; j < 3; j++) {
-        const a = k * 1.31 + j * Math.PI / 3, U = V(Math.cos(a) * 0.22, 1, Math.sin(a) * 0.22).normalize();
-        const S2 = V(-Math.sin(a), 0, Math.cos(a)), h = ry2 * (1.02 + r() * 0.15), w = Math.min(rx2, rz) * (1.05 + r() * 0.13);
-        const base = V(x + sym() * 0.15, y, z + sym() * 0.15).addScaledVector(U, -h * 0.48);
-        const uv2 = j % 2 ? [UV[0][1], UV[0][0]] : UV[0];
-        B.card(base, U, S2, w, h, ...uv2, 0, nrmB, (P2) => shadeB(P2) * 0.83, LEAF, j === 0 ? 0.1 : 0);
+      sk.clusters.push({ Q: top.clone(), D: V().subVectors(top, kink).normalize().add(UP).normalize(), level: 1, tip: true, top: true });
+    }
+    return sk;
+  }
+  function pathAt(pts, y) {
+    for (let i = 1; i < pts.length; i++) if (pts[i].y >= y) {
+      const t = (y - pts[i - 1].y) / Math.max(pts[i].y - pts[i - 1].y, 1e-3);
+      return V().lerpVectors(pts[i - 1], pts[i], t);
+    }
+    return pts[pts.length - 1].clone();
+  }
+  function pathAt3(pts, t) {
+    const f = t * (pts.length - 1), i = Math.min(Math.floor(f), pts.length - 2);
+    return V().lerpVectors(pts[i], pts[i + 1], f - i);
+  }
+  function stemR(pts, rads, y) {
+    for (let i = 1; i < pts.length; i++) if (pts[i].y >= y) return rads[i - 1] + (rads[i] - rads[i - 1]) * (y - pts[i - 1].y) / Math.max(pts[i].y - pts[i - 1].y, 1e-3);
+    return rads[rads.length - 1];
+  }
+  function conifer(sp, o) {
+    const { H, R: R2 } = SPECIES[sp], r = rng(5300 + sp * 131), sk = { stems: [], limbs: [], clusters: [] };
+    const yb = o.base * H, crown = new Cone(yb, H, R2, o.prof);
+    sk.crown = crown;
+    const n = 7, pts = [];
+    for (let i = 0; i <= n; i++) {
+      const f = i / n, y = -0.35 + (H + 0.35) * f;
+      pts.push(V(Math.sin(f * 2.1 + 0.4) * o.wig * H * 0.04 + f * o.lean * H, y, Math.cos(f * 1.7) * o.wig * H * 0.03 - o.wig * H * 0.03));
+    }
+    const rads = pts.map((P2, i) => i === 0 ? o.trunk * 1.5 : o.trunk * Math.max(0.06, 1.04 - 1 * Math.max(P2.y, 0) / H));
+    rads[n] = 0.02;
+    sk.stems.push({ pts, rads, level: 0 });
+    let k = 0;
+    for (let y = yb; y < H * 0.95; y += o.dy * (0.8 + 0.4 * r()), k++) {
+      const at = pathAt(pts, y), f = (y - yb) / (H - yb), az0 = k * 2.39996 + r();
+      const per = o.per + (r() < 0.5 ? 1 : 0) - (f > 0.75 ? 1 : 0);
+      for (let j = 0; j < per; j++) {
+        if (r() < o.skip) continue;
+        const az = az0 + (j + (r() - 0.5) * 0.5) / per * TAU;
+        const reach = Math.max(0.3, crown.r(y) - o.h * o.ov) * (0.8 + 0.3 * r()) * (f > 0.85 ? 0.8 : 1);
+        const d = V(Math.cos(az), o.tilt + (r() - 0.5) * 0.12, Math.sin(az)).normalize();
+        const end = V().copy(at).addScaledVector(d, reach);
+        end.y -= o.droop * reach;
+        const bp2 = curve(at, end, o.droop > 0 ? 0.05 : 0.1, o.wig * 0.5, r, 3), br = Math.min(stemR(pts, rads, y) * 0.5, 0.075);
+        sk.limbs.push({ pts: bp2, rads: taper(bp2, br, 0.012), level: 1, f });
+        sk.clusters.push({ Q: end, D: V().subVectors(bp2[3], bp2[2]).normalize(), level: 1, tip: true, f, reach, at });
+        for (let m = 0; m < (o.sub || 0); m++) {
+          const t = 0.4 + 0.4 * (m + r() * 0.5) / o.sub, Q = pathAt3(bp2, t);
+          const bd2 = V().copy(d).applyAxisAngle(UP, (m % 2 ? 1 : -1) * (0.6 + 0.5 * r())).addScaledVector(UP, o.tilt + 0.15).normalize();
+          const bl = reach * (1 - t) * (0.7 + 0.4 * r()) + 0.3, B = V().copy(Q).addScaledVector(bd2, bl);
+          B.y -= o.droop * bl;
+          const sp2 = curve(Q, B, 0.08, o.wig * 0.6, r, 2);
+          sk.limbs.push({ pts: sp2, rads: taper(sp2, br * 0.45, 0.01), level: 2, f });
+          sk.clusters.push({ Q: B, D: V().subVectors(sp2[2], sp2[1]).normalize(), level: 2, tip: true, f, reach: bl, at: Q });
+        }
       }
     }
-    const stem = [V(0, JOIN, 0), V(0.08, 7.2, -0.06), V(-0.12, 10.8, 0.08), V(0.06, 14.4, -0.03)];
-    for (let i = 1; i < stem.length; i++) B.tube(stem[i - 1], stem[i], 0.29 - (i - 1) * 0.085, i === 3 ? 0.012 : 0.29 - i * 0.085, 4, BARK, 1);
-    const nrmC = (P2, face) => {
-      const o = V(P2.x, 0.45, P2.z).normalize();
-      if (face.y < 0) face = V(0, 0, 0).copy(face).negate();
-      return o.multiplyScalar(0.65).addScaledVector(face, 0.35).normalize();
-    };
-    const tiers = [[3.9, 2.05, 4], [5.35, 2.9, 5], [6.95, 2.65, 5], [8.55, 2.35, 5], [10.05, 1.95, 4], [11.55, 1.4, 4], [12.8, 0.8, 3]];
-    for (let k = 0; k < tiers.length; k++) {
-      const [y, rad, nb] = tiers[k], f = k / (tiers.length - 1), a02 = k * 2.39996323 + r() * 0.7;
-      for (let j = 0; j < nb; j++) {
-        const a = a02 + (j + sym() * 0.18) / nb * TAU2, droop = -0.24 + 0.48 * f + sym() * 0.1;
-        const U = V(Math.cos(a), droop, Math.sin(a)).normalize(), flat = V(-Math.sin(a), 0, Math.cos(a));
-        const vertical = V(0, 0, 0).crossVectors(U, flat).normalize(), roll = (0.42 + r() * 0.4) * (j % 2 ? -1 : 1);
-        const S2 = V(0, 0, 0).copy(flat).multiplyScalar(Math.cos(roll)).addScaledVector(vertical, Math.sin(roll));
-        const h = rad * (0.84 + r() * 0.27), w = h * (0.56 + r() * 0.17), base = V(U.x * 0.1, y + sym() * 0.22, U.z * 0.1);
-        const uv2 = r() < 0.5 ? UV[1] : [UV[1][1], UV[1][0]];
-        const sh = (P2) => (0.61 + 0.35 * Math.min(Math.hypot(P2.x, P2.z) / rad, 1)) * (0.88 + 0.12 * f);
-        if ((j + k) % 2 === 0) B.tube(base, V(0, 0, 0).copy(base).addScaledVector(U, h * 0.8), 0.047 * (1 - f * 0.65), 9e-3, 3, BARK, 1);
-        B.card(base, U, S2, w, h, ...uv2, 1, nrmC, sh, NEEDLE, j === 0 ? 0.11 : 0);
-        const tip = V(0, 0, 0).copy(base).addScaledVector(U, h * 0.38), lift = V(0, 0, 0).copy(U).addScaledVector(vertical, 0.35).normalize();
-        const across = V(0, 0, 0).crossVectors(lift, S2).normalize();
-        B.card(tip, lift, across, w * 0.8, h * 0.7, uv2[1], uv2[0], 1, nrmC, sh, NEEDLE);
-      }
-      for (let j = 0; j < 4; j++) {
-        const a = a02 + (j + 0.25) * Math.PI / 2, reach = rad * (0.13 + r() * 0.1);
-        const U = V(Math.cos(a) * 0.2, 1, Math.sin(a) * 0.2).normalize(), S2 = V(-Math.sin(a), 0, Math.cos(a));
-        const h = 2.1 + 0.55 * (1 - f), w = (1 + rad * 0.45) * (0.92 + r() * 0.16);
-        const base = V(Math.cos(a) * reach, y - 0.62 + sym() * 0.15, Math.sin(a) * reach);
-        const uv2 = j % 2 ? [UV[1][1], UV[1][0]] : UV[1];
-        B.card(base, U, S2, w, h, ...uv2, 1, nrmC, () => 0.73 + 0.16 * f, NEEDLE, j === 0 ? 0.08 : 0);
+    sk.clusters.push({ Q: pts[n].clone(), D: UP.clone(), level: 1, tip: true, top: true, f: 1, reach: 0.5 });
+    return sk;
+  }
+  function sprays(b, c, n, h, spread, cell, crown, r, opts = {}) {
+    const D = c.D, P1 = across(D), P2 = V().crossVectors(D, P1);
+    for (let j = 0; j < n; j++) {
+      const a = j * 2.39996 + r() * 0.8, k = j === 0 && !opts.fan ? 0.15 : spread * (0.5 + 0.5 * r());
+      const U = V().copy(D).multiplyScalar(Math.cos(k)).addScaledVector(P1, Math.sin(k) * Math.cos(a)).addScaledVector(P2, Math.sin(k) * Math.sin(a));
+      U.addScaledVector(UP, opts.rise === void 0 ? 0.25 : opts.rise).normalize();
+      const out = crown.normal(c.Q).addScaledVector(UP, opts.faceUp || 0.3);
+      let F = out.addScaledVector(U, -out.dot(U));
+      if (F.lengthSq() < 1e-4) F = across(U);
+      F.normalize().applyAxisAngle(U, (r() - 0.5) * (opts.roll || 1.1));
+      const hh = h * (0.85 + 0.3 * r()), base = V().copy(c.Q).addScaledVector(U, -hh * (opts.back || 0.25)).add(V((r() - 0.5) * 0.3, (r() - 0.5) * 0.3, (r() - 0.5) * 0.3).multiplyScalar(opts.jit || 1));
+      b.card(base, U, F, hh * (opts.w || 1) * (0.9 + 0.2 * r()), hh, cell, r() < 0.5, crown, r() < (opts.bend || 0.3) ? 0.08 + 0.05 * r() : 0, opts.ao || 1);
+    }
+  }
+  function fill(b, n, h, cell, crown, r, yr2) {
+    for (let j = 0; j < n; j++) {
+      const az = j * 2.39996 + r(), y = yr2[0] + (yr2[1] - yr2[0]) * (j + r()) / n;
+      const rad = (crown.r ? crown.r(y) : crown.rx * Math.sqrt(Math.max(0, 1 - ((y - crown.C.y) / crown.ry) ** 2))) * (0.25 + 0.3 * r());
+      const Q = V(Math.cos(az) * rad, y, Math.sin(az) * rad), U = V(Math.cos(az) * 0.5, 1, Math.sin(az) * 0.5).normalize();
+      const F = V(-Math.sin(az), 0, Math.cos(az)).applyAxisAngle(U, (r() - 0.5) * 0.8);
+      b.card(V().copy(Q).addScaledVector(U, -h * 0.5), U, F, h, h, cell, r() < 0.5, crown, 0, 0.85);
+    }
+  }
+  var BROAD = {
+    0: { base: 0.3, lead: 0.8, limbs: 8, polar: [1.05, 0.45], lift: 0.1, wig: 0.1, sec: 4, crown: [0.62, 0.38], trunk: 0.17, cell: 0, h: 2 },
+    1: { base: 0.33, lead: 0.7, limbs: 7, polar: [1.25, 0.65], lift: 0.06, wig: 0.3, sec: 4, crown: [0.63, 0.36], top: 1.12, trunk: 0.2, cell: 1, h: 2.1, clumpy: 1 },
+    2: { base: 0.3, lead: 0.92, limbs: 8, stems: 2, polar: [0.8, 0.42], lift: 0.12, wig: 0.1, sec: 3, crown: [0.63, 0.37], trunk: 0.13, cell: 2, h: 1.7, droop: 0.12, blift: 0 },
+    3: { base: 0.22, lead: 0.62, limbs: 7, polar: [1.2, 0.55], lift: 0.14, wig: 0.14, sec: 5, crown: [0.58, 0.42], trunk: 0.25, cell: 3, h: 2.2, reach: 0.78 },
+    7: { base: 0.04, lead: 0.8, limbs: 5, stems: 4, polar: [1, 0.6], lift: 0.1, wig: 0.15, sec: 2, crown: [0.58, 0.44], trunk: 0.05, cell: 7, h: 0.9 }
+  };
+  var CONI = {
+    // white pine: open tiers of level branches with their needles in tufts and plates at the ends; a bare lower trunk
+    4: { base: 0.45, prof: (f) => f < 0.3 ? 0.85 + 0.15 * f / 0.3 : 0.15 + 0.85 * Math.pow(Math.max(0, 1 - Math.pow((f - 0.3) / 0.7, 2)), 0.55), dy: 2, per: 5, skip: 0.36, tilt: 0.07, droop: -0.04, lean: 0.01, wig: 0.15, trunk: 0.25, cell: 4, h: 2.2, sub: 2, ov: 0.8 },
+    // hemlock: a dense cone from low down, its branches sweeping down at their ends, a nodding leader
+    5: { base: 0.1, prof: (f) => 0.05 + 0.95 * Math.pow(1 - f, 0.85) * (f < 0.08 ? 0.8 + 2.5 * f : 1), dy: 1.05, per: 4, skip: 0.06, tilt: -0.04, droop: 0.2, lean: 0, wig: 0.08, trunk: 0.21, cell: 5, h: 1.9, ov: 0.3 },
+    // pitch pine: few, crooked limbs and tufts of needles at their ends, a lean and an open, flat top
+    6: { base: 0.4, prof: (f) => 0.3 + 0.7 * Math.sin(Math.PI * Math.min(1, 0.3 + f * 0.8)), dy: 1.3, per: 3, skip: 0.15, tilt: 0.32, droop: -0.05, lean: 0.06, wig: 0.7, trunk: 0.21, cell: 6, h: 1.7, sub: 2, ov: 0.85 }
+  };
+  function makeBroadleaf(sp, lod, fit) {
+    const o = BROAD[sp], b = new Build(sp), sk = broadleaf(sp, o), r = rng(7700 + sp * 31 + lod), crown = sk.crown;
+    const barkShade = (P2) => P2.y < crown.C.y - crown.ry ? 1 : 0.6 + 0.4 * smooth(0.3, 1, crown.e(P2));
+    for (const s29 of sk.stems) {
+      const pts = lod ? [s29.pts[0], s29.pts[3], s29.pts[s29.pts.length - 1]] : s29.pts, rads = lod ? [s29.rads[0], s29.rads[3], s29.rads[s29.rads.length - 1]] : s29.rads;
+      b.limb(pts, rads, lod ? 5 : sp === SHRUB ? 4 : 8, barkShade);
+    }
+    for (const L2 of sk.limbs) {
+      if (lod && L2.level > 1) continue;
+      if (lod) b.limb([L2.pts[0], L2.pts[L2.pts.length - 1]], [L2.rads[0], L2.rads[L2.rads.length - 1]], 3, barkShade, 0.3);
+      else if (L2.level === 1) b.limb(L2.pts, L2.rads, sp === SHRUB ? 3 : 5, barkShade, 0.25);
+      else b.limb([L2.pts[0], L2.pts[L2.pts.length - 1]], [L2.rads[0], L2.rads[L2.rads.length - 1]], 3, barkShade, 0.6);
+    }
+    const clumpy = o.clumpy ? 0.65 : 1;
+    for (const c of sk.clusters) {
+      if (!lod) {
+        if (c.top) sprays(b, c, 6, o.h, 0.9, o.cell, crown, r, { fan: true });
+        else if (c.level === 2) sprays(b, c, 5, o.h, 0.95 * clumpy, o.cell, crown, r, { rise: o.droop ? -0.1 : 0.25 });
+        else if (c.tip) sprays(b, c, 5, o.h, 0.9 * clumpy, o.cell, crown, r);
+        else sprays(b, c, 3, o.h * 1.1, 1.2, o.cell, crown, r, { ao: 0.9 });
+      } else {
+        if (c.level === 2) continue;
+        if (c.top) sprays(b, c, 4, o.h * 1.7, 0.9, o.cell, crown, r, { fan: true, back: 0.55 });
+        else if (c.tip) sprays(b, c, 5, o.h * 1.75, 0.95, o.cell, crown, r, { back: 0.58 });
+        else sprays(b, c, 3, o.h * 1.8, 1.25, o.cell, crown, r, { ao: 0.9, back: 0.5 });
       }
     }
-    for (const a of [0.3, 1.87]) B.card(V(0.02, 12.65, 0), V(0.015, 1, -0.01).normalize(), V(Math.cos(a), 0, Math.sin(a)), 0.9, 1.75, ...UV[1], 1, nrmC, () => 0.95, NEEDLE, 0.05);
-    B.fit(0, 12.8, 3.9, JOIN);
-    B.fit(1, 14.4, 2.9, JOIN);
-    return B.geometry();
+    if (sp !== SHRUB) fill(b, lod ? 5 : 10, o.h * (lod ? 1.9 : 1.4), o.cell, crown, r, [crown.C.y - crown.ry * 0.6, crown.C.y + crown.ry * 0.55]);
+    return b.finish(o.cell, fit);
+  }
+  function makeConifer(sp, lod, fit) {
+    const o = CONI[sp], b = new Build(sp), sk = conifer(sp, o), r = rng(4400 + sp * 37 + lod), crown = sk.crown;
+    const barkShade = (P2) => P2.y < crown.y0 ? 1 : 0.55 + 0.45 * smooth(0.2, 1, crown.e(P2));
+    const s29 = sk.stems[0];
+    b.limb(lod ? [s29.pts[0], s29.pts[2], s29.pts[5], s29.pts[7]] : s29.pts, lod ? [s29.rads[0], s29.rads[2], s29.rads[5], s29.rads[7]] : s29.rads, lod ? 5 : 8, barkShade);
+    if (sp === 4 && !lod) for (let j = 0; j < 9; j++) {
+      const y = crown.y0 * (0.3 + 0.68 * j / 9), at = pathAt(s29.pts, y), az = j * 2.1 + r(), d = V(Math.cos(az), 0.05, Math.sin(az));
+      b.limb([at, V().copy(at).addScaledVector(d, 0.5 + 0.9 * r())], [0.03, 8e-3], 3, () => 0.9);
+    }
+    let i = 0;
+    for (const L2 of sk.limbs) {
+      i++;
+      const n = L2.pts.length - 1;
+      if (L2.level === 2) {
+        if (!lod && sp === 6) b.limb([L2.pts[0], L2.pts[n]], [L2.rads[0], L2.rads[n]], 3, barkShade, 0.5);
+        continue;
+      }
+      if (lod && sp === 5 && i % 2) continue;
+      b.limb(lod || sp === 5 ? [L2.pts[0], L2.pts[n]] : [L2.pts[0], L2.pts[2], L2.pts[n]], lod || sp === 5 ? [L2.rads[0], 0.02] : [L2.rads[0], L2.rads[2], L2.rads[n]], 3, barkShade, 0.35);
+    }
+    i = 0;
+    for (const c of sk.clusters) {
+      i++;
+      const h = o.h * (lod ? 1.7 : 1);
+      if (c.top) {
+        for (let j = 0; j < (lod ? 2 : 3); j++) {
+          const az = j * Math.PI / (lod ? 2 : 3), U = V(sp === 5 ? 0.35 : 0.04, 1, 0.02).normalize();
+          b.card(V().copy(c.Q).addScaledVector(U, -h * 0.85), U, V(Math.cos(az), 0, Math.sin(az)).cross(U).normalize(), h * 0.55, h, o.cell, j % 2 === 1, crown, sp === 5 ? 0.12 : 0.04);
+        }
+        continue;
+      }
+      if (lod && c.level === 2) continue;
+      if (lod && sp === 5 && i % 2) continue;
+      const D = c.D, out = V(D.x, 0, D.z).normalize(), hc2 = c.level === 2 ? h * 0.85 : h;
+      if (sp === 4) {
+        const nP = lod ? 4 : c.level === 2 ? 3 : 6;
+        for (let j = 0; j < nP; j++) {
+          const ang = (j / Math.max(nP - 1, 1) - 0.5) * 2.9 + (r() - 0.5) * 0.4;
+          const U = V().copy(out).applyAxisAngle(UP, ang).addScaledVector(UP, 0.1 + 0.18 * r()).normalize();
+          const F = V(0, 1, 0).addScaledVector(U, -U.y).normalize().applyAxisAngle(U, (j % 2 ? 1 : -1) * (0.45 + 0.5 * r()));
+          const hh = hc2 * (0.85 + 0.35 * r()), t = 0.55 + 0.4 * r();
+          const base = V().lerpVectors(c.at, c.Q, t).addScaledVector(U, -hh * (lod ? 0.45 : 0.3)).add(V(0, (r() - 0.4) * 0.35, 0));
+          b.card(base, U, F, hh * 0.95, hh, o.cell, r() < 0.5, crown, r() < 0.3 ? 0.07 : 0);
+        }
+      } else if (sp === 5) {
+        const nAlong = lod ? 3 : 4;
+        for (let j = 0; j < nAlong; j++) {
+          const t = 0.25 + 0.75 * (j + 0.5) / nAlong, Q = V().lerpVectors(c.at, c.Q, t);
+          const U = V().copy(out).addScaledVector(UP, -0.35 * t).applyAxisAngle(UP, (j % 2 ? 0.55 : -0.55) * (0.6 + 0.4 * r())).normalize();
+          const F = V(0, 1, 0).addScaledVector(out, 0.55).addScaledVector(U, -U.dot(V(0, 1, 0).addScaledVector(out, 0.55))).normalize().applyAxisAngle(U, (r() - 0.5) * 0.9);
+          const hh = h * (0.9 + 0.3 * r());
+          b.card(V().copy(Q).addScaledVector(U, -hh * (lod ? 0.6 : 0.45)), U, F, hh * 0.95, hh, o.cell, r() < 0.5, crown, !lod && r() < 0.5 ? 0.06 + 0.07 * r() : 0);
+        }
+      } else {
+        sprays(b, { Q: c.Q, D: V().copy(D).addScaledVector(UP, 0.5).normalize() }, lod ? 3 : 4, hc2, 1.2, o.cell, crown, r, { fan: true, rise: 0.3, faceUp: 0.4, back: lod ? 0.65 : 0.4, w: 0.9 });
+      }
+    }
+    if (sp === 6 && !lod) for (let j = 0; j < 3; j++) {
+      const at = pathAt(s29.pts, crown.y0 * (0.35 + 0.25 * j)), az = j * 2.4;
+      sprays(b, { Q: at, D: V(Math.cos(az), 0.6, Math.sin(az)).normalize() }, 2, o.h * 0.7, 1, o.cell, crown, r, { fan: true, ao: 0.9 });
+    }
+    if (sp !== 6) fill(b, lod ? 4 : sp === 5 ? 12 : 5, o.h * (lod ? 1.7 : 1.2), o.cell, crown, r, [crown.y0 + 0.5, crown.y1 - 1.5]);
+    return b.finish(o.cell, fit);
+  }
+  function speciesGeometries() {
+    const hi2 = [], mid = [];
+    for (let s29 = 0; s29 < SPECIES.length; s29++) {
+      const make = SPECIES[s29].conifer ? makeConifer : makeBroadleaf;
+      hi2.push(make(s29, 0));
+      mid.push(s29 === SHRUB ? null : make(s29, 1, hi2[s29].userData.fit));
+    }
+    return { hi: hi2, mid };
   }
 
   // src/forest.js
   var V2 = (x, y, z) => new C(x, y, z);
-  var TAU = Math.PI * 2;
+  var TAU2 = Math.PI * 2;
   var ForestMesh = class {
     constructor() {
       this.p = [];
@@ -20289,7 +20643,7 @@ void main() {
     trunk(a, b, ra2, rb, sides2) {
       const ring = [];
       for (let i = 0; i < sides2; i++) {
-        const theta = i * TAU / sides2, x = Math.cos(theta), z = Math.sin(theta);
+        const theta = i * TAU2 / sides2, x = Math.cos(theta), z = Math.sin(theta);
         const N = V2(x, (ra2 - rb) / (b - a), z).normalize();
         ring.push([
           this.vertex(V2(x * ra2, a, z * ra2), N, [0.07, 0.052, 0.036], 2),
@@ -20320,7 +20674,7 @@ void main() {
       for (let k = 0; k < profile.length; k++) {
         const [y, radius] = profile[k], row = [];
         for (let i = 0; i < sides2; i++) {
-          const angle = i * TAU / sides2 + 0.17 + 0.065 * Math.sin(k * 1.2);
+          const angle = i * TAU2 / sides2 + 0.17 + 0.065 * Math.sin(k * 1.2);
           const r = radius * (0.91 + 0.09 * Math.sin(i * 2.1 + k * 0.8));
           const px2 = Math.cos(angle) * r + 0.045 * Math.sin(k * 0.7), pz = Math.sin(angle) * r + 0.045 * Math.cos(k * 1.1);
           const shade = 0.74 + 0.23 * (y - 3.25) / 11.15;
@@ -20670,6 +21024,8 @@ void main() {
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
       this.visScatter = [];
+      this._cam = new C();
+      this._inv = new Ht();
       this.vel = [0, 0];
       this.camPrev = null;
       this.ranked = -1;
@@ -21051,6 +21407,7 @@ void main() {
         return out;
       };
       this.treeGeo = plainTreeGeometry();
+      this.spFit = SPECIES.map((s29) => new C(s29.R / PLAIN_R[s29.conifer], s29.H / PLAIN_H[s29.conifer], s29.R / PLAIN_R[s29.conifer]));
       this.clumpGeo = canopyGeometry();
       const box = new qi(1, 1, 1);
       box.translate(0, 0.5, 0);
@@ -21539,8 +21896,12 @@ void main() {
       }
       this.leafR = this.game.software && !this.game.forceLeaves ? 0 : q.leafR || 0;
       if (this.leafR) {
-        this.leafGeo = leafTreeGeometry();
-        this.leafMat = new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({}, this.defines), side: Bn, uniforms: Object.assign({}, this.U) });
+        this.leafGeos = speciesGeometries();
+        const hr2 = q.leafHiR || this.leafR * 0.3;
+        this.U.uLod.value.set(hr2 * 0.8, hr2 * 1.1);
+        const mk2 = (lod) => new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ [lod]: 1 }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
+        this.leafMat = { hi: mk2("LOD_HI"), mid: mk2("LOD_MID") };
+        this.spExt = this.leafGeos.hi.map((g) => new C(Math.max(-g.boundingBox.min.x, g.boundingBox.max.x), g.boundingBox.max.y, Math.max(-g.boundingBox.min.z, g.boundingBox.max.z)));
       }
       this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], [q.treeR * 0.72, q.treeR * 0.95], Object.assign({ FOLIAGE: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
       this.houseR = this.game.realBuildings ? q.houseR || 0 : 0;
@@ -21576,6 +21937,7 @@ void main() {
         kinds.push(["decks", 7, deckR]);
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
+      if (this.leafR) kinds.push(["under", 9, (q.leafHiR || 100) * 1.15]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
@@ -21609,11 +21971,14 @@ void main() {
         if (t.state !== "ready") continue;
         if (this.frame - t.last > 200 || t.redoAt && performance.now() > t.redoAt) {
           if (t.mesh) {
-            this.scene.remove(t.mesh);
-            if (t.mesh.dispose) t.mesh.dispose();
-            if (t.own) t.mesh.geometry.dispose();
-            else for (const g2 of [t.geoFar || t.mesh.geometry, t.geoNear]) {
-              if (!g2) continue;
+            for (const m of [t.mesh].concat(t.nm || [])) {
+              this.scene.remove(m);
+              if (m.dispose) m.dispose();
+              if (t.own) {
+                m.geometry.dispose();
+                continue;
+              }
+              const g2 = m.geometry;
               for (const name of Object.keys(g2.attributes)) if (name !== "aInst") g2.deleteAttribute(name);
               g2.setIndex(null);
               g2.dispose();
@@ -21629,27 +21994,112 @@ void main() {
             t.d = Math.hypot(t.mid[0] - camC[0], t.mid[1] - camC[1], t.mid[2] - camC[2]);
             vis.push(t);
             if (t.kind === "trees") {
-              const near2 = !!t.geoNear && t.d < this.leafR + (t.near ? 14 : 0);
-              if (t.geoNear && near2 !== t.near) {
+              const near2 = !!this.leafR && t.d < this.leafR + (t.near ? 14 : 0);
+              if (near2 !== t.near) {
                 t.near = near2;
-                t.mesh.geometry = near2 ? t.geoNear : t.geoFar;
-                t.mesh.material = near2 ? this.leafMat : this.treeMat;
+                if (near2 && !t.nm) this.nearTrees(t);
               }
-              t.mesh.count = near2 ? t.n : Math.max(1, Math.ceil(t.n * clamp2(1.9 - 1.75 * t.d / q.treeR, 0.4, 1)));
+              if (near2) {
+                t.mesh.visible = false;
+                const hi2 = t.d - t.rad < this.U.uLod.value.y + 4;
+                this._cam.set(camC[0] - t.center[0], camC[1] - t.center[1], camC[2] - t.center[2]).applyMatrix4(this._inv.copy(t.basis).transpose());
+                this.nearFill(t, this._cam);
+                for (const m of t.nm) m.visible = m.userData.want = m.userData.lod === "mid" || hi2 && m.count > 0;
+              } else {
+                if (t.nm) for (const m of t.nm) m.visible = m.userData.want = false;
+                t.mesh.count = t.nTrees ? Math.max(1, Math.ceil(t.nTrees * clamp2(1.9 - 1.75 * t.d / q.treeR, 0.4, 1))) : 0;
+              }
             }
-          }
+          } else if (t.nm) for (const m of t.nm) m.visible = m.userData.want = false;
           t.mesh.matrix.copy(t.basis);
           t.mesh.matrix.elements[12] = t.center[0] - camC[0];
           t.mesh.matrix.elements[13] = t.center[1] - camC[1];
           t.mesh.matrix.elements[14] = t.center[2] - camC[2];
           t.mesh.matrixWorld.copy(t.mesh.matrix);
+          if (t.nm && t.near) for (const m of t.nm) {
+            m.matrix.copy(t.mesh.matrix);
+            m.matrixWorld.copy(m.matrix);
+          }
         }
       }
     }
     // The frame is drawn in two depth ranges that overlap between the split and nearFar.  A tile of trees or buildings
     // lying wholly inside the near range is left out of the far pass, so it is drawn once and not twice.
     passVisibility(nearPass, nearFar) {
-      for (const t of this.visScatter) t.mesh.visible = nearPass || t.d + t.rad > nearFar;
+      for (const t of this.visScatter) {
+        const on2 = nearPass || t.d + t.rad > nearFar;
+        if (t.near && t.nm) {
+          t.mesh.visible = false;
+          for (const m of t.nm) m.visible = on2 && m.userData.want;
+        } else t.mesh.visible = on2;
+      }
+    }
+    // A tile of trees near the camera: for each species in it, one instanced mesh of its full model (the understory
+    // too) and one of its simpler one, sharing the species' vertex buffers.  Each draws its trees on its side of uLod.
+    nearTrees(t) {
+      const src = t.mesh.instanceMatrix.array, inst = t.inst, n = t.n, byS = SPECIES.map(() => []);
+      for (let i = 0; i < n; i++) byS[inst[i * 4 + 2] - 1].push(i);
+      t.nm = [];
+      for (let s29 = 0; s29 < byS.length; s29++) for (const lod of ["hi", "mid"]) {
+        const L2 = lod === "hi" ? byS[s29] : byS[s29].filter((i) => inst[i * 4 + 3] < 0.5), geo = this.leafGeos[lod][s29];
+        if (!L2.length || !geo) continue;
+        const ia2 = new Float32Array(L2.length * 4), g = new Yt();
+        g.setIndex(geo.index);
+        for (const name in geo.attributes) g.setAttribute(name, geo.attributes[name]);
+        g.setAttribute("aInst", new vi(ia2, 4));
+        const m = new bo(g, this.leafMat[lod], L2.length), mats = m.instanceMatrix.array;
+        for (let k = 0; k < L2.length; k++) {
+          mats.set(src.subarray(L2[k] * 16, L2[k] * 16 + 16), k * 16);
+          ia2.set(inst.subarray(L2[k] * 4, L2[k] * 4 + 4), k * 4);
+        }
+        g.boundingSphere = t.mesh.geometry.boundingSphere;
+        m.boundingSphere = t.mesh.boundingSphere;
+        m.frustumCulled = true;
+        m.matrixAutoUpdate = false;
+        m.visible = false;
+        m.userData.lod = lod;
+        m.userData.want = false;
+        if (lod === "hi") {
+          m.userData.all = { mats: mats.slice(), inst: ia2.slice(), n: L2.length };
+          m.count = 0;
+        }
+        this.scene.add(m);
+        t.nm.push(m);
+      }
+      t.fillAt = null;
+    }
+    // Refill a near tile's full models, when the camera has moved 4 m (cam: the camera in the tile's frame), with only the
+    // trees within reach of their distance (uLod.y and a margin), nearest first.
+    nearFill(t, cam) {
+      if (t.fillAt && t.fillAt.distanceToSquared(cam) < 16) return;
+      t.fillAt = (t.fillAt || new C()).copy(cam);
+      const R2 = (this.U.uLod.value.y + 12) ** 2, order = this._order || (this._order = []);
+      for (const m of t.nm) {
+        const src = m.userData.all;
+        if (!src) continue;
+        const mats = m.instanceMatrix.array, ia2 = m.geometry.attributes.aInst.array;
+        order.length = 0;
+        for (let i = 0; i < src.n; i++) {
+          const dx2 = src.mats[i * 16 + 12] - cam.x, dy2 = src.mats[i * 16 + 13] - cam.y, dz = src.mats[i * 16 + 14] - cam.z, d2 = dx2 * dx2 + dy2 * dy2 + dz * dz;
+          if (d2 > R2) continue;
+          order.push(Math.floor(d2) * 65536 + i);
+        }
+        order.sort((a, b) => a - b);
+        for (let k2 = 0; k2 < order.length; k2++) {
+          const i = order[k2] % 65536;
+          mats.set(src.mats.subarray(i * 16, i * 16 + 16), k2 * 16);
+          ia2.set(src.inst.subarray(i * 4, i * 4 + 4), k2 * 4);
+        }
+        const k = order.length;
+        m.count = k;
+        m.instanceMatrix.clearUpdateRanges();
+        m.instanceMatrix.addUpdateRange(0, k * 16);
+        m.instanceMatrix.needsUpdate = true;
+        const ab = m.geometry.attributes.aInst;
+        ab.clearUpdateRanges();
+        ab.addUpdateRange(0, k * 4);
+        ab.needsUpdate = true;
+      }
     }
     adoptScatter(m) {
       const t = this.scatter.get(m.key);
@@ -21774,8 +22224,8 @@ void main() {
       }
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
-      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
+      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.leafMat.hi : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
@@ -21783,21 +22233,19 @@ void main() {
       const wallA = m.kind === "buildings" && st >= 17 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S2 = new C(), Y = new C(0, 1, 0);
       let rad = 0, vegetationPad = 0;
-      const vegetation = m.kind === "trees" || m.kind === "clumps";
+      const vegetation = m.kind === "trees" || m.kind === "clumps" || m.kind === "under";
       let vegetationExtent = null;
       if (vegetation) {
         if (!geo.boundingBox) geo.computeBoundingBox();
-        const bounds = geo.boundingBox.clone();
-        if (m.kind === "trees" && this.leafGeo) {
-          if (!this.leafGeo.boundingBox) this.leafGeo.computeBoundingBox();
-          bounds.union(this.leafGeo.boundingBox);
-        }
+        const bounds = geo.boundingBox;
         vegetationExtent = new C(
           Math.max(Math.abs(bounds.min.x), Math.abs(bounds.max.x)),
           Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y)),
           Math.max(Math.abs(bounds.min.z), Math.abs(bounds.max.z))
         );
       }
+      let nTrees = 0;
+      const ext = new C();
       const lp2 = new Float32Array(n * 3), mid = new C();
       for (let i = 0; i < n; i++) {
         const o = i * st;
@@ -21863,10 +22311,24 @@ void main() {
           else S2.set(sc2, sc2 * (0.85 + 0.3 * d[o + 6]), sc2);
           inst[i * 4] = d[o + 6];
           inst[i * 4 + 1] = d[o + 5];
+          const sp = st >= 9 ? d[o + 8] : -1;
+          if (sp >= 0) {
+            inst[i * 4 + 2] = (sp & 15) + 1;
+            inst[i * 4 + 3] = sp >= 16 ? 1 : 0;
+            if (sp < 16) nTrees++;
+          }
         }
         M.compose(P2, Q, S2);
         mesh.setMatrixAt(i, M);
-        if (vegetation) vegetationPad = Math.max(vegetationPad, Math.hypot(vegetationExtent.x * S2.x, vegetationExtent.y * S2.y, vegetationExtent.z * S2.z));
+        if (vegetation) {
+          ext.copy(vegetationExtent);
+          if (inst[i * 4 + 2] > 0) {
+            const k = inst[i * 4 + 2] - 1;
+            ext.multiply(this.spFit[k]);
+            if (this.spExt) ext.max(this.spExt[k]);
+          }
+          vegetationPad = Math.max(vegetationPad, Math.hypot(ext.x * S2.x, ext.y * S2.y, ext.z * S2.z));
+        }
       }
       const g2 = new Yt();
       g2.setIndex(geo.index);
@@ -21878,14 +22340,11 @@ void main() {
       if (wallA) g2.setAttribute("aWall", new vi(wallA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
-      if (m.kind === "trees" && this.leafGeo) {
-        const g3 = new Yt();
-        g3.setIndex(this.leafGeo.index);
-        for (const name in this.leafGeo.attributes) g3.setAttribute(name, this.leafGeo.attributes[name]);
-        g3.setAttribute("aInst", ia2);
-        t.geoNear = g3;
-        t.geoFar = g2;
+      if (m.kind === "trees") {
+        t.inst = inst;
         t.near = false;
+        t.nm = null;
+        t.nTrees = st >= 9 ? nTrees : n;
       }
       const pad = vegetation ? vegetationPad : m.kind === "poles" || m.kind === "cars" ? 14 : m.kind === "signs" ? 22 : m.kind === "power" ? 45 : 110;
       mid.multiplyScalar(1 / n);
@@ -21894,7 +22353,6 @@ void main() {
       mesh.geometry.boundingSphere = new Ie(new C(0, 8, 0), 40);
       mid.applyMatrix4(basis);
       t.mid = [m.center[0] + mid.x, m.center[1] + mid.y, m.center[2] + mid.z];
-      if (t.geoNear) t.geoNear.boundingSphere = mesh.geometry.boundingSphere;
       mesh.frustumCulled = true;
       mesh.matrixAutoUpdate = false;
       mesh.visible = false;
@@ -21908,6 +22366,11 @@ void main() {
       this.scene.add(mesh);
     }
   };
+  var v3 = (a) => `vec3(${a.map((x) => x.toFixed(4)).join(", ")})`;
+  var SP_FIT = [[1, 1, 1]].concat(SPECIES.map((s29) => [s29.R / PLAIN_R[s29.conifer], s29.H / PLAIN_H[s29.conifer], s29.R / PLAIN_R[s29.conifer]]));
+  var SP_TINT = [[1, 1, 1]].concat(SPECIES.map((s29) => s29.leaf.map((x, k) => x / PLAIN_LEAF[s29.conifer][k])));
+  var SP_GLSL = `const vec3 SP_FIT[${SP_FIT.length}] = vec3[${SP_FIT.length}](${SP_FIT.map(v3).join(", ")});
+const vec3 SP_TINT[${SP_TINT.length}] = vec3[${SP_TINT.length}](${SP_TINT.map(v3).join(", ")});`;
   var SCATTER_VS = (
     /* glsl */
     `
@@ -21933,6 +22396,9 @@ uniform float uTime;
 uniform vec3 uCam;
 #endif
 ${PALETTE}
+#ifdef FOLIAGE
+${SP_GLSL}
+#endif
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec3 vCol;
@@ -22004,6 +22470,11 @@ void main() {
     f *= step(dep, mix(0.16, 0.26, jit));
   #endif
   pos *= keep * f;
+  #ifdef FOLIAGE
+    // a tree of a species (aInst.z, 1 to 8; 0 a stand of woods) stands at its model's size (species.js)
+    vec3 spf = SP_FIT[int(aInst.z + 0.5)];
+    pos *= spf; nl /= spf;
+  #endif
   vObj = pos * sc;
   vec4 wp = modelMatrix * (instanceMatrix * vec4(pos, 1.0));
   vRel = wp.xyz;
@@ -22014,6 +22485,9 @@ void main() {
     vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * (nl / sc)));
   #endif
   vCol = aCol;
+  #ifdef FOLIAGE
+    if (aPart < 1.5) vCol *= SP_TINT[int(aInst.z + 0.5)];     // ... and in its colour
+  #endif
   vAux = aInst.x;
   #ifdef CAR
     if (aCol.r < -4.5) { vCol = vec3(0.45, 0.42, 0.36); vStyle = 5.0; }
@@ -23459,8 +23933,8 @@ void main() {
         c.water = g.water;
         c.road = g.onDeck ? g.deckRoad : g.edge < 0.8 ? g.road : -1;
         c.reg = g.onDeck ? g.deckReg : g.reg;
-        const smooth2 = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
-        const vmax = (c.water ? 17 : smooth2 ? 52 : 27) * (inp.boost ? 1.5 : 1);
+        const smooth3 = g.glass || c.road >= 0 && (c.reg.rCls[c.road] < 14 || c.reg.rCls[c.road] > 15);
+        const vmax = (c.water ? 17 : smooth3 ? 52 : 27) * (inp.boost ? 1.5 : 1);
         const sx2 = Math.sin(c.hdg), sy2 = Math.cos(c.hdg);
         const ha2 = w.driveH(c.mx + sx2 * 2.2, c.my + sy2 * 2.2, c.h, from0, keep), hb = w.driveH(c.mx - sx2 * 2.2, c.my - sy2 * 2.2, c.h, from0, keep);
         const hl = w.driveH(c.mx - sy2 * 0.9, c.my + sx2 * 0.9, c.h, from0, keep), hr2 = w.driveH(c.mx + sy2 * 0.9, c.my - sx2 * 0.9, c.h, from0, keep);
@@ -25963,7 +26437,7 @@ void main() {
   var NA = 8;
   var FM = { lo: 87.9, hi: 107.9, step: 0.2 };
   var AM = { lo: 530, hi: 1700, step: 10 };
-  var smooth = (a, b, x) => {
+  var smooth2 = (a, b, x) => {
     const t = clamp2((x - a) / (b - a), 0, 1);
     return t * t * (3 - 2 * t);
   };
@@ -26143,14 +26617,14 @@ void main() {
       let E = this.baked(s29, mx2, my2, night);
       if (am2 && night && s29.sk !== void 0) {
         const d = Math.hypot(mx2 - s29.x, my2 - s29.y) / 1e3, D = Math.sqrt(4e4 + d * d);
-        const sky = 97.5 - 20 * Math.log10(D) - s29.gk * Math.sqrt(D / 1e3) + s29.sk - 30 * (1 - smooth(60, 250, d)) + rayleigh(this.t / 7, s29.i * 1.7, 101 + s29.i);
+        const sky = 97.5 - 20 * Math.log10(D) - s29.gk * Math.sqrt(D / 1e3) + s29.sk - 30 * (1 - smooth2(60, 250, d)) + rayleigh(this.t / 7, s29.i * 1.7, 101 + s29.i);
         E = 10 * Math.log10(Math.pow(10, E / 10) + Math.pow(10, sky / 10));
       }
       if (E < -50) return E;
       const env = this.env;
       if (!am2) {
         E += 3.5 * vnoise2(mx2 / 70, my2 / 70, 7 + s29.i) - 4 * env.urban;
-        if (fast) E += rayleigh(mx2 / 1.5, my2 / 1.5, 3 + s29.i) * (0.5 + 0.5 * smooth(50, 25, E));
+        if (fast) E += rayleigh(mx2 / 1.5, my2 / 1.5, 3 + s29.i) * (0.5 + 0.5 * smooth2(50, 25, E));
         if (env.deck) E -= 2;
       } else {
         E += 1.5 * vnoise2(mx2 / 300, my2 / 300, 9 + s29.i);
@@ -26180,7 +26654,7 @@ void main() {
     quality(band3, f, mx2, my2) {
       const h = this.heard(band3, f, mx2, my2, false);
       if (!h.length) return 0;
-      return band3 === "FM" ? smooth(22, 42, h[0][0]) : smooth(8, 28, h[0][0] - this.amFloor());
+      return band3 === "FM" ? smooth2(22, 42, h[0][0]) : smooth2(8, 28, h[0][0] - this.amFloor());
     }
     // ---- controls
     async power(on2 = !this.on) {
@@ -26456,24 +26930,24 @@ void main() {
       let noise = 1, sigA = 0, sigB = 0, cutA = 15e3, cutB = 15e3;
       if (A) {
         if (!am2) {
-          const q = smooth(16, 42, A[0]);
-          sigA = smooth(6, 20, A[0]);
+          const q = smooth2(16, 42, A[0]);
+          sigA = smooth2(6, 20, A[0]);
           noise = (1 - q) * 0.85;
           cutA = 2500 + 12500 * q;
           if (B) {
             const D = A[0] - B[0];
-            sigB = smooth(9, 0, D) * smooth(6, 20, B[0]) * 0.75;
-            sigA *= 1 - 0.35 * smooth(6, 0, D);
-            noise = Math.max(noise, 0.35 * smooth(4, 0, D));
-            cutB = 2500 + 12500 * smooth(16, 42, B[0]);
+            sigB = smooth2(9, 0, D) * smooth2(6, 20, B[0]) * 0.75;
+            sigA *= 1 - 0.35 * smooth2(6, 0, D);
+            noise = Math.max(noise, 0.35 * smooth2(4, 0, D));
+            cutB = 2500 + 12500 * smooth2(16, 42, B[0]);
           }
         } else {
           const N = this.amFloor(), snr = A[0] - N;
-          sigA = smooth(-10, 12, snr);
-          noise = (1 - smooth(-2, 30, snr)) * 0.75 + 0.04;
-          cutA = 2200 + 2600 * smooth(0, 30, snr);
+          sigA = smooth2(-10, 12, snr);
+          noise = (1 - smooth2(-2, 30, snr)) * 0.75 + 0.04;
+          cutA = 2200 + 2600 * smooth2(0, 30, snr);
           if (B) {
-            sigB = Math.pow(10, (B[0] - A[0]) / 20) * smooth(-10, 12, B[0] - N);
+            sigB = Math.pow(10, (B[0] - A[0]) / 20) * smooth2(-10, 12, B[0] - N);
             cutB = cutA;
           }
         }
@@ -26493,7 +26967,7 @@ void main() {
         this.tShow = 0.2;
         const locked = A && (am2 ? A[0] - this.amFloor() > 4 : A[0] > 18);
         const sA = locked ? A[1] : null, slA = sA && sl2.find((x) => x.s === sA);
-        const bars = A ? Math.round(5 * (am2 ? smooth(-5, 35, A[0] - this.amFloor()) : smooth(10, 55, A[0]))) : 0;
+        const bars = A ? Math.round(5 * (am2 ? smooth2(-5, 35, A[0] - this.amFloor()) : smooth2(10, 55, A[0]))) : 0;
         const info = {
           band: band3,
           freq: am2 ? amText(f) : fmText(f),
@@ -27462,8 +27936,8 @@ void main() {
       const O = this.O, P2 = new Float64Array(3);
       const M = new Ht(), V3 = new C(), Q = new ke(), Qx2 = new ke(), S2 = new C(), H = new C();
       const X = new C(1, 0, 0), Y = new C(0, 1, 0);
-      const fill = {};
-      for (const p in this.meshes) fill[p] = 0;
+      const fill2 = {};
+      for (const p in this.meshes) fill2[p] = 0;
       let nr2 = 0, nb = 0;
       const bp2 = this.pts.geometry.attributes.position.array, bl = this.pts.geometry.attributes.aLt.array;
       const alt = Math.max(0, cm2[2] - this.game.groundUnderCam);
@@ -27482,7 +27956,7 @@ void main() {
         if (r.kind === K_GUYED) S2.set(Math.pow(k, 0.3), k, Math.pow(k, 0.3));
         else S2.set(k, k, k);
         M.compose(V3, Q, S2);
-        const i = fill[part]++;
+        const i = fill2[part]++;
         m.setMatrixAt(i, M);
         m.geometry.attributes.aInst.array[i * 4] = r.seed / 255;
         if (turbine && this.rotor) {
@@ -27512,7 +27986,7 @@ void main() {
       }
       for (const p in this.meshes) {
         const m = this.meshes[p];
-        m.count = fill[p];
+        m.count = fill2[p];
         m.instanceMatrix.needsUpdate = true;
         m.geometry.attributes.aInst.needsUpdate = true;
       }
@@ -27733,8 +28207,8 @@ void main() {
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
     low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 16, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3 },
-    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, streetR: 290, signR: 330, powerR: 4500, traffic: 96, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
-    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, streetR: 420, signR: 450, powerR: 6500, traffic: 144, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
+    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, leafHiR: 105, streetR: 290, signR: 330, powerR: 4500, traffic: 96, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4 },
+    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, leafHiR: 140, streetR: 420, signR: 450, powerR: 6500, traffic: 144, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3 }
   };
   var GAME = null;
   function fatal(msg) {
@@ -27980,6 +28454,7 @@ void main() {
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
         uTime: { value: 0 },
+        uLod: { value: new et(85, 115) },
         uSdf: { value: tex(sdf.data, sdf.w, sdf.h, Rl) },
         uCover: { value: tex(png.cover.data, png.cover.w, png.cover.h, on) },
         uAux: { value: tex(aux2, png.aux.w, png.aux.h, bi) },
@@ -28185,7 +28660,19 @@ void main() {
       this.depthMat.decks = this.depthMat.houses;
       this.depthMat.rails = mk(DEPTH_RAILS_VS);
       this.depthMat.trains = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { TRAIN: 1 }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
-      this.depthMat.leaves = new Rn({ vertexShader: DEPTH_TREE_VS, fragmentShader: DEPTH_TREE_FS, uniforms: { uLeafTex: this.U.uLeafTex }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
+      const mkLeaves = (lod) => new Rn({
+        vertexShader: DEPTH_TREE_VS,
+        fragmentShader: DEPTH_TREE_FS,
+        defines: { [lod]: 1 },
+        uniforms: { uLeafTex: this.U.uLeafTex, uTime: this.U.uTime, uLod: this.U.uLod },
+        side: Bn,
+        colorWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: 1.2,
+        polygonOffsetUnits: 2
+      });
+      this.depthMat.leaves = { hi: mkLeaves("LOD_HI"), mid: mkLeaves("LOD_MID") };
+      this.depthMat.under = this.depthMat.leaves.hi;
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
       this.renderer.clear();
@@ -28230,13 +28717,27 @@ void main() {
       const reach = Rs2 * 1.45;
       for (const t of this.terrain.visScatter) {
         const m = t.mesh;
-        if (t.kind !== "houses" && t.kind !== "decks" && t.kind !== "trees" && t.kind !== "poles" && t.kind !== "cars" && t.kind !== "rails" || Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) > reach + t.rad) {
+        const casts = (t.kind === "houses" || t.kind === "decks" || t.kind === "trees" || t.kind === "under" || t.kind === "poles" || t.kind === "cars" || t.kind === "rails") && Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) <= reach + t.rad;
+        if (t.near && t.nm) {
+          m.layers.disable(1);
+          for (const nm2 of t.nm) {
+            if (!casts || !nm2.userData.want) {
+              nm2.layers.disable(1);
+              continue;
+            }
+            nm2.layers.enable(1);
+            sw.push(nm2, nm2.material);
+            nm2.material = this.depthMat.leaves[nm2.userData.lod];
+          }
+          continue;
+        }
+        if (!casts) {
           m.layers.disable(1);
           continue;
         }
         m.layers.enable(1);
         sw.push(m, m.material);
-        m.material = t.near ? this.depthMat.leaves : this.depthMat[t.kind];
+        m.material = this.depthMat[t.kind];
       }
       const car = p.mesh;
       if (car.visible) {
@@ -28343,7 +28844,7 @@ void main() {
       };
       this.U.uGndTex = { value: mkG(gph, 1) };
       (async () => {
-        let res = await fetch(vurl("data/mat/foliage.webp"));
+        let res = await fetch(vurl("data/mat/foliage2.webp"));
         if (!res.ok) throw new Error("foliage " + res.status);
         const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
         const t = new Ae(bmp);
