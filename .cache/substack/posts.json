@@ -1,6 +1,36 @@
 {
-  "timestamp": 1792009650609,
+  "timestamp": 1794965233536,
   "posts": [
+    {
+      "title": "Some favorite lesser-known books",
+      "slug": "some-favorite-lesser-known-books",
+      "date": "2026-10-28T12:09:32.454Z",
+      "description": "Which aren’t Parfit or Borges or Orwell",
+      "url": "https://blog.andymasley.com/p/some-favorite-lesser-known-books",
+      "category": "Recs & Advice",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/72b13807-1193-46a0-bf73-de6d5839dbf6_2944x1648.png"
+    },
+    {
+      "title": "3 thoughts on effective altruist comms",
+      "slug": "3-thoughts-on-effective-altruist",
+      "date": "2026-10-25T12:41:33.259Z",
+      "description": "A poke for more people to try communicating about the high-level ideas in a way you would to a smart friend",
+      "url": "https://blog.andymasley.com/p/3-thoughts-on-effective-altruist",
+      "category": "Charity",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9d8f3c8d-59ae-41a1-8724-178aeec39e9c_2730x1490.png"
+    },
+    {
+      "title": "Thinking about the future of AI shouldn’t feel like choosing from a buffet",
+      "slug": "thinking-about-the-future-of-ai-shouldnt",
+      "date": "2026-10-20T22:18:12.101Z",
+      "description": "The world doesn’t react to the vibes we want to give off",
+      "url": "https://blog.andymasley.com/p/thinking-about-the-future-of-ai-shouldnt",
+      "category": "Artificial Intelligence",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9afa4d35-c3f3-46dc-9ec0-0637f6895943_2944x1648.png"
+    },
     {
       "title": "The direction I’d like for effective altruism",
       "slug": "the-direction-id-like-for-effective",
@@ -790,16 +820,6 @@
       "category": "Misc",
       "source": "substack",
       "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/97f9af20-4ed4-4d52-9522-f1a65265d5d2_1232x928.png"
-    },
-    {
-      "title": "Ideas from philosophy I use to think about AI",
-      "slug": "guiding-ideas-i-use-to-think-about",
-      "date": "2025-02-11T12:31:26.110Z",
-      "description": "Physicalism, functionalism, and lots of Quine",
-      "url": "https://blog.andymasley.com/p/guiding-ideas-i-use-to-think-about",
-      "category": "Artificial Intelligence",
-      "source": "substack",
-      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/669d2696-7413-4ebb-99f8-7f336a418409_1024x1024.png"
     },
     {
       "title": "Using ChatGPT is not bad for the environment",
