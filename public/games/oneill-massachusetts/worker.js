@@ -9236,6 +9236,39 @@
         off2[o * 2 + 1] = wside[o * 4 + 2] * mv;
       }
     }
+    let rs = null;
+    if (carve && hasRoads && cell <= 8) {
+      off2 = off2 || new Float32Array(G * G * 2);
+      rs = new Int8Array(G * G);
+      const re = new Float32Array(G * G), rnx = new Float32Array(G * G), rny = new Float32Array(G * G);
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const o = j * G + i;
+        re[o] = NaN;
+        if (off2[o * 2] || off2[o * 2 + 1]) continue;
+        const e = world.nearestRoad(mx0 + (i - 1) * cell, my0 + (j - 1) * cell), nr = world._nr;
+        if (!(e < 40) || nr.road < 0 || nr.reg.rCls[nr.road] >= 18) continue;
+        re[o] = e - 0.6;
+        rnx[o] = nr.side * nr.ty;
+        rny[o] = -nr.side * nr.tx;
+        rs[o] = re[o] > 0 ? 1 : -1;
+      }
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const o = j * G + i, e = re[o];
+        if (!(Math.abs(e) < 0.71 * cell)) continue;
+        let across3 = false;
+        for (let b = -1; b <= 1 && !across3; b++) for (let a = -1; a <= 1; a++) {
+          const jj = j + b, ii = i + a, q2 = jj * G + ii;
+          if ((a || b) && jj >= 0 && jj < G && ii >= 0 && ii < G && rs[q2] && rs[q2] !== rs[o]) {
+            across3 = true;
+            break;
+          }
+        }
+        if (!across3) continue;
+        const mv = (e > 0 ? 0.02 : -0.02) - e;
+        off2[o * 2] = rnx[o] * mv;
+        off2[o * 2 + 1] = rny[o] * mv;
+      }
+    }
     const hs = new Float32Array(G * G);
     let hmin = 1e9, hmax = -1e9;
     for (let j = 0; j < G; j++) {
@@ -9275,13 +9308,13 @@
     let v = 0;
     const N1 = N + 1;
     const nrm = new Float32Array(N1 * N1 * 3);
-    const across2 = (o, p) => wside && wside[o * 4 + 3] && crossesWall(wside, o, p, (p % G - o % G) * cell, (Math.floor(p / G) - Math.floor(o / G)) * cell);
+    const across2 = (o, p) => wside && wside[o * 4 + 3] && crossesWall(wside, o, p, (p % G - o % G) * cell, (Math.floor(p / G) - Math.floor(o / G)) * cell) || rs && rs[o] && rs[p] && rs[o] !== rs[p];
     for (let j = 0; j <= N; j++) {
       const my = my0 + j * cell;
       for (let i = 0; i <= N; i++) {
         const o = (j + 1) * G + i + 1;
         let dx, dy;
-        if (!wside) {
+        if (!wside && !rs) {
           dx = (hs[o + 1] - hs[o - 1]) / (2 * cell);
           dy = (hs[o + G] - hs[o - G]) / (2 * cell);
         } else {
