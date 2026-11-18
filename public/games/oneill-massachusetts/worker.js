@@ -4742,6 +4742,18 @@
         mp.cov.get(r).push(dv.getFloat32(o + 4, true), dv.getFloat32(o + 8, true));
       }
     }
+    f.dt = null;
+    if (o + 16 <= e.byteLength && dv.getUint32(o, true) === 1280591172) {
+      const nD = dv.getUint32(o + 4, true);
+      o += 16;
+      const dt = f.dt = { n: nD, x: new Float32Array(nD), y: new Float32Array(nD), k: new Uint8Array(nD), a: new Float32Array(nD) };
+      for (let i = 0; i < nD; i++, o += 12) {
+        dt.x[i] = dv.getInt32(o, true) / 10;
+        dt.y[i] = dv.getInt32(o + 4, true) / 10;
+        dt.k[i] = dv.getUint8(o + 8);
+        dt.a[i] = dv.getUint16(o + 10, true) / 65536 * 2 * Math.PI;
+      }
+    }
     f.aBox = new Float32Array(nA2 * 4);
     for (let a = 0; a < nA2; a++) {
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -5019,13 +5031,13 @@
   }
   function paintTris(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
-    if (!f || !f.nP && !f.nW) return new Float32Array(0);
+    if (!f || !f.nP && !f.nW && !f.dt) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const WHITE = [0.78, 0.78, 0.74];
     let zD = null;
     let hNode = 0;
-    const quad2 = (ox, oy, dx, dy, a0, a1, c0, c1, col) => {
+    const quad2 = (ox, oy, dx, dy, a0, a1, c0, c1, col, lift = 0.03) => {
       const n = Math.max(1, Math.ceil((c1 - c0) / 2));
       const P2 = [];
       for (let q = 0; q <= n; q++) {
@@ -5033,8 +5045,8 @@
         for (const a of [a0, a1]) {
           const x = ox + dx * a + dy * c, y = oy + dy * a - dx * c;
           const h = surfaceH(world2, x, y, zD);
-          cyl(x, y, h + 0.03, p32);
-          cyl(x, y, h + 1.03, u3);
+          cyl(x, y, h + lift, p32);
+          cyl(x, y, h + lift + 1, u3);
           P2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2], h > (zD === null ? hNode - 2.5 : zD - 1.2)]);
         }
       }
@@ -5130,6 +5142,50 @@
       hNode = h;
       zD = null;
     }, WHITE);
+    const dt = f.dt;
+    if (dt) {
+      const GRATE = [0.035, 0.034, 0.033], COVER = [0.075, 0.07, 0.065];
+      zD = null;
+      for (let i = 0; i < dt.n; i++) {
+        const x = dt.x[i], y = dt.y[i];
+        if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
+        const kind = dt.k[i];
+        if (kind === 1 && surveyPainted(reg, x, y)) continue;
+        let mx = reg.x0 + x, my = reg.y0 + y, dx = Math.cos(dt.a[i]), dy = Math.sin(dt.a[i]);
+        if (world2._near(mx, my, false, world2._nr, 1e9, false, 13) < 4 && Math.abs(world2._nr.tx * dx + world2._nr.ty * dy) > 0.87) {
+          const nr = world2._nr, R2 = nr.reg, ri = nr.road, sR = nr.s - R2.cum[R2.rStart[ri]];
+          const kb = kerbsAt(R2, ri, sR), phw = kb ? 0 : paintHw(R2, ri, sR);
+          const left = kb ? kb.left : -phw, right = kb ? kb.right : phw, lat = nr.side * nr.d;
+          const nl = kind === 1 ? lat >= (left + right) / 2 ? right - 0.35 : left + 0.35 : right - left > 1.2 ? clamp2(lat, left + 0.5, right - 0.5) : (left + right) / 2;
+          dx = nr.tx;
+          dy = nr.ty;
+          mx += dy * (nl - lat);
+          my -= dx * (nl - lat);
+          if (kind === 1 && world2._near(mx, my, false, world2._nr, 1e9, false, 13) < -0.3 && (world2._nr.road !== ri || world2._nr.reg !== R2) && Math.abs(world2._nr.tx * dx + world2._nr.ty * dy) < 0.87) continue;
+        }
+        hNode = world2.groundH(mx, my, true);
+        if (world2.g.water) continue;
+        if (kind === 1) {
+          quad2(mx, my, dx, dy, -0.45, 0.45, -0.3, 0.3, GRATE, 0.045);
+          continue;
+        }
+        const h0 = surfaceH(world2, mx, my, zD), gx = (surfaceH(world2, mx + 0.35, my, zD) - h0) / 0.35, gy = (surfaceH(world2, mx, my + 0.35, zD) - h0) / 0.35;
+        const V2 = [];
+        for (let q = 0; q <= 8; q++) {
+          const px = q === 8 ? mx : mx + 0.35 * Math.cos(q * Math.PI / 4), py = q === 8 ? my : my + 0.35 * Math.sin(q * Math.PI / 4);
+          const h = h0 + gx * (px - mx) + gy * (py - my);
+          cyl(px, py, h + 0.045, p32);
+          cyl(px, py, h + 1.045, u3);
+          V2.push([p32[0] - cx, p32[1] - cy, p32[2] - cz, u3[0] - p32[0], u3[1] - p32[1], u3[2] - p32[2]]);
+        }
+        const v = (P2) => out.push(P2[0], P2[1], P2[2], P2[3], P2[4], P2[5], COVER[0], COVER[1], COVER[2]);
+        for (let q = 0; q < 8; q++) {
+          v(V2[8]);
+          v(V2[q]);
+          v(V2[(q + 1) % 8]);
+        }
+      }
+    }
     return new Float32Array(out);
   }
   function junctionMarks(reg, mx0, my0, s) {

@@ -22076,6 +22076,18 @@ void main() {
         mp2.cov.get(r).push(dv2.getFloat32(o + 4, true), dv2.getFloat32(o + 8, true));
       }
     }
+    f.dt = null;
+    if (o + 16 <= e.byteLength && dv2.getUint32(o, true) === 1280591172) {
+      const nD = dv2.getUint32(o + 4, true);
+      o += 16;
+      const dt = f.dt = { n: nD, x: new Float32Array(nD), y: new Float32Array(nD), k: new Uint8Array(nD), a: new Float32Array(nD) };
+      for (let i = 0; i < nD; i++, o += 12) {
+        dt.x[i] = dv2.getInt32(o, true) / 10;
+        dt.y[i] = dv2.getInt32(o + 4, true) / 10;
+        dt.k[i] = dv2.getUint8(o + 8);
+        dt.a[i] = dv2.getUint16(o + 10, true) / 65536 * 2 * Math.PI;
+      }
+    }
     f.aBox = new Float32Array(nA * 4);
     for (let a = 0; a < nA; a++) {
       let x02 = 1e9, y02 = 1e9, x1 = -1e9, y1 = -1e9;
