@@ -16810,6 +16810,45 @@ void main() {
       }
       return h;
     }
+    // The nearest point of way ri of region reg to (mx, my), into o as _near gives it (d: the distance from the way's
+    // middle line; hw, side, z, s, tx, ty), whether or not the point is on its roadway.  For the deck or tunnel a car
+    // is held on: driveH finds the one a car keeps to without _near, so _nd and _nt may still hold another point's answer
+    // (one with nothing near, d 1e9, threw the car to the end of the world: Andy's "my car randomly jumps out of it" in
+    // the Big Dig, Nov 17).  Returns d, or 1e9 where there is no such way.
+    wayAt(reg, ri2, mx2, my2, o) {
+      o.road = -1;
+      o.d = 1e9;
+      o.reg = null;
+      if (!reg || !(ri2 >= 0) || ri2 >= reg.nRoads) return 1e9;
+      const lx2 = mx2 - reg.x0, ly2 = my2 - reg.y0, a = reg.rStart[ri2], n = reg.rCount[ri2], px2 = reg.px, py2 = reg.py;
+      let best = 1e18, bi2 = -1, bt2 = 0, bside = 1;
+      for (let q = a; q < a + n - 1; q++) {
+        const dx3 = px2[q + 1] - px2[q], dy3 = py2[q + 1] - py2[q], l2 = dx3 * dx3 + dy3 * dy3;
+        if (l2 < 1e-6) continue;
+        const ux2 = lx2 - px2[q], uy2 = ly2 - py2[q];
+        let t = (ux2 * dx3 + uy2 * dy3) / l2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex2 = ux2 - dx3 * t, ey2 = uy2 - dy3 * t, d2 = ex2 * ex2 + ey2 * ey2;
+        if (d2 < best) {
+          best = d2;
+          bi2 = q;
+          bt2 = t;
+          bside = ux2 * dy3 - uy2 * dx3 >= 0 ? 1 : -1;
+        }
+      }
+      if (bi2 < 0) return 1e9;
+      const dx2 = px2[bi2 + 1] - px2[bi2], dy2 = py2[bi2 + 1] - py2[bi2], len = Math.hypot(dx2, dy2), il = len > 0 ? 1 / len : 0;
+      o.d = Math.sqrt(best);
+      o.road = ri2;
+      o.reg = reg;
+      o.hw = reg.rHw[ri2];
+      o.side = bside;
+      o.z = reg.pz[bi2] + (reg.pz[bi2 + 1] - reg.pz[bi2]) * bt2;
+      o.s = reg.cum[bi2] + len * bt2;
+      o.tx = dx2 * il;
+      o.ty = dy2 * il;
+      return o.d;
+    }
     // The height of deck way ri of region reg under (mx, my), or null where the point is off its roadway (more than
     // 0.35 m past its edge) or past one of its rims.
     onWayZ(reg, ri2, mx2, my2) {
@@ -22764,8 +22803,9 @@ void main() {
             onTun = true;
           }
           if (onDeck) {
-            if (!w.g.onDeck) w.nearestDeck(c.mx, c.my, c.h + 1.7);
-            const nd2 = w._nd, over = nd2.d - Math.max(nd2.hw - 0.05 - this.across(nd2), 0.3);
+            const nd2 = this._hold || (this._hold = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 });
+            w.wayAt(w.g.onDeck ? w.g.deckReg : c.wayReg, w.g.onDeck ? w.g.deckRoad : c.wayRoad, c.mx, c.my, nd2);
+            const over = nd2.road >= 0 ? Math.min(nd2.d - Math.max(nd2.hw - 0.05 - this.across(nd2), 0.3), 4) : 0;
             if (over > 0) {
               c.mx = clamp2(c.mx - nd2.ty * nd2.side * over, 250, L - 250);
               c.my = wrapY(c.my + nd2.tx * nd2.side * over);
@@ -22774,8 +22814,9 @@ void main() {
             }
             tgt = w.driveH(c.mx, c.my, c.h, "deck", keepS);
           } else if (onTun) {
-            if (!w.g.onTunnel) w.nearestTunnel(c.mx, c.my, c.h + 1.7);
-            const nt = w._nt, over = nt.d - Math.max(nt.hw + WALL_GAP - 0.1 - this.across(nt), 0.3);
+            const nt = this._hold || (this._hold = { d: 1e9, road: -1, reg: null, z: 0, s: 0, hw: 0, tx: 1, ty: 0, side: 1 });
+            w.wayAt(w.g.onTunnel ? w.g.reg : c.wayReg, w.g.onTunnel ? w.g.road : c.wayRoad, c.mx, c.my, nt);
+            const over = nt.road >= 0 ? Math.min(nt.d - Math.max(nt.hw + WALL_GAP - 0.1 - this.across(nt), 0.3), 4) : 0;
             if (over > 0) {
               c.mx = clamp2(c.mx - nt.ty * nt.side * over, 250, L - 250);
               c.my = wrapY(c.my + nt.tx * nt.side * over);

@@ -2259,6 +2259,45 @@
       }
       return h;
     }
+    // The nearest point of way ri of region reg to (mx, my), into o as _near gives it (d: the distance from the way's
+    // middle line; hw, side, z, s, tx, ty), whether or not the point is on its roadway.  For the deck or tunnel a car
+    // is held on: driveH finds the one a car keeps to without _near, so _nd and _nt may still hold another point's answer
+    // (one with nothing near, d 1e9, threw the car to the end of the world: Andy's "my car randomly jumps out of it" in
+    // the Big Dig, Nov 17).  Returns d, or 1e9 where there is no such way.
+    wayAt(reg, ri, mx, my, o) {
+      o.road = -1;
+      o.d = 1e9;
+      o.reg = null;
+      if (!reg || !(ri >= 0) || ri >= reg.nRoads) return 1e9;
+      const lx = mx - reg.x0, ly = my - reg.y0, a = reg.rStart[ri], n = reg.rCount[ri], px = reg.px, py = reg.py;
+      let best = 1e18, bi = -1, bt = 0, bside = 1;
+      for (let q = a; q < a + n - 1; q++) {
+        const dx2 = px[q + 1] - px[q], dy2 = py[q + 1] - py[q], l2 = dx2 * dx2 + dy2 * dy2;
+        if (l2 < 1e-6) continue;
+        const ux = lx - px[q], uy = ly - py[q];
+        let t = (ux * dx2 + uy * dy2) / l2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = ux - dx2 * t, ey = uy - dy2 * t, d2 = ex * ex + ey * ey;
+        if (d2 < best) {
+          best = d2;
+          bi = q;
+          bt = t;
+          bside = ux * dy2 - uy * dx2 >= 0 ? 1 : -1;
+        }
+      }
+      if (bi < 0) return 1e9;
+      const dx = px[bi + 1] - px[bi], dy = py[bi + 1] - py[bi], len = Math.hypot(dx, dy), il = len > 0 ? 1 / len : 0;
+      o.d = Math.sqrt(best);
+      o.road = ri;
+      o.reg = reg;
+      o.hw = reg.rHw[ri];
+      o.side = bside;
+      o.z = reg.pz[bi] + (reg.pz[bi + 1] - reg.pz[bi]) * bt;
+      o.s = reg.cum[bi] + len * bt;
+      o.tx = dx * il;
+      o.ty = dy * il;
+      return o.d;
+    }
     // The height of deck way ri of region reg under (mx, my), or null where the point is off its roadway (more than
     // 0.35 m past its edge) or past one of its rims.
     onWayZ(reg, ri, mx, my) {
