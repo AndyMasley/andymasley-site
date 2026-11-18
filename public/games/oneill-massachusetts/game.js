@@ -22724,6 +22724,7 @@ void main() {
       for (let it = 0; it < 4; it++) {
         let best = null, bl = 0;
         for (const P2 of polys) {
+          if ((P2.what === "pier" || P2.what === "seat") && c.h > P2.z - DECK_T - 0.5) continue;
           let dx2 = c.mx - P2.cx, dy2 = c.my - P2.cy;
           if (dy2 > C2 / 2) dy2 -= C2;
           else if (dy2 < -C2 / 2) dy2 += C2;
