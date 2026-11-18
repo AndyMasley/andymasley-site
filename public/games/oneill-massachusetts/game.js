@@ -15727,6 +15727,17 @@ void main() {
     o.clear = clear;
     return true;
   }
+  function walkW(reg, ri2, s29, side) {
+    const xs = xsOf(reg, ri2);
+    if (!xs) return 0;
+    const pr2 = side > 0 ? xs[9] : xs[10], base = side > 0 ? xs[7] : xs[8];
+    if (!pr2 || !pr2.length) return base >= 10 ? base / 10 : 0;
+    const a = reg.rStart[ri2], n = reg.rCount[ri2], cum = reg.cum;
+    let k = 0;
+    while (k < n - 2 && cum[a + k + 1] - cum[a] < s29) k++;
+    const L2 = cum[a + k + 1] - cum[a + k], f = L2 > 0 ? clamp2((s29 - (cum[a + k] - cum[a])) / L2, 0, 1) : 0;
+    return (pr2[k] + (pr2[k + 1] - pr2[k]) * f) / 10;
+  }
   var _kerbs = { left: 0, right: 0, mid: 0, hw: 0 };
   function kerbsAt(reg, ri2, s29) {
     const st = reg && reg.streets, m = !st && XK && reg ? XK.get(reg.ry * RNX + reg.rx) : null;
@@ -15890,6 +15901,64 @@ void main() {
       if (ch) (reg.mergedWays || (reg.mergedWays = [])).push(i);
     }
     reg.nMerged = moved;
+  }
+  function endHw(reg) {
+    if (reg.endHw) return reg.endHw;
+    const n = reg.nRoads, E = new Float32Array(n * 2).fill(NaN), px2 = reg.px, py2 = reg.py, rStart = reg.rStart, rCount = reg.rCount;
+    const W = reg.endWay = new Int32Array(n * 2).fill(-1);
+    const G = /* @__PURE__ */ new Map(), key2 = (x, y) => Math.floor(x) * 1e5 + Math.floor(y);
+    const ok = (ri2) => reg.rCls[ri2] <= 13 && rCount[ri2] >= 2 && !reg.rTun[ri2];
+    for (let ri2 = 0; ri2 < n; ri2++) {
+      if (!ok(ri2)) continue;
+      for (let e = 0; e < 2; e++) {
+        const q = e ? rStart[ri2] + rCount[ri2] - 1 : rStart[ri2], k = key2(px2[q], py2[q]);
+        let l = G.get(k);
+        if (!l) G.set(k, l = []);
+        l.push(ri2 * 2 + e);
+      }
+    }
+    const dir = (ri2, e, out) => {
+      const a = rStart[ri2], b = a + rCount[ri2] - 1, q = e ? b : a, r = e ? b - 1 : a + 1;
+      let dx2 = px2[q] - px2[r], dy2 = py2[q] - py2[r];
+      const l = Math.hypot(dx2, dy2) || 1;
+      return out ? [dx2 / l, dy2 / l] : [-dx2 / l, -dy2 / l];
+    };
+    for (let ri2 = 0; ri2 < n; ri2++) {
+      if (!ok(ri2)) continue;
+      for (let e = 0; e < 2; e++) {
+        const q = e ? rStart[ri2] + rCount[ri2] - 1 : rStart[ri2], x = px2[q], y = py2[q];
+        let other = -1, many = false;
+        for (let j = -1; j <= 1 && !many; j++) for (let i = -1; i <= 1; i++) {
+          for (const v of G.get(key2(x + i, y + j)) || []) {
+            const rj2 = v >> 1, ej = v & 1;
+            if (rj2 === ri2) continue;
+            const qj = ej ? rStart[rj2] + rCount[rj2] - 1 : rStart[rj2];
+            if (Math.hypot(px2[qj] - x, py2[qj] - y) > 0.6) continue;
+            if (other >= 0) {
+              many = true;
+              break;
+            }
+            other = v;
+          }
+        }
+        if (other < 0 || many) continue;
+        const rj = other >> 1, a = dir(ri2, e, true), b = dir(rj, other & 1, false);
+        if (a[0] * b[0] + a[1] * b[1] >= 0.82) {
+          E[ri2 * 2 + e] = reg.rHw[rj];
+          W[ri2 * 2 + e] = rj;
+        }
+      }
+    }
+    return reg.endHw = E;
+  }
+  function paintHw(reg, ri2, s29) {
+    const E = reg.endHw || endHw(reg), hw = reg.rHw[ri2], h02 = E[ri2 * 2], h1 = E[ri2 * 2 + 1];
+    if (!(Math.abs(h02 - hw) > 0.15) && !(Math.abs(h1 - hw) > 0.15)) return hw;
+    const a = reg.rStart[ri2], L2 = reg.cum[a + reg.rCount[ri2] - 1] - reg.cum[a], T = Math.min(40, 0.45 * L2);
+    let out = hw;
+    if (Math.abs(h02 - hw) > 0.15 && s29 < T) out += (h02 - hw) / 2 * (1 - smoothstep(0, T, s29));
+    if (Math.abs(h1 - hw) > 0.15 && L2 - s29 < T) out += (h1 - hw) / 2 * (1 - smoothstep(0, T, L2 - s29));
+    return out;
   }
   function onOtherWay(reg, lx2, ly2, z, ri2, deckOnly) {
     const gw = reg.gw, cx2 = Math.floor((lx2 + RM) / RCELL), cy2 = Math.floor((ly2 + RM) / RCELL);
@@ -22016,7 +22085,144 @@ void main() {
   };
   var mirror = (g) => g.map((e) => e[0] === "s" ? ["s", e[1], -e[2], e[3], -e[4]] : ["h", e[1], -e[2], e[3], -e[4], e[5], e[6]]);
   var GLYPH = [null, ARROW.through, ARROW.left, mirror(ARROW.left), ARROW.thl, mirror(ARROW.thl), ARROW.lr, ARROW.all, ARROW.uturn, ARROW.left];
+  var RAIL_STEP = 2;
+  var C_BEAM = [0.4, 0.42, 0.42];
+  var C_POST = [0.28, 0.29, 0.3];
+  var C_BLOCK = [0.12, 0.09, 0.065];
+  var C_CONC = [0.34, 0.33, 0.31];
+  var C_TUBE = [0.4, 0.43, 0.45];
   var HEX = [0, 1, 2, 3, 4, 5].map((k) => [-0.15 + 0.075 * Math.cos(k * Math.PI / 3), 0.92 + 0.075 * Math.sin(k * Math.PI / 3)]);
+  var RAIL = [
+    {
+      // 0: a steel W-beam guard rail on the ground
+      polys: [{ pts: [[0, 0.48], [0.083, 0.54], [0.02, 0.635], [0.083, 0.73], [0, 0.79]], col: C_BEAM }],
+      out: 0.3,
+      gap: 1.905,
+      posts: [{ a: [-0.35, -0.2], b: [-0.05, 0.74], hl: 0.075, col: C_POST }, { a: [-0.2, 0], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK }]
+    },
+    {
+      // 1: a New Jersey concrete barrier
+      polys: [{ pts: [[-0.61, 0], [0, 0], [0, 0.076], [-0.178, 0.33], [-0.228, 0.81], [-0.382, 0.81], [-0.432, 0.33], [-0.61, 0.076]], col: C_CONC, cap: true }],
+      out: 0.05,
+      gap: 0,
+      posts: []
+    },
+    {
+      // 2: on a bridge, along the kerb: a concrete curb and a steel rail on posts over it
+      polys: [{ pts: [[-0.3, 0], [0, 0], [0, 0.48], [-0.3, 0.48]], col: C_CONC, cap: true }, { pts: HEX, col: C_TUBE }],
+      out: 0,
+      gap: 2.4,
+      posts: [{ a: [-0.19, -0.11], b: [0.48, 0.92], hl: 0.04, col: C_TUBE }]
+    },
+    {
+      // 3: down a median, a W-beam on each face of the posts, with blockouts behind each, on the run's line
+      polys: [
+        { pts: [[0.275, 0.48], [0.358, 0.54], [0.295, 0.635], [0.358, 0.73], [0.275, 0.79]], col: C_BEAM },
+        { pts: [[-0.275, 0.79], [-0.358, 0.73], [-0.295, 0.635], [-0.358, 0.54], [-0.275, 0.48]], col: C_BEAM }
+      ],
+      out: 0,
+      gap: 1.905,
+      posts: [
+        { a: [-0.075, 0.075], b: [-0.05, 0.74], hl: 0.075, col: C_POST },
+        { a: [0.075, 0.275], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK },
+        { a: [-0.275, -0.075], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK }
+      ]
+    },
+    {
+      // 4: down a median, the New Jersey barrier on the run's line
+      polys: [{ pts: [[-0.305, 0], [0.305, 0], [0.305, 0.076], [0.127, 0.33], [0.077, 0.81], [-0.077, 0.81], [-0.127, 0.33], [-0.305, 0.076]], col: C_CONC, cap: true }],
+      out: 0,
+      gap: 0,
+      posts: []
+    }
+  ];
+  var MEDIAN_HALF = [0.36, 0.2];
+  function railPoint(world, mx2, my2, layer, kind, o) {
+    o.look = -1;
+    o.rdx = 0;
+    o.rdy = 0;
+    o.x = mx2;
+    o.y = my2;
+    o.drop = 0;
+    if (kind >= 2) {
+      const z = world.groundH(mx2, my2, true);
+      if (world.g.water) return o;
+      let lo2 = z, hi2 = z;
+      if (world.nearestRoad(mx2, my2) < 12) {
+        const nr2 = world._nr, zA = nr2.z, rA = nr2.road, gA = nr2.reg, ux2 = nr2.side * nr2.ty, uy2 = -nr2.side * nr2.tx;
+        if (world.nearestRoad(mx2 + ux2 * 0.7, my2 + uy2 * 0.7) < 6 && (world._nr.road !== rA || world._nr.reg !== gA)) {
+          const zB = world._nr.z;
+          lo2 = Math.min(lo2, zB);
+          hi2 = Math.max(hi2, zB);
+        }
+        const hA = world.groundH(mx2 - ux2 * 0.7, my2 - uy2 * 0.7, true), hB = world.groundH(mx2 + ux2 * 0.7, my2 + uy2 * 0.7, true);
+        lo2 = Math.min(lo2, zA, hA, hB);
+        hi2 = Math.max(hi2, zA, hA, hB);
+      }
+      o.z = hi2;
+      o.drop = hi2 - lo2 + 0.05;
+      o.look = kind + 1;
+      return o;
+    }
+    if (layer < 0 && world.nearestTunnel(mx2, my2) < 3) return o;
+    const dd = world.nearestDeck(mx2, my2);
+    if (dd < 8) {
+      const nd2 = world._nd, R2 = nd2.reg, ri2 = nd2.road, hw = nd2.hw, side = nd2.side, lat = side * nd2.d, z = nd2.z, tx2 = nd2.tx, ty2 = nd2.ty, sAt = nd2.s;
+      const gz = world.groundH(mx2, my2, true), high = world.g.water || z > gz + 2;
+      let onDeck = high && layer >= 1;
+      if (high && !onDeck && dd < 2.5) onDeck = world.nearestRoad(mx2, my2) > 8;
+      if (onDeck) {
+        if (R2.rCls[ri2] >= 14) return o;
+        const wS2 = walkW(R2, ri2, sAt - R2.cum[R2.rStart[ri2]], side);
+        o.z = z;
+        if (Math.abs(lat) < hw - 1) {
+          o.look = kind;
+          return o;
+        }
+        if (wS2 < 1) return o;
+        const sh = side * hw - lat;
+        o.x = mx2 + ty2 * sh;
+        o.y = my2 - tx2 * sh;
+        o.rdx = -side * ty2;
+        o.rdy = side * tx2;
+        o.look = kind === 1 ? 1 : 2;
+        return o;
+      }
+    }
+    const look = kind === 1 ? 1 : 0, e = world.nearestRoad(mx2, my2);
+    if (e < 15) {
+      const nr2 = world._nr, R2 = nr2.reg, ri2 = nr2.road, lat = nr2.side * nr2.d, tx2 = nr2.tx, ty2 = nr2.ty;
+      const pw = paintHw(R2, ri2, nr2.s - R2.cum[R2.rStart[ri2]]);
+      let left = -pw, right = pw;
+      const kb = R2.streets ? kerbsAt(R2, ri2, nr2.s - R2.cum[R2.rStart[ri2]]) : null;
+      if (kb) {
+        left = kb.left;
+        right = kb.right;
+      }
+      const mid = (left + right) / 2, half = (right - left) / 2, out = RAIL[look].out;
+      let nl = lat;
+      if (Math.abs(lat - mid) >= half - 1.5) {
+        if (lat >= mid && lat < right + out) nl = right + out;
+        else if (lat < mid && lat > left - out) nl = left - out;
+      }
+      if (nl !== lat) {
+        o.x = mx2 + ty2 * (nl - lat);
+        o.y = my2 - tx2 * (nl - lat);
+        if (world.nearestRoad(o.x, o.y) < -0.05 && (world._nr.road !== ri2 || world._nr.reg !== R2)) {
+          o.x = mx2;
+          o.y = my2;
+          nl = lat;
+        }
+      }
+      const tw = mid > nl ? 1 : -1;
+      o.rdx = tw * ty2;
+      o.rdy = -tw * tx2;
+    }
+    o.z = world.groundH(o.x, o.y, true);
+    if (world.g.water) return o;
+    o.look = look;
+    return o;
+  }
   var B_STEP = [1.5, 3, 1];
   function barPoint(world, mx2, my2, o) {
     o.ok = false;
@@ -22050,6 +22256,48 @@ void main() {
       PY[i] = ya2 + (yb - ya2) * t;
     }
     return { cum, L: L2, S: S2, PX, PY };
+  }
+  function railStretches(world, reg, x02, y02, x1, y1, cb) {
+    const f = reg.feat;
+    if (!f || !f.nG) return;
+    const lx0 = x02 - reg.x0, ly0 = y02 - reg.y0, lx1 = x1 - reg.x0, ly1 = y1 - reg.y0, tmp2 = { x: 0, y: 0, z: 0, look: -1, rdx: 0, rdy: 0, drop: 0 };
+    for (let g = 0; g < f.nG; g++) {
+      const kind = f.gKind[g], a02 = f.gStart[g], n = f.gCount[g];
+      if (kind < 2 || n < 2) continue;
+      let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9, L2 = 0;
+      for (let v2 = a02; v2 < a02 + n; v2++) {
+        const x = f.gx[v2], y = f.gy[v2];
+        if (x < bx0) bx0 = x;
+        if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y;
+        if (y > by1) by1 = y;
+        if (v2 > a02) L2 += Math.hypot(x - f.gx[v2 - 1], y - f.gy[v2 - 1]);
+      }
+      if (bx1 < lx0 - 4 || bx0 > lx1 + 4 || by1 < ly0 - 4 || by0 > ly1 + 4 || L2 < 1) continue;
+      const half = MEDIAN_HALF[kind - 2], K = Math.ceil(L2 / RAIL_STEP - 1e-6);
+      let v = a02, sA = 0, sl2 = Math.hypot(f.gx[v + 1] - f.gx[v], f.gy[v + 1] - f.gy[v]), px2 = 0, py2 = 0, prev = false;
+      for (let k = 0; k <= K; k++) {
+        const sk = Math.min(k * RAIL_STEP, L2);
+        while (v < a02 + n - 2 && sk > sA + sl2 + 1e-9) {
+          sA += sl2;
+          v++;
+          sl2 = Math.hypot(f.gx[v + 1] - f.gx[v], f.gy[v + 1] - f.gy[v]);
+        }
+        const t = sl2 > 1e-9 ? Math.min(1, (sk - sA) / sl2) : 0, ox2 = f.gx[v] + (f.gx[v + 1] - f.gx[v]) * t, oy2 = f.gy[v] + (f.gy[v + 1] - f.gy[v]) * t;
+        let ok = false;
+        if (ox2 > lx0 - 4 && ox2 < lx1 + 4 && oy2 > ly0 - 4 && oy2 < ly1 + 4) {
+          railPoint(world, reg.x0 + ox2, reg.y0 + oy2, 0, kind, tmp2);
+          ok = tmp2.look >= 0;
+        }
+        if (ok && prev) {
+          const mx2 = (px2 + ox2) / 2, my2 = (py2 + oy2) / 2;
+          if (mx2 >= lx0 && mx2 < lx1 && my2 >= ly0 && my2 < ly1) cb(reg.x0 + px2, reg.y0 + py2, reg.x0 + ox2, reg.y0 + oy2, half);
+        }
+        prev = ok;
+        px2 = ox2;
+        py2 = oy2;
+      }
+    }
   }
   var WALL_HALF = [0.4, 0.53, 0.31, 0.18, 0.125, 0.15];
   function barrierStretches(world, reg, x02, y02, x1, y1, cb) {
@@ -22686,9 +22934,9 @@ void main() {
       this.bCache = { reg, cx: cx2, cy: cy2, real: !!reg.real, polys };
       return polys;
     }
-    // The walls, fences and hedges within 64 m of the car (feat.js barrierStretches: the stretches drawn), each a thin
-    // box along its line as wide as it is drawn, and the bridges' piers there (pierPolys).  Kept until the car moves to
-    // another 32 m square.
+    // The walls, fences and hedges within 64 m of the car (feat.js barrierStretches: the stretches drawn), and the
+    // barriers down the medians of divided roads (railStretches), each a thin box along its line as wide as it is drawn,
+    // and the bridges' piers there (pierPolys).  Kept until the car moves to another 32 m square.
     barriersNear() {
       const w = this.game.world, c = this.car, gx2 = Math.floor(c.mx / 32), gy2 = Math.floor(c.my / 32);
       if (this.barCache && this.barCache.gx === gx2 && this.barCache.gy === gy2) return this.barCache.polys;
@@ -22700,13 +22948,15 @@ void main() {
         const rx0 = Math.max(x02, reg.x0), ry0 = Math.max(y02, reg.y0), rx1 = Math.min(x1, reg.x0 + RS3), ry1 = Math.min(y1, reg.y0 + RS3);
         if (rx1 <= rx0 || ry1 <= ry0) continue;
         for (const P2 of pierPolys(w, reg)) if (P2.cx > x02 - 20 && P2.cx < x1 + 20 && P2.cy > y02 - 20 && P2.cy < y1 + 20) polys.push(P2);
-        barrierStretches(w, reg, rx0, ry0, rx1, ry1, (ax2, ay2, bx2, by2, hw) => {
+        const stretch = (ax2, ay2, bx2, by2, hw) => {
           const len = Math.hypot(bx2 - ax2, by2 - ay2);
           if (len < 0.05) return;
           const nx2 = -(by2 - ay2) / len * hw, ny2 = (bx2 - ax2) / len * hw;
           const pts = new Float64Array([ax2 - nx2, ay2 - ny2, bx2 - nx2, by2 - ny2, bx2 + nx2, by2 + ny2, ax2 + nx2, ay2 + ny2]);
           polys.push({ pts, n: 4, cx: (ax2 + bx2) / 2, cy: (ay2 + by2) / 2, rad: len / 2 + hw + 0.1, rings: null });
-        });
+        };
+        barrierStretches(w, reg, rx0, ry0, rx1, ry1, stretch);
+        railStretches(w, reg, rx0, ry0, rx1, ry1, stretch);
       }
       this.barCache = { gx: gx2, gy: gy2, polys };
       return polys;

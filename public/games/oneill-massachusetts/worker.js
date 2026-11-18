@@ -5650,6 +5650,27 @@
       out: 0,
       gap: 2.4,
       posts: [{ a: [-0.19, -0.11], b: [0.48, 0.92], hl: 0.04, col: C_TUBE }]
+    },
+    {
+      // 3: down a median, a W-beam on each face of the posts, with blockouts behind each, on the run's line
+      polys: [
+        { pts: [[0.275, 0.48], [0.358, 0.54], [0.295, 0.635], [0.358, 0.73], [0.275, 0.79]], col: C_BEAM },
+        { pts: [[-0.275, 0.79], [-0.358, 0.73], [-0.295, 0.635], [-0.358, 0.54], [-0.275, 0.48]], col: C_BEAM }
+      ],
+      out: 0,
+      gap: 1.905,
+      posts: [
+        { a: [-0.075, 0.075], b: [-0.05, 0.74], hl: 0.075, col: C_POST },
+        { a: [0.075, 0.275], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK },
+        { a: [-0.275, -0.075], b: [0.46, 0.8], hl: 0.075, col: C_BLOCK }
+      ]
+    },
+    {
+      // 4: down a median, the New Jersey barrier on the run's line
+      polys: [{ pts: [[-0.305, 0], [0.305, 0], [0.305, 0.076], [0.127, 0.33], [0.077, 0.81], [-0.077, 0.81], [-0.127, 0.33], [-0.305, 0.076]], col: C_CONC, cap: true }],
+      out: 0,
+      gap: 0,
+      posts: []
     }
   ];
   function railPoint(world2, mx, my, layer, kind, o) {
@@ -5658,6 +5679,27 @@
     o.rdy = 0;
     o.x = mx;
     o.y = my;
+    o.drop = 0;
+    if (kind >= 2) {
+      const z = world2.groundH(mx, my, true);
+      if (world2.g.water) return o;
+      let lo = z, hi = z;
+      if (world2.nearestRoad(mx, my) < 12) {
+        const nr = world2._nr, zA = nr.z, rA = nr.road, gA = nr.reg, ux = nr.side * nr.ty, uy = -nr.side * nr.tx;
+        if (world2.nearestRoad(mx + ux * 0.7, my + uy * 0.7) < 6 && (world2._nr.road !== rA || world2._nr.reg !== gA)) {
+          const zB = world2._nr.z;
+          lo = Math.min(lo, zB);
+          hi = Math.max(hi, zB);
+        }
+        const hA = world2.groundH(mx - ux * 0.7, my - uy * 0.7, true), hB = world2.groundH(mx + ux * 0.7, my + uy * 0.7, true);
+        lo = Math.min(lo, zA, hA, hB);
+        hi = Math.max(hi, zA, hA, hB);
+      }
+      o.z = hi;
+      o.drop = hi - lo + 0.05;
+      o.look = kind + 1;
+      return o;
+    }
     if (layer < 0 && world2.nearestTunnel(mx, my) < 3) return o;
     const dd = world2.nearestDeck(mx, my);
     if (dd < 8) {
@@ -5722,7 +5764,7 @@
     if (!f || !f.nG && !f.nB) return new Float32Array(0);
     const out = [], WIN = 40;
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
-    const A = new Float64Array(3), Bq = new Float64Array(3), tmp2 = { x: 0, y: 0, z: 0, look: -1, rdx: 0, rdy: 0 };
+    const A = new Float64Array(3), Bq = new Float64Array(3), tmp2 = { x: 0, y: 0, z: 0, look: -1, rdx: 0, rdy: 0, drop: 0 };
     const at = (x, y, z, r) => {
       cyl(x, y, z, A);
       r[0] = A[0] - cx;
@@ -5800,7 +5842,7 @@
           const t = sl > 1e-9 ? (sk - cum[v]) / sl : 0, ox = xa + (xb - xa) * t, oy = ya + (yb - ya) * t;
           if (ox < lx0 - WIN || ox > lx0 + s + WIN || oy < ly0 - WIN || oy > ly0 + s + WIN) continue;
           railPoint(world2, reg.x0 + ox, reg.y0 + oy, layer, kind, tmp2);
-          P2.set(k, [ox, oy, tmp2.x, tmp2.y, tmp2.z, tmp2.look, tmp2.rdx, tmp2.rdy, sk]);
+          P2.set(k, [ox, oy, tmp2.x, tmp2.y, tmp2.z, tmp2.look, tmp2.rdx, tmp2.rdy, sk, tmp2.drop]);
         }
       }
       if (P2.size < 2) continue;
@@ -5825,9 +5867,10 @@
           if (q && (q[6] || q[7])) vote += q[6] * ty - q[7] * tx >= 0 ? 1 : -1;
         }
         const sg = vote >= 0 ? 1 : -1, ax = sg * ty, ay = -sg * tx;
-        F.set(k, { B: at(p[2], p[3], p[4], [0, 0, 0]), U: dir(p[2], p[3], p[4], 0, 0, 1, [0, 0, 0]), Ac: dir(p[2], p[3], p[4], ax, ay, 0, [0, 0, 0]), T: dir(p[2], p[3], p[4], tx, ty, 0, [0, 0, 0]), look: p[5] });
+        F.set(k, { B: at(p[2], p[3], p[4], [0, 0, 0]), U: dir(p[2], p[3], p[4], 0, 0, 1, [0, 0, 0]), Ac: dir(p[2], p[3], p[4], ax, ay, 0, [0, 0, 0]), T: dir(p[2], p[3], p[4], tx, ty, 0, [0, 0, 0]), look: p[5], drop: p[9] || 0 });
       }
       const pt = (Fr, a, b, r) => {
+        if (b === 0 && Fr.drop) b = -Fr.drop;
         r[0] = Fr.B[0] + Fr.Ac[0] * a + Fr.U[0] * b;
         r[1] = Fr.B[1] + Fr.Ac[1] * a + Fr.U[1] * b;
         r[2] = Fr.B[2] + Fr.Ac[2] * a + Fr.U[2] * b;
@@ -5871,10 +5914,10 @@
             for (let m = Math.ceil(s0 / R2.gap - 1e-9); m * R2.gap < s1 - 1e-9; m++) {
               const t = (m * R2.gap - s0) / (s1 - s0);
               const B = [Fa.B[0] + (Fb.B[0] - Fa.B[0]) * t, Fa.B[1] + (Fb.B[1] - Fa.B[1]) * t, Fa.B[2] + (Fb.B[2] - Fa.B[2]) * t];
-              const Fr = { B, U: Fa.U, Ac: Fa.Ac, T: Fa.T };
+              const Fr = { B, U: Fa.U, Ac: Fa.Ac, T: Fa.T }, drop = Fa.drop + (Fb.drop - Fa.drop) * t;
               for (const ps of R2.posts) {
                 const c = (ia, ib, it, r) => {
-                  pt(Fr, ps.a[ia], ps.b[ib], r);
+                  pt(Fr, ps.a[ia], ib === 0 && ps.b[0] < 0 ? ps.b[0] - drop : ps.b[ib], r);
                   const h = it ? ps.hl : -ps.hl;
                   r[0] += Fr.T[0] * h;
                   r[1] += Fr.T[1] * h;
