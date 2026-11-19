@@ -10911,6 +10911,76 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride }, [arr2.buffer]);
       return;
     }
+    if (kind === "grass") {
+      const f = reg && reg.fld, cell2 = s / Math.round(s / 0.8);
+      const n2 = Math.round(s / cell2);
+      for (let j = 0; j < n2; j++) for (let i = 0; i < n2; i++) {
+        const gi = Math.round(mx0 / cell2) + i, gj = Math.round(my0 / cell2) + j;
+        const u1 = hash2(gi * 7 + 3, gj * 5 + 11), u2 = hash2(gi * 3 + 17, gj * 11 + 2), u3 = hash2(gi * 13 + 5, gj * 7 + 23);
+        const mx = mx0 + (i + u1) * cell2, my = my0 + (j + u2) * cell2;
+        const lcv = lcAt(mx, my);
+        if (lcv < 3 || lcv > 5) continue;
+        let type = lcv === 5 ? 0 : 1;
+        const I = f ? Math.floor(mx / FLD) - f.I0 : -1, J = f ? Math.floor(my / FLD) - f.J0 : -1;
+        const c = f && I >= 0 && J >= 0 && I < f.w && J < f.h ? f.data[J * f.w + I] : 0;
+        if (c >= 64) {
+          const g2 = c - 64 >> 4;
+          type = g2 === 0 ? 1 : g2 === 1 ? 2 : g2 === 7 ? 3 : -1;
+        } else if (lcv === 3) type = -1;
+        if (type < 0) continue;
+        const p = type === 0 ? 0.85 : type === 1 ? 0.9 : type === 2 ? 0.8 : 0.6;
+        const hgt = type === 0 ? 0.62 : type === 1 ? 0.5 : type === 2 ? 0.26 : 0.45;
+        if (u3 > p) continue;
+        const h = world.groundH(mx, my, true), g = world.g;
+        if (g.water || g.edge < 1.2 || g.deck > -1e8) continue;
+        cyl(mx, my, h, p32);
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, hgt * (0.65 + 0.7 * hash2(gi + 41, gj + 3)), u1 * 6.2832, type, hash2(gi + 9, gj + 77), 1.1 + 0.5 * u3, -1);
+      }
+      const arr2 = new Float32Array(out);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
+      return;
+    }
+    if (kind === "corn") {
+      const f = reg && reg.fld, code = (x, y) => {
+        const I = Math.floor(x / FLD) - f.I0, J = Math.floor(y / FLD) - f.J0;
+        return I >= 0 && J >= 0 && I < f.w && J < f.h ? f.data[J * f.w + I] : 0;
+      };
+      const dirs = /* @__PURE__ */ new Set();
+      if (f) for (let y = my0 + FLD / 2; y < my0 + s; y += FLD) for (let x = mx0 + FLD / 2; x < mx0 + s; x += FLD) {
+        const c = code(x, y);
+        if (c >= 64 && c - 64 >> 4 === 2) dirs.add(c - 64 & 15);
+      }
+      for (const a of dirs) {
+        const an = a * Math.PI / 16, dx = Math.cos(an), dy = Math.sin(an), nx = -dy, ny = dx;
+        let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9;
+        for (const [x, y] of [[mx0, my0], [mx0 + s, my0], [mx0, my0 + s], [mx0 + s, my0 + s]]) {
+          const u = x * nx + y * ny, v = x * dx + y * dy;
+          u0 = Math.min(u0, u);
+          u1 = Math.max(u1, u);
+          v0 = Math.min(v0, v);
+          v1 = Math.max(v1, v);
+        }
+        for (let k = Math.ceil(u0 / 0.76); k * 0.76 <= u1; k++) {
+          const u = k * 0.76, ok = hash2(k * 5 + 3, 17);
+          for (let j = Math.floor(v0 / 1.5) - 1; (j + ok) * 1.5 <= v1 + 0.3; j++) {
+            const h12 = hash2(k * 7 + 13, j * 11 + 5), v = (j + ok) * 1.5 + (h12 - 0.5) * 0.4;
+            const mx = u * nx + v * dx, my = u * ny + v * dy;
+            if (mx < mx0 || mx >= mx0 + s || my < my0 || my >= my0 + s) continue;
+            const c = code(mx, my);
+            if (c < 64 || c - 64 >> 4 !== 2 || (c - 64 & 15) !== a) continue;
+            const lcv = lcAt(mx, my);
+            if (lcv < 3 || lcv > 5) continue;
+            const h = world.groundH(mx, my, true), g = world.g;
+            if (g.water || g.edge < 1.5 || g.deck > -1e8) continue;
+            cyl(mx, my, h, p32);
+            out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, 2.12 + 0.3 * hash2(k * 3 + 1, j * 5 + 9), an, 4, h12, 1, -1);
+          }
+        }
+      }
+      const arr2 = new Float32Array(out);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
+      return;
+    }
     if (kind === "trees" || kind === "clumps" || kind === "under") {
       const sp2 = kind === "trees" ? 8.5 : 30, order = [];
       const n2 = Math.round(s / sp2), cell2 = s / n2;
@@ -11239,7 +11309,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           await Promise.all(prs);
         }
       }
-      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "under") && lcPacks.size) {
+      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn") && lcPacks.size) {
         for (let tries = 0; tries < 4; tries++) {
           const pad = m.kind === "houses" ? 40 : 0, prs = lcPromises(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
           if (!prs.length) break;

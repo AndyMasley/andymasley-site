@@ -17953,6 +17953,7 @@ uniform float uGlowK;        // one building's point of light, far off, as night
 uniform vec3 uSkyRefl;
 uniform sampler2D uAerial;   // USDA NAIP 2023 photographs on the 46 m grid (bake/m40_aerial.py), decoded to linear
 uniform float uHasAerial;
+uniform float uPlants3D;     // 1 where corn and grass are drawn in 3D near the camera (terrain.js cornMat, grassMat)
 uniform vec4 uAerCol;        // gain, then the offsets per channel, that bring them to the palette (bake/c35_aerial.py)
 uniform sampler2DArray uAerNear; // nearer the camera (aerial.js), layer 0: the 2 x 2 regions round it at 5.75 m, region
                              // (rx, ry) in quarter (rx, ry) mod 2; layer 1: the 4 x 4 tiles of 2.95 km at 2.88 m, tile
@@ -18102,8 +18103,7 @@ vec3 fieldPattern(int code, vec2 m, vec3 col, vec2 fwm) {
     // how green the photograph shows the field: a field growing its crop has leaves over soil, a bare one (just tilled,
     // or harvested) only its ridges and furrows
     float green = smoothstep(0.02, 0.12, (col.g - max(col.r, col.b)) / max(col.g, 1e-3));
-    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-    vec3 dirt = vec3(1.0, 0.80, 0.60) * lum * 1.35 * (0.9 + 0.2 * vnoise(m * 1.3));      // soil as bright as the field
+    vec3 dirt = soil * 0.55;                                            // the soil between the rows, in the leaves' shade
     vec3 lc = max((col - (1.0 - cover) * dirt) / cover, col * 0.5);    // the leaves' colour, so leaves and soil keep col
     vec3 grow = mix(dirt, lc * (0.94 + 0.12 * vnoise(m * 2.3)), leaf);
     vec3 bare = col * (1.0 + 0.16 * (leaf - (cover)) );                 // ridges a little lighter than the furrows
@@ -18586,7 +18586,22 @@ void main() {
       else land = mix(land, land * clamp(aerN / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kP * kLc);
     }
   }
-  if (fcode >= 0) land = mix(land, fieldPattern(fcode, m, land, fwm), kLc);
+  if (fcode >= 0) {
+    land = mix(land, fieldPattern(fcode, m, land, fwm), kLc);
+    // where the corn stands in 3D round the camera, seen from among its stalks (the camera no higher than its tassels
+    // above this ground), the ground is the soil in its shade; from above it, the rows' leaves fill in between the plants
+    if (uPlants3D > 0.5 && (fcode >> 4) == 2) {
+      float k = (1.0 - smoothstep(40.0, 70.0, dist)) * (1.0 - smoothstep(2.4, 4.0, dot(-vRel, up)));
+      vec3 under = mix(FIELD_SOIL, vec3(0.105, 0.094, 0.056), 0.2 + 0.5 * vnoise(m * 0.9 + 4.1));   // and dead leaves
+      land = mix(land, under * 0.5 * (0.8 + 0.4 * vnoise(m * 2.1)), k * kLc);
+    }
+  }
+  // and where the grass stands in 3D (worker.js 'grass': meadows, hay, pasture and fallow), seen from no higher than a
+  // head above it, the gaps between the tufts are the lower layer of the sward in its own shade
+  if (uPlants3D > 0.5 && kLc > 0.0 && (lc == 4 || lc == 5 || (fcode >= 0 && (fcode >> 4) == 7))) {
+    float k = (1.0 - smoothstep(22.0, 40.0, dist)) * (1.0 - smoothstep(2.4, 4.0, dot(-vRel, up)));
+    land = mix(land, land * vec3(0.55, 0.72, 0.5), k * kLc);
+  }
   // past where the 1 m land cover ends the ground is the photographs themselves: at 5.75 m in the 2 x 2 regions round
   // the camera, the 46 m overview past them
   float kAer = 0.0;
@@ -20095,14 +20110,20 @@ bool treeVertex(out vec4 tp, out vec3 sc3) {
   vec3 org = instanceMatrix[3].xyz;
   float dc = length((modelMatrix * vec4(org, 1.0)).xyz);
   float thr = mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31));
-  #ifdef LOD_HI
+  vec3 lp = position;
+  #ifdef GRASS
+    // a tuft of grass shows within GRASS_R (each at its own point inside it), sinking into the ground as it nears it
+    float lim = GRASS_R * (0.72 + 0.28 * fract(aInst.x * 7.77 + 0.31));
+    if (dc > lim) return false;
+    lp.y *= smoothstep(lim, lim * 0.62, dc);
+  #elif defined(LOD_HI)
     if (dc > thr) return false;
   #else
     if (dc <= thr) return false;
   #endif
   // (no more than a quarter over the narrower of the two, so a narrow crown is not all overhanging sprays)
   float g = min(sqrt(sc3.x * sc3.y), 1.25 * min(sc3.x, sc3.y));
-  tp = instanceMatrix * vec4(position + aOff * (g / sc3), 1.0);
+  tp = instanceMatrix * vec4(lp + aOff * (g / sc3), 1.0);
   float ph = aInst.x * 6.2832;
   float gust = 0.6 + 0.4 * sin(uTime * 0.23 + org.x * 0.011 + org.z * 0.007);
   float sway = (sin(uTime * 1.07 + ph) * 0.7 + sin(uTime * 2.3 + ph * 2.1) * 0.3) * gust;
@@ -20145,7 +20166,11 @@ void main() {
   vCol = aCol;
   vUV = aTuv;
   vAux = aInst.x;
-  vSp = aInst.z - 1.0;
+  #ifdef GRASS
+    vSp = aInst.y;                     // (the grass's kind: worker.js 'grass')
+  #else
+    vSp = aInst.z - 1.0;
+  #endif
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `
@@ -20169,6 +20194,29 @@ varying vec3 vT;
 varying vec3 vS;
 varying vec3 vSunE;
 varying vec3 vLd;
+#if defined(GRASS) && !defined(CORN)
+// a card of grass blades (uv across 0..1 and up 0..1, px the pixel across): fourteen blades from its foot, each its own
+// height, lean and shade; their colour by the grass's kind k (0 meadow, 1 hay, 2 pasture, 3 weeds on fallow), linear
+float grassHash(float n) { return fract(sin(n) * 43758.5453); }
+vec4 grassBlades(vec2 uv, float seed, float k, float px) {
+  float a = 0.0, sh = 0.5, tip = 0.0;
+  for (int i = 0; i < 14; i++) {
+    float fi = float(i) + seed * 31.7;
+    float h1 = grassHash(fi * 12.9898), h2 = grassHash(fi * 39.346 + 1.7), h3 = grassHash(fi * 73.156 + 4.1);
+    float top = 0.45 + 0.55 * h2, y = uv.y / top;
+    if (y >= 1.0) continue;
+    float xc = 0.06 + 0.88 * h1 + (h3 - 0.5) * 0.55 * y * y;
+    float hw = 0.024 * (1.0 - y * y) + 0.003;
+    float c = clamp((hw - abs(uv.x - xc)) / max(px, 1e-4) + 0.5, 0.0, 1.0);
+    if (c > a) { a = c; sh = h3; tip = y; }
+  }
+  vec3 green = k < 0.5 ? vec3(0.050, 0.090, 0.022) : k < 1.5 ? vec3(0.066, 0.096, 0.026) : k < 2.5 ? vec3(0.044, 0.088, 0.020) : vec3(0.058, 0.086, 0.026);
+  vec3 straw = k < 0.5 ? vec3(0.120, 0.112, 0.052) : k < 1.5 ? vec3(0.130, 0.120, 0.058) : vec3(0.100, 0.098, 0.045);
+  float dry = k < 0.5 ? 0.2 : k < 1.5 ? 0.28 : k < 2.5 ? 0.08 : 0.25;
+  vec3 col = mix(green, straw, step(1.0 - dry, sh) * (0.6 + 0.4 * tip)) * (0.85 + 0.3 * sh);
+  return vec4(col * 1.35, a);          // (TREE_FS multiplies by the vertex colour: the foot's shade, 0.45 to 1)
+}
+#endif
 // bark by species: a the way round the limb (0..1, the noise taken round a circle so it has no seam), s metres up it
 vec3 bark(float a, float s) {
   vec2 q = vec2(cos(a * 6.2832), sin(a * 6.2832));
@@ -20196,13 +20244,24 @@ void main() {
   vec3 alb = vCol;
   bool leaf = vUV.x > -0.5;
   float cov = 1.0;
+  #if defined(GRASS) && !defined(CORN)
+    float gpx = fwidth(vUV.x);
+  #endif
   if (leaf) {
-    vec4 t = texture2D(uLeafTex, vUV);
+    #if defined(GRASS) && !defined(CORN)
+      vec4 t = grassBlades(vUV, vAux, vSp, gpx);
+    #else
+      vec4 t = texture2D(uLeafTex, vUV);           // (corn: data/mat/corn.webp)
+    #endif
     // far off the atlas blurs toward its average cover, so the cut drops with distance and crowns stay full; a spray
     // seen edge on would be a smear, so it fades out (its face from the slope of the surface across the screen)
     float cut = mix(0.45, 0.16, smoothstep(18.0, 170.0, dist));
     float edge = abs(dot(normalize(cross(dFdx(vRel), dFdy(vRel))), V));
-    cut = mix(0.97, cut, smoothstep(0.08, 0.3, edge));
+    #ifdef CORN
+      cut = mix(0.97, cut, smoothstep(0.0, 0.04, edge));    // (a row seen along its length is still a row)
+    #else
+      cut = mix(0.97, cut, smoothstep(0.08, 0.3, edge));
+    #endif
     // the cut spread over a pixel, which the multisampling turns into coverage: crisp edges without stair steps
     cov = clamp((t.a - cut) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0);
     if (cov <= 0.0) discard;
@@ -20226,6 +20285,10 @@ void main() {
     col = alb * 1.55 * (sunE * max(dot(N, Ld), 0.0) * sh + ambient(N, up));
   }
   col += alb * 1.55 * headlamp(vRel, N);
+  #ifdef CORN
+    // seen from above, a field of corn shows the shade down among its leaves, which its cards do not cast
+    col *= 1.0 - 0.45 * smoothstep(0.15, 0.75, dot(V, up));
+  #endif
   gl_FragColor = vec4(col * vT + vS, cov);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -20713,6 +20776,59 @@ void main() {
     }
     if (sp !== 6) fill(b, lod ? 4 : sp === 5 ? 12 : 5, o.h * (lod ? 1.7 : 1.2), o.cell, crown, r, [crown.y0 + 0.5, crown.y1 - 1.5]);
     return b.finish(o.cell, fit);
+  }
+  function grassGeometry() {
+    const p = [], o = [], n = [], c = [], uv2 = [], w = [], idx = [];
+    for (let k = 0; k < 3; k++) {
+      const a = k * Math.PI / 3 + 0.3, dx2 = Math.cos(a) * 0.45, dz = Math.sin(a) * 0.45, base = p.length / 3;
+      for (const [sx2, t] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+        const x = (sx2 * 2 - 1) * dx2, z = (sx2 * 2 - 1) * dz, N = V(x * 0.7, 1, z * 0.7).normalize(), ao2 = 0.45 + 0.55 * t;
+        p.push(x, t, z);
+        o.push(0, 0, 0);
+        n.push(N.x, N.y, N.z);
+        c.push(ao2, ao2, ao2);
+        uv2.push(sx2, t);
+        w.push(Math.pow(t, 1.5), t);
+      }
+      idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+    const g = new Yt();
+    g.setAttribute("position", new me(new Float32Array(p), 3));
+    g.setAttribute("aOff", new me(new Float32Array(o), 3));
+    g.setAttribute("normal", new me(new Float32Array(n), 3));
+    g.setAttribute("aCol", new me(new Float32Array(c), 3));
+    g.setAttribute("aTuv", new me(new Float32Array(uv2), 2));
+    g.setAttribute("aWind", new me(new Float32Array(w), 2));
+    g.setIndex(new me(new Uint16Array(idx), 1));
+    g.computeBoundingBox();
+    return g;
+  }
+  function cornGeometry() {
+    const p = [], o = [], n = [], c = [], uv2 = [], w = [], idx = [], gain = [1, 1, 1];
+    for (let k = 0; k < 2; k++) {
+      const side = k ? -1 : 1, a = side * 0.06, ca2 = Math.cos(a), sa2 = Math.sin(a), base = p.length / 3;
+      for (const [sx2, t] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+        const lx2 = (sx2 - 0.5) * 1.8, x = lx2 * ca2, z = side * 0.07 - lx2 * sa2;
+        const N = V(0, 0.71 * 5.06, side * 0.71), ao2 = 0.5 + 0.5 * t;
+        p.push(x, t, z);
+        o.push(0, 0, 0);
+        n.push(N.x, N.y, N.z);
+        c.push(ao2 * gain[0], ao2 * gain[1], ao2 * gain[2]);
+        uv2.push(sx2 + 0.5 * k, t);
+        w.push(Math.pow(t, 1.5), 0.5 * t);
+      }
+      idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+    const g = new Yt();
+    g.setAttribute("position", new me(new Float32Array(p), 3));
+    g.setAttribute("aOff", new me(new Float32Array(o), 3));
+    g.setAttribute("normal", new me(new Float32Array(n), 3));
+    g.setAttribute("aCol", new me(new Float32Array(c), 3));
+    g.setAttribute("aTuv", new me(new Float32Array(uv2), 2));
+    g.setAttribute("aWind", new me(new Float32Array(w), 2));
+    g.setIndex(new me(new Uint16Array(idx), 1));
+    g.computeBoundingBox();
+    return g;
   }
   function speciesGeometries() {
     const hi2 = [], mid = [];
@@ -22045,6 +22161,11 @@ void main() {
         this.U.uLod.value.set(hr2 * 0.8, hr2 * 1.1);
         const mk2 = (lod) => new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ [lod]: 1 }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
         this.leafMat = { hi: mk2("LOD_HI"), mid: mk2("LOD_MID") };
+        this.grassGeo = grassGeometry();
+        this.grassMat = new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ GRASS: 1, GRASS_R: "42.0" }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
+        this.cornGeo = cornGeometry();
+        this.cornMat = new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ GRASS: 1, CORN: 1, GRASS_R: "80.0" }, this.defines), side: Bn, uniforms: Object.assign({}, this.U, { uLeafTex: this.U.uCornTex }), alphaToCoverage: true });
+        this.U.uPlants3D.value = 1;
         this.spExt = this.leafGeos.hi.map((g) => new C(Math.max(-g.boundingBox.min.x, g.boundingBox.max.x), g.boundingBox.max.y, Math.max(-g.boundingBox.min.z, g.boundingBox.max.z)));
       }
       this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], [q.treeR * 0.72, q.treeR * 0.95], Object.assign({ FOLIAGE: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
@@ -22081,7 +22202,7 @@ void main() {
         kinds.push(["decks", 7, deckR]);
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
-      if (this.leafR) kinds.push(["under", 9, (q.leafHiR || 100) * 1.15]);
+      if (this.leafR) kinds.push(["under", 9, (q.leafHiR || 100) * 1.15], ["grass", 10, 44], ["corn", 9, 84]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
@@ -22374,8 +22495,8 @@ void main() {
       }
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
-      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.leafMat.hi : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
+      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.leafMat.hi : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
@@ -22383,7 +22504,7 @@ void main() {
       const wallA = m.kind === "buildings" && st >= 17 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S2 = new C(), Y = new C(0, 1, 0);
       let rad = 0, vegetationPad = 0;
-      const vegetation = m.kind === "trees" || m.kind === "clumps" || m.kind === "under";
+      const vegetation = m.kind === "trees" || m.kind === "clumps" || m.kind === "under" || m.kind === "grass" || m.kind === "corn";
       let vegetationExtent = null;
       if (vegetation) {
         if (!geo.boundingBox) geo.computeBoundingBox();
@@ -28611,6 +28732,8 @@ void main() {
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
         uMie: { value: 1 },
+        uCornTex: { value: null },
+        uPlants3D: { value: 0 },
         uTime: { value: 0 },
         uLod: { value: new et(85, 115) },
         uBounce: { value: new C() },
@@ -29072,6 +29195,21 @@ void main() {
         t.needsUpdate = true;
         this.U.uLeafTex.value = t;
         this.leafReady = true;
+        res = await fetch(vurl("data/mat/corn.webp"));
+        if (res.ok) {
+          const cb = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
+          const ct = new Ae(cb);
+          ct.flipY = false;
+          ct.premultiplyAlpha = false;
+          ct.colorSpace = sn;
+          ct.generateMipmaps = true;
+          ct.wrapS = dr;
+          ct.minFilter = In;
+          ct.magFilter = ye;
+          ct.anisotropy = 4;
+          ct.needsUpdate = true;
+          this.U.uCornTex.value = ct;
+        }
         res = await fetch(vurl("data/mat/ground.png"));
         if (!res.ok) throw new Error("ground " + res.status);
         const gb = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
