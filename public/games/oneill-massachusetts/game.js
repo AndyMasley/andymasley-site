@@ -19850,6 +19850,15 @@ void main() {
       else if (sr2(seed) < 0.5) band = seg(fv, fh - 0.16, fh + 0.2, px.y) * 0.7;
     }
     if (clad == 3 && inFloors) band = max(band, seg(fv, -0.2, 0.9, px.y) * 0.55);                    // spandrel panels on glass towers
+    // weather: rain running off each sill stains the wall under it, more stains streak down from the top of a big
+    // building, and splashes darken the foot; stronger on masonry and concrete than on siding and metal, none on glass
+    if (!plain && clad != 3 && clad != 7) {
+      float wk = (house ? 0.5 : 1.0) * (clad == 4 ? 0.5 : 1.0) * detailK;
+      float sillRun = hasWin ? (1.0 - smoothstep(ww * 0.6, ww * 1.15, abs(bu))) * smoothstep(sill - 1.4, sill - 0.05, fv) * step(fv, sill) : 0.0;
+      float topRun = house ? 0.0 : smoothstep(0.58, 0.86, vnoise(vec2(u / 0.85 + seed * 3.1, v / 16.0))) * smoothstep(eave - 9.0, eave - 0.5, v);
+      float foot = 1.0 - smoothstep(found, found + 0.45, v);
+      alb *= 1.0 - wk * (0.09 * sillRun + 0.13 * topRun + 0.12 * foot);
+    }
     // compose
     alb = mix(alb, mix(trim, vec3(0.12, 0.13, 0.14), float(shop && fl < 0.5 && v <= eave) * step(0.5, float(clad != 3))), band * (1.0 - gw));
     alb = mix(alb, trim, clamp(boards, 0.0, 1.0));
