@@ -17528,14 +17528,13 @@ vec3 sunTrans(vec3 p, out vec3 Ld, out float sd) {
 float hg(float g, float mu) { return (1.0 - g * g) / (4.0 * PI * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 float phaseM(float mu) { return 0.88 * hg(0.78, mu) + 0.12 * hg(-0.3, mu); }
 
-// March the view ray camera -> p.  T: transmittance, S: in-scattered radiance.
-void atmosphere(vec3 p, out vec3 T, out vec3 S) {
-  vec3 d = p - uCam; float len = max(length(d), 1e-3); vec3 dir = d / len;
-  int n = len < 5000.0 ? 2 : (len < 45000.0 ? ATMOS_STEPS_MID : ATMOS_STEPS_FAR);
+// March a ray a -> p in n steps.  T: transmittance, S: in-scattered radiance.
+void atmosphereSteps(vec3 a, vec3 p, int n, out vec3 T, out vec3 S) {
+  vec3 d = p - a; float len = max(length(d), 1e-3); vec3 dir = d / len;
   float ds = len / float(n);
   vec3 tau = vec3(0.0); S = vec3(0.0);
   for (int i = 0; i < n; i++) {
-    vec3 q = uCam + dir * ((float(i) + 0.5) * ds);
+    vec3 q = a + dir * ((float(i) + 0.5) * ds);
     float r2 = dot(q.yz, q.yz);
     float dR = densR(r2), dM = densM(r2) * uMie;
     vec3 sc = (BETA_R * dR + vec3(BETA_M) * dM);
@@ -17549,6 +17548,13 @@ void atmosphere(vec3 p, out vec3 T, out vec3 S) {
   }
   T = exp(-tau);
 }
+// ... in as many as its length needs
+void atmosphereFrom(vec3 a, vec3 p, out vec3 T, out vec3 S) {
+  float len = length(p - a);
+  atmosphereSteps(a, p, len < 5000.0 ? 2 : (len < 45000.0 ? ATMOS_STEPS_MID : ATMOS_STEPS_FAR), T, S);
+}
+// ... the view ray, camera -> p
+void atmosphere(vec3 p, out vec3 T, out vec3 S) { atmosphereFrom(uCam, p, T, S); }
 
 // Direct + ambient irradiance at p for a surface with normal N (cylinder space).
 // the sky's light on a surface facing N, and the ground's from below and the sides
@@ -17953,6 +17959,7 @@ uniform float uGlowK;        // one building's point of light, far off, as night
 uniform vec3 uSkyRefl;
 uniform sampler2D uAerial;   // USDA NAIP 2023 photographs on the 46 m grid (bake/m40_aerial.py), decoded to linear
 uniform float uHasAerial;
+uniform vec2 uUvScale;       // 1 / the cylinder's length and circumference (vUv = map metres times this)
 uniform float uPlants3D;     // 1 where corn and grass are drawn in 3D near the camera (terrain.js cornMat, grassMat)
 uniform vec4 uAerCol;        // gain, then the offsets per channel, that bring them to the palette (bake/c35_aerial.py)
 uniform sampler2DArray uAerNear; // nearer the camera (aerial.js), layer 0: the 2 x 2 regions round it at 5.75 m, region
@@ -18699,25 +18706,69 @@ void main() {
     float depth = clamp(-sdf / mix(1400.0, 260.0, fresh), 0.0, 1.0);
     vec3 wcol = mix(vec3(0.020, 0.090, 0.095), vec3(0.004, 0.022, 0.050), pow(depth, 0.55));
     wcol = mix(wcol, vec3(0.012, 0.030, 0.028), fresh * 0.7);
-    float wa = (1.0 / (1.0 + dist / 900.0)) * (1.0 - smoothstep(3.0, 18.0, fp));
-    vec2 wv = m / 9.0 + uTime * vec2(0.11, 0.07), wv2 = m / 23.0 - uTime * vec2(0.05, 0.08);
-    vec2 wn = (vec2(vnoise(wv) - vnoise(wv + vec2(0.7, 0.0)), vnoise(wv) - vnoise(wv + vec2(0.0, 0.7))) * 0.9
-             + vec2(vnoise(wv2) - vnoise(wv2 + vec2(0.7, 0.0)), vnoise(wv2) - vnoise(wv2 + vec2(0.0, 0.7))) * 1.3) * (0.38 * wa);
-    if (daySurface > 0.0) {
-      // Small wind ripples on the existing water only. Integer cycles in 48 m
-      // keep phase continuous across chunks; footprint filtering prevents glitter.
-      vec3 phase = vec3(dot(tm, vec2(6.0, 4.0)), dot(tm, vec2(-9.0, 7.0)), dot(tm, vec2(26.0, -15.0))) * (6.2831853 / 48.0);
-      vec2 ripple = vec2(0.832, 0.555) * sin(phase.x + uTime * 1.7) * 0.025 * (1.0 - smoothstep(0.5, 1.8, fp))
-                  + vec2(-0.789, 0.614) * sin(phase.y - uTime * 2.2) * 0.018 * (1.0 - smoothstep(0.3, 1.1, fp))
-                  + vec2(0.866, -0.500) * sin(phase.z + uTime * 3.1) * 0.012 * (1.0 - smoothstep(0.10, 0.40, fp));
-      wn += ripple * daySurface * mix(1.0, 0.65, fresh) * (1.0 - smoothstep(700.0, 1800.0, dist));
+    // wind waves: eight trains, most running north-east before the prevailing south-west wind, each a whole number of
+    // cycles in 48 m (tm) so its phase runs on across the chunks, at deep water's speed for its length. A train finer
+    // than about three pixels along it fades out and its slope counts as roughness instead, so it widens the lamp's
+    // glitter rather than flickering. Their mean square slope is Cox and Munk's for a light breeze (about 0.03 at sea,
+    // less on ponds and rivers and in the lee of the shore)
+    float open = smoothstep(2.0, 60.0, -sdf);
+    // and the wind comes in gusts, roughening some patches and leaving others smooth, drifting downwind
+    float gust = 0.35 + 1.3 * vnoise(m / 85.0 - uTime * vec2(0.016, 0.011));
+    float msl = mix(0.030, 0.011, fresh) * mix(0.45, 1.0, open) * gust * gust;
+    float s0 = sqrt(msl / 4.0);
+    vec2 sl = vec2(0.0);
+    float var = 0.004 * mix(0.5, 1.0, open) * gust * gust;     // (and the capillary ripples, never resolved)
+    const vec2 WAVES[8] = vec2[8](vec2(3.0, 2.0), vec2(4.0, 6.0), vec2(9.0, -2.0), vec2(7.0, 8.0),
+                                  vec2(12.0, 6.0), vec2(-4.0, 16.0), vec2(19.0, 11.0), vec2(26.0, 38.0));
+    for (int i = 0; i < 8; i++) {
+      vec2 wk = WAVES[i];
+      float kc = length(wk);
+      vec2 wd = wk / kc;
+      float lam = 48.0 / kc;
+      float keep = 1.0 - smoothstep(0.17 * lam, 0.4 * lam, abs(dot(wd, tmx)) + abs(dot(wd, tmy)));
+      float ph = dot(tm, wk) * (6.2831853 / 48.0) - sqrt(61.638 / lam) * uTime + float(i) * 2.3999;
+      sl += wd * (s0 * keep * cos(ph));
+      var += 0.5 * s0 * s0 * (1.0 - keep * keep);
     }
-    vec3 Nw = normalize(up + east * wn.x + north * wn.y);
-    float fres = 0.02 + 0.98 * pow(1.0 - max(dot(V, Nw), 0.0), 5.0);
+    vec3 Nw = normalize(up - east * sl.x - north * sl.y);
+    float cv = max(dot(V, Nw), 0.02);
+    float fres = 0.02 + 0.98 * pow(1.0 - cv, 5.0);
+    // the lamp's glitter: a Beckmann spread of facets as rough as the trains left unresolved
     vec3 Hh = normalize(Ld + V);
-    float spec = pow(max(dot(Nw, Hh), 0.0), mix(900.0, 90.0, clamp(dist / 60000.0, 0.0, 1.0)));
+    float ch2 = max(dot(Nw, Hh), 0.05); ch2 *= ch2;
+    float a2 = max(var, 1e-4);                                   // (Beckmann's m squared: the whole mean square slope)
+    float spec = min(exp((ch2 - 1.0) / (ch2 * a2)) / (PI * a2 * ch2 * ch2) * (0.02 + 0.98 * pow(1.0 - max(dot(V, Hh), 0.0), 5.0)) / cv, 60.0)
+               * step(0.0, dot(Nw, Ld));
+    // what it mirrors: the far wall where the reflected ray meets it (or the end cap), lit by the lamp and seen through the
+    // air between, as you would see it looking that way; its colour from the photographs, blurred as much as the
+    // unresolved waves spread the ray
+    // (by night the mirrored wall is its glow, as before: uSkyRefl)
+    float kDay = smoothstep(0.05, 0.4, dot(uSunCol, vec3(0.333)));
+    vec3 refl = uSkyRefl;
+    if (kDay > 0.0) {
+      vec3 rd = reflect(-V, Nw);
+      rd = normalize(rd + up * max(0.03 - dot(rd, up), 0.0));
+      float ra = max(dot(rd.yz, rd.yz), 1e-9), rb = dot(P.yz, rd.yz), rc = dot(P.yz, P.yz) - RC * RC;
+      float rt = (-rb + sqrt(max(rb * rb - ra * rc, 0.0))) / ra;
+      float capX = 0.5 / uUvScale.x;
+      if (abs(rd.x) > 1e-5) rt = min(rt, (sign(rd.x) * capX - P.x) / rd.x);
+      rt = clamp(rt, 1.0, 2.0e5);
+      vec3 Q = P + rd * rt;
+      vec3 Tr, Sr;
+      atmosphereSteps(P, Q, 2, Tr, Sr);
+      vec3 albQ = vec3(0.060, 0.075, 0.040);
+      if (uHasAerial > 0.5) {
+        vec2 uvQ = vec2(Q.x * uUvScale.x + 0.5, fract(atan(-Q.z, -Q.y) / 6.2831853));
+        float lodQ = clamp(log2(rt * sqrt(var) / 46.0 + 1.0), 0.0, 9.0);
+        albQ = max(textureLod(uAerial, uvQ, lodQ).rgb * uAerCol.x + uAerCol.yzw, vec3(0.0));
+      }
+      vec3 LdQ; float sdQ;
+      vec3 TsQ = sunTrans(Q, LdQ, sdQ);
+      vec3 upQ = vec3(0.0, -Q.y, -Q.z) / max(length(Q.yz), 1.0);
+      refl = mix(refl, albQ * (uSunCol * TsQ * max(dot(upQ, LdQ), 0.0) + uAmbIrr) * 1.55 * Tr + Sr, kDay);
+    }
     vec3 wE = sunE * max(dot(Nw, Ld), 0.0) + uAmbIrr;
-    vec3 wsurf = wcol * wE * (1.0 - fres) + uSkyRefl * fres + sunE * spec * (0.6 + 5.0 * wa);
+    vec3 wsurf = wcol * wE * (1.0 - fres) + refl * fres + sunE * spec * sh;
     float surf = (1.0 - smoothstep(-9.0, -1.0, sdf)) ;
     wsurf = mix(wsurf + vec3(0.25, 0.27, 0.26) * wE * (0.5 + 0.5 * mix(0.5, vnoise(m / 4.0 + uTime * 0.3), kC)) * (1.0 - fresh) * 0.5, wsurf, surf);
     col = mix(col, wsurf, water);
