@@ -3263,6 +3263,7 @@
     const w = B[k + 2], d = B[k + 3], wallH = B[k + 5], cls = B[k + 6], roof = B[k + 7], side = B[k + 8], levels = Math.max(1, B[k + 9]);
     const porch = B[k + 10] > 0, chimney = B[k + 11] > 0, mat = B[k + 12], seed = B[k + 13], id = B[k + 14];
     const r1 = h1(id, seed * 7 + 1), r2 = h1(id * 3 + 5, seed + 11), r3 = h1(id + 77, seed * 3 + 2);
+    const split = isHome(cls) && styleOf(env.reg, id) === 1;
     const y0 = clamp2(gmax - g, 0, 2.5);
     const yb = env.raised ? 0 : Math.min(gmin - g, 0) - 0.6;
     const found = FOUND[cls];
@@ -3311,9 +3312,11 @@
         door = len * (0.3 + 0.4 * r2);
         flags |= 4;
       }
+      if (split) flags |= 32;
+      const lv = split ? clamp2(Math.round((He - y0 - SPLIT_FLOOR - 0.3) / FLOOR[cls]), 1, 3) : levels;
       M.W[0] = len;
       M.W[1] = He - y0;
-      M.W[2] = levels + 64 * (flags | (plainRec ? 16 : 0));
+      M.W[2] = lv + 64 * (flags | (plainRec ? 16 : 0));
       M.W[3] = door;
       const c = M.v(p1u, top, p1v, nu, 0, nv, len, top - y0), e = M.v(p0u, top, p0v, nu, 0, nv, 0, top - y0);
       if (!LF) {
@@ -3449,7 +3452,7 @@
         M.tri(i0, i1, i2);
       }
     }
-    if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
+    if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, split ? 0.45 : found, y0, yb, r1, r2, r3, env);
   }
   function porchAt(M, setM, p0u, p0v, tu, tv, nu, nv, a0, a1, dep, floorY, roofY, yb, stepAl, decks, fh) {
     const pw = a1 - a0;
@@ -3459,6 +3462,33 @@
       M.box(Math.min(...us), Math.max(...us), ya, yb2, Math.min(...vs), Math.max(...vs), which);
     };
     const steps = stepAl === stepAl;
+    const high = floorY - (yb + 0.6) > 0.8;
+    if (high) {
+      setM(MAT.TRIM);
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      const np2 = Math.max(2, Math.ceil(pw / 2.4) + 1);
+      for (let i = 0; i < np2; i++) {
+        const al = a0 + 0.1 + (pw - 0.2) * i / (np2 - 1);
+        wbox(al - 0.09, al + 0.09, dep - 0.2, dep - 0.02, yb, floorY - 0.24, 55);
+      }
+      wbox(a0 + 0.01, a0 + 0.19, 0.1, 0.28, yb, floorY - 0.24, 55);
+      wbox(a1 - 0.19, a1 - 0.01, 0.1, 0.28, yb, floorY - 0.24, 55);
+      setM(MAT.RAIL);
+      const g0 = yb + 0.6, g1 = floorY - 0.24, hh = Math.max(g1 - g0, 0.1);
+      const skirt = (q0, q1, n2) => {
+        const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
+        const i0 = M.v(q0[0], yb, q0[1], n2[0], 0, n2[1], 0, -0.6 / hh * 0.95), i1 = M.v(q1[0], yb, q1[1], n2[0], 0, n2[1], ln, -0.6 / hh * 0.95);
+        const i2 = M.v(q1[0], g1, q1[1], n2[0], 0, n2[1], ln, 0.95), i3 = M.v(q0[0], g1, q0[1], n2[0], 0, n2[1], 0, 0.95);
+        M.quad(i0, i1, i2, i3);
+      };
+      const Q = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
+      skirt(Q(a0, dep - 0.04), Q(a1, dep - 0.04), [nu, nv]);
+      skirt(Q(a0 + 0.02, 0), Q(a0 + 0.02, dep), [-tu, -tv]);
+      skirt(Q(a1 - 0.02, 0), Q(a1 - 0.02, dep), [tu, tv]);
+    }
     for (let lv = 0; lv < decks; lv++) {
       const fy = floorY + lv * fh;
       setM(MAT.DECK);
@@ -3466,7 +3496,7 @@
       M.W[1] = 0;
       M.W[2] = 0;
       M.W[3] = -1;
-      wbox(a0, a1, 0, dep, lv === 0 ? yb : fy - 0.22, fy, 63);
+      wbox(a0, a1, 0, dep, lv === 0 ? high ? fy - 0.24 : yb : fy - 0.22, fy, 63);
       setM(MAT.RAIL);
       const rail = (q0, q1, n2) => {
         const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
@@ -3499,9 +3529,10 @@
     M.face(q(a0 - 0.2, 0, roofY - 0.08), q(a1 + 0.2, 0, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a0 - 0.2, o1, roofY - 0.08), [0, -1, 0], [tu, 0, tv], [nu, 0, nv]);
     if (!steps) return dep;
     setM(MAT.CONCRETE);
-    const st2 = Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19));
-    wbox(clamp2(stepAl - 0.7, a0, a1 - 1.4), clamp2(stepAl + 0.7, a0 + 1.4, a1), dep, dep + Math.min(st2, 6) * 0.28, yb, floorY - 0.19, 55);
-    return dep + Math.min(st2, 6) * 0.28;
+    const st2 = Math.min(10, Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19)));
+    const s0 = clamp2(stepAl - 0.7, a0, a1 - 1.4), s1 = clamp2(stepAl + 0.7, a0 + 1.4, a1);
+    for (let i = 0; i < st2; i++) wbox(s0, s1, dep + i * 0.28, dep + (i + 1) * 0.28, yb, floorY - 0.19 * (i + 1), 55);
+    return dep + st2 * 0.28;
   }
   function featsOf(reg, id) {
     const F = reg && reg.hf;
@@ -3517,6 +3548,14 @@
     for (let i = lo; i < F.n && F.b[i] === id; i++) out.push([F.k[i], F.p[i], F.len[i]]);
     return out;
   }
+  function styleOf(reg, id) {
+    const fs = featsOf(reg, id);
+    if (fs) {
+      for (const [kind, o, n] of fs) if (kind === 3 && n >= 1) return reg.hf.dv.getUint8(o);
+    }
+    return 0;
+  }
+  var SPLIT_FLOOR = 1.25;
   function porchesOf(reg, id, P2, nv, front, cls, seed, tb) {
     const fs = featsOf(reg, id);
     if (!fs || front < 0) return null;
@@ -4152,6 +4191,7 @@
     if (!ns || nv < 3) return false;
     const cls = B[k + 6], side = B[k + 8], mat = B[k + 12], seed = B[k + 13], yawOld = B[k + 4];
     const r1 = h1(id, seed * 7 + 1), r2 = h1(id * 3 + 5, seed + 11), r3 = h1(id + 77, seed * 3 + 2);
+    const split = isHome(cls) && styleOf(env.reg, id) === 1;
     const y0 = clamp2(gmax - g, 0, 2.5), yb = Math.min(gmin - g, 0) - 0.6, lift = Math.min(gmin - g, 0), found = FOUND[cls];
     M.C[1] = M.oy;
     const setM = (m) => {
@@ -4288,6 +4328,7 @@
               if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
             }
             if (plainRec) flags |= 16;
+            if (split) return [eave, clamp2(Math.round((eave - SPLIT_FLOOR - 0.3) / FLOOR[cls]), 1, 3) + 64 * (flags | 32), door, y0];
             return [eave, clamp2(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * flags, door, y0];
           });
         }
@@ -4436,7 +4477,7 @@
       M.W[2] = 0;
       M.W[3] = -1;
     }
-    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, frontPorch, found, y0, yb, r1, r2, r3, env);
+    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, frontPorch, split ? 0.45 : found, y0, yb, r1, r2, r3, env);
     return true;
   }
   var D_HE = 1.6;

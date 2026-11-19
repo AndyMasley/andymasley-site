@@ -19876,8 +19876,19 @@ void main() {
     float nb = vBay > 0.05 ? max(1.0, floor(len / bw0 + 0.5)) : max(1.0, floor((len - 0.6) / bw0)), bw = len / nb;
     float bi = min(floor(u / bw), nb - 1.0), bu = u - (bi + 0.5) * bw;
     float fl = floor((v - found) / fh), fv = v - found - fl * fh;
+    // a raised ranch (split foyer, from the assessor's style): its lower level half in the ground with short windows,
+    // its main floor 1.25 m up, and the front door between the two, a few steps up from the ground
+    bool split = (flags & 32) != 0;
+    float doorBase = found;
+    if (split) {
+      float ff = 1.25;
+      fh = max((eave - ff - KNEE[cls]) / levels, 2.2);
+      found = 0.1; doorBase = 0.45;
+      if (v < ff) { fl = 0.0; fv = v; }
+      else { fl = 1.0 + floor((v - ff) / fh); fv = v - ff - (fl - 1.0) * fh; }
+    }
     bool deep = !house && cls != 9 && cls != 12;                 // large buildings on a slope show lower storeys downhill
-    bool inFloors = !plain && (v > found || (deep && v < found - 0.7)) && fl < levels && v < eave - 0.05;
+    bool inFloors = !plain && (v > found || (deep && v < found - 0.7)) && fl < levels + (split ? 1.0 : 0.0) && v < eave - 0.05;
     float wh = hash2(ivec2(int(bi) + int(seed) * 7 + flags * 31, int(fl) + int(len * 13.0)));
     float wh2 = hash2(ivec2(int(bi) * 3 + 11 + int(seed), int(fl) * 5 + int(len * 7.0)));
     // window shape by kind of building
@@ -19891,6 +19902,7 @@ void main() {
     if (cls == 8 || cls == 13) { ww = bw * 0.38; sill = fh * 0.58; head = fh * 0.74; }
     if (cls == 11 || clad == 3 || clad == 7) { ww = bw * 0.5 - 0.07; sill = 0.95; head = fh - 0.12; }
     if (clad == 7) { ww = bw * 0.5 - 0.03; sill = 0.08; head = fh - 0.05; }                // a station's glass runs floor to roof
+    if (split && fl < 0.5) { sill = 0.35; head = 1.05; }
     bool hasWin = inFloors && !(cls == 4 && !front && wh > 0.35) && !(cls == 5 && wh > 0.5) && !(clad == 4 && wh > 0.3) && !(house && !front && wh > 0.86);
     if (cls == 13 && !front && len > 26.0) hasWin = false;      // a big store's side and back walls are blank; a shop's are not
     float gw = 0.0, frame = 0.0, lintel = 0.0;
@@ -19901,10 +19913,10 @@ void main() {
     // door
     float door = 0.0, doorFrame = 0.0, dw = bigDoor ? ((cls == 8 || cls == 5) ? 1.9 : 1.25) : (cls >= 6 && cls <= 13 ? 0.85 : 0.47), dh = bigDoor ? ((cls == 8 || cls == 5) ? min(fh - 0.6, 3.8) : 2.12) : 2.05;
     float du = u - doorU;
-    bool doorBay = !plain && doorU >= 0.0 && fl < 0.5 && abs(du) < bw * 0.5 && v > found - 0.05;
-    if (!plain && doorU >= 0.0 && v < found + dh + 0.3) {
-      door = box2(vec2(du, v - found), vec2(-dw, -0.5), vec2(dw, dh), px);
-      doorFrame = box2(vec2(du, v - found), vec2(-dw - 0.11, -0.5), vec2(dw + 0.11, dh + 0.13), px) - door;
+    bool doorBay = !plain && doorU >= 0.0 && fl < (split ? 1.5 : 0.5) && abs(du) < bw * 0.5 && v > found - 0.05;
+    if (!plain && doorU >= 0.0 && v < doorBase + dh + 0.3) {
+      door = box2(vec2(du, v - doorBase), vec2(-dw, -0.5), vec2(dw, dh), px);
+      doorFrame = box2(vec2(du, v - doorBase), vec2(-dw - 0.11, -0.5), vec2(dw + 0.11, dh + 0.13), px) - door;
     }
     if (doorBay && !store) hasWin = false;
     if (doorBay && store && abs(du) < dw + 0.3) hasWin = false;
@@ -20020,12 +20032,12 @@ void main() {
     // door leaf with panels, and the big doors of garages, barns and loading bays
     if (door > 0.0 || doorFrame > 0.0) {
       vec3 dc = bigDoor ? ((cls == 5) ? vColA * 0.8 : vec3(0.72, 0.72, 0.70)) : ((cls >= 6 && cls <= 13) ? vec3(0.05, 0.06, 0.07) : vColC);
-      float pv = v - found;
+      float pv = v - doorBase;
       if (bigDoor) dc *= 0.86 + 0.14 * step(0.06, fract(pv / 0.53));
       else if (cls >= 6 && cls <= 13) { glass = max(glass, door * seg(pv, 0.25, dh - 0.1, px.y) * 0.8); }
       else dc *= 0.82 + 0.18 * (1.0 - box2(vec2(abs(du), fract(pv / 0.95)), vec2(0.10, 0.12), vec2(0.36, 0.86), px));
-      alb = mix(alb, trim, clamp(doorFrame, 0.0, 1.0) * step(found - 0.02, v));
-      alb = mix(alb, dc, door * step(found - 0.02, v));
+      alb = mix(alb, trim, clamp(doorFrame, 0.0, 1.0) * step(doorBase - 0.02, v));
+      alb = mix(alb, dc, door * step(doorBase - 0.02, v));
       if (!bigDoor && house) emis += vec3(1.0, 0.78, 0.5) * dark * 0.25 * box2(vec2(abs(du), pv), vec2(0.0, dh + 0.25), vec2(0.22, dh + 0.5), px);   // porch light
     }
     if (aaH > 0.0 && dark > 0.001) {
