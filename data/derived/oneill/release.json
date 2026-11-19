@@ -12,14 +12,14 @@
       "expandedBytes": 1257561507
     },
     {
-      "tag": "oneill-r2-2026-11-19-d34fff0dd959",
+      "tag": "oneill-r2-2026-11-19-6ec0e6164fc5",
       "directory": "r2",
-      "manifestSha256": "d34fff0dd95985a2ea560d64d5f1e16501d4642c87bf567e0ac628ee97d63e05",
-      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-r2-2026-11-19-d34fff0dd959/oneill-r2-d34fff0dd959.tar",
-      "archiveSha256": "60dc1840bca8bdf80a28a7415cc3837b9bdb1e4e44ebe59ee2533686bc4e2a17",
-      "archiveBytes": 63160320,
+      "manifestSha256": "6ec0e6164fc5706591e36e1aafc104bceeeee3221c9d9760d69ceb60658375f0",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-r2-2026-11-19-6ec0e6164fc5/oneill-r2-6ec0e6164fc5.tar",
+      "archiveSha256": "76f8dfdaef18ba50e9bbc4b0bd2cb890110d732ec8fd7f77b2cb55a5742e47d7",
+      "archiveBytes": 63170560,
       "files": 223,
-      "expandedBytes": 62968043
+      "expandedBytes": 62973104
     },
     {
       "tag": "oneill-b3-2026-11-13-987e192df574",
@@ -32,14 +32,14 @@
       "expandedBytes": 178350824
     },
     {
-      "tag": "oneill-lights-2026-11-13-e2de55d2a218",
+      "tag": "oneill-lights-2026-11-19-38f724a36d93",
       "directory": "lights",
-      "manifestSha256": "e2de55d2a218eaa89687f151b3a54485b4015ecd0a41543756937170247a84c3",
-      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lights-2026-11-13-e2de55d2a218/oneill-lights-e2de55d2a218.tar",
-      "archiveSha256": "4799fba26c8862063047271671e9f237ec4835ea3ef684db591c403a2df805ca",
+      "manifestSha256": "38f724a36d93785929b16f875a3d049a9e077dada90821dd0ba53057f7bb2d65",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-lights-2026-11-19-38f724a36d93/oneill-lights-38f724a36d93.tar",
+      "archiveSha256": "b00478b1aee5b97a1e472bc33ee856815a8639bb8c6627f8cd517cb8c027fb53",
       "archiveBytes": 15779840,
       "files": 219,
-      "expandedBytes": 15586117
+      "expandedBytes": 15587495
     },
     {
       "tag": "oneill-aer-2026-11-13-f83f4f74add6",
