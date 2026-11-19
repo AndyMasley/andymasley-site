@@ -1425,6 +1425,174 @@
     }
     return k[ri];
   }
+  var PASS_STEP = 10;
+  var DWELL = [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1];
+  function endJoin(reg, ri, e) {
+    const a = reg.rStart[ri], q = e ? a + reg.rCount[ri] - 1 : a, q1 = e ? q - 1 : q + 1;
+    const px = reg.px, py = reg.py, lx = px[q], ly = py[q], gw = reg.gw;
+    const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
+    if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 0;
+    let ux = lx - px[q1], uy = ly - py[q1];
+    const ul = Math.hypot(ux, uy) || 1;
+    ux /= ul;
+    uy /= ul;
+    const c = cy * gw + cx, end = reg.gstart[c + 1], items = reg.gitems, segR = reg.segR, seen = /* @__PURE__ */ new Set();
+    let runsOn = true;
+    for (let k = reg.gstart[c]; k < end; k++) {
+      const pi = items[k], rj = segR[pi];
+      if (rj === ri || seen.has(rj) || reg.rCls[rj] > 12 || reg.rTun[rj]) continue;
+      const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+      const t = clamp2(l2 > 0 ? ((lx - ax) * dx + (ly - ay) * dy) / l2 : 0, 0, 1);
+      if (Math.hypot(lx - ax - dx * t, ly - ay - dy * t) > 1) continue;
+      seen.add(rj);
+      const b0 = reg.rStart[rj], b1 = b0 + reg.rCount[rj] - 1;
+      let vx = 0, vy = 0;
+      if (Math.hypot(px[b0] - lx, py[b0] - ly) < 1) {
+        vx = px[b0 + 1] - px[b0];
+        vy = py[b0 + 1] - py[b0];
+      } else if (Math.hypot(px[b1] - lx, py[b1] - ly) < 1) {
+        vx = px[b1 - 1] - px[b1];
+        vy = py[b1 - 1] - py[b1];
+      }
+      if ((vx * ux + vy * uy) / (Math.hypot(vx, vy) || 1) < 0.866) runsOn = false;
+    }
+    return seen.size === 0 ? 0 : seen.size === 1 && runsOn ? 1 : 2;
+  }
+  function passingOf(reg, ri, world2) {
+    let P2 = reg.pass;
+    if (!P2) P2 = reg.pass = /* @__PURE__ */ new Map();
+    if (P2.has(ri)) return P2.get(ri);
+    let out = null;
+    const cls = reg.rCls[ri], fl = reg.rFlags[ri], mph = reg.rMph ? reg.rMph[ri] : 0, n = reg.rCount[ri], a = reg.rStart[ri];
+    const kd = roadKindXS(reg, ri, xsOf(reg, ri));
+    const L2 = n >= 2 ? reg.cum[a + n - 1] - reg.cum[a] : 0;
+    if ((kd & 3) === 1 && (kd >> 2 & 7) === 1 && (cls === 2 || cls === 4 || cls === 6 || cls === 8) && !(fl & 14) && !reg.rEnd[ri] && !reg.rTun[ri] && L2 >= 160 && !(mph > 0 && mph < 40)) {
+      const px = reg.px, py = reg.py, pz = reg.pz, S = (k) => reg.cum[a + k] - reg.cum[a];
+      const ns = Math.floor(L2 / PASS_STEP) + 1, f = new Uint8Array(ns);
+      const settled = new Uint8Array(ns);
+      if (mph < 45 && reg.b) {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (let k = 0; k < n; k++) {
+          x0 = Math.min(x0, px[a + k]);
+          x1 = Math.max(x1, px[a + k]);
+          y0 = Math.min(y0, py[a + k]);
+          y1 = Math.max(y1, py[a + k]);
+        }
+        const along2 = [], NB = 80;
+        const look = (rg) => {
+          if (!rg || !rg.b || !rg.nBld) return;
+          const cs = RS2 / rg.cells, ox = rg.x0 - reg.x0, oy = rg.y0 - reg.y0;
+          const i0 = clamp2(Math.floor((x0 - NB - ox) / cs), 0, rg.cells - 1), i1 = clamp2(Math.floor((x1 + NB - ox) / cs), 0, rg.cells - 1);
+          const j02 = clamp2(Math.floor((y0 - NB - oy) / cs), 0, rg.cells - 1), j12 = clamp2(Math.floor((y1 + NB - oy) / cs), 0, rg.cells - 1);
+          if (x1 + NB - ox < 0 || x0 - NB - ox > RS2 || y1 + NB - oy < 0 || y0 - NB - oy > RS2) return;
+          for (let j = j02; j <= j12; j++) for (let i = i0; i <= i1; i++) {
+            const c = j * rg.cells + i, e = rg.bCell[c + 1];
+            for (let q = rg.bCell[c]; q < e; q++) {
+              const o = q * 12, b = rg.b;
+              if (!DWELL[b[o + 8] & 15]) continue;
+              const bx = ox + (b[o] | b[o + 1] << 8) * 0.2, by = oy + (b[o + 2] | b[o + 3] << 8) * 0.2;
+              if (bx < x0 - NB || bx > x1 + NB || by < y0 - NB || by > y1 + NB) continue;
+              let best = NB, bs = -1;
+              for (let k = 0; k < n - 1; k++) {
+                const ax = px[a + k], ay = py[a + k], dx = px[a + k + 1] - ax, dy = py[a + k + 1] - ay, l2 = dx * dx + dy * dy;
+                const t = clamp2(l2 > 0 ? ((bx - ax) * dx + (by - ay) * dy) / l2 : 0, 0, 1);
+                const dd = Math.hypot(bx - ax - dx * t, by - ay - dy * t);
+                if (dd < best) {
+                  best = dd;
+                  bs = S(k) + t * Math.sqrt(l2);
+                }
+              }
+              if (bs >= 0) along2.push(bs);
+            }
+          }
+        };
+        look(reg);
+        if (world2 && world2.regions) {
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) if (di || dj) look(world2.regions.get((reg.ry + dj) * RNX + reg.rx + di));
+        }
+        along2.sort((u, v) => u - v);
+        let lo = 0, hi = 0;
+        for (let i = 0; i < ns; i++) {
+          const d = i * PASS_STEP;
+          while (lo < along2.length && along2[lo] < d - 201) lo++;
+          while (hi < along2.length && along2[hi] <= d + 201) hi++;
+          if (hi - lo >= 7) settled[i] = 1;
+        }
+      }
+      const D2 = (mph <= 0 ? 700 : mph < 45 ? 600 : mph < 50 ? 700 : mph < 55 ? 800 : 900) * 0.3048, END = 60;
+      const j0 = endJoin(reg, ri, 0), j1 = endJoin(reg, ri, 1), E0 = j0 === 2 ? END : 0, E1 = j1 === 2 ? END : 0;
+      const at = (d, o) => {
+        let lo = 0, hi = n - 1;
+        while (hi - lo > 1) {
+          const mid = lo + hi >> 1;
+          if (S(mid) <= d) lo = mid;
+          else hi = mid;
+        }
+        const s0 = S(lo), s1 = S(hi), t = s1 > s0 ? clamp2((d - s0) / (s1 - s0), 0, 1) : 0;
+        o[0] = px[a + lo] + (px[a + hi] - px[a + lo]) * t;
+        o[1] = py[a + lo] + (py[a + hi] - py[a + lo]) * t;
+        o[2] = pz[a + lo] + (pz[a + hi] - pz[a + lo]) * t;
+        o[3] = lo;
+        return o;
+      };
+      const A = [0, 0, 0, 0], B = [0, 0, 0, 0];
+      const clear = (d0, d1) => {
+        at(d0, A);
+        at(d1, B);
+        const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy);
+        if (len < 1) return true;
+        const k0 = Math.min(A[3], B[3]) + 1, k1 = Math.max(A[3], B[3]);
+        for (let k = k0; k <= k1; k++) {
+          const qx = px[a + k] - A[0], qy = py[a + k] - A[1];
+          if (Math.abs(qx * dy - qy * dx) / len > 5) return false;
+          const tt = clamp2((qx * dx + qy * dy) / (len * len), 0, 1);
+          if (pz[a + k] > A[2] + (B[2] - A[2]) * tt + 1.07 - 0.05) return false;
+        }
+        return true;
+      };
+      for (let i = 0; i < ns; i++) {
+        const d = i * PASS_STEP;
+        if (d < E0 || d > L2 - E1 || settled[i]) continue;
+        let b = 0;
+        if (d + D2 <= L2 - E1 ? clear(d, d + D2) : j1 !== 2 && clear(d, L2)) b |= 1;
+        if (d - D2 >= E0 ? clear(d, d - D2) : j0 !== 2 && clear(d, 0)) b |= 2;
+        f[i] = b;
+      }
+      const runs = (bit, fn) => {
+        let i = 0;
+        while (i < ns) {
+          const v = f[i] & bit;
+          let j = i;
+          while (j < ns && (f[j] & bit) === v) j++;
+          fn(i, j, v !== 0);
+          i = j;
+        }
+      };
+      const MINP = Math.ceil(400 * 0.3048 / PASS_STEP), MINN = Math.ceil(500 * 0.3048 / PASS_STEP);
+      for (const bit of [1, 2]) {
+        runs(bit, (i, j, on) => {
+          if (on && j - i < MINP) for (let k = i; k < j; k++) f[k] &= ~bit;
+        });
+        const grow = [];
+        runs(bit, (i, j, on) => {
+          if (!on && i > 0 && j < ns && j - i < MINN) grow.push([i, j]);
+        });
+        for (const [i, j] of grow) {
+          const pad = Math.ceil((MINN - (j - i)) / 2);
+          for (let k = Math.max(0, i - pad); k < Math.min(ns, j + pad); k++) f[k] &= ~bit;
+        }
+        runs(bit, (i, j, on) => {
+          if (on && j - i < MINP) for (let k = i; k < j; k++) f[k] &= ~bit;
+        });
+      }
+      for (let i = 0; i < ns; i++) if (f[i]) {
+        out = f;
+        break;
+      }
+    }
+    P2.set(ri, out);
+    return out;
+  }
   var GSEG = 1472;
   var GS = RS2 / GSEG;
   function parseGround(u8) {
@@ -10663,6 +10831,12 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
     };
     const _shB = { r: 0, l: 0, b: 0 };
+    const wearBytes = (wear, kk, rg, ri, sAbs) => {
+      const pf = passingOf(rg, ri, world);
+      if (pf) wear[kk] = pf[clamp2(Math.floor((sAbs - rg.cum[rg.rStart[ri]]) / PASS_STEP), 0, pf.length - 1)];
+      wear[kk + 1] = Math.floor((sAbs + dashOff(rg)[ri]) / DASH) & 255;
+      wear[kk + 2] = (Math.imul(ri + 1, 2654435761) ^ Math.imul(rg.rx * 31 + rg.ry + 7, 40503)) >>> 24;
+    };
     const _ld = [0, 0, 0];
     const laneBytes = (tone, rg, ri, s2, kd, kk) => {
       const st2 = kd & 3;
@@ -10674,7 +10848,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (st2 === 1 && _ld[2] > 0) tone[kk + 2] |= Math.round(_ld[2] * 15) << 4;
     };
     if (hasRoads && level >= 6) {
-      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 3), tone = kind.subarray(T * T * 4, T * T * 8), jun = kind.subarray(T * T * 8);
+      const data = new Uint16Array(T * T * 4), kind = new Uint8Array(T * T * 4 * 4), tone = kind.subarray(T * T * 4, T * T * 8), jun = kind.subarray(T * T * 8, T * T * 12), wear = kind.subarray(T * T * 12);
       const JM = junctionMarks(reg, mx0, my0, s);
       let any = false;
       const far = toHalf(60), one = toHalf(1), zero = toHalf(0), none = toHalf(10);
@@ -10720,6 +10894,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
               tone[kk + 2] = surfOf(nr0.reg, nr0.road);
               laneBytes(tone, nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd, kk);
               junField(jun, kk, mx, my, kb.hw, JM);
+              wearBytes(wear, kk, nr0.reg, nr0.road, nr0.s);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
               kind[kk + 3] = xs0 ? bikeByte(xs0[4], xs0[5], xs0[6]) : 0;
@@ -10779,7 +10954,10 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
               laneBytes(tone, nr.reg, nr.road, nr.s - nr.reg.cum[nr.reg.rStart[nr.road]], kind[kk], kk);
             }
             if (cxr) junField(jun, kk, mx, my, nr.hw, JM, cxr);
-            if (!notSt) sideByte(jun, kk, nr.reg, nr.road, nr.side, pw);
+            if (!notSt) {
+              sideByte(jun, kk, nr.reg, nr.road, nr.side, pw);
+              wearBytes(wear, kk, nr.reg, nr.road, nr.s);
+            }
             any = true;
           } else {
             data[k] = far;

@@ -17854,13 +17854,14 @@ const vec3 KERB = vec3(0.250, 0.245, 0.240);
 // left (common.js bikeByte: type 1 painted, 2 with a painted buffer, 3 behind flex posts, then width and buffer); rS,
 // lS: its shoulders on the right and the left where MassDOT's inventory gives them (common.js shoulderOf; 0 where not
 // known); ts: metres right (+) or left (-) of its centre line; hw: its half width; along: metres along it; lw, la: a
-// line's half width and antialiasing; dash: 1 where lane lines are painted; keepL, keepR: 0 where that edge line is left
-// out.  The zone a bike lane takes at the kerb is left out of the travel lanes, and a buffer is two solid lines with
+// line's half width and antialiasing; dash: 1 where lane lines are painted; pass: where passing is allowed on a two-way
+// road with one lane each way (common.js passingOf: bit 0 for the lane going the way's way, right of the centre, bit 1
+// for the other), and pdash where its broken yellow line is painted; keepL, keepR: 0 where that edge line is left out.  The zone a bike lane takes at the kerb is left out of the travel lanes, and a buffer is two solid lines with
 // diagonal hatching between them; where the shoulders are known, the lanes take what is left between them and the edge
 // lines run along them.  The lanes are laid out as common.js laneGeom lays them (keep the two the same): 3.5 m wide, or
 // what the paving holds.  Returns how much paint covers the point; yellow says whether it is the yellow kind.
 float spBand(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa, w + aa, abs(x - c)); }
-float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float rS, float lS, float ts, float hw, float along, float lw, float la, float dash, float keepL, float keepR, out float yellow) {
+float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float rS, float lS, float ts, float hw, float along, float lw, float la, float dash, int pass, float pdash, float keepL, float keepR, out float yellow) {
   int style = kd & 3;
   bool known = rS + lS > 0.01;
   float cap = known ? 3.7 : 3.5;
@@ -17889,7 +17890,14 @@ float streetPaint(int kd, float nlf, float nbf, float ccf, int bR, int bL, float
     float w = min(cap, (eR - eL) / max(nF + nB + ccf, 0.001));
     float y = clamp(0.0, eL + nB * w + ccf * w * 0.5, eR - nF * w - ccf * w * 0.5);
     float cR = y + ccf * w * 0.5, cL = y - ccf * w * 0.5;
-    if (ccf < 0.02) { float dy = abs(ts - y); yl = max(spBand(dy, 0.0, 0.26, la) - spBand(dy, 0.0, 0.085, la), 0.0); }
+    // (where passing is allowed, the line on the side of the lane that may pass is broken, and where both may, the two
+    // become one broken line down the middle: the MUTCD's three kinds of centre line on a two-lane road)
+    if (ccf < 0.02) {
+      float sy = ts - y, dy = abs(sy);
+      yl = max(spBand(dy, 0.0, 0.26, la) - spBand(dy, 0.0, 0.085, la), 0.0);
+      if (pass == 3) yl = spBand(dy, 0.0, 0.0875, la) * pdash;
+      else if (pass != 0 && (sy > 0.0) == (pass == 1)) yl *= pdash;
+    }
     else yl = max(max(spBand(ts, cR + 0.12, lw, la), spBand(ts, cL - 0.12, lw, la)), max(spBand(ts, cR - 0.12, lw, la), spBand(ts, cL + 0.12, lw, la)) * dash);
     float shR = clamp(hw - (cR + nF * w), 0.25, max(3.0, rS)), shL = clamp(hw + (cL - nB * w), 0.25, max(3.0, lS));
     wl = max(spBand(ts, rZ > 0.0 ? hw - rZ : hw - shR, lw, la) * keepR, spBand(ts, lZ > 0.0 ? -(hw - lZ) : -(hw - shL), lw, la) * keepL);
@@ -18227,6 +18235,7 @@ void main() {
   // ---- roads painted on the carved ground
   float paved = 0.0, mark = 0.0, shoulder = 0.0, onRoadGeom = 0.0, dirt = 0.0, walk = 0.0, kerb = 0.0, joint = 0.0, bed = 0.0, river = 0.0;
   float roadTone = 1.0, toneKnown = 0.0;           // the road's own brightness over its neighbourhood's roads (measured)
+  float wearMul = 1.0, wearSeal = 0.0;              // the asphalt's patches and sealed cracks (estimated: items 36, 37)
   int surf = 0; vec2 surfQ = vec2(0.0), surfSpan = vec2(12.192, 1e6);    // a street's own surface (roadSurface), and where on it
   float streetEdge = 1e3;                           // metres outside the streets' paving (in reach of the road texture)
   vec3 markCol = vec3(0.0), bedCol = vec3(0.0), airLamp = vec3(0.0);
@@ -18266,6 +18275,9 @@ void main() {
         if (eo >= 0.0 ? ei < eo : (ei < 0.0 && yo && !yi)) { own = i; eo = ei; yo = yi; }
       }
     }
+    // the fourth layer, the own texel's: where passing is allowed, and which 12.192 m stretch of which road it is in
+    // (worker.js wearBytes), so each stretch draws its own wear
+    vec4 W4 = texelFetch(uRoadK, ivec3(clamp(rb + ivec2(own & 1, own >> 1), ivec2(0), rmx), 3), 0);
     // (two texels are of one road where, carried to the point, they agree on its offset, and their widths are near:
     // two ways side by side, two tracks, are told apart by the offset, and a highway's width eases along it by a few
     // centimetres a texel where it meets another, worker.js)
@@ -18304,6 +18316,66 @@ void main() {
       // the survey's (g), and its offset and half width are taken between the survey's kerbs
       bool svy = (style == 1 || style == 2) && ((kd >> 5) & 1) == 1;
       dirt = svy ? 0.0 : float((kd >> 5) & 1);
+      // ---- wear, estimated rather than seen (Andy's list, items 36 and 37): patches over utility cuts, trenches across
+      // and along the road, and the dark sealant poured into its cracks, more on a road the photographs show pale (worn)
+      // than on a dark (new) one; each 12.192 m stretch of each road draws its own (the fourth layer says which), and the
+      // joint down the middle wanders with a noise on the map.  Gone by the time a pixel is 0.6 m across, and kept faint
+      if ((style == 1 || style == 2) && surf == 0 && dirt < 0.5 && R4[own].a < 6.5 && fp < 0.6 && dc < hw - 0.2) {
+        float wk = 1.0 - smoothstep(0.2, 0.6, fp), wa = max(fp, 0.02);
+        float wal = fract(phs) * 12.192;
+        int wst = (int(W4.g * 255.0 + 0.5) + 256 + int(floor(phs))) & 255, whs = int(W4.b * 255.0 + 0.5);
+        ivec2 wkey = ivec2(wst, whs * 7 + 3);
+        float h1 = hash2(wkey), h2 = hash2(wkey + ivec2(17, 5)), h3 = hash2(wkey + ivec2(3, 29)), h4 = hash2(wkey + ivec2(41, 11)), h5 = hash2(wkey + ivec2(7, 23));
+        float age = toneKnown > 0.5 ? smoothstep(0.80, 1.30, roadTone) : 0.45;
+        float lim = max(hw - 0.35, 0.5);
+        // a patch over a cut: in a tenth of the stretches of a new road, a quarter of an old one's
+        if (h1 < mix(0.10, 0.26, age)) {
+          float pl = mix(1.4, 7.0, h2), pw = min(mix(0.8, 3.2, h3), 2.0 * lim);
+          float pa = 0.5 + (11.19 - pl) * h4, pt = (h5 * 2.0 - 1.0) * max(lim - 0.5 * pw, 0.0);
+          float e = max(abs(wal - pa - 0.5 * pl) - 0.5 * pl, abs(ts - pt) - 0.5 * pw);
+          float pin = 1.0 - smoothstep(-wa, wa, e);
+          wearMul = mix(1.0, h3 > 0.45 ? 0.74 : 1.16, pin * wk);
+          wearSeal = max(wearSeal, (1.0 - smoothstep(0.035 - wa, 0.035 + wa, abs(e))) * 0.8 * wk);
+        }
+        // a trench across the road (a pipe or a service line laid under it), one stretch in twenty
+        else if (h1 > 1.0 - mix(0.03, 0.06, age)) {
+          float tw = mix(0.6, 1.3, h2), ta = 0.8 + 10.0 * h4;
+          float e = max(abs(wal - ta) - 0.5 * tw, h5 < 0.5 ? (h3 < 0.5 ? -ts : ts) : -1.0);      // (half the road, or all of it)
+          float tin = 1.0 - smoothstep(-wa, wa, e);
+          wearMul = mix(1.0, 0.78, tin * wk);
+          wearSeal = max(wearSeal, (1.0 - smoothstep(0.03 - wa, 0.03 + wa, abs(e))) * 0.7 * wk);
+        }
+        // a trench along it, for about 50 m at a time, in some stretches of road
+        ivec2 lkey = ivec2(wst >> 2, whs * 7 + 5);
+        float g1 = hash2(lkey + ivec2(13, 3));
+        if (g1 < mix(0.06, 0.14, age)) {
+          float lt = (hash2(lkey + ivec2(5, 31)) * 2.0 - 1.0) * max(lim - 0.6, 0.0), lw2 = mix(0.6, 1.0, hash2(lkey + ivec2(9, 1)));
+          float e = abs(ts - lt) - 0.5 * lw2;
+          float lin = 1.0 - smoothstep(-wa, wa, e);
+          wearMul *= mix(1.0, 0.82, lin * wk);
+          wearSeal = max(wearSeal, (1.0 - smoothstep(0.03 - wa, 0.03 + wa, abs(e))) * 0.6 * wk);
+        }
+        // sealed cracks: bands of sealant about 6 cm wide across the road (where the paving shrank in the cold), one or two
+        // to a stretch on an old road, and along it in the wheel paths for a few metres, each wavering a little; and down
+        // the joint between the two halves of a two-way road
+        float crack = 0.0, cw0 = 0.03, cfade = min(1.0, 0.06 / wa);
+        if (h2 < mix(0.12, 0.55, age)) {
+          float off = wal - (0.4 + 11.4 * h3) - 0.16 * sin(ts * 1.1 + h4 * 6.28) - 0.05 * sin(ts * 3.7 + h5 * 6.28);
+          crack = max(crack, 1.0 - smoothstep(cw0 - wa, cw0 + wa, abs(off)));
+        }
+        if (h4 < mix(0.04, 0.25, age)) {
+          float off = wal - (0.4 + 11.4 * h5) - 0.14 * sin(ts * 1.3 + h2 * 6.28) - 0.05 * sin(ts * 4.1 + h3 * 6.28);
+          crack = max(crack, 1.0 - smoothstep(cw0 - wa, cw0 + wa, abs(off)));
+        }
+        float g2 = hash2(wkey + ivec2(21, 8)), g3 = hash2(wkey + ivec2(33, 19)), g4 = hash2(wkey + ivec2(2, 44));
+        if (g3 < mix(0.15, 0.55, age)) {
+          float a0 = 6.0 * g4, a1 = a0 + 2.5 + 3.5 * hash2(wkey + ivec2(19, 2));
+          float off = ts - (g2 * 2.0 - 1.0) * lim * 0.8 - 0.07 * sin(wal * 1.3 + g2 * 6.28) - 0.04 * sin(wal * 3.1 + g3 * 6.28);
+          crack = max(crack, (1.0 - smoothstep(cw0 - wa, cw0 + wa, abs(off))) * smoothstep(a0, a0 + 0.3, wal) * (1.0 - smoothstep(a1 - 0.3, a1, wal)));
+        }
+        if (style == 1) crack = max(crack, (1.0 - smoothstep(cw0 - wa, cw0 + wa, abs(ts - 0.1 * (vnoise(m / 4.0) - 0.5)))) * smoothstep(0.45, 0.85, age));
+        wearSeal = max(wearSeal, crack * 0.7 * wk * cfade);
+      }
       float aa = max(fwidth(dc), 0.03);
       float edge = dc - hw, edge0 = edge;
       if (style == 1 || style == 2) {
@@ -18362,7 +18434,8 @@ void main() {
         paved -= gin;
         shoulder = max(shoulder, max(gin, gU * (1.0 - smoothstep(sS - aa, sS + aa, edge)) * (1.0 - paved)));
       }
-      float dash = smoothstep(-3.14159, -3.0, ang) * (1.0 - smoothstep(-1.62, -1.52, ang)) * step(uSize / uRoadT, 3.2);
+      float dpat = smoothstep(-3.14159, -3.0, ang) * (1.0 - smoothstep(-1.62, -1.52, ang)), dash = dpat * step(uSize / uRoadT, 3.2);
+      float pdash = uSize / uRoadT <= 3.2 ? dpat : 0.25;      // (a broken centre line drawn as a faint solid one where the texels are coarse)
       if (style != 3) {
         vec2 bk = K4[own].ba * 255.0 + 0.5;
         float yel;
@@ -18372,7 +18445,7 @@ void main() {
         float jAll = dot(rw4, vec4(J4[0].x, J4[1].x, J4[2].x, J4[3].x)) * 6.0 - 1.5;
         float jEdge = dot(rw4, vec4(J4[0].y, J4[1].y, J4[2].y, J4[3].y)) * 6.0 - 1.5;
         float keepJ = keepEdge * (1.0 - smoothstep(-aa, aa, jEdge));
-        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), rsf, lsf, ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, keepJ, keepJ, yel) * vis * paved * (1.0 - smoothstep(-aa, aa, jAll));
+        mark = streetPaint(kd & ~32, nlf, nbf, ccf, int(bk.x), int(bk.y), rsf, lsf, ts, hw, ang / 6.2831853 * 12.192, lw, la, dash, int(W4.r * 255.0 + 0.5) & 3, pdash, keepJ, keepJ, yel) * vis * paved * (1.0 - smoothstep(-aa, aa, jAll));
         markCol = yel > 0.5 ? yellow : white;
       } else if (style == 3) {
         // not a street.  nl says what: 1 a main line, 2 a siding or yard track, 3 a runway, 4 a taxiway, 5 a river too
@@ -18652,6 +18725,7 @@ void main() {
   // roads over everything
   // (each road's own tone where the photographs measured it, with a little of the noise left; else the noise alone)
   vec3 asphalt = mix(ASPHALT * roadTone, vec3(0.150, 0.125, 0.090), dirt) * mix(0.85 + 0.3 * nB, 0.94 + 0.12 * nB, toneKnown);
+  asphalt = mix(asphalt * wearMul, vec3(0.020, 0.020, 0.022), wearSeal);
   if (surf > 0 && surf <= 10) asphalt = roadSurface(surf, surfQ, surfSpan, roadTone, nB);
   float surfHard = (surf > 0 && surf < 5) || surf == 10 ? 1.0 : 0.0;   // (paved with something other than asphalt: none of its grain)
   float surfSoft = surf == 7 ? 0.7 : 0.0;                               // (sand: less of the soil's grain)
@@ -20012,7 +20086,7 @@ void main() {
     if (style == 1 || style == 2 || style == 0) {
       int bw = vW.w > 0.0 ? int(vW.w + 0.5) : 0;
       float yel;
-      mark = streetPaint(kd, 0.0, float((kv >> 8) & 7), float((kv >> 11) & 1), bw & 255, bw >> 8, dRS, dLS, ts, hw, uv.x, lw, la, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
+      mark = streetPaint(kd, 0.0, float((kv >> 8) & 7), float((kv >> 11) & 1), bw & 255, bw >> 8, dRS, dLS, ts, hw, uv.x, lw, la, dash, 0, dash, 1.0 - noL, 1.0 - noR, yel) * vis;
       if (yel > 0.5) markCol = vec3(0.78, 0.55, 0.06);
     }
     alb = mix(alb, markCol, mark);
@@ -21329,7 +21403,7 @@ void main() {
       this.dummyRoad.needsUpdate = true;
       this.dummyK = new an(new Uint8Array([0, 255, 0, 0]), 1, 1, on, cn);
       this.dummyK.needsUpdate = true;
-      this.dummyKA = new Rs(new Uint8Array([0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 1, 1, 3);
+      this.dummyKA = new Rs(new Uint8Array([0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 1, 1, 4);
       this.dummyKA.needsUpdate = true;
       this.scatter = /* @__PURE__ */ new Map();
       this.scatterQueue = [];
@@ -21391,7 +21465,7 @@ void main() {
         roadTex.magFilter = roadTex.minFilter = ye;
         roadTex.wrapS = roadTex.wrapT = rn;
         roadTex.needsUpdate = true;
-        roadKTex = new Rs(m.roadK, m.roadT, m.roadT, 3);
+        roadKTex = new Rs(m.roadK, m.roadT, m.roadT, 4);
         roadKTex.magFilter = roadKTex.minFilter = Te;
         roadKTex.unpackAlignment = 1;
         roadKTex.needsUpdate = true;
