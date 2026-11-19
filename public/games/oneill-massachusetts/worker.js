@@ -10000,6 +10000,14 @@
     { name: "pitch pine", H: 11, R: 3.9, conifer: 1, leaf: [0.029, 0.052, 0.024], bark: [0.135, 0.1, 0.078] },
     { name: "shrub", H: 2.4, R: 1.5, conifer: 0, leaf: [0.04, 0.083, 0.024], bark: [0.11, 0.095, 0.08] }
   ];
+  var PLAIN_H = [12.8, 14.4];
+  var PLAIN_R = [3.9, 2.9];
+  var PLAIN_LEAF = [[0.043, 0.086, 0.025], [0.019, 0.045, 0.022]];
+  var v3 = (a) => `vec3(${a.map((x) => x.toFixed(4)).join(", ")})`;
+  var FIT = [[1, 1, 1]].concat(SPECIES.map((s) => [s.R / PLAIN_R[s.conifer], s.H / PLAIN_H[s.conifer], s.R / PLAIN_R[s.conifer]]));
+  var TINT = [[1, 1, 1]].concat(SPECIES.map((s) => s.leaf.map((x, k) => x / PLAIN_LEAF[s.conifer][k])));
+  var SP_GLSL = `const vec3 SP_FIT[${FIT.length}] = vec3[${FIT.length}](${FIT.map(v3).join(", ")});
+const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(", ")});`;
 
   // src/worker.js
   var TUN_SHELL = 0.6;

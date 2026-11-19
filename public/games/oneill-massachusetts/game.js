@@ -17454,6 +17454,27 @@ float surfaceReflection(vec3 N, vec3 V, vec3 L, float roughness) {
 `
   );
 
+  // src/species.js
+  var SPECIES = [
+    { name: "maple", H: 14, R: 4.3, conifer: 0, leaf: [0.045, 0.09, 0.026], bark: [0.165, 0.155, 0.14] },
+    { name: "oak", H: 15.5, R: 5.2, conifer: 0, leaf: [0.04, 0.077, 0.024], bark: [0.125, 0.115, 0.1] },
+    { name: "birch", H: 12, R: 3.1, conifer: 0, leaf: [0.056, 0.1, 0.029], bark: [0.62, 0.6, 0.55] },
+    { name: "shade tree", H: 13, R: 6.2, conifer: 0, leaf: [0.044, 0.088, 0.026], bark: [0.14, 0.13, 0.115] },
+    { name: "white pine", H: 21, R: 5.4, conifer: 1, leaf: [0.024, 0.054, 0.03], bark: [0.105, 0.09, 0.078] },
+    { name: "hemlock", H: 15, R: 3.9, conifer: 1, leaf: [0.016, 0.04, 0.02], bark: [0.12, 0.085, 0.066] },
+    { name: "pitch pine", H: 11, R: 3.9, conifer: 1, leaf: [0.029, 0.052, 0.024], bark: [0.135, 0.1, 0.078] },
+    { name: "shrub", H: 2.4, R: 1.5, conifer: 0, leaf: [0.04, 0.083, 0.024], bark: [0.11, 0.095, 0.08] }
+  ];
+  var PLAIN_H = [12.8, 14.4];
+  var PLAIN_R = [3.9, 2.9];
+  var PLAIN_LEAF = [[0.043, 0.086, 0.025], [0.019, 0.045, 0.022]];
+  var SHRUB = 7;
+  var v3 = (a) => `vec3(${a.map((x) => x.toFixed(4)).join(", ")})`;
+  var FIT = [[1, 1, 1]].concat(SPECIES.map((s29) => [s29.R / PLAIN_R[s29.conifer], s29.H / PLAIN_H[s29.conifer], s29.R / PLAIN_R[s29.conifer]]));
+  var TINT = [[1, 1, 1]].concat(SPECIES.map((s29) => s29.leaf.map((x, k) => x / PLAIN_LEAF[s29.conifer][k])));
+  var SP_GLSL = `const vec3 SP_FIT[${FIT.length}] = vec3[${FIT.length}](${FIT.map(v3).join(", ")});
+const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(", ")});`;
+
   // src/shaders.js
   var ATMOS = (
     /* glsl */
@@ -17463,6 +17484,7 @@ uniform vec3 uSunPos;     // the light on the axis
 uniform vec3 uSunCol;     // its colour x strength (sun by day, moon by night)
 uniform vec3 uAmbRad;     // ambient sky radiance (multiple scattering, light off the far wall)
 uniform vec3 uAmbIrr;     // ambient irradiance on surfaces
+uniform vec3 uBounce;     // the lamp's light off the land round you, on what faces down or sideways (0 at night)
 uniform float uHaze;
 uniform float uTime;
 uniform vec4 uHeadPos;    // your car's head lamps relative to the camera; w is how lit they are (0 by day)
@@ -17526,11 +17548,16 @@ void atmosphere(vec3 p, out vec3 T, out vec3 S) {
 }
 
 // Direct + ambient irradiance at p for a surface with normal N (cylinder space).
+// the sky's light on a surface facing N, and the ground's from below and the sides
+vec3 ambient(vec3 N, vec3 up) {
+  float u = dot(N, up);
+  return uAmbIrr * (0.55 + 0.45 * max(u, 0.0)) + uBounce * (0.5 - 0.5 * u);
+}
 vec3 irradiance(vec3 p, vec3 N, vec3 up, out vec3 Ld, out vec3 sunE) {
   float sd; vec3 Ts = sunTrans(p, Ld, sd);
   sunE = uSunCol * Ts;
   float ndl = max(dot(N, Ld), 0.0);
-  return sunE * ndl + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0));
+  return sunE * ndl + ambient(N, up);
 }
 `
   );
@@ -17724,39 +17751,43 @@ vec3 spaceSkyAt(vec3 P, vec3 dh, float pix) {
     /* glsl */
     `
 #ifdef USE_SHADOW
+// two maps side by side in one texture: the near one (left half) over the ground ahead of the camera, and a far one
+// (right half) four times as wide and coarser, for what lies past the near one (main.js renderShadow)
 uniform highp sampler2DShadow uShadowMap;
-uniform mat4 uShadowMat;       // camera-relative world -> shadow clip space (0..1)
-uniform vec3 uShadowInfo;      // texel size (1/res), frame radius (m), strength
-float sunShadow(vec3 rel, vec3 N, vec3 Ld) {
-  float ndl = dot(N, Ld);
-  // push the lookup off the surface, by a texel or so, more at a glancing sun, so a wall does not shade itself
-  float tm = 2.0 * uShadowInfo.y * uShadowInfo.x;
-  vec3 p = rel + N * (tm * (0.9 + 2.0 * (1.0 - clamp(ndl, 0.0, 1.0))));
-  vec4 sc = uShadowMat * vec4(p, 1.0);
-  vec3 s = sc.xyz;
-  vec2 e = abs(s.xy - 0.5) * 2.0;
-  float edge = 1.0 - smoothstep(0.86, 0.98, max(e.x, e.y));
-  if (edge <= 0.0 || s.z > 1.0 || s.z < 0.0) return 1.0;
-  float t = uShadowInfo.x, sum = 0.0;
-  s.z -= 0.00018;
-  sum += texture(uShadowMap, s + vec3(-0.6 * t, -0.6 * t, 0.0));
-  sum += texture(uShadowMap, s + vec3(0.6 * t, -0.6 * t, 0.0));
-  sum += texture(uShadowMap, s + vec3(-0.6 * t, 0.6 * t, 0.0));
-  sum += texture(uShadowMap, s + vec3(0.6 * t, 0.6 * t, 0.0));
-  sum += texture(uShadowMap, s);
-  return mix(1.0, sum * 0.2, edge * uShadowInfo.z);
-}
-// one lookup (the comparison sampler's own 2 x 2 filter), for leaves, which are speckled anyway
-float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) {
-  float tm = 2.0 * uShadowInfo.y * uShadowInfo.x;
+uniform mat4 uShadowMat;       // camera-relative world -> the near map's clip space (0..1)
+uniform vec3 uShadowInfo;      // its texel size (1/res), frame radius (m), strength
+uniform mat4 uShadowMat2;      // ... and the far map's
+uniform vec3 uShadowInfo2;
+// one map's shadow at rel, the lookup pushed off the surface by a texel or so (more at a glancing sun, so a wall does
+// not shade itself); e: 1 well inside the map's frame, 0 outside it
+float shadowIn(mat4 M, vec3 info, float x0, vec3 rel, vec3 N, vec3 Ld, bool many, out float e) {
+  float tm = 2.0 * info.y * info.x;
   vec3 p = rel + N * (tm * (0.9 + 2.0 * (1.0 - clamp(dot(N, Ld), 0.0, 1.0))));
-  vec3 s = (uShadowMat * vec4(p, 1.0)).xyz;
-  vec2 e = abs(s.xy - 0.5) * 2.0;
-  float edge = 1.0 - smoothstep(0.86, 0.98, max(e.x, e.y));
-  if (edge <= 0.0 || s.z > 1.0 || s.z < 0.0) return 1.0;
+  vec3 s = (M * vec4(p, 1.0)).xyz;
+  vec2 ee = abs(s.xy - 0.5) * 2.0;
+  e = (1.0 - smoothstep(0.86, 0.98, max(ee.x, ee.y))) * step(0.001, info.z);
+  if (e <= 0.0 || s.z > 1.0 || s.z < 0.0) { e = 0.0; return 1.0; }
+  s.x = x0 + s.x * 0.5;
   s.z -= 0.00018;
-  return mix(1.0, texture(uShadowMap, s), edge * uShadowInfo.z);
+  if (!many) return mix(1.0, texture(uShadowMap, s), info.z);
+  float t = info.x, sum = 0.0;
+  sum += texture(uShadowMap, s + vec3(-0.3 * t, -0.6 * t, 0.0));
+  sum += texture(uShadowMap, s + vec3(0.3 * t, -0.6 * t, 0.0));
+  sum += texture(uShadowMap, s + vec3(-0.3 * t, 0.6 * t, 0.0));
+  sum += texture(uShadowMap, s + vec3(0.3 * t, 0.6 * t, 0.0));
+  sum += texture(uShadowMap, s);
+  return mix(1.0, sum * 0.2, info.z);
 }
+float sunShadow2(vec3 rel, vec3 N, vec3 Ld, bool many) {
+  float e1, e2;
+  float s1 = shadowIn(uShadowMat, uShadowInfo, 0.0, rel, N, Ld, many, e1);
+  if (e1 >= 1.0) return s1;
+  float s2 = shadowIn(uShadowMat2, uShadowInfo2, 0.5, rel, N, Ld, false, e2);
+  return mix(mix(1.0, s2, e2), s1, e1);
+}
+float sunShadow(vec3 rel, vec3 N, vec3 Ld) { return sunShadow2(rel, N, Ld, true); }
+// one lookup in each (the comparison sampler's own 2 x 2 filter), for leaves, which are speckled anyway
+float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) { return sunShadow2(rel, N, Ld, false); }
 #else
 float sunShadow(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
 float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
@@ -18915,7 +18946,7 @@ void main() {
     float w = clamp((dot(N, Ld) + 0.45) / 1.45, 0.0, 1.0);
     alb *= 0.8 + 0.4 * vAux;
     float sh = sunShadow(vRel, N, Ld);
-    col = alb * 1.55 * (sunE * (w + 0.18 * max(dot(-V, Ld), 0.0)) * (0.12 + 0.88 * sh) + uAmbIrr * (0.5 + 0.5 * max(dot(N, up), 0.0)));
+    col = alb * 1.55 * (sunE * (w + 0.18 * max(dot(-V, Ld), 0.0)) * (0.12 + 0.88 * sh) + uAmbIrr * (0.5 + 0.5 * max(dot(N, up), 0.0)) + uBounce * (0.5 - 0.5 * dot(N, up)));
     col += alb * 1.55 * headlamp(vRel, N);
   } else if (uKind > 2.5 && uKind < 3.5) {
     float sd; vec3 Ts = sunTrans(P, Ld, sd); sunE = uSunCol * Ts;
@@ -19860,7 +19891,7 @@ void main() {
 
   float ndl = max(dot(N, Ld), 0.0);
   float sh = sunShadow(vRel, N, Ld);
-  vec3 E = sunE0 * ndl * sh + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)) * occ;
+  vec3 E = sunE0 * ndl * sh + ambient(N, up) * occ;
   if (mat == 18 || mat == 19) {
     // inside a tunnel the daylight from the nearest portal (uv.x: metres to it along the tunnels) dies away within a few
     // tens of metres, and the lamps light the rest, day and night (less after dark, when eyes have adapted)
@@ -19936,9 +19967,27 @@ void main() {
     `
 attribute float aPart;
 attribute vec4 aInst;
+#ifdef FOLIAGE
+${SP_GLSL}
+#endif
+#ifdef SPLIT
+uniform vec2 uLod;
+#endif
 void main() {
-  float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+  #ifdef BOX
+    float keep = aPart > 1.5 ? 1.0 : 0.0;
+  #else
+    float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+  #endif
   vec3 pos = position;
+  #ifdef SPLIT
+    float dc = length((modelMatrix * vec4(instanceMatrix[3].xyz, 1.0)).xyz);
+    if (dc <= mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31))) keep = 0.0;
+    if (aPart < 1.5) { float c = aPart < 0.5 ? 8.3 : 8.9; pos.xz *= 0.88; pos.y = c + (pos.y - c) * 0.88; }
+  #endif
+  #ifdef FOLIAGE
+    pos *= SP_FIT[int(aInst.z + 0.5)];
+  #endif
   #ifdef TRAIN
     pos.z = clamp(pos.z, aInst.z, aInst.w);         // (a train going into a tunnel: trains.js)
   #endif
@@ -20047,7 +20096,7 @@ vec3 bark(float a, float s) {
   float ridge = abs(sin(3.14159 * (a * k + w)));
   float plate = vnoise(q * 3.0 + vec2(5.0, s * 1.6));
   float f = smoothstep(0.2, 0.75, ridge) * (0.7 + 0.3 * plate);
-  return vec3(0.42 + 0.58 * f) * (0.9 + 0.2 * vnoise(q * 6.0 + vec2(1.0, s * 5.0)));
+  return vec3(0.55 + 0.45 * f) * (0.9 + 0.2 * vnoise(q * 6.0 + vec2(1.0, s * 5.0)));
 }
 void main() {
   vec3 P = uCam + vRel;
@@ -20083,10 +20132,10 @@ void main() {
     float tr = pow(max(dot(-V, Ld), 0.0), 4.0) * (0.30 + 0.25 * (1.0 - max(ndl, 0.0)));
     vec3 Hh = normalize(Ld + V);
     float spec = pow(max(dot(N, Hh), 0.0), 24.0) * 0.022;
-    col = alb * 1.55 * (sunE * (w * (0.65 + 0.35 * w) + tr * vec3(1.0, 1.12, 0.55)) * (0.10 + 0.90 * sh) + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)));
+    col = alb * 1.55 * (sunE * (w * (0.65 + 0.35 * w) + tr * vec3(1.0, 1.12, 0.55)) * (0.10 + 0.90 * sh) + ambient(N, up));
     col += sunE * spec * sh;
   } else {
-    col = alb * 1.55 * (sunE * max(dot(N, Ld), 0.0) * sh + uAmbIrr * (0.55 + 0.45 * max(dot(N, up), 0.0)));
+    col = alb * 1.55 * (sunE * max(dot(N, Ld), 0.0) * sh + ambient(N, up));
   }
   col += alb * 1.55 * headlamp(vRel, N);
   gl_FragColor = vec4(col * vT + vS, cov);
@@ -20143,22 +20192,6 @@ void main() {
   #include <colorspace_fragment>
 }`
   );
-
-  // src/species.js
-  var SPECIES = [
-    { name: "maple", H: 14, R: 4.3, conifer: 0, leaf: [0.045, 0.09, 0.026], bark: [0.165, 0.155, 0.14] },
-    { name: "oak", H: 15.5, R: 5.2, conifer: 0, leaf: [0.04, 0.077, 0.024], bark: [0.125, 0.115, 0.1] },
-    { name: "birch", H: 12, R: 3.1, conifer: 0, leaf: [0.056, 0.1, 0.029], bark: [0.62, 0.6, 0.55] },
-    { name: "shade tree", H: 13, R: 6.2, conifer: 0, leaf: [0.044, 0.088, 0.026], bark: [0.14, 0.13, 0.115] },
-    { name: "white pine", H: 21, R: 5.4, conifer: 1, leaf: [0.024, 0.054, 0.03], bark: [0.105, 0.09, 0.078] },
-    { name: "hemlock", H: 15, R: 3.9, conifer: 1, leaf: [0.016, 0.04, 0.02], bark: [0.12, 0.085, 0.066] },
-    { name: "pitch pine", H: 11, R: 3.9, conifer: 1, leaf: [0.029, 0.052, 0.024], bark: [0.135, 0.1, 0.078] },
-    { name: "shrub", H: 2.4, R: 1.5, conifer: 0, leaf: [0.04, 0.083, 0.024], bark: [0.11, 0.095, 0.08] }
-  ];
-  var PLAIN_H = [12.8, 14.4];
-  var PLAIN_R = [3.9, 2.9];
-  var PLAIN_LEAF = [[0.043, 0.086, 0.025], [0.019, 0.045, 0.022]];
-  var SHRUB = 7;
 
   // src/trees.js
   var TAU = Math.PI * 2;
@@ -21407,6 +21440,29 @@ void main() {
         return out;
       };
       this.treeGeo = plainTreeGeometry();
+      {
+        const P2 = [], parts = [], idx = [];
+        const add2 = (g2, part2, f) => {
+          const o = P2.length / 3, a = g2.attributes.position;
+          for (let i = 0; i < a.count; i++) {
+            const v = f(a.getX(i), a.getY(i), a.getZ(i));
+            P2.push(v[0], v[1], v[2]);
+            parts.push(part2);
+          }
+          const ix2 = g2.index;
+          if (ix2) for (let i = 0; i < ix2.count; i++) idx.push(o + ix2.getX(i));
+          else for (let i = 0; i < a.count; i++) idx.push(o + i);
+          g2.dispose();
+        };
+        add2(new Go(1, 0), 0, (x, y, z) => [x * 3.6, 8.3 + y * 4.3, z * 3.6]);
+        add2(new Cr(2.7, 11, 6, 1, false), 1, (x, y, z) => [x, 8.9 + y, z]);
+        add2(new Rr(0.25, 0.3, 4.4, 4, 1, true), 2, (x, y, z) => [x, 2 + y, z]);
+        const g = new Yt();
+        g.setAttribute("position", new me(new Float32Array(P2), 3));
+        g.setAttribute("aPart", new me(new Float32Array(parts), 1));
+        g.setIndex(idx);
+        this.treeShadowGeo = g;
+      }
       this.spFit = SPECIES.map((s29) => new C(s29.R / PLAIN_R[s29.conifer], s29.H / PLAIN_H[s29.conifer], s29.R / PLAIN_R[s29.conifer]));
       this.clumpGeo = canopyGeometry();
       const box = new qi(1, 1, 1);
@@ -21971,6 +22027,12 @@ void main() {
         if (t.state !== "ready") continue;
         if (this.frame - t.last > 200 || t.redoAt && performance.now() > t.redoAt) {
           if (t.mesh) {
+            if (t.geoShadow) {
+              const g2 = t.geoShadow;
+              for (const name of Object.keys(g2.attributes)) if (name !== "aInst") g2.deleteAttribute(name);
+              g2.setIndex(null);
+              g2.dispose();
+            }
             for (const m of [t.mesh].concat(t.nm || [])) {
               this.scene.remove(m);
               if (m.dispose) m.dispose();
@@ -22345,12 +22407,18 @@ void main() {
         t.near = false;
         t.nm = null;
         t.nTrees = st >= 9 ? nTrees : n;
+        const gs2 = new Yt();
+        gs2.setIndex(this.treeShadowGeo.index);
+        for (const name in this.treeShadowGeo.attributes) gs2.setAttribute(name, this.treeShadowGeo.attributes[name]);
+        gs2.setAttribute("aInst", ia2);
+        t.geoShadow = gs2;
       }
       const pad = vegetation ? vegetationPad : m.kind === "poles" || m.kind === "cars" ? 14 : m.kind === "signs" ? 22 : m.kind === "power" ? 45 : 110;
       mid.multiplyScalar(1 / n);
       for (let i = 0; i < n; i++) rad = Math.max(rad, Math.hypot(lp2[i * 3] - mid.x, lp2[i * 3 + 1] - mid.y, lp2[i * 3 + 2] - mid.z));
       mesh.boundingSphere = new Ie(mid.clone(), rad + pad);
       mesh.geometry.boundingSphere = new Ie(new C(0, 8, 0), 40);
+      if (t.geoShadow) t.geoShadow.boundingSphere = mesh.geometry.boundingSphere;
       mid.applyMatrix4(basis);
       t.mid = [m.center[0] + mid.x, m.center[1] + mid.y, m.center[2] + mid.z];
       mesh.frustumCulled = true;
@@ -22366,11 +22434,6 @@ void main() {
       this.scene.add(mesh);
     }
   };
-  var v3 = (a) => `vec3(${a.map((x) => x.toFixed(4)).join(", ")})`;
-  var SP_FIT = [[1, 1, 1]].concat(SPECIES.map((s29) => [s29.R / PLAIN_R[s29.conifer], s29.H / PLAIN_H[s29.conifer], s29.R / PLAIN_R[s29.conifer]]));
-  var SP_TINT = [[1, 1, 1]].concat(SPECIES.map((s29) => s29.leaf.map((x, k) => x / PLAIN_LEAF[s29.conifer][k])));
-  var SP_GLSL = `const vec3 SP_FIT[${SP_FIT.length}] = vec3[${SP_FIT.length}](${SP_FIT.map(v3).join(", ")});
-const vec3 SP_TINT[${SP_TINT.length}] = vec3[${SP_TINT.length}](${SP_TINT.map(v3).join(", ")});`;
   var SCATTER_VS = (
     /* glsl */
     `
@@ -22624,6 +22687,10 @@ void main() {
       U.uAmbIrr.value.set(0.05 * dn2 + 35e-4, 0.066 * dn2 + 45e-4, 0.098 * dn2 + 75e-4);
       U.uAmbRad.value.set(0.04 * dn2 + 12e-4, 0.052 * dn2 + 16e-4, 0.075 * dn2 + 3e-3);
       const here = this.lampAt(camC[0], Math.hypot(camC[1], camC[2]));
+      {
+        const e = Math.max(Math.sin(here.elev), 0), A = U.uAmbIrr.value, B = [0.055, 0.06, 0.04];
+        U.uBounce.value.set((col[0] * here.T[0] * e + A.x) * B[0] * dn2, (col[1] * here.T[1] * e + A.y) * B[1] * dn2, (col[2] * here.T[2] * e + A.z) * B[2] * dn2);
+      }
       const lum = (day ? k : 0.03 * k) * (0.3 * here.T[0] + 0.5 * here.T[1] + 0.2 * here.T[2]);
       U.uSkyRefl.value.set(0.16 * lum + 4e-3, 0.24 * lum + 5e-3, 0.36 * lum + 9e-3);
       this.sun.material.uniforms.uSunSize.value = size;
@@ -28455,6 +28522,7 @@ void main() {
         uHaze: { value: 1 },
         uTime: { value: 0 },
         uLod: { value: new et(85, 115) },
+        uBounce: { value: new C() },
         uSdf: { value: tex(sdf.data, sdf.w, sdf.h, Rl) },
         uCover: { value: tex(png.cover.data, png.cover.w, png.cover.h, on) },
         uAux: { value: tex(aux2, png.aux.w, png.aux.h, bi) },
@@ -28641,19 +28709,27 @@ void main() {
       this.U.uShadowMap = { value: null };
       this.U.uShadowMat = { value: new Ht() };
       this.U.uShadowInfo = { value: new C(0, 0, 0) };
+      this.U.uShadowMat2 = { value: new Ht() };
+      this.U.uShadowInfo2 = { value: new C(0, 0, 0) };
       this.shadowOn = S2 > 0;
       if (!S2) return;
-      const dt = new ei(S2, S2);
+      const dt = new ei(2 * S2, S2);
       dt.type = xn;
       dt.compareFunction = ku;
       dt.magFilter = dt.minFilter = ye;
-      this.shadowRT = new je(S2, S2, { depthTexture: dt, depthBuffer: true, stencilBuffer: false, generateMipmaps: false });
+      this.shadowRT = new je(2 * S2, S2, { depthTexture: dt, depthBuffer: true, stencilBuffer: false, generateMipmaps: false });
+      this.shadowS = S2;
       const Rs2 = this.shadowR = S2 >= 4096 ? 210 : 170;
       this.shadowD = 700;
       const cam = this.shadowCam = new Gs(-Rs2, Rs2, Rs2, -Rs2, 1, this.shadowD * 2);
       cam.layers.set(1);
+      const Rs22 = this.shadowR2 = S2 >= 4096 ? 520 : 420;
+      this.shadowD2 = 1500;
+      const cam2 = this.shadowCam2 = new Gs(-Rs22, Rs22, Rs22, -Rs22, 1, this.shadowD2 * 2);
+      cam2.layers.set(1);
       this.U.uShadowMap.value = dt;
       this.U.uShadowInfo.value.set(1 / S2, Rs2, 0.8);
+      this.U.uShadowInfo2.value.set(1 / S2, Rs22, 0);
       const mk = (vs2) => new Rn({ vertexShader: vs2, fragmentShader: DEPTH_FS, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
       this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
@@ -28673,22 +28749,42 @@ void main() {
       });
       this.depthMat.leaves = { hi: mkLeaves("LOD_HI"), mid: mkLeaves("LOD_MID") };
       this.depthMat.under = this.depthMat.leaves.hi;
+      const mkD = (defines) => new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
+      this.depthMat.crowns = mkD({ FOLIAGE: 1 });
+      this.depthMat.boxes = mkD({ BOX: 1 });
+      this.depthMat.proxies = mkD({ FOLIAGE: 1, SPLIT: 1 });
+      this.depthMat.proxies.uniforms = { uLod: this.U.uLod };
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
       this.renderer.clear();
       this.renderer.setRenderTarget(null);
       this.shadowBias = new Ht().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
-      this.sv = { X: new C(), Y: new C(), Z: new C(), F: new C(), up: new C(), g: new C(), M: new Ht() };
+      this.sv = { X: new C(), Y: new C(), Z: new C(), F: new C(), up: new C(), g: new C(), M: new Ht(), T: new Ht() };
+      this.shadowM2 = new Ht();
+      this.shadowC2 = [0, 0, 0];
     }
+    // The near map every frame, the far one every other frame (it changes slowly, and it is only seen past the near one).
     renderShadow() {
       if (!this.shadowOn) return;
-      const U = this.U, p = this.player, Rs2 = this.shadowR, c = p.camC, v = this.sv;
+      const U = this.U, p = this.player;
       const agl = p.camMap[2] - this.groundUnderCam;
-      if (agl > Rs2 * 1.4) {
-        U.uShadowInfo.value.z = 0;
-        return;
+      this.shadowTick = (this.shadowTick || 0) + 1;
+      const near2 = agl <= this.shadowR * 1.4, far = agl <= this.shadowR2 * 1.4;
+      U.uShadowInfo.value.z = near2 ? 0.8 : 0;
+      U.uShadowInfo2.value.z = far ? 0.8 : 0;
+      if (near2) this.shadowPass(0, agl);
+      if (far && (this.shadowTick % 2 === 0 || !this.shadowFar)) {
+        this.shadowPass(1, agl);
+        this.shadowFar = true;
+      } else if (far) {
+        const c = p.camC, c02 = this.shadowC2;
+        U.uShadowMat2.value.copy(this.shadowM2).multiply(this.sv.T.makeTranslation(c[0] - c02[0], c[1] - c02[1], c[2] - c02[2]));
       }
-      U.uShadowInfo.value.z = 0.8;
+      if (!far) this.shadowFar = false;
+    }
+    shadowPass(k, agl) {
+      const U = this.U, p = this.player, c = p.camC, v = this.sv, S2 = this.shadowS;
+      const Rs2 = k ? this.shadowR2 : this.shadowR, cam = k ? this.shadowCam2 : this.shadowCam, D = k ? this.shadowD2 : this.shadowD;
       const sp = U.uSunPos.value;
       v.Z.set(sp.x - c[0], sp.y - c[1], sp.z - c[2]).normalize();
       const e = [0, 0, 0], n = [0, 0, 0], u = [0, 0, 0];
@@ -28703,33 +28799,49 @@ void main() {
       if (Math.abs(v.Z.x) > 0.93) v.X.copy(v.up);
       v.X.cross(v.Z).normalize();
       v.Y.crossVectors(v.Z, v.X);
-      const tex = 2 * Rs2 / this.shadowRT.width;
+      const tex = 2 * Rs2 / S2;
       const ax2 = (c[0] + v.F.x) * v.X.x + (c[1] + v.F.y) * v.X.y + (c[2] + v.F.z) * v.X.z, ay2 = (c[0] + v.F.x) * v.Y.x + (c[1] + v.F.y) * v.Y.y + (c[2] + v.F.z) * v.Y.z;
       v.F.addScaledVector(v.X, Math.round(ax2 / tex) * tex - ax2).addScaledVector(v.Y, Math.round(ay2 / tex) * tex - ay2);
-      const cam = this.shadowCam;
       v.M.makeBasis(v.X, v.Y, v.Z);
       cam.quaternion.setFromRotationMatrix(v.M);
-      cam.position.copy(v.F).addScaledVector(v.Z, this.shadowD);
+      cam.position.copy(v.F).addScaledVector(v.Z, D);
       cam.updateMatrixWorld(true);
-      U.uShadowMat.value.copy(this.shadowBias).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+      (k ? U.uShadowMat2 : U.uShadowMat).value.copy(this.shadowBias).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+      if (k) {
+        this.shadowM2.copy(U.uShadowMat2.value);
+        this.shadowC2[0] = c[0];
+        this.shadowC2[1] = c[1];
+        this.shadowC2[2] = c[2];
+      }
       const sw = this.shadowSwap;
       sw.length = 0;
-      const reach = Rs2 * 1.45;
+      const shown = this.shadowShown || (this.shadowShown = []);
+      shown.length = 0;
+      const geos = this.shadowGeos || (this.shadowGeos = []);
+      geos.length = 0;
+      const reach = Rs2 * 1.45, split = this.shadowSplit !== false;
       for (const t of this.terrain.visScatter) {
         const m = t.mesh;
-        const casts = (t.kind === "houses" || t.kind === "decks" || t.kind === "trees" || t.kind === "under" || t.kind === "poles" || t.kind === "cars" || t.kind === "rails") && Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) <= reach + t.rad;
+        const kind = t.kind, inReach = Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) <= reach + t.rad;
+        const casts = inReach && (k ? kind === "trees" || kind === "buildings" || kind === "decks" : kind === "houses" || kind === "decks" || kind === "trees" || kind === "under" || kind === "poles" || kind === "cars" || kind === "rails");
         if (t.near && t.nm) {
-          m.layers.disable(1);
           for (const nm2 of t.nm) {
-            if (!casts || !nm2.userData.want) {
+            const lod = nm2.userData.lod;
+            if (k || !casts || !nm2.userData.want || split && lod !== "hi") {
               nm2.layers.disable(1);
               continue;
             }
             nm2.layers.enable(1);
             sw.push(nm2, nm2.material);
-            nm2.material = this.depthMat.leaves[nm2.userData.lod];
+            nm2.material = this.depthMat.leaves[lod];
           }
-          continue;
+          if (!casts || !k && !split) {
+            m.layers.disable(1);
+            continue;
+          }
+          shown.push(m, m.count);
+          m.visible = true;
+          m.count = t.nTrees;
         }
         if (!casts) {
           m.layers.disable(1);
@@ -28737,35 +28849,46 @@ void main() {
         }
         m.layers.enable(1);
         sw.push(m, m.material);
-        m.material = this.depthMat[t.kind];
+        m.material = kind === "trees" ? k ? this.depthMat.crowns : split ? this.depthMat.proxies : this.depthMat.trees : k && kind === "buildings" ? this.depthMat.boxes : this.depthMat[kind];
+        if (kind === "trees" && t.geoShadow && (k || split)) {
+          geos.push(m, m.geometry);
+          m.geometry = t.geoShadow;
+        }
       }
-      const car = p.mesh;
-      if (car.visible) {
+      const car = p.mesh, tm2 = this.traffic && this.traffic.mesh;
+      if (car.visible && !k) {
         car.layers.enable(1);
         sw.push(car, car.material);
         car.material = this.depthMat.plain;
       } else car.layers.disable(1);
-      const tm2 = this.traffic && this.traffic.mesh;
       if (tm2) {
-        if (tm2.visible) {
+        if (tm2.visible && !k) {
           tm2.layers.enable(1);
           sw.push(tm2, tm2.material);
           tm2.material = this.depthMat.cars;
         } else tm2.layers.disable(1);
       }
       if (this.trains) for (const m of this.trains.meshes) {
-        if (m.visible) {
+        if (m.visible && !k) {
           m.layers.enable(1);
           sw.push(m, m.material);
           m.material = this.depthMat.trains;
         } else m.layers.disable(1);
       }
-      const r = this.renderer;
-      r.setRenderTarget(this.shadowRT);
+      const r = this.renderer, rt = this.shadowRT;
+      rt.viewport.set(k * S2, 0, S2, S2);
+      rt.scissor.set(k * S2, 0, S2, S2);
+      rt.scissorTest = true;
+      r.setRenderTarget(rt);
       r.clear();
       r.render(this.scene, cam);
       r.setRenderTarget(null);
       for (let i = 0; i < sw.length; i += 2) sw[i].material = sw[i + 1];
+      for (let i = 0; i < shown.length; i += 2) {
+        shown[i].visible = false;
+        shown[i].count = shown[i + 1];
+      }
+      for (let i = 0; i < geos.length; i += 2) geos[i].geometry = geos[i + 1];
     }
     // The Webster drive's own surface set (clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick) as one
     // texture array.  A one-texel stand-in (each set's mean colour) is in place at once; the images follow in the background.
@@ -29364,7 +29487,12 @@ void main() {
         U.uTime.value = this.time;
       }
       const lum = this.sky.update(this.paused && !this.title ? 0 : dt, camC);
-      const target = clamp2(1.25 / (Math.pow(lum, 0.62) + 0.14), 0.9, 8);
+      let target = clamp2(1.25 / (Math.pow(lum, 0.62) + 0.14), 0.9, 8);
+      const cm2 = p.camMap, above = cm2[2] - this.groundUnderCam;
+      if (this.sky.dayness > 0 && above < 22) {
+        const woods = this.world.coverBilinear(cm2[0], cm2[1], 1), road = this.world.nearestRoad(cm2[0], cm2[1]);
+        target *= 1 + 0.8 * this.sky.dayness * smoothstep(0.3, 0.85, woods) * (1 - smoothstep(8, 22, above)) * smoothstep(5, 18, road);
+      }
       this.exposure += (target - this.exposure) * Math.min(1, dt * 1.6);
       this.renderer.toneMappingExposure = this.exposure;
       this.terrain.update(camC);
