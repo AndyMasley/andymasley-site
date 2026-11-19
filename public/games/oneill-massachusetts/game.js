@@ -21361,7 +21361,7 @@ void main() {
 
   // src/terrain.js
   var tmp = new Float64Array(3);
-  var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "rails", "pwires"]);
+  var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "kerbs", "rails", "pwires"]);
   var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
     const N1 = N + 1, base = N1 * N1, idx = [];
@@ -22351,7 +22351,7 @@ void main() {
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
       if (this.leafR) kinds.push(["under", 9, (q.leafHiR || 100) * 1.15], ["grass", 10, 44], ["corn", 9, 84]);
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
-      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
+      if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["kerbs", 8, Math.min(this.signR, 160)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
       for (const [kind, level, rad] of kinds) {
         if (alt > rad * 1.2) continue;
@@ -22573,7 +22573,7 @@ void main() {
       }
       const n = m.data.length / m.stride;
       if (!n) return;
-      if (m.kind === "paint" || m.kind === "gpaint" || m.kind === "streets" || m.kind === "rails") {
+      if (m.kind === "paint" || m.kind === "gpaint" || m.kind === "streets" || m.kind === "kerbs" || m.kind === "rails") {
         const nv2 = m.data.length / 9, pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3);
         const mid2 = new C();
         let rad2 = 0;
