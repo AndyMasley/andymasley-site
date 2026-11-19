@@ -1158,7 +1158,7 @@
     o.hw = hw;
     return o;
   }
-  function deckOwnerAt(reg, lx, ly, z, ri, thi, oi, dz, inset) {
+  function deckOwnerAt(reg, lx, ly, z, ri, thi, oi, dz, inset2) {
     const gw = reg.gw, cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
     if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return -1;
     const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rCls = reg.rCls;
@@ -1171,7 +1171,7 @@
       if (l2 < 1e-6) continue;
       const t = ((lx - ax) * dx + (ly - ay) * dy) / l2;
       if (t < 0 || t > 1) continue;
-      const ex = lx - ax - dx * t, ey = ly - ay - dy * t, w = rHw[rj] - inset;
+      const ex = lx - ax - dx * t, ey = ly - ay - dy * t, w = rHw[rj] - inset2;
       if (w <= 0 || ex * ex + ey * ey >= w * w) continue;
       const zj = pz[pi] + (pz[pi + 1] - pz[pi]) * t;
       if (Math.abs(zj - z) >= dz) continue;
@@ -10162,6 +10162,293 @@
     return new Float32Array(out);
   }
 
+  // src/islands.js
+  var KERB_H = 0.15;
+  var APRON_H = 0.06;
+  var TOP_W = 0.15;
+  var BANK_W = 1;
+  var STEP2 = 1.5;
+  var COL2 = {
+    kerb: [0.25, 0.245, 0.24],
+    conc: [0.27, 0.262, 0.248],
+    apron: [0.3, 0.276, 0.255],
+    grass: [0.075, 0.14, 0.035],
+    paint: [0.78, 0.78, 0.74]
+  };
+  var ISL = [];
+  var YLD = [];
+  function setRoundabouts(j) {
+    ISL = [];
+    YLD = [];
+    for (const r of j && j.isl || []) {
+      const P2 = [[r[3], r[4]]];
+      let x = Math.round(r[3] * 100), y = Math.round(r[4] * 100);
+      for (let i = 5; i + 1 < r.length && typeof r[i] === "number"; i += 2) {
+        x += r[i];
+        y += r[i + 1];
+        P2.push([x / 100, y / 100]);
+      }
+      const last = r[r.length - 1];
+      let col = last && typeof last === "object" && !Array.isArray(last) && last.c ? last.c : null;
+      if (col) {
+        const m = (col[0] + col[1] + col[2]) / 3;
+        col = col.map((v) => m * Math.min(1.18, Math.max(0.85, v / m)));
+      }
+      if (P2.length < 3) continue;
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, cx = 0, cy = 0;
+      for (const [px, py] of P2) {
+        x0 = Math.min(x0, px);
+        x1 = Math.max(x1, px);
+        y0 = Math.min(y0, py);
+        y1 = Math.max(y1, py);
+        cx += px;
+        cy += py;
+      }
+      const Pd = clean(r[0] !== 2 ? hullIfRound(P2) : P2, 0.5);
+      ISL.push({ kind: r[0], apron: r[1] / 10, surf: r[2], col, P: Pd, box: [x0, y0, x1, y1], cx: cx / P2.length, cy: cy / P2.length });
+    }
+    for (const y of j && j.yld || []) YLD.push(y);
+  }
+  var polyArea2 = (P2) => {
+    let s = 0;
+    for (let i = 0, j = P2.length - 1; i < P2.length; j = i++) s += (P2[j][0] - P2[i][0]) * (P2[j][1] + P2[i][1]);
+    return s / 2;
+  };
+  function clean(P2, d) {
+    const out = [P2[0]];
+    for (let i = 1; i < P2.length; i++) {
+      const q = out[out.length - 1];
+      if (Math.hypot(P2[i][0] - q[0], P2[i][1] - q[1]) >= d) out.push(P2[i]);
+    }
+    while (out.length > 3 && Math.hypot(out[0][0] - out[out.length - 1][0], out[0][1] - out[out.length - 1][1]) < d) out.pop();
+    return out.length >= 3 ? out : P2;
+  }
+  function convex(P2) {
+    for (let i = 0; i < P2.length; i++) {
+      const a = P2[i], b = P2[(i + 1) % P2.length], c = P2[(i + 2) % P2.length];
+      if ((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) < -1e-9) return false;
+    }
+    return true;
+  }
+  function hullIfRound(P2) {
+    const Q = P2.map((p) => p.slice()).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const p of Q) {
+      while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+      lo.push(p);
+    }
+    for (let i = Q.length - 1; i >= 0; i--) {
+      const p = Q[i];
+      while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop();
+      up.push(p);
+    }
+    const H = lo.slice(0, -1).concat(up.slice(0, -1));
+    return H.length >= 3 && polyArea2(H) <= polyArea2(P2) * 1.04 ? H : P2;
+  }
+  function inset(P2, d) {
+    const n = P2.length, out = [];
+    for (let i = 0; i < n; i++) {
+      const a = P2[(i + n - 1) % n], b = P2[i], c = P2[(i + 1) % n];
+      let ux = b[0] - a[0], uy = b[1] - a[1], vx = c[0] - b[0], vy = c[1] - b[1];
+      const ul = Math.hypot(ux, uy) || 1, vl = Math.hypot(vx, vy) || 1;
+      ux /= ul;
+      uy /= ul;
+      vx /= vl;
+      vy /= vl;
+      let nx = -uy - vy, ny = ux + vx;
+      const nl = Math.hypot(nx, ny);
+      if (nl < 1e-6) {
+        nx = -uy;
+        ny = ux;
+      } else {
+        nx /= nl;
+        ny /= nl;
+      }
+      const cosh = Math.max(0.5, nx * -uy + ny * ux);
+      out.push([b[0] + nx * d / cosh, b[1] + ny * d / cosh]);
+    }
+    return out;
+  }
+  function earcut(P2) {
+    const idx = P2.map((_, i) => i), tris = [];
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const inTri = (p, a, b, c) => cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
+    let guard = 0;
+    while (idx.length > 3 && guard++ < 1e4) {
+      let cut = false;
+      for (let k = 0; k < idx.length; k++) {
+        const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
+        const a = P2[i0], b = P2[i1], c = P2[i2];
+        if (cross(a, b, c) <= 1e-9) continue;
+        let ok = true;
+        for (const j of idx) {
+          if (j === i0 || j === i1 || j === i2) continue;
+          if (inTri(P2[j], a, b, c)) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        tris.push([i0, i1, i2]);
+        idx.splice(k, 1);
+        cut = true;
+        break;
+      }
+      if (!cut) break;
+    }
+    if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
+    return tris;
+  }
+  function islandTris(world2, mx0, my0, s, cx, cy, cz, lc) {
+    if (!ISL.length && !YLD.length) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), A3 = new Float64Array(3);
+    const hc = /* @__PURE__ */ new Map();
+    const ground = (x, y) => {
+      const key2 = Math.round(x * 20) * 1e7 + Math.round(y * 20);
+      let h = hc.get(key2);
+      if (h === void 0) {
+        h = world2.groundH(x, y, true);
+        hc.set(key2, h);
+      }
+      return h;
+    };
+    const inTile = (x, y) => x >= mx0 && x < mx0 + s && y >= my0 && y < my0 + s;
+    const tri4 = (a, b, c, col, want) => {
+      const P2 = [a, b, c].map(([x, y, h]) => {
+        cyl(x, y, h, p32);
+        return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
+      });
+      let nx, ny, nz;
+      if (want) [nx, ny, nz] = want;
+      else {
+        const [x, y, h] = a;
+        cyl(x, y, h, p32);
+        cyl(x, y, h + 1, u3);
+        nx = u3[0] - p32[0];
+        ny = u3[1] - p32[1];
+        nz = u3[2] - p32[2];
+      }
+      const e1 = [P2[1][0] - P2[0][0], P2[1][1] - P2[0][1], P2[1][2] - P2[0][2]], e2 = [P2[2][0] - P2[0][0], P2[2][1] - P2[0][1], P2[2][2] - P2[0][2]];
+      const fx = e1[1] * e2[2] - e1[2] * e2[1], fy = e1[2] * e2[0] - e1[0] * e2[2], fz = e1[0] * e2[1] - e1[1] * e2[0];
+      const order = fx * nx + fy * ny + fz * nz >= 0 ? [0, 1, 2] : [0, 2, 1];
+      for (const i of order) out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, col[0], col[1], col[2]);
+    };
+    const flat2 = (a, b, c, col, h, depth = 0) => {
+      const lab = Math.hypot(a[0] - b[0], a[1] - b[1]), lbc = Math.hypot(b[0] - c[0], b[1] - c[1]), lca = Math.hypot(c[0] - a[0], c[1] - a[1]);
+      const l = Math.max(lab, lbc, lca);
+      if (l > 3 && depth < 12) {
+        const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+        if (l === lab) {
+          const ab = m(a, b);
+          flat2(a, ab, c, col, h, depth + 1);
+          flat2(ab, b, c, col, h, depth + 1);
+        } else if (l === lbc) {
+          const bc = m(b, c);
+          flat2(a, b, bc, col, h, depth + 1);
+          flat2(a, bc, c, col, h, depth + 1);
+        } else {
+          const ca = m(c, a);
+          flat2(a, b, ca, col, h, depth + 1);
+          flat2(ca, b, c, col, h, depth + 1);
+        }
+        return;
+      }
+      tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
+    };
+    const band = (a0, a1, b0, b1, ha, hb, col) => {
+      const A0 = [a0[0], a0[1], ground(a0[0], a0[1]) + ha], A1 = [a1[0], a1[1], ground(a1[0], a1[1]) + ha];
+      const B0 = [b0[0], b0[1], ground(b0[0], b0[1]) + hb], B1 = [b1[0], b1[1], ground(b1[0], b1[1]) + hb];
+      tri4(A0, A1, B1, col);
+      tri4(A0, B1, B0, col);
+    };
+    const face = (a, b, h0, h12, col) => {
+      const L2 = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (L2 < 0.01) return;
+      const wx = (b[1] - a[1]) / L2, wy = -(b[0] - a[0]) / L2;
+      const g0 = ground(a[0], a[1]), g1 = ground(b[0], b[1]);
+      cyl((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (g0 + g1) / 2, p32);
+      cyl((a[0] + b[0]) / 2 + wx, (a[1] + b[1]) / 2 + wy, (g0 + g1) / 2, A3);
+      const want = [A3[0] - p32[0], A3[1] - p32[1], A3[2] - p32[2]];
+      tri4([a[0], a[1], g0 + h12], [b[0], b[1], g1 + h0], [b[0], b[1], g1 + h12], col, want);
+      tri4([a[0], a[1], g0 + h12], [a[0], a[1], g0 + h0], [b[0], b[1], g1 + h0], col, want);
+    };
+    const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    for (const I of ISL) {
+      if (I.box[2] < mx0 - 1 || I.box[0] > mx0 + s + 1 || I.box[3] < my0 - 1 || I.box[1] > my0 + s + 1) continue;
+      const P2 = I.P, n = P2.length;
+      if (I.kind === 1 && I.grassTop === void 0 && lc) {
+        let nP = 0, nK = 0;
+        for (let q = 0; q < 24; q++) {
+          const t = (q + 0.5) / 24, a = P2[Math.floor(t * n)], f = 0.25 + 0.5 * (q * 7 % 24) / 24;
+          const v = lc(I.cx + (a[0] - I.cx) * f, I.cy + (a[1] - I.cy) * f);
+          if (v < 0) continue;
+          nK++;
+          if (v === 1 || v === 14) nP++;
+        }
+        if (nK >= 12) I.grassTop = nP >= nK / 2;
+      }
+      const flatTop = I.kind !== 1 || I.grassTop === true;
+      const base = I.kind === 1 && I.apron > 0 ? APRON_H : 0;
+      const Q = I.kind === 1 && I.apron > 0 ? inset(P2, I.apron) : P2;
+      const T1 = inset(Q, TOP_W), T2 = I.kind === 1 ? inset(Q, TOP_W + BANK_W) : null;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const L2 = Math.hypot(P2[j][0] - P2[i][0], P2[j][1] - P2[i][1]), m = Math.max(1, Math.ceil(L2 / STEP2));
+        for (let k = 0; k < m; k++) {
+          const t0 = k / m, t1 = (k + 1) / m;
+          const a = lerp(P2[i], P2[j], t0), b = lerp(P2[i], P2[j], t1);
+          if (!inTile((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)) continue;
+          const qa = lerp(Q[i], Q[j], t0), qb = lerp(Q[i], Q[j], t1);
+          if (base > 0) {
+            face(a, b, -0.03, base, COL2.kerb);
+            band(a, b, qa, qb, base, base, I.col || COL2.apron);
+            face(qa, qb, base, base + KERB_H, COL2.kerb);
+          } else face(a, b, -0.03, KERB_H, COL2.kerb);
+          const top = base + KERB_H;
+          const ta = lerp(T1[i], T1[j], t0), tb = lerp(T1[i], T1[j], t1);
+          band(qa, qb, ta, tb, top, top, COL2.kerb);
+          if (T2 && !flatTop) {
+            const ua = lerp(T2[i], T2[j], t0), ub = lerp(T2[i], T2[j], t1);
+            band(ta, tb, ua, ub, top, -0.05, COL2.grass);
+          }
+        }
+      }
+      if (flatTop && inTile(I.cx, I.cy)) {
+        const col = I.kind !== 1 && I.surf ? I.col || COL2.conc : COL2.grass;
+        const h = (x, y) => ground(x, y) + base + KERB_H;
+        let tris = convex(T1) ? null : earcut(T1);
+        if (!tris || tris.length < T1.length - 2) {
+          let mx = 0, my = 0;
+          for (const p of T1) {
+            mx += p[0];
+            my += p[1];
+          }
+          const M = [mx / T1.length, my / T1.length];
+          for (let i = 0; i < T1.length; i++) flat2(M, T1[i], T1[(i + 1) % T1.length], col, h);
+        } else for (const [i0, i1, i2] of tris) flat2(T1[i0], T1[i1], T1[i2], col, h);
+      }
+    }
+    for (const [x, y, ux, uy, from, to] of YLD) {
+      if (!inTile(x, y)) continue;
+      const zD = deckOwner(world2, x, y);
+      if (zD === null) {
+        world2.groundH(x, y, true);
+        if (world2.g.water) continue;
+      }
+      const h = (px, py) => surfaceH(world2, px, py, zD) + 0.017;
+      const nx = uy, ny = -ux, B = 0.5, G = 0.25, Hh = 0.75;
+      const k = Math.max(1, Math.floor((to - from + G) / (B + G)));
+      const t0 = (from + to) / 2 - (k * (B + G) - G) / 2;
+      for (let q = 0; q < k; q++) {
+        const ta = t0 + q * (B + G), tb = ta + B, tm = (ta + tb) / 2;
+        const a = [x + nx * ta, y + ny * ta], b = [x + nx * tb, y + ny * tb], c = [x + nx * tm - ux * Hh, y + ny * tm - uy * Hh];
+        tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], COL2.paint);
+      }
+    }
+    return new Float32Array(out);
+  }
+
   // src/species.js
   var SPECIES = [
     { name: "maple", H: 14, R: 4.3, conifer: 0, leaf: [0.045, 0.09, 0.026], bark: [0.165, 0.155, 0.14] },
@@ -10234,6 +10521,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var sidesReady = null;
   var shouldersReady = null;
   var piersReady = null;
+  var rbtReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -10333,6 +10621,11 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       const M = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M.set(+k, new Map(Object.entries(v).map(([ri, c]) => [+ri, c])));
       setSurf(M);
+    }).catch(() => {
+    }) : null;
+    const rbf = meta.files && meta.files.rbt;
+    rbtReady = rbf ? fetch(vurl("data/" + rbf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+      if (j) setRoundabouts(j);
     }).catch(() => {
     }) : null;
     const pf = meta.files && meta.files.piers;
@@ -11083,7 +11376,14 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       return;
     }
     if (kind === "streets") {
-      const arr2 = reg && reg.streets ? streetTris(world, reg, mx0, my0, s, cx, cy, cz, lcAt) : new Float32Array(0);
+      let arr2 = reg && reg.streets ? streetTris(world, reg, mx0, my0, s, cx, cy, cz, lcAt) : new Float32Array(0);
+      const ia = islandTris(world, mx0, my0, s, cx, cy, cz, lcAt);
+      if (ia.length) {
+        const both2 = new Float32Array(arr2.length + ia.length);
+        both2.set(arr2);
+        both2.set(ia, arr2.length);
+        arr2 = both2;
+      }
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
       return;
     }
@@ -11492,7 +11792,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           await Promise.all(prs);
         }
       }
-      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn") && lcPacks.size) {
+      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn" || m.kind === "streets") && lcPacks.size) {
         for (let tries = 0; tries < 4; tries++) {
           const pad = m.kind === "houses" ? 40 : 0, prs = lcPromises(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
           if (!prs.length) break;
@@ -11501,6 +11801,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
       if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
       if (m.type === "scatter" && m.kind === "decks" && piersReady) await piersReady;
+      if (m.type === "scatter" && m.kind === "streets" && rbtReady) await rbtReady;
       if (wallsReady) await wallsReady;
       if (liftedReady) await liftedReady;
       if (stationsReady) await stationsReady;
