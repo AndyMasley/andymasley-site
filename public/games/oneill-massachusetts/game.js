@@ -15189,6 +15189,20 @@ void main() {
     reg.wall = bflags & 2 ? new Uint16Array(buf.slice(wo, wo + nB * 2)) : null;
     const fo2 = wo + (bflags & 2 ? nB * 2 : 0);
     reg.fac = bflags & 4 ? new Uint16Array(buf.slice(fo2, fo2 + nB * 8)) : null;
+    reg.hf = null;
+    if (bflags & 8) {
+      const xo2 = fo2 + (bflags & 4 ? nB * 8 : 0), nF = dv2.getUint32(xo2, true);
+      const fb = new Uint32Array(nF), fp2 = new Uint32Array(nF), fk = new Uint8Array(nF), fl = new Uint8Array(nF);
+      let q = xo2 + 4;
+      for (let i = 0; i < nF; i++) {
+        fb[i] = dv2.getUint32(q, true);
+        fk[i] = dv2.getUint8(q + 4);
+        fl[i] = dv2.getUint8(q + 5);
+        fp2[i] = q + 6;
+        q += 6 + fl[i] + 3 & ~3;
+      }
+      reg.hf = { n: nF, b: fb, p: fp2, k: fk, len: fl, dv: dv2 };
+    }
     const gw = reg.gw = Math.ceil((RS3 + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill2) => {

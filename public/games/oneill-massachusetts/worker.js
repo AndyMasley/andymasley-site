@@ -452,6 +452,20 @@
     reg.wall = bflags & 2 ? new Uint16Array(buf.slice(wo, wo + nB2 * 2)) : null;
     const fo = wo + (bflags & 2 ? nB2 * 2 : 0);
     reg.fac = bflags & 4 ? new Uint16Array(buf.slice(fo, fo + nB2 * 8)) : null;
+    reg.hf = null;
+    if (bflags & 8) {
+      const xo = fo + (bflags & 4 ? nB2 * 8 : 0), nF = dv.getUint32(xo, true);
+      const fb = new Uint32Array(nF), fp = new Uint32Array(nF), fk = new Uint8Array(nF), fl = new Uint8Array(nF);
+      let q = xo + 4;
+      for (let i = 0; i < nF; i++) {
+        fb[i] = dv.getUint32(q, true);
+        fk[i] = dv.getUint8(q + 4);
+        fl[i] = dv.getUint8(q + 5);
+        fp[i] = q + 6;
+        q += 6 + fl[i] + 3 & ~3;
+      }
+      reg.hf = { n: nF, b: fb, p: fp, k: fk, len: fl, dv };
+    }
     const gw = reg.gw = Math.ceil((RS2 + 2 * RM) / RCELL);
     const counts = new Int32Array(gw * gw + 1);
     const visit = (fill) => {
@@ -3234,6 +3248,7 @@
     const a = w / 2, b = d / 2;
     return [[a, -b, a, b, 1, 0, d], [a, b, -a, b, 0, 1, w], [-a, b, -a, -b, -1, 0, d], [-a, -b, a, -b, 0, -1, w]];
   }
+  var isHome = (cls) => cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI;
   function bayWidth(cls) {
     return cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW ? 2.5 : cls >= CLS.APART && cls !== CLS.CHURCH && cls !== CLS.ROW ? 3.4 : 2.9;
   }
@@ -3436,11 +3451,92 @@
     }
     if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env);
   }
+  function porchAt(M, setM, p0u, p0v, tu, tv, nu, nv, a0, a1, dep, floorY, roofY, yb, stepAl, decks, fh) {
+    const pw = a1 - a0;
+    const wbox = (b0, b1, o0, o12, ya, yb2, which) => {
+      const us = [p0u + tu * b0 + nu * o0, p0u + tu * b1 + nu * o0, p0u + tu * b0 + nu * o12, p0u + tu * b1 + nu * o12];
+      const vs = [p0v + tv * b0 + nv * o0, p0v + tv * b1 + nv * o0, p0v + tv * b0 + nv * o12, p0v + tv * b1 + nv * o12];
+      M.box(Math.min(...us), Math.max(...us), ya, yb2, Math.min(...vs), Math.max(...vs), which);
+    };
+    const steps = stepAl === stepAl;
+    for (let lv = 0; lv < decks; lv++) {
+      const fy = floorY + lv * fh;
+      setM(MAT.DECK);
+      M.W[0] = pw;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+      wbox(a0, a1, 0, dep, lv === 0 ? yb : fy - 0.22, fy, 63);
+      setM(MAT.RAIL);
+      const rail = (q0, q1, n2) => {
+        const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
+        const i0 = M.v(q0[0], fy, q0[1], n2[0], 0, n2[1], 0, 0), i1 = M.v(q1[0], fy, q1[1], n2[0], 0, n2[1], ln, 0);
+        const i2 = M.v(q1[0], fy + 0.95, q1[1], n2[0], 0, n2[1], ln, 0.95), i3 = M.v(q0[0], fy + 0.95, q0[1], n2[0], 0, n2[1], 0, 0.95);
+        M.quad(i0, i1, i2, i3);
+      };
+      const P2 = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
+      const gap0 = lv === 0 && steps ? clamp2(stepAl - 0.75, a0, a1) : -1, gap1 = lv === 0 && steps ? clamp2(stepAl + 0.75, a0, a1) : -1;
+      if (lv === 0 && gap1 > gap0) {
+        if (gap0 - a0 > 0.4) rail(P2(a0, dep), P2(gap0, dep), [nu, nv]);
+        if (a1 - gap1 > 0.4) rail(P2(gap1, dep), P2(a1, dep), [nu, nv]);
+      } else rail(P2(a0, dep), P2(a1, dep), [nu, nv]);
+      rail(P2(a0, 0), P2(a0, dep), [-tu, -tv]);
+      rail(P2(a1, 0), P2(a1, dep), [tu, tv]);
+    }
+    setM(MAT.TRIM);
+    const np = Math.max(2, Math.round(pw / 2.6) + 1);
+    for (let i = 0; i < np; i++) {
+      const al = a0 + 0.09 + (pw - 0.18) * i / (np - 1);
+      wbox(al - 0.08, al + 0.08, dep - 0.18, dep - 0.02, floorY, roofY, 51);
+    }
+    setM(MAT.ROOF);
+    const o1 = dep + 0.28;
+    const q = (al, o, y) => [p0u + tu * al + nu * o, y, p0v + tv * al + nv * o];
+    const sl = Math.hypot(o1, 0.3), n = [nu * 0.3 / sl, o1 / sl, nv * 0.3 / sl];
+    M.face(q(a0 - 0.2, 0, roofY + 0.42), q(a1 + 0.2, 0, roofY + 0.42), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), n, [tu, 0, tv], [nu, 0, nv]);
+    setM(MAT.TRIM);
+    M.face(q(a0 - 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), [nu, 0, nv], [tu, 0, tv], [0, 1, 0]);
+    M.face(q(a0 - 0.2, 0, roofY - 0.08), q(a1 + 0.2, 0, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a0 - 0.2, o1, roofY - 0.08), [0, -1, 0], [tu, 0, tv], [nu, 0, nv]);
+    if (!steps) return dep;
+    setM(MAT.CONCRETE);
+    const st2 = Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19));
+    wbox(clamp2(stepAl - 0.7, a0, a1 - 1.4), clamp2(stepAl + 0.7, a0 + 1.4, a1), dep, dep + Math.min(st2, 6) * 0.28, yb, floorY - 0.19, 55);
+    return dep + Math.min(st2, 6) * 0.28;
+  }
+  function featsOf(reg, id) {
+    const F = reg && reg.hf;
+    if (!F || !F.n) return null;
+    let lo = 0, hi = F.n;
+    while (lo < hi) {
+      const m = lo + hi >> 1;
+      if (F.b[m] < id) lo = m + 1;
+      else hi = m;
+    }
+    if (lo >= F.n || F.b[lo] !== id) return null;
+    const out = [];
+    for (let i = lo; i < F.n && F.b[i] === id; i++) out.push([F.k[i], F.p[i], F.len[i]]);
+    return out;
+  }
+  function porchesOf(reg, id, P2, nv, front, cls, seed, tb) {
+    const fs = featsOf(reg, id);
+    if (!fs || front < 0) return null;
+    const dv = reg.hf.dv, out = [];
+    for (const [kind, o, n] of fs) {
+      if (kind !== 2 || out.length) continue;
+      const j = (front + 1) % nv, len = Math.hypot(P2[j * 3] - P2[front * 3], P2[j * 3 + 1] - P2[front * 3 + 1]);
+      if (len < 3) continue;
+      const type = n >= 1 ? dv.getUint8(o) & 3 : 0, multi = cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW;
+      const du = doorAt(len, cls, seed, tb), pw = multi || len < 9 ? len : clamp2(len * 0.45, 3, 6);
+      const a0 = clamp2(du - pw / 2, 0, len - pw);
+      out.push({ edge: front, a0, a1: a0 + pw, dep: type === 2 ? 2.1 : 1.9, decks: type === 2 ? 3 : 1, type, door: NaN });
+    }
+    return out.length ? out : null;
+  }
   function site(M, setM, wall2, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
     const [p0u, p0v, p1u, p1v, nu, nv, len] = wall2;
     const tu = (p1u - p0u) / len, tv = (p1v - p0v) / len;
-    const du = doorAt(len, cls, seed, M.T[3]);
+    const du = porch && typeof porch === "object" && porch.door === porch.door ? porch.door : doorAt(len, cls, seed, M.T[3]);
     const floorY = y0 + found;
     let walkFrom = 0.25;
     const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
@@ -3448,55 +3544,15 @@
       const vs = [p0v + tv * a0 + nv * o0, p0v + tv * a1 + nv * o0, p0v + tv * a0 + nv * o1, p0v + tv * a1 + nv * o1];
       M.box(Math.min(...us), Math.max(...us), ya, yb2, Math.min(...vs), Math.max(...vs), which);
     };
-    if (porch && len > 4.2) {
+    if (porch && typeof porch === "object") {
+      walkFrom = porch.walkFrom;
+    } else if (porch && len > 4.2) {
       const full = cls !== CLS.TRIPLE || (seed & 2) > 0;
       const pw = full ? len : Math.max(3, len * 0.55);
       const a0 = full ? 0 : clamp2(du - pw / 2, 0, len - pw), a1 = a0 + pw, dep = cls === CLS.TRIPLE ? 2.1 : 1.9;
       const decks = cls === CLS.TRIPLE ? Math.min(levels, 3) : cls === CLS.MULTI && seed & 4 ? 2 : 1;
       const fh = FLOOR[cls];
-      const roofY = floorY + decks * fh - 0.25;
-      for (let lv = 0; lv < decks; lv++) {
-        const fy = floorY + lv * fh;
-        setM(MAT.DECK);
-        M.W[0] = pw;
-        M.W[1] = 0;
-        M.W[2] = 0;
-        M.W[3] = -1;
-        wbox(a0, a1, 0, dep, lv === 0 ? yb : fy - 0.22, fy, 63);
-        setM(MAT.RAIL);
-        const rail = (q0, q1, n2) => {
-          const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
-          const i0 = M.v(q0[0], fy, q0[1], n2[0], 0, n2[1], 0, 0), i1 = M.v(q1[0], fy, q1[1], n2[0], 0, n2[1], ln, 0);
-          const i2 = M.v(q1[0], fy + 0.95, q1[1], n2[0], 0, n2[1], ln, 0.95), i3 = M.v(q0[0], fy + 0.95, q0[1], n2[0], 0, n2[1], 0, 0.95);
-          M.quad(i0, i1, i2, i3);
-        };
-        const P2 = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
-        const gap0 = lv === 0 ? clamp2(du - 0.75, a0, a1) : -1, gap1 = lv === 0 ? clamp2(du + 0.75, a0, a1) : -1;
-        if (lv === 0 && gap1 > gap0) {
-          if (gap0 - a0 > 0.4) rail(P2(a0, dep), P2(gap0, dep), [nu, nv]);
-          if (a1 - gap1 > 0.4) rail(P2(gap1, dep), P2(a1, dep), [nu, nv]);
-        } else rail(P2(a0, dep), P2(a1, dep), [nu, nv]);
-        rail(P2(a0, 0), P2(a0, dep), [-tu, -tv]);
-        rail(P2(a1, 0), P2(a1, dep), [tu, tv]);
-      }
-      setM(MAT.TRIM);
-      const np = Math.max(2, Math.round(pw / 2.6) + 1);
-      for (let i = 0; i < np; i++) {
-        const al = a0 + 0.09 + (pw - 0.18) * i / (np - 1);
-        wbox(al - 0.08, al + 0.08, dep - 0.18, dep - 0.02, floorY, roofY, 51);
-      }
-      setM(MAT.ROOF);
-      const o1 = dep + 0.28;
-      const q = (al, o, y) => [p0u + tu * al + nu * o, y, p0v + tv * al + nv * o];
-      const sl = Math.hypot(o1, 0.3), n = [nu * 0.3 / sl, o1 / sl, nv * 0.3 / sl];
-      M.face(q(a0 - 0.2, 0, roofY + 0.42), q(a1 + 0.2, 0, roofY + 0.42), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), n, [tu, 0, tv], [nu, 0, nv]);
-      setM(MAT.TRIM);
-      M.face(q(a0 - 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a1 + 0.2, o1, roofY + 0.12), q(a0 - 0.2, o1, roofY + 0.12), [nu, 0, nv], [tu, 0, tv], [0, 1, 0]);
-      M.face(q(a0 - 0.2, 0, roofY - 0.08), q(a1 + 0.2, 0, roofY - 0.08), q(a1 + 0.2, o1, roofY - 0.08), q(a0 - 0.2, o1, roofY - 0.08), [0, -1, 0], [tu, 0, tv], [nu, 0, nv]);
-      setM(MAT.CONCRETE);
-      const st2 = Math.max(1, Math.ceil((floorY - yb - 0.6) / 0.19));
-      wbox(clamp2(du - 0.7, a0, a1 - 1.4), clamp2(du + 0.7, a0 + 1.4, a1), dep, dep + Math.min(st2, 6) * 0.28, yb, floorY - 0.19, 55);
-      walkFrom = dep + Math.min(st2, 6) * 0.28;
+      walkFrom = porchAt(M, setM, p0u, p0v, tu, tv, nu, nv, a0, a1, dep, floorY, floorY + decks * fh - 0.25, yb, du, decks, fh);
     } else if (found > 0.2 && len > 2.5) {
       walkFrom = floorY - y0 > 0.45 ? 1.64 : 1.32;
       setM(MAT.CONCRETE);
@@ -3534,7 +3590,7 @@
       let al = NaN, run = -1, known = false, bestF = 0.6;
       if (cls !== CLS.ROW && len > 4) {
         const cands = [-1.85, len + 1.85, -3.6, len + 3.6];
-        for (const f of [0.2, 0.5, 0.8]) if (Math.abs(len * f - du) > 2.4) cands.push(len * f);
+        for (const f of [0.2, 0.5, 0.8]) if (Math.abs(len * f - du) > 2.4 && !(porch && typeof porch === "object" && len * f > porch.a0 - 1.6 && len * f < porch.a1 + 1.6)) cands.push(len * f);
         for (const c of cands) {
           const Q = at(c, 0.4);
           const r = env.roadEdge(Q[0], Q[1], nu, nv, 32);
@@ -4181,6 +4237,13 @@
         front = i;
       }
     }
+    const porches = isHome(cls) && !LF ? porchesOf(env.reg, id, P2, nv, front, cls, seed, M.T[3]) : null;
+    const edgeDoor = /* @__PURE__ */ new Map();
+    if (porches) for (const pc of porches) {
+      const i = pc.edge, j = (i + 1) % nv, len = Math.hypot(P2[j * 3] - P2[i * 3], P2[j * 3 + 1] - P2[i * 3 + 1]);
+      pc.door = clamp2(doorAt(len, cls, seed, M.T[3]), pc.a0 + 0.7, pc.a1 - 0.7);
+      edgeDoor.set(i, pc.door);
+    }
     const cuts = [];
     let frontWall = null;
     const ringWalls = (R3, front2) => {
@@ -4204,7 +4267,7 @@
         }
         if (LF) corrCuts(LF, u0, v0, u1, v1, cuts);
         cuts.sort((x, y) => x - y);
-        const isFront = i === front2, door = isFront ? doorAt(len, cls, seed, M.T[3]) : -1;
+        const isFront = i === front2, door = R3 === P2 && edgeDoor.has(i) ? edgeDoor.get(i) : isFront ? doorAt(len, cls, seed, M.T[3]) : -1;
         if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
         setM(MAT.WALL);
         for (let c = 0; c + 1 < cuts.length; c++) {
@@ -4359,7 +4422,21 @@
       M.W[2] = 0;
       M.W[3] = -1;
     }
-    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, false, found, y0, yb, r1, r2, r3, env);
+    let frontPorch = false;
+    if (porches) {
+      const floorY = y0 + found, fh = FLOOR[cls];
+      for (const pc of porches) {
+        const i = pc.edge, j = (i + 1) % nv, du = P2[j * 3] - P2[i * 3], dw = P2[j * 3 + 1] - P2[i * 3 + 1], len = Math.hypot(du, dw);
+        const decks = Math.max(1, Math.min(pc.decks, B[k + 9] || 1));
+        const wf = porchAt(M, setM, P2[i * 3], P2[i * 3 + 1], du / len, dw / len, dw / len, -du / len, pc.a0, pc.a1, pc.dep, floorY, floorY + decks * fh - 0.25, yb, pc.door, decks, fh);
+        if (i === front) frontPorch = { walkFrom: wf, door: pc.door, a0: pc.a0, a1: pc.a1 };
+      }
+      M.W[0] = 0;
+      M.W[1] = 0;
+      M.W[2] = 0;
+      M.W[3] = -1;
+    }
+    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, frontPorch, found, y0, yb, r1, r2, r3, env);
     return true;
   }
   var D_HE = 1.6;
@@ -4600,6 +4677,7 @@
       ca: 1,
       sa: 0,
       g: 0,
+      reg,
       groundAt(u, v) {
         return world2.groundH(this.mx + this.ca * u - this.sa * v, this.my + this.sa * u + this.ca * v, true) - this.g;
       },
