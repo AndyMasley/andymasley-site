@@ -18066,6 +18066,86 @@ vec3 aerCrisp(vec2 uv, float layer) {
   return mix(c, sharp, smoothstep(0.12, 0.22, dm));       // only between fields that differ a lot: lesser changes inside a field stay smooth
 }
 
+// A field the Cropland Data Layer knows (bake/c75_fields.py), drawn over its colour: code = 16 g + a, g its crop group
+// (0 hay, 1 pasture, 2 corn, 3 vegetables, potatoes, tobacco and the like, 4 small grains, 5 cranberries, 6 sod,
+// 7 fallow, 8 orchard, 9 berries and vines, 11 a crop the layer does not name) and a the way its rows run (a x 11.25
+// degrees from east).  col is the field's colour from the photographs; each pattern keeps that mean, and fades into it
+// where its stripes are finer than the pixel (fwm: the pixel's size in map metres along x and y).
+const vec3 FIELD_SOIL = vec3(0.118, 0.090, 0.062);
+// stripes of width d in each period of 1 (on [0, d) of every period), averaged over the pixel's width w around x: the
+// integral of the stripes taken across the pixel, so they blur to their share d instead of shimmering as they shrink
+float pulseInt(float x, float d) { return floor(x) * d + min(fract(x), d); }
+float stripes(float x, float w, float d) { w = max(w, 1e-3); return (pulseInt(x + 0.5 * w, d) - pulseInt(x - 0.5 * w, d)) / w; }
+// across a set of stripes of period 1 at x: a square wave of +1 and -1, averaged over the pixel w
+float bands(float x, float w) { return 2.0 * stripes(x, w, 0.5) - 1.0; }
+vec3 fieldPattern(int code, vec2 m, vec3 col, vec2 fwm) {
+  int g = code >> 4;
+  float an = float(code & 15) * 0.19634954;
+  vec2 d = vec2(cos(an), sin(an)), nn = vec2(-d.y, d.x);
+  float u = dot(m, nn), v = dot(m, d);
+  float du = abs(nn.x) * fwm.x + abs(nn.y) * fwm.y + 1e-4, dv = abs(d.x) * fwm.x + abs(d.y) * fwm.y + 1e-4;
+  float fpx = max(fwm.x, fwm.y);
+  vec3 soil = FIELD_SOIL * (0.88 + 0.24 * vnoise(m * 1.3));
+  if (g == 2 || g == 3 || g == 9 || g == 11) {
+    // in rows: corn 76 cm apart (30 in), vegetables 91 cm (36 in), berries and vines 3 m; the band of leaves along each
+    // row covers this share of the ground seen from above, with soil between
+    float P = g == 2 ? 0.76 : g == 9 ? 3.0 : 0.91;
+    float cover = g == 2 ? 0.80 : g == 9 ? 0.45 : g == 3 ? 0.60 : 0.68;
+    float x = u / P, w = du / P;
+    float amp = 1.0 - smoothstep(0.8, 2.5, w);
+    if (amp <= 0.0) return col;
+    // the soil between the rows: a stripe of 1 - cover in each period, centred midway between two rows
+    float leaf = 1.0 - stripes(x - 0.5 * cover, w, 1.0 - cover);
+    // plants bigger and smaller along the row, and a few gaps
+    float along = vnoise(vec2(v / (P * 0.9), floor(x) * 7.31));
+    leaf *= mix(1.0, 0.75 + 0.35 * along, (1.0 - smoothstep(0.1, 0.4, dv / P)) * (1.0 - smoothstep(0.3, 0.8, w)));
+    // how green the photograph shows the field: a field growing its crop has leaves over soil, a bare one (just tilled,
+    // or harvested) only its ridges and furrows
+    float green = smoothstep(0.02, 0.12, (col.g - max(col.r, col.b)) / max(col.g, 1e-3));
+    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+    vec3 dirt = vec3(1.0, 0.80, 0.60) * lum * 1.35 * (0.9 + 0.2 * vnoise(m * 1.3));      // soil as bright as the field
+    vec3 lc = max((col - (1.0 - cover) * dirt) / cover, col * 0.5);    // the leaves' colour, so leaves and soil keep col
+    vec3 grow = mix(dirt, lc * (0.94 + 0.12 * vnoise(m * 2.3)), leaf);
+    vec3 bare = col * (1.0 + 0.16 * (leaf - (cover)) );                 // ridges a little lighter than the furrows
+    return mix(col, mix(bare, grow, green), amp * (g == 2 ? 0.8 : 0.92));
+  }
+  if (g == 0 || g == 6) {
+    // hay and sod: the mower's swaths, the grass lying one way and then the other, lighter and darker
+    float P = g == 0 ? 7.2 : 3.6;
+    float w = du / P;
+    float b = bands(u / P, w) * (1.0 - smoothstep(0.6, 1.5, w));
+    float tuft = mix(vnoise(m * 2.3) - 0.5, 0.0, smoothstep(0.15, 0.6, fpx));
+    return col * (1.0 + 0.075 * b + 0.16 * tuft);
+  }
+  if (g == 1) {
+    // pasture: tufts and clumps the stock leave, and worn ground here and there
+    float k = 1.0 - smoothstep(0.3, 1.2, fpx);
+    float t = smoothstep(0.55, 0.78, vnoise(m / 1.1 + 3.7)) * k;
+    float worn = smoothstep(0.66, 0.82, vnoise(m / 7.0 + 11.3)) * (1.0 - smoothstep(1.5, 5.0, fpx));
+    vec3 c = col * (1.0 + 0.22 * (vnoise(m * 1.9) - 0.5) * k) * (1.0 - 0.28 * t);
+    return mix(c, soil * 1.25, worn * 0.35);
+  }
+  if (g == 4) {
+    // small grains: the tractor's tramlines, a pair every 18 m
+    // (two wheel tracks 0.5 m wide, 1.8 m apart, every 18 m)
+    float line = stripes(u / 18.0, du / 18.0, 0.5 / 18.0) + stripes((u - 1.8) / 18.0, du / 18.0, 0.5 / 18.0);
+    return mix(col * (1.0 + 0.10 * (vnoise(m * 4.0) - 0.5) * (1.0 - smoothstep(0.1, 0.4, fpx))), soil, line * 0.7);
+  }
+  if (g == 5) {
+    // a cranberry bog: its beds cut by ditches every 16 m along it and every 64 m across it
+    float ditch = max(stripes(u / 16.0, du / 16.0, 0.6 / 16.0), stripes(v / 64.0, dv / 64.0, 1.0 / 64.0));
+    vec3 c = col * (0.9 + 0.2 * vnoise(m * 2.7) * (1.0 - smoothstep(0.1, 0.5, fpx)));
+    return mix(c, vec3(0.032, 0.044, 0.040), ditch * 0.8);
+  }
+  if (g == 7) {
+    // fallow: weeds over bare ground in patches
+    float p = smoothstep(0.42, 0.70, vnoise(m / 3.2 + 1.9));
+    return mix(col * (1.0 + 0.15 * (vnoise(m * 1.7) - 0.5)), soil * 1.2, p * 0.45 * (1.0 - smoothstep(4.0, 12.0, fpx)));
+  }
+  // an orchard: mown grass between the trees
+  return col * (1.0 + 0.12 * (vnoise(m * 2.1) - 0.5) * (1.0 - smoothstep(0.2, 0.8, fpx)));
+}
+
 void main() {
   vec3 P = uCam + vRel;
   float r = length(P.yz);
@@ -18076,7 +18156,8 @@ void main() {
   float dist = length(vRel);
   vec3 V = -vRel / dist;
   vec2 m = vMap;                                    // absolute map metres (east, north)
-  float fp = max(length(fwidth(m)), 0.02);          // pixel footprint on the ground (m), long axis
+  vec2 fwm = fwidth(m);
+  float fp = max(length(fwm), 0.02);                // pixel footprint on the ground (m), long axis
   float fpn = max(min(length(dFdx(m)), length(dFdy(m))), 0.02);   // ... and its short axis (keeps lines thin at grazing angles)
 
   if (uWebRect.w > 0.5) {
@@ -18366,13 +18447,16 @@ void main() {
   // 7 conifers, 8 mixed woods, 9 scrub, 10 wooded swamp, 11 shrub swamp, 12 marsh, 13 beach, 14 bare ground, 15 water,
   // 16 and 17 lawn under a yard's broadleaf trees or conifers
   float kLc = uHasLc * (1.0 - smoothstep(1500.0, 2600.0, dist));
-  int lc = 0;
+  int lc = 0, fcode = -1;
   if (kLc > 0.0) {
     // a nudge of up to half a metre breaks the square metres into ragged edges close up
     vec2 jit = (vec2(vnoise(m * 0.83 + 17.3), vnoise(m * 0.83 + 71.1)) - 0.5) * 1.1 * (1.0 - smoothstep(0.8, 2.5, fp));
     int lc0 = int(texture2D(uLc, vLoc / uSize).r * 255.0 + 0.5);
     lc = int(texture2D(uLc, (vLoc + jit) / uSize).r * 255.0 + 0.5);
-    if (lc0 >= 20 || lc >= 20) lc = lc0;          // a mapped court or field keeps its straight edges
+    if ((lc0 >= 20 && lc0 < 64) || (lc >= 20 && lc < 64)) lc = lc0;          // a mapped court or field keeps its straight edges
+    // a field whose crop the Cropland Data Layer gives (64 and over: worker.js, bake/c75_fields.py) is the land cover's
+    // hay and pasture or cropland, with its crop drawn over it (fieldPattern)
+    if (lc >= 64) { fcode = lc - 64; lc = (fcode >> 4) <= 1 ? 4 : 3; }
     if (lc == 0) kLc = 0.0;
     // along a street's edge the street's own paving, shoulders and sidewalks decide: the 1 m squares of paving and
     // soil the survey found there step along any street that is not square to the grid (the "staircase" at gores and
@@ -18502,6 +18586,7 @@ void main() {
       else land = mix(land, land * clamp(aerN / max(uPhotoMean[lc], vec3(0.003)), vec3(0.55), vec3(1.7)), kP * kLc);
     }
   }
+  if (fcode >= 0) land = mix(land, fieldPattern(fcode, m, land, fwm), kLc);
   // past where the 1 m land cover ends the ground is the photographs themselves: at 5.75 m in the 2 x 2 regions round
   // the camera, the 46 m overview past them
   float kAer = 0.0;

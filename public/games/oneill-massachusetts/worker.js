@@ -10033,6 +10033,8 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var featFiles = /* @__PURE__ */ new Set();
   var streetFiles = /* @__PURE__ */ new Set();
   var toneFiles = /* @__PURE__ */ new Set();
+  var fldFiles = /* @__PURE__ */ new Set();
+  var FLD = 4;
   var lcPacks = /* @__PURE__ */ new Set();
   var LCP = 8192;
   var LCQ = 2048;
@@ -10080,6 +10082,8 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     featFiles = new Set(meta.tiles && meta.tiles.feat ? meta.tiles.feat : []);
     streetFiles = new Set(meta.tiles && meta.tiles.streets ? meta.tiles.streets : []);
     toneFiles = new Set(meta.tiles && meta.tiles.tone ? meta.tiles.tone : []);
+    fldFiles = new Set(meta.tiles && meta.tiles.fld ? meta.tiles.fld : []);
+    FLD = meta.fldRes || 4;
     setDecks(meta.tiles && meta.tiles.decks);
     lcPacks = new Set(meta.tiles && meta.tiles.lcp ? meta.tiles.lcp : []);
     LCP = meta.lcPack || 8192;
@@ -10278,7 +10282,12 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
         else if (dir === "f1") reg.feat = parseFeat(e);
         else if (dir === "s1") reg.streets = parseStreets(e);
         else if (dir === "tone") reg.tone = parseTone(e, reg.nRoads);
-        else if (dir === "t3") {
+        else if (dir === "fld") {
+          const I0 = Math.floor(rx * RS2 / FLD), J0 = Math.floor(ry * RS2 / FLD);
+          const w = Math.ceil((rx + 1) * RS2 / FLD) - I0, h = Math.ceil((ry + 1) * RS2 / FLD) - J0;
+          if (e.length !== w * h) throw new Error("fields: " + e.length + " bytes, not " + w + " x " + h);
+          reg.fld = { data: e, I0, J0, w, h };
+        } else if (dir === "t3") {
           const dv = new DataView(e.buffer, e.byteOffset, e.byteLength);
           const magic = dv.getUint32(0, true);
           if (magic !== 860181076 && magic !== 876958292) throw new Error("bad tree file");
@@ -10316,6 +10325,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           if (featFiles.has(k)) parts.push("f1");
           if (streetFiles.has(k)) parts.push("s1");
           if (toneFiles.has(k)) parts.push("tone");
+          if (fldFiles.has(k)) parts.push("fld");
           const got = {};
           for (const dir of parts) got[dir] = fetchPart(dir, rx, ry).then((e) => ({ e }), (err) => ({ err }));
           const d = await fetchPart("r2", rx, ry);
@@ -10845,6 +10855,24 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (!any) {
         lc = null;
         lcN = 0;
+      }
+    }
+    if (lc && level >= 6) {
+      const reg2 = world.regionAt(mx0 + s / 2, my0 + s / 2), f = reg2 && reg2.fld;
+      if (f) {
+        const px = s / lcN;
+        for (let b = 0; b < lcN; b++) {
+          const J = Math.floor((my0 + (b + 0.5) * px) / FLD) - f.J0;
+          if (J < 0 || J >= f.h) continue;
+          for (let a = 0; a < lcN; a++) {
+            const k = b * lcN + a, v2 = lc[k];
+            if (v2 < 3 || v2 > 5) continue;
+            const I = Math.floor((mx0 + (a + 0.5) * px) / FLD) - f.I0;
+            if (I < 0 || I >= f.w) continue;
+            const c = f.data[J * f.w + I];
+            if (c >= 64) lc[k] = c;
+          }
+        }
       }
     }
     if (level >= 6 && !sea) {
