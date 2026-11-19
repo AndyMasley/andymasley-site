@@ -4092,14 +4092,19 @@
     if (T) roofOfTris(M, setM, T, [], basePl, lift);
     else roofOf(M, setM, P2, basePl, lift);
     setM(MAT.WALL);
+    const stepInfo = (lo, varies, plen) => {
+      if (plen < 1.2) return null;
+      const eave = Math.max(lo - y0, 0.3);
+      return [eave, clamp2(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * ((varies && plen > 3 ? 1 : 0) | (plainRec ? 16 : 0)), -1, y0];
+    };
     for (const [Q, pl] of clipped) {
       const n = Q.length / 3;
       for (let i = 0; i < n; i++) {
         if (Q[i * 3 + 2] !== CUT) continue;
         const j = (i + 1) % n, len = Math.hypot(Q[j * 3] - Q[i * 3], Q[j * 3 + 1] - Q[i * 3 + 1]);
         if (len <= 0.05) continue;
-        if (!holes.length) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], 0, 1, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
-        else for (const [ta, tb] of outsideHoles(Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], holes)) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], ta, tb, [pl], basePl[0][2] + lift - 0.05, lift, len, null);
+        if (!holes.length) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], 0, 1, [pl], basePl[0][2] + lift - 0.05, lift, len, stepInfo);
+        else for (const [ta, tb] of outsideHoles(Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], holes)) wallOf(M, Q[i * 3], Q[i * 3 + 1], Q[j * 3], Q[j * 3 + 1], ta, tb, [pl], basePl[0][2] + lift - 0.05, lift, len, stepInfo);
       }
     }
     M.W[0] = 0;

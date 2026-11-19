@@ -17589,6 +17589,39 @@ float vnoise(vec2 x) {
 float fbm3(vec2 x) { return vnoise(x) * 0.57 + vnoise(x * 2.13 + 17.3) * 0.29 + vnoise(x * 4.31 + 5.1) * 0.14; }
 `
   );
+  var MIRROR = (
+    /* glsl */
+    `
+uniform sampler2D uAerial;   // USDA NAIP 2023 photographs on the 46 m grid (bake/m40_aerial.py), decoded to linear
+uniform float uHasAerial;
+uniform vec4 uAerCol;        // gain, then the offsets per channel, that bring them to the palette (bake/c35_aerial.py)
+uniform float uCylLen;       // the cylinder's length (m)
+vec3 farWallMirror(vec3 P, vec3 rd, vec3 up, float spread) {
+  float ru = dot(rd, up);
+  vec3 r = normalize(rd + up * max(0.03 - ru, 0.0));
+  float ra = max(dot(r.yz, r.yz), 1e-9), rb = dot(P.yz, r.yz), rc = dot(P.yz, P.yz) - RC * RC;
+  float rt = (-rb + sqrt(max(rb * rb - ra * rc, 0.0))) / ra;
+  if (abs(r.x) > 1e-5) rt = min(rt, (sign(r.x) * 0.5 * uCylLen - P.x) / r.x);
+  rt = clamp(rt, 1.0, 2.0e5);
+  vec3 Q = P + r * rt;
+  vec3 T, S;
+  atmosphereSteps(P, Q, 2, T, S);
+  vec3 alb = vec3(0.060, 0.075, 0.040);
+  if (uHasAerial > 0.5) {
+    vec2 uv = vec2(Q.x / uCylLen + 0.5, fract(atan(-Q.z, -Q.y) / 6.2831853));
+    alb = max(textureLod(uAerial, uv, clamp(log2(rt * spread / 46.0 + 1.0), 0.0, 9.0)).rgb * uAerCol.x + uAerCol.yzw, vec3(0.0));
+  }
+  vec3 Ld; float sd;
+  vec3 Ts = sunTrans(Q, Ld, sd);
+  vec3 upQ = vec3(0.0, -Q.y, -Q.z) / max(length(Q.yz), 1.0);
+  vec3 wall = alb * (uSunCol * Ts * max(dot(upQ, Ld), 0.0) + uAmbIrr) * 1.55 * T + S;
+  if (ru > 0.0) return wall;
+  vec3 Lp; float sp;
+  vec3 ground = vec3(0.075, 0.078, 0.065) * (uSunCol * sunTrans(P, Lp, sp) * max(dot(up, Lp), 0.0) * 0.7 + uAmbIrr) * 1.55;
+  return mix(wall, ground, smoothstep(0.0, 0.08, -ru));
+}
+`
+  );
   var SPACE = (
     /* glsl */
     `
@@ -17916,6 +17949,7 @@ precision highp float;
 precision highp int;
 precision highp sampler2DArray;
 ${ATMOS}
+${MIRROR}
 ${NOISE}
 ${SHADOW}
 ${SPACE}
@@ -17957,11 +17991,7 @@ uniform sampler2D uGlow;     // past them, the same lights summed over each 92 m
 uniform float uHasGlow;
 uniform float uGlowK;        // one building's point of light, far off, as nightlights.js draws it
 uniform vec3 uSkyRefl;
-uniform sampler2D uAerial;   // USDA NAIP 2023 photographs on the 46 m grid (bake/m40_aerial.py), decoded to linear
-uniform float uHasAerial;
-uniform vec2 uUvScale;       // 1 / the cylinder's length and circumference (vUv = map metres times this)
 uniform float uPlants3D;     // 1 where corn and grass are drawn in 3D near the camera (terrain.js cornMat, grassMat)
-uniform vec4 uAerCol;        // gain, then the offsets per channel, that bring them to the palette (bake/c35_aerial.py)
 uniform sampler2DArray uAerNear; // nearer the camera (aerial.js), layer 0: the 2 x 2 regions round it at 5.75 m, region
                              // (rx, ry) in quarter (rx, ry) mod 2; layer 1: the 4 x 4 tiles of 2.95 km at 2.88 m, tile
                              // (tx, ty) in sixteenth (tx, ty) mod 4
@@ -18718,6 +18748,8 @@ void main() {
     float s0 = sqrt(msl / 4.0);
     vec2 sl = vec2(0.0);
     float var = 0.004 * mix(0.5, 1.0, open) * gust * gust;     // (and the capillary ripples, never resolved)
+    // (their crests bent a little by a slow warp, so the trains do not cross in a regular lattice)
+    vec2 tw = tm + 3.2 * vec2(vnoise(m / 31.0) - 0.5, vnoise(m / 31.0 + vec2(17.3, 5.1)) - 0.5);
     const vec2 WAVES[8] = vec2[8](vec2(3.0, 2.0), vec2(4.0, 6.0), vec2(9.0, -2.0), vec2(7.0, 8.0),
                                   vec2(12.0, 6.0), vec2(-4.0, 16.0), vec2(19.0, 11.0), vec2(26.0, 38.0));
     for (int i = 0; i < 8; i++) {
@@ -18726,9 +18758,11 @@ void main() {
       vec2 wd = wk / kc;
       float lam = 48.0 / kc;
       float keep = 1.0 - smoothstep(0.17 * lam, 0.4 * lam, abs(dot(wd, tmx)) + abs(dot(wd, tmy)));
-      float ph = dot(tm, wk) * (6.2831853 / 48.0) - sqrt(61.638 / lam) * uTime + float(i) * 2.3999;
-      sl += wd * (s0 * keep * cos(ph));
-      var += 0.5 * s0 * s0 * (1.0 - keep * keep);
+      float ph = dot(tw, wk) * (6.2831853 / 48.0) - sqrt(61.638 / lam) * uTime + float(i) * 2.3999;
+      // (on ponds and rivers the fetch is short, so the longer trains hardly build)
+      float sa = s0 * mix(1.0, 0.25 + 0.9 * smoothstep(13.0, 4.0, lam), fresh);
+      sl += wd * (sa * keep * cos(ph));
+      var += 0.5 * sa * sa * (1.0 - keep * keep);
     }
     vec3 Nw = normalize(up - east * sl.x - north * sl.y);
     float cv = max(dot(V, Nw), 0.02);
@@ -18745,28 +18779,7 @@ void main() {
     // (by night the mirrored wall is its glow, as before: uSkyRefl)
     float kDay = smoothstep(0.05, 0.4, dot(uSunCol, vec3(0.333)));
     vec3 refl = uSkyRefl;
-    if (kDay > 0.0) {
-      vec3 rd = reflect(-V, Nw);
-      rd = normalize(rd + up * max(0.03 - dot(rd, up), 0.0));
-      float ra = max(dot(rd.yz, rd.yz), 1e-9), rb = dot(P.yz, rd.yz), rc = dot(P.yz, P.yz) - RC * RC;
-      float rt = (-rb + sqrt(max(rb * rb - ra * rc, 0.0))) / ra;
-      float capX = 0.5 / uUvScale.x;
-      if (abs(rd.x) > 1e-5) rt = min(rt, (sign(rd.x) * capX - P.x) / rd.x);
-      rt = clamp(rt, 1.0, 2.0e5);
-      vec3 Q = P + rd * rt;
-      vec3 Tr, Sr;
-      atmosphereSteps(P, Q, 2, Tr, Sr);
-      vec3 albQ = vec3(0.060, 0.075, 0.040);
-      if (uHasAerial > 0.5) {
-        vec2 uvQ = vec2(Q.x * uUvScale.x + 0.5, fract(atan(-Q.z, -Q.y) / 6.2831853));
-        float lodQ = clamp(log2(rt * sqrt(var) / 46.0 + 1.0), 0.0, 9.0);
-        albQ = max(textureLod(uAerial, uvQ, lodQ).rgb * uAerCol.x + uAerCol.yzw, vec3(0.0));
-      }
-      vec3 LdQ; float sdQ;
-      vec3 TsQ = sunTrans(Q, LdQ, sdQ);
-      vec3 upQ = vec3(0.0, -Q.y, -Q.z) / max(length(Q.yz), 1.0);
-      refl = mix(refl, albQ * (uSunCol * TsQ * max(dot(upQ, LdQ), 0.0) + uAmbIrr) * 1.55 * Tr + Sr, kDay);
-    }
+    if (kDay > 0.0) refl = mix(refl, farWallMirror(P, reflect(-V, Nw), up, sqrt(var)), kDay);
     vec3 wE = sunE * max(dot(Nw, Ld), 0.0) + uAmbIrr;
     vec3 wsurf = wcol * wE * (1.0 - fres) + refl * fres + sunE * spec * sh;
     float surf = (1.0 - smoothstep(-9.0, -1.0, sdf)) ;
@@ -19930,7 +19943,7 @@ void main() {
       emis += vec3(1.0, 0.72, 0.38) * sparkH * aaH * 1.2 * dark * 0.9;
     }
     // shade under the eave and a little grime at the ground
-    occ = (0.80 + 0.20 * smoothstep(0.0, 0.7, eave - v + (gableEnd ? 1.0 : 0.0))) * (0.90 + 0.10 * smoothstep(-0.2, 0.5, v));
+    occ = (0.80 + 0.20 * smoothstep(0.0, 0.7, eave - v + (gableEnd ? 1.0 : 0.0))) * (0.66 + 0.34 * smoothstep(-0.2, 1.4, v));
     // Fine cladding relief belongs only to exposed cladding, not painted window
     // bars, shutters, trim or the opening. Keep those original masks in place.
     float trimMask = clamp(max(max(boards, lintel), max(frame, max(shut, band))), 0.0, 1.0);
@@ -28785,6 +28798,7 @@ void main() {
         uMie: { value: 1 },
         uCornTex: { value: null },
         uPlants3D: { value: 0 },
+        uCylLen: { value: L },
         uTime: { value: 0 },
         uLod: { value: new et(85, 115) },
         uBounce: { value: new C() },
