@@ -23170,6 +23170,7 @@ void main() {
     return out;
   }
   var CAR_MAT = [MAT.CAR, MAT.CARGLASS, MAT.CARDARK, MAT.CARDARK, MAT.CARPALE, MAT.CARPALE, MAT.CARTAIL, MAT.CARPALE, MAT.CARDARK];
+  var RULE_PORCH = { [CLS.HOUSE]: [0.65, 0.015], [CLS.MULTI]: [0.72, 0.08], [CLS.TRIPLE]: [0.74, 0.36] };
   function parseReal(buf) {
     const dv2 = new DataView(buf);
     if (dv2.getUint32(0, true) !== 860113986) throw new Error("bad building file");

@@ -3261,7 +3261,8 @@
   }
   function building(M, B, k, g, gmin, gmax, env) {
     const w = B[k + 2], d = B[k + 3], wallH = B[k + 5], cls = B[k + 6], roof = B[k + 7], side = B[k + 8], levels = Math.max(1, B[k + 9]);
-    const porch = B[k + 10] > 0, chimney = B[k + 11] > 0, mat = B[k + 12], seed = B[k + 13], id = B[k + 14];
+    const mat = B[k + 12], seed = B[k + 13], id = B[k + 14], chimney = B[k + 11] > 0;
+    const porch = M.T[3] & 2 ? B[k + 10] > 0 : rulePorch(B[k + 6], id, seed, M.T[3]) >= 0;
     const r1 = h1(id, seed * 7 + 1), r2 = h1(id * 3 + 5, seed + 11), r3 = h1(id + 77, seed * 3 + 2);
     const split = isHome(cls) && styleOf(env.reg, id) === 1;
     const y0 = clamp2(gmax - g, 0, 2.5);
@@ -3556,20 +3557,31 @@
     return 0;
   }
   var SPLIT_FLOOR = 1.25;
+  var RULE_PORCH = { [CLS.HOUSE]: [0.65, 0.015], [CLS.MULTI]: [0.72, 0.08], [CLS.TRIPLE]: [0.74, 0.36] };
+  function rulePorch(cls, id, seed, tb) {
+    if ((tb | 0) & 2) return -1;
+    const r = RULE_PORCH[cls];
+    if (!r || h1(id * 13 + 7, seed + 41) >= r[0]) return -1;
+    return h1(id * 17 + 3, seed + 59) < r[1] ? 2 : 0;
+  }
   function porchesOf(reg, id, P2, nv, front, cls, seed, tb) {
+    if (front < 0) return null;
+    let type = -1;
     const fs = featsOf(reg, id);
-    if (!fs || front < 0) return null;
-    const dv = reg.hf.dv, out = [];
-    for (const [kind, o, n] of fs) {
-      if (kind !== 2 || out.length) continue;
-      const j = (front + 1) % nv, len = Math.hypot(P2[j * 3] - P2[front * 3], P2[j * 3 + 1] - P2[front * 3 + 1]);
-      if (len < 3) continue;
-      const type = n >= 1 ? dv.getUint8(o) & 3 : 0, multi = cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW;
-      const du = doorAt(len, cls, seed, tb), pw = multi || len < 9 ? len : clamp2(len * 0.45, 3, 6);
-      const a0 = clamp2(du - pw / 2, 0, len - pw);
-      out.push({ edge: front, a0, a1: a0 + pw, dep: type === 2 ? 2.1 : 1.9, decks: type === 2 ? 3 : 1, type, door: NaN });
+    if (fs) {
+      for (const [kind, o, n] of fs) if (kind === 2) {
+        type = n >= 1 ? reg.hf.dv.getUint8(o) & 3 : 0;
+        break;
+      }
     }
-    return out.length ? out : null;
+    if (type < 0) type = rulePorch(cls, id, seed, tb);
+    if (type < 0) return null;
+    const j = (front + 1) % nv, len = Math.hypot(P2[j * 3] - P2[front * 3], P2[j * 3 + 1] - P2[front * 3 + 1]);
+    if (len < 3) return null;
+    const multi = cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW;
+    const du = doorAt(len, cls, seed, tb), pw = multi || len < 9 ? len : clamp2(len * 0.45, 3, 6);
+    const a0 = clamp2(du - pw / 2, 0, len - pw);
+    return [{ edge: front, a0, a1: a0 + pw, dep: type === 2 ? 2.1 : 1.9, decks: type === 2 ? 3 : 1, type, door: NaN }];
   }
   function site(M, setM, wall2, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
