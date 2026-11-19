@@ -17486,6 +17486,7 @@ uniform vec3 uAmbRad;     // ambient sky radiance (multiple scattering, light of
 uniform vec3 uAmbIrr;     // ambient irradiance on surfaces
 uniform vec3 uBounce;     // the lamp's light off the land round you, on what faces down or sideways (0 at night)
 uniform float uHaze;
+uniform float uMie;       // the aerosol, as a multiple of BETA_M (more by day: sky.js)
 uniform float uTime;
 uniform vec4 uHeadPos;    // your car's head lamps relative to the camera; w is how lit they are (0 by day)
 uniform vec3 uHeadDir;
@@ -17520,10 +17521,12 @@ vec3 sunTrans(vec3 p, out vec3 Ld, out float sd) {
   float aR = (f0 + 4.0 * fh + f1) / 6.0;
   float km = 2.0 * K_M * r2;
   float aM = exp((r2 - RC * RC) * K_M) * (1.0 - exp(-km)) / max(km, 1e-3);
-  return exp(-(BETA_R * aR + vec3(BETA_M * 1.1) * aM) * sd * uHaze);
+  return exp(-(BETA_R * aR + vec3(BETA_M * uMie * 1.1) * aM) * sd * uHaze);
 }
 
-float phaseM(float mu) { const float g = 0.76; return (1.0 - g * g) / (4.0 * PI * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
+// haze: a forward lobe and a weak backward one, as fitted to real aerosol (it lightens the far land away from the lamp too)
+float hg(float g, float mu) { return (1.0 - g * g) / (4.0 * PI * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
+float phaseM(float mu) { return 0.88 * hg(0.78, mu) + 0.12 * hg(-0.3, mu); }
 
 // March the view ray camera -> p.  T: transmittance, S: in-scattered radiance.
 void atmosphere(vec3 p, out vec3 T, out vec3 S) {
@@ -17534,7 +17537,7 @@ void atmosphere(vec3 p, out vec3 T, out vec3 S) {
   for (int i = 0; i < n; i++) {
     vec3 q = uCam + dir * ((float(i) + 0.5) * ds);
     float r2 = dot(q.yz, q.yz);
-    float dR = densR(r2), dM = densM(r2);
+    float dR = densR(r2), dM = densM(r2) * uMie;
     vec3 sc = (BETA_R * dR + vec3(BETA_M) * dM);
     vec3 dtau = sc * (ds * uHaze);
     vec3 Tm = exp(-(tau + 0.5 * dtau));
@@ -22647,14 +22650,15 @@ void main() {
       this.sunX = 0;
       this.isNight = false;
       this.dayness = 1;
+      this.hazeDay = 6;
     }
     // green-channel transmittance and geometry from the lamp to a point (for exposure, HUD)
     lampAt(x, r) {
       const dx2 = this.sunX - x, sd2 = Math.hypot(dx2, r), r2 = Math.min(r * r, R * R);
       const f02 = Math.exp(-R * R * K_R), fh2 = Math.exp((0.25 * r2 - R * R) * K_R), f1 = Math.exp((r2 - R * R) * K_R);
       const aR = (f02 + 4 * fh2 + f1) / 6, km = 2 * K_M * r2, aM = Math.exp((r2 - R * R) * K_M) * (1 - Math.exp(-km)) / Math.max(km, 1e-3);
-      const h = this.game.U.uHaze.value;
-      return { T: BETA_R.map((b) => Math.exp(-(b * aR + BETA_M * 1.1 * aM) * sd2 * h)), elev: Math.atan2(r, Math.abs(dx2)), dx: dx2, sd: sd2 };
+      const h = this.game.U.uHaze.value, mie = this.game.U.uMie.value;
+      return { T: BETA_R.map((b) => Math.exp(-(b * aR + BETA_M * mie * 1.1 * aM) * sd2 * h)), elev: Math.atan2(r, Math.abs(dx2)), dx: dx2, sd: sd2 };
     }
     update(dt, camC) {
       const g = this.game, U = g.U;
@@ -22684,6 +22688,7 @@ void main() {
       U.uSunPos.value.set(this.sunX, 0, 0);
       U.uSunCol.value.set(col[0], col[1], col[2]);
       const dn2 = this.dayness;
+      U.uMie.value = 1 + (this.hazeDay - 1) * dn2;
       U.uAmbIrr.value.set(0.05 * dn2 + 35e-4, 0.066 * dn2 + 45e-4, 0.098 * dn2 + 75e-4);
       U.uAmbRad.value.set(0.04 * dn2 + 12e-4, 0.052 * dn2 + 16e-4, 0.075 * dn2 + 3e-3);
       const here = this.lampAt(camC[0], Math.hypot(camC[1], camC[2]));
@@ -28520,6 +28525,7 @@ void main() {
         uAmbRad: { value: new C() },
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
+        uMie: { value: 1 },
         uTime: { value: 0 },
         uLod: { value: new et(85, 115) },
         uBounce: { value: new C() },
