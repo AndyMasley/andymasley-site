@@ -2068,6 +2068,49 @@
     nearestRoad(mx, my) {
       return this._near(mx, my, false, this._nr);
     }
+    // The same, from the short list nearCands made for a spot near (mx, my) in region reg: the same answer wherever it
+    // is under the limit that list was made for (worker.js's road texture, which asks for every texel of a tile)
+    nearestRoadIn(mx, my, reg, li, ln) {
+      return this._near(mx, my, false, this._nr, 1e9, false, 99, reg, li, ln);
+    }
+    // The grid cell of region reg that nearestRoad searches at (mx, my) (its index, or -1 off the region's grid)
+    cellOf(reg, mx, my) {
+      const gw = reg.gw, cx = Math.floor((mx - reg.x0 + RM) / RCELL), cy = Math.floor((my - reg.y0 + RM) / RCELL);
+      return cx < 0 || cy < 0 || cx >= gw || cy >= gw ? -1 : cy * gw + cx;
+    }
+    // Of the segments nearestRoad weighs in cell c of region reg, the ones that can matter at any point within r of
+    // (qx, qy), into out (an Int32Array as long as the cell's list) in the order nearestRoad weighs them; their count.
+    // A segment's edge (distance less half width) changes by no more than the distance moved, so one whose edge at
+    // (qx, qy) is m + r or more is at least m away everywhere within r.  Kept: every segment that can come nearer
+    // than lim there, but no more than the nearest edge at (qx, qy) plus 2r (nothing farther can be the nearest road
+    // within r, or on a roadway the nearest is on), and never less than near + r (crossingAt and outrankedBy, given the
+    // list, count ways within 12 m).  So nearestRoadIn's answer at such a point is nearestRoad's wherever that is under
+    // lim, and with it the edge of all the streets' paving (_nr.u) wherever that is under near
+    nearCands(reg, c, qx, qy, lim, near, r, out) {
+      const lx = qx - reg.x0, ly = qy - reg.y0, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
+      const L2 = lim + r + 1;
+      if (!this._ncE || this._ncE.length < out.length) this._ncE = new Float32Array(out.length);
+      const ed = this._ncE;
+      let n = 0, emin = 1e9;
+      for (let q = reg.gstart[c]; q < e; q++) {
+        const pi = items[q], ri = segR[pi];
+        if (rTun[ri] || rEnd[ri] !== 0) continue;
+        const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
+        const ux = lx - ax, uy = ly - ay;
+        let t = l2 > 0 ? (ux * dx + uy * dy) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = ux - dx * t, ey = uy - dy * t, edge = Math.sqrt(ex * ex + ey * ey) - rHw[ri];
+        if (edge < emin) emin = edge;
+        if (edge < L2) {
+          ed[n] = edge;
+          out[n++] = pi;
+        }
+      }
+      const M2 = Math.min(lim, Math.max(near, emin + r)) + r + 1;
+      let k = 0;
+      for (let i = 0; i < n; i++) if (ed[i] < M2) out[k++] = out[i];
+      return k;
+    }
     // Nearest bridge deck over (mx,my): the same, in this._nd.  Past a rim (where the deck meets the ground) there is
     // no deck, so the approach is not taken for part of the bridge.
     // zmax: only decks at or below this height here.  Of the decks the point is on, the highest is taken (the one a car
@@ -2084,7 +2127,9 @@
     nearestRoadDeck(mx, my) {
       return this._near(mx, my, true, this._nd, 1e9, false, 13);
     }
-    _near(mx, my, deck, o, zmax = 1e9, tun = false, maxCls = 99, rg = null) {
+    // (li, ln: in place of the point's grid cell's segments, the first ln of list li, of that cell's in its order:
+    // nearCands)
+    _near(mx, my, deck, o, zmax = 1e9, tun = false, maxCls = 99, rg = null, li = null, ln = 0) {
       o.road = -1;
       o.d = 1e9;
       o.reg = null;
@@ -2094,10 +2139,10 @@
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
-      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
+      const c = cy * gw + cx, e = li ? ln : reg.gstart[c + 1], px = reg.px, py = reg.py, items = li || reg.gitems, segR = reg.segR, rHw = reg.rHw, rEnd = reg.rEnd, rTun = reg.rTun;
       let best = 1e9, bi = -1, bt = 0, bd = 0, bside = 1, bon = false, bz = -1e9, bpr = 99, umin = 1e9, bcls = 99;
       const rCls = reg.rCls;
-      for (let q = reg.gstart[c]; q < e; q++) {
+      for (let q = li ? 0 : reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri2 = segR[pi], en = rEnd[ri2];
         if (rTun[ri2] ? !tun : tun || en !== 0 !== deck) continue;
         if (rCls[ri2] > maxCls) continue;
@@ -2444,7 +2489,8 @@
     // far as its line runs, not the round end of its paving), how far inside that street's paving the point is (metres, the
     // most of any such street, down to 12 m outside it; -1e9 where there is none) in o.e, that street's half width in
     // o.hw, and in o.big whether one it is inside ranks with this street or above it.  Asked after nearestRoad, of its road.
-    crossingAt(mx, my, o) {
+    // (li, ln: the short list nearestRoadIn was given, which holds every way this can count, all within 12 m)
+    crossingAt(mx, my, o, li = null, ln = 0) {
       const nr = this._nr, reg = nr.reg;
       o.e = -1e9;
       o.big = false;
@@ -2453,9 +2499,9 @@
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return o;
-      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const c = cy * gw + cx, e = li ? ln : reg.gstart[c + 1], px = reg.px, py = reg.py, pz = reg.pz, items = li || reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
       const mine = ROAD_RANK[rCls[nr.road]];
-      for (let q = reg.gstart[c]; q < e; q++) {
+      for (let q = li ? 0 : reg.gstart[c]; q < e; q++) {
         const pi = items[q], rj = segR[pi];
         if (rj === nr.road || rCls[rj] > 12 || reg.rEnd[rj] || reg.rTun[rj]) continue;
         const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
@@ -2474,16 +2520,17 @@
       }
       return o;
     }
-    outrankedBy(mx, my) {
+    // (li, ln: the short list nearestRoadIn was given; then the answer is the same wherever it is under that list's limit)
+    outrankedBy(mx, my, li = null, ln = 0) {
       const nr = this._nr, reg = nr.reg;
       if (!reg || nr.road < 0) return 1e9;
       const lx = mx - reg.x0, ly = my - reg.y0, gw = reg.gw;
       const cx = Math.floor((lx + RM) / RCELL), cy = Math.floor((ly + RM) / RCELL);
       if (cx < 0 || cy < 0 || cx >= gw || cy >= gw) return 1e9;
-      const c = cy * gw + cx, e = reg.gstart[c + 1], px = reg.px, py = reg.py, items = reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
+      const c = cy * gw + cx, e = li ? ln : reg.gstart[c + 1], px = reg.px, py = reg.py, items = li || reg.gitems, segR = reg.segR, rHw = reg.rHw, rCls = reg.rCls;
       const mine = ROAD_RANK[rCls[nr.road]];
       let best = 1e9;
-      for (let q = reg.gstart[c]; q < e; q++) {
+      for (let q = li ? 0 : reg.gstart[c]; q < e; q++) {
         const pi = items[q], ri = segR[pi];
         if (ri === nr.road || reg.rEnd[ri] || reg.rTun[ri] || ROAD_RANK[rCls[ri]] >= mine) continue;
         const ax = px[pi], ay = py[pi], dx = px[pi + 1] - ax, dy = py[pi + 1] - ay, l2 = dx * dx + dy * dy;
@@ -12037,12 +12084,37 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       let any = false;
       const far = toHalf(60), one = toHalf(1), zero = toHalf(0), none = toHalf(10);
       const cyc = (v2) => toHalf(v2 - Math.floor(v2));
+      const BS = 8, step = s / (T - 1), rB = (BS - 1) / 2 * step * Math.SQRT2, cols = [];
+      for (let i = 0; i < Math.ceil(T / BS); i++) cols.push({ n: 0, e: [] });
+      let li = null, ln = 0;
       for (let b = 0; b < T; b++) {
         const my = my0 + b / (T - 1) * s;
+        if (b % BS === 0) for (const col of cols) col.n = 0;
+        const qy = my0 + (b - b % BS + (BS - 1) / 2) * step;
         for (let a = 0; a < T; a++) {
           const mx = mx0 + a / (T - 1) * s, k = (b * T + a) * 4;
-          const e = world.nearestRoad(mx, my);
-          const sr = world.regionAt(mx, my);
+          const sr = world.regionAt(mx, my), c = sr && sr.nRoads ? world.cellOf(sr, mx, my) : -1;
+          if (c < 0) li = null;
+          else {
+            const col = cols[a / BS | 0];
+            let h = null;
+            for (let i = 0; i < col.n; i++) if (col.e[i].reg === sr && col.e[i].c === c) {
+              h = col.e[i];
+              break;
+            }
+            if (!h) {
+              if (col.n === col.e.length) col.e.push({ reg: null, c: -1, li: null, n: 0 });
+              h = col.e[col.n++];
+              const len = sr.gstart[c + 1] - sr.gstart[c];
+              if (!h.li || h.li.length < len) h.li = new Int32Array(Math.max(len, 256));
+              h.reg = sr;
+              h.c = c;
+              h.n = world.nearCands(sr, c, mx0 + (a - a % BS + (BS - 1) / 2) * step, qy, 56, 12, rB, h.li);
+            }
+            li = h.li;
+            ln = h.n;
+          }
+          const e = li ? world.nearestRoadIn(mx, my, sr, li, ln) : world.nearestRoad(mx, my);
           if (sr && sr.streets && streetsCovered(sr.streets, mx - sr.x0, my - sr.y0) && !(e < 3 && world._nr.reg.rCls[world._nr.road] >= 14)) {
             let dd = streetsPaving(sr.streets, mx - sr.x0, my - sr.y0);
             if (e < 0 && world._nr.reg.rCls[world._nr.road] <= 3 && !(world._nr.reg.rFlags[world._nr.road] & 6) && e < dd) {
@@ -12077,7 +12149,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
               kind[kk] = kd | 32;
               tone[kk + 2] = surfOf(nr0.reg, nr0.road);
               laneBytes(tone, nr0.reg, nr0.road, nr0.s - nr0.reg.cum[nr0.reg.rStart[nr0.road]], kd, kk);
-              junField(jun, kk, mx, my, kb.hw, JM);
+              junField(jun, kk, mx, my, kb.hw, JM, world.crossingAt(mx, my, _cx2, li, ln));
               wearBytes(wear, kk, nr0.reg, nr0.road, nr0.s);
               kind[kk + 1] = Math.round(clamp2((dd + 1.5) / 6, 0, 1) * 255);
               kind[kk + 2] = xs0 ? bikeByte(xs0[1], xs0[2], xs0[3]) : 0;
@@ -12119,14 +12191,14 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
             const kk = (b * T + a) * 4;
             kind[kk] = roadKind(nr.reg, nr.road);
             let ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
-            const cxr = !notSt && e < 8 ? world.crossingAt(mx, my, _cx2) : null;
+            const cxr = !notSt && e < 8 ? world.crossingAt(mx, my, _cx2, li, ln) : null;
             if (cxr && cxr.e > -12) {
               const r = clamp2(3 + 0.5 * Math.min(pw, cxr.hw), 4, 9), a0 = nr.d - pw, b0 = -cxr.e;
               const ru = Math.max(r, Math.min(a0, b0)) - Math.hypot(Math.max(r - a0, 0), Math.max(r - b0, 0));
               if (ru < ue) ue = ru;
             }
             kind[kk + 1] = Math.round(clamp2((ue + 1.5) / 6, 0, 1) * 255);
-            if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my) < 1.6) kind[kk] |= 128;
+            if (nr.d < nr.hw + 0.5 && world.outrankedBy(mx, my, li, ln) < 1.6) kind[kk] |= 128;
             const xs = (kind[kk] & 3) !== 3 ? xsOf(nr.reg, nr.road) : void 0;
             if ((kind[kk] & 3) !== 3) kind[kk] = kind[kk] & 128 | roadKindXS(nr.reg, nr.road, xs);
             if (xs) {
