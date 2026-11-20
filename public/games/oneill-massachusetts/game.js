@@ -22006,6 +22006,17 @@ void main() {
         ay2 *= LOOK_MAX / l;
       }
       this.look = [cm2[0], cm2[1], ax2, ay2];
+      const AHEAD = 2, AHEAD_MAX = 900;
+      let bx2 = this.vel[0] * AHEAD, by2 = this.vel[1] * AHEAD;
+      const lb = Math.hypot(bx2, by2);
+      if (lb > AHEAD_MAX) {
+        bx2 *= AHEAD_MAX / lb;
+        by2 *= AHEAD_MAX / lb;
+      }
+      if (this.ahead !== false && lb > 15 * AHEAD) {
+        this.aheadMap = [bx2, by2];
+        this.aheadC = cyl(clamp2(cm2[0] + bx2, 0, L - 1), wrapY(cm2[1] + by2), cm2[2], this.aheadC || new Float64Array(3));
+      } else this.aheadMap = this.aheadC = null;
     }
     // a job's rank (higher first): minus its tile's distance from the camera's path ahead, less a little for how far
     // along it is
@@ -22100,7 +22111,8 @@ void main() {
       if ((this.frame & 7) === 0) this.prefetch();
       const drawn = this.drawn;
       drawn.length = 0;
-      const K = this.K, maxLevel = this.maxLevel, chunks = this.chunks, frame2 = this.frame;
+      const K = this.K, maxLevel = this.maxLevel, chunks = this.chunks, frame2 = this.frame, ahead = this.aheadC;
+      this.starved = 0;
       const visit = (level, ix2, iy2) => {
         const key2 = level * 4194304 + iy2 * 2048 + ix2;
         const k = level <= 8 ? key2 : level + "/" + ix2 + "/" + iy2;
@@ -22124,6 +22136,19 @@ void main() {
         c.last = frame2;
         if (c.state !== "ready") return false;
         const split = level < maxLevel && d < K * s30 && !(c.sea && level >= 3);
+        if (!split && ahead && level < maxLevel && level >= 3 && !(c.sea && level >= 3) && d < 2 * K * s30) {
+          const ux2 = ahead[0] - camC[0], uy2 = ahead[1] - camC[1], uz = ahead[2] - camC[2], u2 = ux2 * ux2 + uy2 * uy2 + uz * uz;
+          const t = clamp2(((tmp[0] - camC[0]) * ux2 + (tmp[1] - camC[1]) * uy2 + (tmp[2] - camC[2]) * uz) / u2, 0, 1);
+          const da2 = Math.max(0, Math.hypot(tmp[0] - camC[0] - ux2 * t, tmp[1] - camC[1] - uy2 * t, tmp[2] - camC[2] - uz * t) - s30 * 0.7072);
+          if (da2 < K * s30) {
+            const l = level + 1, x = ix2 * 2, y = iy2 * 2;
+            for (const [cx2, cy2] of [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]]) {
+              const ck = l <= 8 ? l * 4194304 + cy2 * 2048 + cx2 : l + "/" + cx2 + "/" + cy2, cc2 = chunks.get(ck);
+              if (!cc2) this.request(ck, l, cx2, cy2, -da2);
+              else cc2.last = frame2;
+            }
+          }
+        }
         if (split) {
           const l = level + 1, x = ix2 * 2, y = iy2 * 2;
           const ks2 = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]];
@@ -22143,6 +22168,7 @@ void main() {
             for (const [cx2, cy2] of ks2) visit(l, cx2, cy2);
             return true;
           }
+          this.starved++;
         }
         drawn.push(c);
         return true;
@@ -22872,28 +22898,36 @@ void main() {
       if (this.streetR) kinds.push(["poles", 8, ...ask(this.streetR)], ["cars", 8, ...ask(this.streetR)], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, ...ask(this.signR)], ["paint", 8, ...ask(Math.min(this.signR, 260))], ["gpaint", 7, ...ask(this.signR * 2)], ["streets", 8, ...ask(Math.min(this.signR * 1.6, 420))], ["kerbs", 8, ...ask(Math.min(this.signR, 160))], ["rails", 7, ...ask(Math.min(this.signR * 1.6, 520))]);
       if (this.powerR) kinds.push(["power", 6, ...ask(this.powerR)], ["pwires", 6, Math.min(this.powerR, 3e3)]);
+      const [bx2, by2] = this.aheadMap || [0, 0], b2 = bx2 * bx2 + by2 * by2;
       for (const [kind, level, rad, shows] of kinds) {
         if (alt > Math.max(shows ? rad : 0, (shows || rad) * 1.2)) continue;
         const s30 = ROOT / (1 << level);
         const reach = Math.sqrt(Math.max(rad * rad - alt * alt, 0)) + s30 * 0.75;
-        const x02 = Math.floor((cm2[0] - reach) / s30), x1 = Math.floor((cm2[0] + reach) / s30);
-        const y02 = Math.floor((cm2[1] - reach) / s30), y1 = Math.floor((cm2[1] + reach) / s30);
+        const x02 = Math.floor((cm2[0] + Math.min(0, bx2) - reach) / s30), x1 = Math.floor((cm2[0] + Math.max(0, bx2) + reach) / s30);
+        const y02 = Math.floor((cm2[1] + Math.min(0, by2) - reach) / s30), y1 = Math.floor((cm2[1] + Math.max(0, by2) + reach) / s30);
         const ny2 = NY << level, nx2 = NX << level;
         for (let y = y02; y <= y1; y++) for (let x = x02; x <= x1; x++) {
           if (x < 0 || x >= nx2) continue;
           const yy2 = (y % ny2 + ny2) % ny2;
           const dx2 = (x + 0.5) * s30 - cm2[0], dy2 = (y + 0.5) * s30 - cm2[1];
           const d = Math.hypot(dx2, dy2);
-          if (d > reach) continue;
+          let da2 = d;
+          if (d > reach) {
+            if (!b2) continue;
+            const tt = clamp2((dx2 * bx2 + dy2 * by2) / b2, 0, 1);
+            da2 = Math.hypot(dx2 - bx2 * tt, dy2 - by2 * tt);
+            if (da2 > reach) continue;
+          }
           const key2 = kind + "/" + x + "/" + yy2;
           let t = this.scatter.get(key2);
           if (!t) {
-            t = { state: "pending", last: this.frame, kind, ix: x, iy: yy2 };
+            t = { state: "pending", last: this.frame, cur: -1e9, kind, ix: x, iy: yy2 };
             this.scatter.set(key2, t);
-            this.scatterQueue.push({ type: "scatter", key: key2, kind, level, ix: x, iy: yy2, prio: -d });
+            this.scatterQueue.push({ type: "scatter", key: key2, kind, level, ix: x, iy: yy2, prio: -da2 });
             this.dirty = true;
           }
           t.last = this.frame;
+          if (d <= reach) t.cur = this.frame;
         }
       }
       const vis = this.visScatter;
@@ -22925,7 +22959,7 @@ void main() {
           continue;
         }
         if (t.mesh) {
-          t.show = this.frame - t.last < 3;
+          t.show = this.frame - t.cur < 3;
           t.mesh.visible = t.show;
           if (t.show) {
             t.d = Math.hypot(t.mid[0] - camC[0], t.mid[1] - camC[1], t.mid[2] - camC[2]);
@@ -29071,7 +29105,7 @@ void main() {
         let missing = 0;
         for (const t of T.scatter.values()) {
           if (t.kind !== "houses" && t.kind !== "buildings") continue;
-          if (T.frame - t.last >= 3) continue;
+          if (T.frame - t.cur >= 3) continue;
           if (t.state !== "ready" || t.redoAt) {
             missing++;
             continue;
