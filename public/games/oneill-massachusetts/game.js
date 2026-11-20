@@ -29312,6 +29312,261 @@ void main() {
     }
   };
 
+  // src/fardecks.js
+  var FDECK_VS = (
+    /* glsl */
+    `
+attribute vec3 aCen;      // the centre its detailed piece folds at (decks.js M.C), in this mesh's frame
+attribute vec3 aCol;      // its colour
+attribute vec3 aK;        // its seed (/255), its kind (0 slab or pier, 1 a truss's panel), its deck's width (m)
+uniform vec2 uHouseFade;  // where the detailed pieces go (terrain.js deckMat): each at its seed's point between
+uniform vec4 uFDk;        // pixels a metre spans at 1 m, this layer's reach
+flat varying vec2 vVeg;
+varying vec3 vRel;
+varying vec3 vNor;
+varying vec3 vCol;
+varying vec3 vCol2;
+varying vec3 vObj;
+varying float vAux;
+varying float vStyle;
+void main() {
+  float dc = length((modelMatrix * vec4(aCen, 1.0)).xyz), thr = mix(uHouseFade.x, uHouseFade.y, aK.x);
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  float dv = length(wp.xyz);
+  // in over the 220 m before its detailed piece goes; out over the last part of this layer's reach, and once its deck
+  // is under about a pixel wide
+  float c = smoothstep(thr - 240.0, thr - 20.0, dc) * (1.0 - smoothstep(uFDk.y * 0.85, uFDk.y, dv))
+          * smoothstep(0.5, 1.1, aK.z * uFDk.x / max(dv, 1.0)) * (aK.y > 0.5 ? 0.5 : 1.0);
+  vVeg = vec2(c, fract(aK.x * 3.71 + 0.11 + aK.y * 0.37));
+  if (c < 0.004) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); return; }
+  vRel = wp.xyz;
+  vNor = normalize(mat3(modelMatrix) * normal);
+  vCol = aCol; vCol2 = aCol; vObj = position; vAux = aK.x; vStyle = 0.0;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`
+  );
+  var ASPHALT = [0.075, 0.075, 0.08];
+  var BALLAST = [0.16, 0.15, 0.13];
+  var CONCRETE = [0.4, 0.39, 0.36];
+  var STEEL2 = [0.09, 0.11, 0.105];
+  async function inflate2(buf) {
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("deflate"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  function regionDist3(rx2, ry2, mx2, my2) {
+    const ex2 = Math.max(0, Math.abs((rx2 + 0.5) * RS3 - mx2) - RS3 / 2);
+    let dy2 = Math.abs((ry2 + 0.5) * RS3 - my2) % C2;
+    dy2 = Math.min(dy2, C2 - dy2);
+    return Math.hypot(ex2, Math.max(0, dy2 - RS3 / 2));
+  }
+  var FarDecks = class {
+    constructor(game2) {
+      this.game = game2;
+      const F = game2.meta.files && game2.meta.files.fdecks, t = game2.terrain, q = game2.quality;
+      this.R = Math.max(q.farR || 0, 6e3);
+      this.ready = !!(F && t.deckMat && typeof DecompressionStream !== "undefined");
+      if (!this.ready) return;
+      this.blocks = null;
+      this.regions = /* @__PURE__ */ new Map();
+      this.vis = [];
+      this.tick = 0;
+      this.U = { uFDk: { value: new de(900, this.R, 0, 0) } };
+      this.mat = new Rn({
+        vertexShader: FDECK_VS,
+        fragmentShader: LIT_FS,
+        side: Mi,
+        alphaToCoverage: true,
+        defines: Object.assign({ COVER: 1 }, t.defines),
+        uniforms: Object.assign({}, game2.U, { uKind: { value: 0 }, uHouseFade: t.deckMat.uniforms.uHouseFade, uFDk: this.U.uFDk })
+      });
+      fetch(vurl("data/" + F.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? inflate2(b) : null).then((u8) => {
+        if (u8) this.parse(u8);
+      }).catch((e) => console.warn("far bridges unavailable:", e));
+    }
+    // test/far_decks_export.mjs's file: each region's arrays, kept as they are until the region is built
+    parse(u8) {
+      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      if (dv2.getUint32(0, true) !== 827016262) return;
+      const n = dv2.getUint32(4, true);
+      let p = 8;
+      this.blocks = /* @__PURE__ */ new Map();
+      for (let b = 0; b < n; b++) {
+        const rx2 = dv2.getUint16(p, true), ry2 = dv2.getUint16(p + 2, true);
+        const nR = dv2.getUint32(p + 4, true), nP = dv2.getUint32(p + 8, true), nQ = dv2.getUint32(p + 12, true), nT = dv2.getUint32(p + 16, true), nTP = dv2.getUint32(p + 20, true);
+        const len = 24 + nR * 24 + nP * 20 + nQ * 60 + nT * 32 + nTP * 20;
+        this.blocks.set(ry2 * RNX + rx2, { rx: rx2, ry: ry2, nR, nP, nQ, nT, nTP, bytes: u8.slice(p, p + len) });
+        p += len;
+      }
+    }
+    // a region's pieces onto the graphics card, in one mesh about the region's middle
+    build(B) {
+      const dv2 = new DataView(B.bytes.buffer, B.bytes.byteOffset, B.bytes.byteLength);
+      const x02 = B.rx * RS3, y02 = B.ry * RS3, cmx = x02 + RS3 / 2, cmy = y02 + RS3 / 2, th = cmy / R, c = Math.cos(th), sn2 = Math.sin(th);
+      const cc2 = cyl(cmx, cmy, 0, new Float64Array(3)), q3 = new Float64Array(3);
+      const pos = [], nor = [], col = [], cen = [], kk = [], idx = [];
+      const P2 = (x, y, h) => {
+        cyl(x02 + x, y02 + y, h, q3);
+        const dx2 = q3[0] - cc2[0], dy2 = q3[1] - cc2[1], dz = q3[2] - cc2[2];
+        return [dx2, c * dy2 + sn2 * dz, -sn2 * dy2 + c * dz];
+      };
+      const D = (y, e, n, u) => {
+        const t = (y02 + y) / R, ct = Math.cos(t), st = Math.sin(t);
+        const dy2 = n * st + u * ct, dz = -n * ct + u * st;
+        return [e, c * dy2 + sn2 * dz, -sn2 * dy2 + c * dz];
+      };
+      let C02 = null, K02 = null;
+      const quad = (a, b2, c2, d, N, rgb) => {
+        const ux2 = b2[0] - a[0], uy2 = b2[1] - a[1], uz = b2[2] - a[2], vx2 = c2[0] - a[0], vy2 = c2[1] - a[1], vz = c2[2] - a[2];
+        if ((uy2 * vz - uz * vy2) * N[0] + (uz * vx2 - ux2 * vz) * N[1] + (ux2 * vy2 - uy2 * vx2) * N[2] < 0) {
+          const t = b2;
+          b2 = d;
+          d = t;
+        }
+        const i = pos.length / 3;
+        for (const v of [a, b2, c2, d]) {
+          pos.push(v[0], v[1], v[2]);
+          nor.push(N[0], N[1], N[2]);
+          col.push(rgb[0], rgb[1], rgb[2]);
+          cen.push(C02[0], C02[1], C02[2]);
+          kk.push(K02[0], K02[1], K02[2]);
+        }
+        idx.push(i, i + 1, i + 2, i, i + 2, i + 3);
+      };
+      const box = (X, Y, ux2, uy2, vx2, vy2, h02, h1, a, b2, rgb, top) => {
+        const corner = (s30, t, h) => P2(X + ux2 * a * s30 + vx2 * b2 * t, Y + uy2 * a * s30 + vy2 * b2 * t, h);
+        for (const [s0, t02, s1, t1, nx2, ny2] of [[-1, -1, 1, -1, -vx2, -vy2], [1, -1, 1, 1, ux2, uy2], [1, 1, -1, 1, vx2, vy2], [-1, 1, -1, -1, -ux2, -uy2]])
+          quad(corner(s0, t02, h02), corner(s1, t1, h02), corner(s1, t1, h1), corner(s0, t02, h1), D(Y, nx2, ny2, 0), rgb);
+        if (top) quad(corner(-1, -1, h1), corner(1, -1, h1), corner(1, 1, h1), corner(-1, 1, h1), D(Y, 0, 0, 1), rgb);
+      };
+      let p = 24;
+      const runs = [];
+      for (let r = 0; r < B.nR; r++, p += 24)
+        runs.push([dv2.getUint32(p, true), dv2.getUint16(p + 4, true), dv2.getUint8(p + 6), dv2.getUint8(p + 7), dv2.getFloat32(p + 8, true), dv2.getFloat32(p + 12, true), dv2.getFloat32(p + 16, true), dv2.getFloat32(p + 20, true)]);
+      const pts = new Float32Array(B.nP * 5);
+      for (let i = 0; i < B.nP * 5; i++, p += 4) pts[i] = dv2.getFloat32(p, true);
+      const segCen = (r, j) => {
+        const a = (runs[r][0] + j) * 5, b2 = a + 5;
+        return P2((pts[a] + pts[b2]) / 2, (pts[a + 1] + pts[b2 + 1]) / 2, (pts[a + 2] + pts[b2 + 2]) / 2);
+      };
+      for (let r = 0; r < runs.length; r++) {
+        const [first, n, seed, flags, L2, Rt, PH, depth] = runs[r], W = L2 + Rt;
+        const topC = flags & 1 ? BALLAST : ASPHALT;
+        for (let j = 0; j < n - 1; j++) {
+          const a = (first + j) * 5, b2 = a + 5;
+          C02 = segCen(r, j);
+          K02 = [seed / 255, 0, W];
+          const e = (k, o, h) => P2(pts[k] + pts[k + 3] * o, pts[k + 1] + pts[k + 4] * o, pts[k + 2] + h);
+          const lA = -(L2 + 0.15), rA = Rt + 0.15;
+          const ym = (pts[a + 1] + pts[b2 + 1]) / 2;
+          let tx2 = pts[b2] - pts[a], ty2 = pts[b2 + 1] - pts[a + 1];
+          const tl = Math.hypot(tx2, ty2) || 1;
+          tx2 /= tl;
+          ty2 /= tl;
+          quad(e(a, lA, 0.15), e(a, rA, 0.15), e(b2, rA, 0.15), e(b2, lA, 0.15), D(ym, 0, 0, 1), topC);
+          quad(e(a, rA, -depth), e(b2, rA, -depth), e(b2, rA, PH + 0.15), e(a, rA, PH + 0.15), D(ym, ty2, -tx2, 0), CONCRETE);
+          quad(e(b2, lA, -depth), e(a, lA, -depth), e(a, lA, PH + 0.15), e(b2, lA, PH + 0.15), D(ym, -ty2, tx2, 0), CONCRETE);
+          quad(e(a, lA, -depth), e(b2, lA, -depth), e(b2, rA, -depth), e(a, rA, -depth), D(ym, 0, 0, -1), CONCRETE);
+          if (j === 0) quad(e(a, lA, -depth), e(a, rA, -depth), e(a, rA, 0.15), e(a, lA, 0.15), D(ym, -tx2, -ty2, 0), CONCRETE);
+          if (j === n - 2) quad(e(b2, rA, -depth), e(b2, lA, -depth), e(b2, lA, 0.15), e(b2, rA, 0.15), D(ym, tx2, ty2, 0), CONCRETE);
+        }
+      }
+      for (let k = 0; k < B.nQ; k++, p += 60) {
+        const r = dv2.getUint32(p, true), j = dv2.getUint16(p + 4, true), f = (i) => dv2.getFloat32(p + 8 + i * 4, true);
+        const X = f(0), Y = f(1), ux2 = f(2), uy2 = f(3), vx2 = f(4), vy2 = f(5), bot = f(6), capFoot = f(7), top = f(8), tt = f(9), ln2 = f(10), capT = f(11), capL = f(12);
+        C02 = segCen(r, j);
+        K02 = [runs[r][2] / 255, 0, runs[r][4] + runs[r][5]];
+        if (capFoot > bot + 0.1) box(X, Y, ux2, uy2, vx2, vy2, bot, capFoot, tt, ln2, CONCRETE, false);
+        box(X, Y, ux2, uy2, vx2, vy2, capFoot, top, capT, capL, CONCRETE, false);
+      }
+      const tr2 = [];
+      for (let k = 0; k < B.nT; k++, p += 32) tr2.push([dv2.getUint32(p, true), dv2.getUint16(p + 4, true), dv2.getUint8(p + 6), dv2.getUint8(p + 7), dv2.getFloat32(p + 8, true), dv2.getFloat32(p + 12, true), dv2.getFloat32(p + 16, true), dv2.getFloat32(p + 20, true), dv2.getFloat32(p + 24, true), dv2.getFloat32(p + 28, true)]);
+      const tp2 = new Float32Array(B.nTP * 5);
+      for (let i = 0; i < B.nTP * 5; i++, p += 4) tp2[i] = dv2.getFloat32(p, true);
+      for (const [first, m, seed, , off, y0b, y1b, fx2, fy2, fz] of tr2) {
+        C02 = P2(fx2, fy2, fz);
+        K02 = [seed / 255, 1, 2 * off];
+        for (const side of [-1, 1]) {
+          const o = side * off;
+          for (let j = 0; j < m - 1; j++) {
+            const a = (first + j) * 5, b2 = a + 5;
+            const e = (k, h) => P2(tp2[k] + tp2[k + 4] * o, tp2[k + 1] - tp2[k + 3] * o, tp2[k + 2] + h);
+            const ym = (tp2[a + 1] + tp2[b2 + 1]) / 2, nx2 = tp2[a + 4] * side, ny2 = -tp2[a + 3] * side;
+            quad(e(a, y0b), e(b2, y0b), e(b2, y1b), e(a, y1b), D(ym, nx2, ny2, 0), STEEL2);
+            quad(e(b2, y0b), e(a, y0b), e(a, y1b), e(b2, y1b), D(ym, -nx2, -ny2, 0), STEEL2);
+          }
+        }
+      }
+      if (!idx.length) return null;
+      const g = new Yt();
+      g.setAttribute("position", new me(new Float32Array(pos), 3));
+      g.setAttribute("normal", new me(new Float32Array(nor), 3));
+      g.setAttribute("aCol", new me(new Float32Array(col), 3));
+      g.setAttribute("aCen", new me(new Float32Array(cen), 3));
+      g.setAttribute("aK", new me(new Float32Array(kk), 3));
+      g.setIndex(pos.length / 3 > 65535 ? new me(new Uint32Array(idx), 1) : new me(new Uint16Array(idx), 1));
+      g.computeBoundingSphere();
+      const mesh = new Ce(g, this.mat);
+      mesh.matrixAutoUpdate = false;
+      mesh.frustumCulled = true;
+      mesh.visible = false;
+      this.game.scene.add(mesh);
+      return { mesh, C: cc2, half: g.boundingSphere.radius + g.boundingSphere.center.length(), basis: new Ht().set(1, 0, 0, 0, 0, c, -sn2, 0, 0, sn2, c, 0, 0, 0, 0, 1) };
+    }
+    update(camC) {
+      if (!this.ready || !this.blocks) return;
+      const g = this.game, cm2 = g.camMap, my2 = wrapY(cm2[1]), U = this.U.uFDk.value;
+      U.x = g.renderer.domElement.height / (2 * Math.tan(g.camera.fov * Math.PI / 360));
+      if (this.tick++ % 30 === 0) {
+        const rx0 = Math.floor(cm2[0] / RS3), ry0 = Math.floor(my2 / RS3), n = Math.ceil(this.R / RS3) + 1, want = [];
+        for (let dy2 = -n; dy2 <= n; dy2++) for (let dx2 = -n; dx2 <= n; dx2++) {
+          const rx2 = rx0 + dx2, ry2 = ((ry0 + dy2) % RNY + RNY) % RNY, key2 = ry2 * RNX + rx2;
+          if (rx2 < 0 || rx2 >= RNX || !this.blocks.has(key2) || want.some((w) => w[1] === key2)) continue;
+          const d = regionDist3(rx2, ry2, cm2[0], my2);
+          if (d < this.R + 500) want.push([d, key2]);
+        }
+        want.sort((a, b) => a[0] - b[0]);
+        this.queue = want.filter((w) => !this.regions.has(w[1])).map((w) => w[1]);
+        for (const [key2, r] of this.regions) {
+          const B = this.blocks.get(key2);
+          if (regionDist3(B.rx, B.ry, cm2[0], my2) > this.R + 4e3) {
+            if (r) {
+              this.game.scene.remove(r.mesh);
+              r.mesh.geometry.dispose();
+            }
+            this.regions.delete(key2);
+          }
+        }
+      }
+      if (this.queue && this.queue.length) {
+        const key2 = this.queue.shift();
+        if (!this.regions.has(key2)) this.regions.set(key2, this.build(this.blocks.get(key2)));
+      }
+      const vis = this.vis;
+      vis.length = 0;
+      const inner = this.game.terrain.deckMat.uniforms.uHouseFade.value.x - 300;
+      for (const r of this.regions.values()) {
+        if (!r) continue;
+        const d = Math.hypot(r.C[0] - camC[0], r.C[1] - camC[1], r.C[2] - camC[2]);
+        r.on = d + r.half > inner && d - r.half < this.R;
+        r.mesh.visible = r.on;
+        if (!r.on) continue;
+        r.d = d;
+        const m = r.mesh.matrix;
+        m.copy(r.basis);
+        m.elements[12] = r.C[0] - camC[0];
+        m.elements[13] = r.C[1] - camC[1];
+        m.elements[14] = r.C[2] - camC[2];
+        r.mesh.matrixWorld.copy(m);
+        vis.push(r);
+      }
+    }
+    // the frame's two depth ranges: a region's mesh is in the near one only where some of it is within it
+    passVisibility(nearPass, nearFar) {
+      if (!this.ready) return;
+      for (const r of this.vis) r.mesh.visible = r.on && (!nearPass || r.d - r.half < nearFar);
+    }
+  };
+
   // src/structures.js
   var MAGIC2 = 827018572;
   var K_GUYED = 0;
@@ -30113,6 +30368,7 @@ void main() {
       this.lights = new Lights(this);
       this.skyline = new Skyline(this);
       this.far = params.get("far") !== "0" ? new Far(this) : null;
+      this.farDecks = params.get("far") !== "0" ? new FarDecks(this) : null;
       this.structures = new Structures(this);
       this.nightLights = params.get("lights") !== "0" ? new NightLights(this) : null;
       let start = meta.starts[0], named = false;
@@ -31016,6 +31272,7 @@ void main() {
       if (this.lights) this.lights.update(camC);
       if (this.skyline) this.skyline.update(camC);
       if (this.far) this.far.update(camC);
+      if (this.farDecks) this.farDecks.update(camC);
       if (this.structures) this.structures.update(camC);
       if (this.aerial) this.aerial.update(p.camMap);
       if (this.nightLights) this.nightLights.update(camC);
@@ -31032,6 +31289,7 @@ void main() {
         this.terrain.passVisibility(false, nearFar);
         if (this.skyline) this.skyline.passVisibility(false, nearFar);
         if (this.far) this.far.passVisibility(false, nearFar);
+        if (this.farDecks) this.farDecks.passVisibility(false, nearFar);
         if (this.structures) this.structures.passVisibility(false, nearFar);
         if (this.nightLights) this.nightLights.passVisibility(false);
         r.render(this.scene, cam);
@@ -31043,6 +31301,7 @@ void main() {
         this.terrain.passVisibility(true, nearFar);
         if (this.skyline) this.skyline.passVisibility(true, nearFar);
         if (this.far) this.far.passVisibility(true, nearFar);
+        if (this.farDecks) this.farDecks.passVisibility(true, nearFar);
         if (this.structures) this.structures.passVisibility(true, nearFar);
         if (this.nightLights) this.nightLights.passVisibility(true);
         r.render(this.scene, cam);
