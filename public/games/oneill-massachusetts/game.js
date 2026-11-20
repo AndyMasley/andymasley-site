@@ -17803,6 +17803,34 @@ vec3 spaceSkyAt(vec3 P, vec3 dh, float pix) {
 }
 `
   );
+  var VEG_VS = (
+    /* glsl */
+    `
+uniform sampler2D uVeg8;    // 64 x 64 tiles of 184 m round the camera, wrapped: r trees, g stands of woods (1 come in)
+uniform sampler2D uVeg9;    // of 92 m: r shrubs, g corn
+uniform sampler2D uVeg10;   // of 46 m: r grass
+uniform vec4 uVegBand;      // where the species models give way to the plain crowns (from, to), the plants' reach
+float vegIn(vec3 rel, int lvl, int ch) {
+  vec3 P = uCam + rel;
+  float my = atan(-P.z, -P.y) * ${R.toFixed(1)};
+  vec2 m = vec2(P.x + ${(L / 2).toFixed(3)}, my < 0.0 ? my + ${C2.toFixed(3)} : my);
+  float size = ${(ROOT / 256).toFixed(5)} / (lvl == 8 ? 1.0 : lvl == 9 ? 2.0 : 4.0);
+  ivec2 ti = ivec2(floor(m / size)), t = ivec2(ti.x & 63, ti.y & 63);
+  vec4 v = lvl == 8 ? texelFetch(uVeg8, t, 0) : lvl == 9 ? texelFetch(uVeg9, t, 0) : texelFetch(uVeg10, t, 0);
+  return ch == 0 ? v.r : v.g;
+}
+float vegSeed(float a) { return fract(a * 3.71 + 0.11); }`
+  );
+  var VEG_FS = (
+    /* glsl */
+    `
+flat varying vec2 vVeg;     // the share of its coverage it shows, its own offset to the dither
+float vegIgn(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+// (spread over neighbouring pixels by under a quarter, so the few steps of coverage four samples make blend smoothly)
+float vegCover() {
+  return vVeg.x >= 0.999 ? 1.0 : clamp(vVeg.x + (fract(vegIgn(gl_FragCoord.xy) + vVeg.y) - 0.5) * 0.24, 0.0, 1.0);
+}`
+  );
   var SHADOW = (
     /* glsl */
     `
@@ -19005,6 +19033,9 @@ varying vec3 vCol2;
 varying vec3 vObj;
 varying float vAux;
 varying float vStyle;
+#ifdef FOLIAGE
+${VEG_FS}
+#endif
 #ifdef BARRIERS
 // ---- walls, fences and hedges (feat.js barrierTris): a vertex colour's red is -(64 T + P + 0.5) for pattern T in
 // palette P, its green and blue the point's place on the surface (u along the run, v round its cross-section or up its
@@ -19287,7 +19318,11 @@ void main() {
   }
   vec3 T, S;
   atmosphere(P, T, S);
-  gl_FragColor = vec4(col * T + S, 1.0);
+  #ifdef FOLIAGE
+    gl_FragColor = vec4(col * T + S, vegCover());           // (a plant's share of its coverage: VEG_FS)
+  #else
+    gl_FragColor = vec4(col * T + S, 1.0);
+  #endif
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -20249,6 +20284,9 @@ ${SP_GLSL}
 #ifdef SPLIT
 uniform vec2 uLod;
 #endif
+#ifdef THIN
+uniform vec4 uVegBand;
+#endif
 void main() {
   #ifdef BOX
     float keep = aPart > 1.5 ? 1.0 : 0.0;
@@ -20260,6 +20298,11 @@ void main() {
     float dc = length((modelMatrix * vec4(instanceMatrix[3].xyz, 1.0)).xyz);
     if (dc <= mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31))) keep = 0.0;
     if (aPart < 1.5) { float c = aPart < 0.5 ? 8.3 : 8.9; pos.xz *= 0.88; pos.y = c + (pos.y - c) * 0.88; }
+  #endif
+  #ifdef THIN
+    // a crown the trees thin out to by distance casts no shadow either (SCATTER_VS: at the middle of its fade)
+    float dt = length((modelMatrix * vec4(instanceMatrix[3].xyz, 1.0)).xyz);
+    if (fract(aInst.x * 13.13 + 0.71) > clamp(1.9 - 1.75 * dt / uVegBand.z, 0.4, 1.0)) keep = 0.0;
   #endif
   #ifdef FOLIAGE
     pos *= SP_FIT[int(aInst.z + 0.5)];
@@ -20278,21 +20321,54 @@ attribute vec2 aTuv;       // a spray's place in the atlas; on bark -1 - the way
 attribute vec2 aWind;      // how high in the tree (it sways), how far out along its spray (it flutters)
 attribute vec4 aInst;      // tint, conifer, species + 1, understory
 uniform vec2 uLod;
-bool treeVertex(out vec4 tp, out vec3 sc3) {
+#ifndef TREE_DEPTH
+${VEG_VS}
+#endif
+// veg: the share of its coverage it shows (VEG_FS), and its offset to the dither.  The depth pass keeps a hard switch.
+bool treeVertex(out vec4 tp, out vec3 sc3, out vec2 veg) {
   sc3 = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
   vec3 org = instanceMatrix[3].xyz;
-  float dc = length((modelMatrix * vec4(org, 1.0)).xyz);
-  float thr = mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31));
+  vec3 rel = (modelMatrix * vec4(org, 1.0)).xyz;
+  float dc = length(rel);
   vec3 lp = position;
+  veg = vec2(1.0, 0.0);
   #ifdef GRASS
     // a tuft of grass shows within GRASS_R (each at its own point inside it), sinking into the ground as it nears it
     float lim = GRASS_R * (0.72 + 0.28 * fract(aInst.x * 7.77 + 0.31));
     if (dc > lim) return false;
     lp.y *= smoothstep(lim, lim * 0.62, dc);
-  #elif defined(LOD_HI)
-    if (dc > thr) return false;
+  #elif defined(TREE_DEPTH)
+    float thr = mix(uLod.x, uLod.y, fract(aInst.x * 7.77 + 0.31));
+    #ifdef LOD_HI
+      if (dc > thr) return false;
+    #else
+      if (dc <= thr) return false;
+    #endif
   #else
-    if (dc <= thr) return false;
+    // each tree passes from one shape to the next at its own point in each band (where the depth pass switches it):
+    // the next comes in over the metres before that point and the first goes over the metres after it
+    float hT = fract(aInst.x * 7.77 + 0.31), thr = mix(uLod.x, uLod.y, hT), thrN = mix(uVegBand.x, uVegBand.y, hT);
+    #if defined(LOD_HI) && defined(UNDER)
+      veg.x = 1.0 - smoothstep(thr - 10.0, thr + 10.0, dc);            // a shrub: no simpler shape, it just goes
+    #elif defined(LOD_HI)
+      veg.x = aInst.w > 0.5 ? 1.0 - smoothstep(thr - 10.0, thr + 10.0, dc) : 1.0 - smoothstep(thr, thr + 10.0, dc);
+    #else
+      veg.x = smoothstep(thr - 10.0, thr, dc) * (1.0 - smoothstep(thrN, thrN + 24.0, dc));
+    #endif
+  #endif
+  #ifndef TREE_DEPTH
+    // and of that, the share come in since its tile arrived
+    #if defined(CORN)
+      veg.x *= vegIn(rel, 9, 1);
+    #elif defined(GRASS)
+      veg.x *= vegIn(rel, 10, 0);
+    #elif defined(UNDER)
+      veg.x *= vegIn(rel, 9, 0);
+    #else
+      veg.x *= vegIn(rel, 8, 0);
+    #endif
+    if (veg.x < 0.002) return false;
+    veg.y = vegSeed(aInst.x);
   #endif
   // (no more than a quarter over the narrower of the two, so a narrow crown is not all overhanging sprays)
   float g = min(sqrt(sc3.x * sc3.y), 1.25 * min(sc3.x, sc3.y));
@@ -20322,9 +20398,11 @@ varying vec3 vT;
 varying vec3 vS;
 varying vec3 vSunE;
 varying vec3 vLd;
+flat varying vec2 vVeg;
 void main() {
-  vec4 tp; vec3 sc3;
-  if (!treeVertex(tp, sc3)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vec4 tp; vec3 sc3; vec2 veg;
+  if (!treeVertex(tp, sc3, veg)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vVeg = veg;
   vec4 wp = modelMatrix * tp;
   vRel = wp.xyz;
   // the air between the camera and the tree, and the lamp's light reaching it, change too little across a tree to work
@@ -20367,6 +20445,7 @@ varying vec3 vT;
 varying vec3 vS;
 varying vec3 vSunE;
 varying vec3 vLd;
+${VEG_FS}
 #if defined(GRASS) && !defined(CORN)
 // a card of grass blades (uv across 0..1 and up 0..1, px the pixel across): fourteen blades from its foot, each its own
 // height, lean and shade; their colour by the grass's kind k (0 meadow, 1 hay, 2 pasture, 3 weeds on fallow), linear
@@ -20462,7 +20541,7 @@ void main() {
     // seen from above, a field of corn shows the shade down among its leaves, which its cards do not cast
     col *= 1.0 - 0.45 * smoothstep(0.15, 0.75, dot(V, up));
   #endif
-  gl_FragColor = vec4(col * vT + vS, cov);
+  gl_FragColor = vec4(col * vT + vS, cov * vegCover());
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -20471,12 +20550,13 @@ void main() {
   var DEPTH_TREE_VS = (
     /* glsl */
     `
+#define TREE_DEPTH 1
 uniform float uTime;
 ${TREE_POS}
 varying vec2 vUV;
 void main() {
-  vec4 tp; vec3 sc3;
-  if (!treeVertex(tp, sc3)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vec4 tp; vec3 sc3; vec2 veg;
+  if (!treeVertex(tp, sc3, veg)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vUV = aTuv;
   gl_Position = projectionMatrix * viewMatrix * modelMatrix * tp;
 }`
@@ -21387,6 +21467,7 @@ void main() {
 
   // src/terrain.js
   var tmp = new Float64Array(3);
+  var VEG_FADE = 700;
   var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "kerbs", "rails", "pwires"]);
   var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
@@ -21442,6 +21523,19 @@ void main() {
       this.dirty = true;
       this.prefetchT = 0;
       this.prefetchKey = "";
+      this.vegData = [new Uint8Array(64 * 64 * 2), new Uint8Array(64 * 64 * 2), new Uint8Array(64 * 64 * 2)];
+      this.vegTex = this.vegData.map((d) => {
+        d.fill(255);
+        const t = new an(d, 64, 64, bi, cn);
+        t.magFilter = t.minFilter = Te;
+        t.unpackAlignment = 1;
+        t.needsUpdate = true;
+        return t;
+      });
+      this.U.uVeg8 = { value: this.vegTex[0] };
+      this.U.uVeg9 = { value: this.vegTex[1] };
+      this.U.uVeg10 = { value: this.vegTex[2] };
+      this.vegUntil = 0;
       this._initScatterAssets();
       for (const w of this.workers) w.addEventListener("message", (ev2) => this.onMessage(ev2.data, this.workers.indexOf(w)));
     }
@@ -21731,9 +21825,34 @@ void main() {
         m.matrixWorld.copy(m.matrix);
       }
       this.updateScatter(camC);
+      this.updateVeg();
       this.pump();
       if ((frame2 & 63) === 0) this.evict();
       if ((frame2 & 31) === 0) this.redo();
+    }
+    // How far each tile of plants has faded in since it arrived (VEG_VS), written afresh every frame while any is still
+    // fading in: trees and stands of woods by 184 m tile (a stand's 736 m tile over its 4 x 4), shrubs and corn by 92 m,
+    // grass by 46 m, each in a 64 x 64 window wrapped round the camera (no tile asked for is 32 tiles off)
+    updateVeg() {
+      const now = performance.now();
+      if (now > this.vegUntil + 200) return;
+      const [d8, d9, d10] = this.vegData;
+      d8.fill(255);
+      d9.fill(255);
+      d10.fill(255);
+      for (const t of this.scatter.values()) {
+        if (t.born === void 0 || t.state !== "ready") continue;
+        const a = Math.min(1, (now - t.born) / VEG_FADE), v = Math.round(a * a * (3 - 2 * a) * 255);
+        if (v >= 255) continue;
+        const k = t.kind, x = t.ix, y = t.iy;
+        if (k === "trees") d8[((y & 63) * 64 + (x & 63)) * 2] = v;
+        else if (k === "clumps") {
+          for (let b = 0; b < 4; b++) for (let c = 0; c < 4; c++) d8[((y * 4 + b & 63) * 64 + (x * 4 + c & 63)) * 2 + 1] = v;
+        } else if (k === "under") d9[((y & 63) * 64 + (x & 63)) * 2] = v;
+        else if (k === "corn") d9[((y & 63) * 64 + (x & 63)) * 2 + 1] = v;
+        else if (k === "grass") d10[((y & 63) * 64 + (x & 63)) * 2] = v;
+      }
+      for (const tx2 of this.vegTex) tx2.needsUpdate = true;
     }
     // chunks made while their region could not be read are dropped and made again (the worker tries the region again)
     redo() {
@@ -21909,7 +22028,9 @@ void main() {
         fragmentShader: LIT_FS,
         defines: Object.assign({ SCATTER: 1 }, extra || {}, this.defines),
         side: Bn,
-        uniforms: Object.assign({}, this.U, { uKind: { value: kind }, uFade: { value: new et(fade[0], fade[1]) }, uFadeIn: { value: new et(fadeIn[0], fadeIn[1]) } })
+        uniforms: Object.assign({}, this.U, { uKind: { value: kind }, uFade: { value: new et(fade[0], fade[1]) }, uFadeIn: { value: new et(fadeIn[0], fadeIn[1]) } }),
+        alphaToCoverage: !!(extra && extra.FOLIAGE)
+        // (a plant's share of its coverage: VEG_FS)
       });
       const q = this.game.quality;
       this.treeMat = mk(1, [q.treeR * 0.8, q.treeR * 0.97], [-2, -1], { FOLIAGE: 1 });
@@ -22334,6 +22455,8 @@ void main() {
         this.U.uLod.value.set(hr2 * 0.8, hr2 * 1.1);
         const mk2 = (lod) => new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ [lod]: 1 }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
         this.leafMat = { hi: mk2("LOD_HI"), mid: mk2("LOD_MID") };
+        this.underMat = new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ LOD_HI: 1, UNDER: 1 }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
+        this.U.uVegBand.value.set(this.leafR - 80, this.leafR - 30, q.treeR, 0);
         this.grassGeo = grassGeometry();
         this.grassMat = new Rn({ vertexShader: TREE_VS, fragmentShader: TREE_FS, defines: Object.assign({ GRASS: 1, GRASS_R: "42.0" }, this.defines), side: Bn, uniforms: Object.assign({}, this.U), alphaToCoverage: true });
         this.cornGeo = cornGeometry();
@@ -22341,7 +22464,7 @@ void main() {
         this.U.uPlants3D.value = 1;
         this.spExt = this.leafGeos.hi.map((g) => new C(Math.max(-g.boundingBox.min.x, g.boundingBox.max.x), g.boundingBox.max.y, Math.max(-g.boundingBox.min.z, g.boundingBox.max.z)));
       }
-      this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], [q.treeR * 0.72, q.treeR * 0.95], Object.assign({ FOLIAGE: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
+      this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], [q.treeR * 0.72, q.treeR * 0.95], Object.assign({ FOLIAGE: 1, STAND: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
       this.houseR = this.game.realBuildings ? q.houseR || 0 : 0;
       this.bldMat = mk(2, [q.bldR * 0.85, q.bldR * 0.98], this.houseR ? [this.houseR - 16, this.houseR] : [-2, -1], { BLD: 1 });
       this.bldMat.side = Mi;
@@ -22367,7 +22490,7 @@ void main() {
       const alt = cm2[2] - g.groundUnderCam;
       const bldR = clamp2(Math.max(q.bldR, alt * 2.4 + 300), q.bldR, q.bldR * 3);
       this.bldMat.uniforms.uFade.value.set(bldR * 0.85, bldR * 0.98);
-      const kinds = [["trees", 8, q.treeR], ["clumps", 6, q.clumpR], ["buildings", 7, bldR]];
+      const kinds = [["trees", 8, q.treeR * 1.3, q.treeR], ["clumps", 6, q.clumpR * 1.1, q.clumpR], ["buildings", 7, bldR]];
       if (this.deckMat) {
         const deckR = clamp2(Math.max(q.deckR, alt * 2.4 + 300), q.deckR, q.deckR * 2);
         this.deckReach = deckR;
@@ -22375,12 +22498,15 @@ void main() {
         kinds.push(["decks", 7, deckR]);
       }
       if (this.houseR) kinds.push(["houses", 8, this.houseR]);
-      if (this.leafR) kinds.push(["under", 9, (q.leafHiR || 100) * 1.15], ["grass", 10, 44], ["corn", 9, 84]);
+      if (this.leafR) {
+        const u = (q.leafHiR || 100) * 1.15;
+        kinds.push(["under", 9, u * 1.5, u], ["grass", 10, 70, 44], ["corn", 9, 115, 84]);
+      }
       if (this.streetR) kinds.push(["poles", 8, this.streetR], ["cars", 8, this.streetR], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, this.signR], ["paint", 8, Math.min(this.signR, 260)], ["gpaint", 7, this.signR * 2], ["streets", 8, Math.min(this.signR * 1.6, 420)], ["kerbs", 8, Math.min(this.signR, 160)], ["rails", 7, Math.min(this.signR * 1.6, 520)]);
       if (this.powerR) kinds.push(["power", 6, this.powerR], ["pwires", 6, Math.min(this.powerR, 3e3)]);
-      for (const [kind, level, rad] of kinds) {
-        if (alt > rad * 1.2) continue;
+      for (const [kind, level, rad, shows] of kinds) {
+        if (alt > Math.max(shows ? rad : 0, (shows || rad) * 1.2)) continue;
         const s29 = ROOT / (1 << level);
         const reach = Math.sqrt(Math.max(rad * rad - alt * alt, 0)) + s29 * 0.75;
         const x02 = Math.floor((cm2[0] - reach) / s29), x1 = Math.floor((cm2[0] + reach) / s29);
@@ -22438,21 +22564,20 @@ void main() {
             t.d = Math.hypot(t.mid[0] - camC[0], t.mid[1] - camC[1], t.mid[2] - camC[2]);
             vis.push(t);
             if (t.kind === "trees") {
-              const near2 = !!this.leafR && t.d < this.leafR + (t.near ? 14 : 0);
+              const near2 = !!this.leafR && t.d - t.rad < this.leafR + (t.near ? 40 : 10);
               if (near2 !== t.near) {
                 t.near = near2;
                 if (near2 && !t.nm) this.nearTrees(t);
               }
+              t.mesh.count = t.nTrees || 0;
+              t.plain = t.d - t.rad < q.treeR;
+              t.mesh.visible = t.plain;
               if (near2) {
-                t.mesh.visible = false;
-                const hi2 = t.d - t.rad < this.U.uLod.value.y + 4;
+                const hi2 = t.d - t.rad < this.U.uLod.value.y + 14;
                 this._cam.set(camC[0] - t.center[0], camC[1] - t.center[1], camC[2] - t.center[2]).applyMatrix4(this._inv.copy(t.basis).transpose());
                 this.nearFill(t, this._cam);
                 for (const m of t.nm) m.visible = m.userData.want = m.userData.lod === "mid" || hi2 && m.count > 0;
-              } else {
-                if (t.nm) for (const m of t.nm) m.visible = m.userData.want = false;
-                t.mesh.count = t.nTrees ? Math.max(1, Math.ceil(t.nTrees * clamp2(1.9 - 1.75 * t.d / q.treeR, 0.4, 1))) : 0;
-              }
+              } else if (t.nm) for (const m of t.nm) m.visible = m.userData.want = false;
             }
           } else if (t.nm) for (const m of t.nm) m.visible = m.userData.want = false;
           t.mesh.matrix.copy(t.basis);
@@ -22472,10 +22597,8 @@ void main() {
     passVisibility(nearPass, nearFar) {
       for (const t of this.visScatter) {
         const on2 = nearPass || t.d + t.rad > nearFar;
-        if (t.near && t.nm) {
-          t.mesh.visible = false;
-          for (const m of t.nm) m.visible = on2 && m.userData.want;
-        } else t.mesh.visible = on2;
+        t.mesh.visible = on2 && t.plain !== false;
+        if (t.near && t.nm) for (const m of t.nm) m.visible = on2 && m.userData.want;
       }
     }
     // A tile of trees near the camera: for each species in it, one instanced mesh of its full model (the understory
@@ -22517,7 +22640,7 @@ void main() {
     nearFill(t, cam) {
       if (t.fillAt && t.fillAt.distanceToSquared(cam) < 16) return;
       t.fillAt = (t.fillAt || new C()).copy(cam);
-      const R2 = (this.U.uLod.value.y + 12) ** 2, order = this._order || (this._order = []);
+      const R2 = (this.U.uLod.value.y + 22) ** 2, order = this._order || (this._order = []);
       for (const m of t.nm) {
         const src = m.userData.all;
         if (!src) continue;
@@ -22669,7 +22792,7 @@ void main() {
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
       const geo = m.kind === "trees" ? this.treeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.leafMat.hi : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.underMat : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
@@ -22678,6 +22801,10 @@ void main() {
       const M = new Ht(), P2 = new C(), Q = new ke(), S2 = new C(), Y = new C(0, 1, 0);
       let rad = 0, vegetationPad = 0;
       const vegetation = m.kind === "trees" || m.kind === "clumps" || m.kind === "under" || m.kind === "grass" || m.kind === "corn";
+      if (vegetation) {
+        t.born = performance.now();
+        this.vegUntil = t.born + VEG_FADE + 100;
+      }
       let vegetationExtent = null;
       if (vegetation) {
         if (!geo.boundingBox) geo.computeBoundingBox();
@@ -22837,8 +22964,10 @@ uniform vec2 uFadeIn;
 #ifdef ROTOR
 uniform float uTime;
 #endif
-#ifdef CLUMP
+#ifdef FOLIAGE
 uniform vec3 uCam;
+${VEG_VS}
+flat varying vec2 vVeg;
 #endif
 ${PALETTE}
 #ifdef FOLIAGE
@@ -22907,12 +23036,32 @@ void main() {
   #else
     float f = step(mix(uFadeIn.x, uFadeIn.y, jit), dc) * step(dc, mix(uFade.x, uFade.y, jit) * reach);
   #endif
-  #ifdef CLUMP
-    // seen from above, the woods are their aerial photographs on the ground: a clump of crowns stands only where it is
-    // seen low, under about 9 to 15 degrees down, where it makes the woods' edge against the sky
-    vec3 Pi = uCam + wc.xyz;
-    float dep = -dot(wc.xyz / max(dc, 1.0), vec3(0.0, -Pi.y, -Pi.z) / max(length(Pi.yz), 1.0));
-    f *= step(dep, mix(0.16, 0.26, jit));
+  #ifdef FOLIAGE
+    // a plant never pops: it shows in a share of its coverage (VEG_FS, in LIT_FS) that grows and shrinks smoothly
+    float c;
+    #ifdef STAND
+      // a stand of woods: in from where the trees thin out, out to its own reach, each at its own distance
+      float fi = mix(uFadeIn.x, uFadeIn.y, jit), fo = mix(uFade.x, uFade.y, jit);
+      c = smoothstep(fi - 25.0, fi + 25.0, dc) * (1.0 - smoothstep(fo - 50.0, fo + 50.0, dc));
+      #ifdef CLUMP
+        // seen from above, the woods are their aerial photographs on the ground: a clump of crowns stands only where
+        // it is seen low, under about 9 to 15 degrees down, where it makes the woods' edge against the sky
+        vec3 Pi = uCam + wc.xyz;
+        float dep = -dot(wc.xyz / max(dc, 1.0), vec3(0.0, -Pi.y, -Pi.z) / max(length(Pi.yz), 1.0)), dl = mix(0.16, 0.26, jit);
+        c *= 1.0 - smoothstep(dl - 0.04, dl + 0.04, dep);
+      #endif
+      c *= vegIn(wc.xyz, 8, 1);
+    #else
+      // a plain crown: in over the metres before its own point in uVegBand.xy, where its species model goes over the
+      // metres after (TREE_POS); fewer of them farther out as the stands take over, each going at its own distance;
+      // gone by its own point in the plants' reach (uFade)
+      float thrN = mix(uVegBand.x, uVegBand.y, jit), fo = mix(uFade.x, uFade.y, jit);
+      float dens = clamp(1.9 - 1.75 * dc / uVegBand.z, 0.4, 1.0), ri = fract(aInst.x * 13.13 + 0.71);
+      c = (uVegBand.y > 0.0 ? smoothstep(thrN - 24.0, thrN, dc) : 1.0) * smoothstep(ri - 0.05, ri + 0.05, dens)
+        * (1.0 - smoothstep(fo - 20.0, fo + 20.0, dc)) * vegIn(wc.xyz, 8, 0);
+    #endif
+    vVeg = vec2(c, vegSeed(aInst.x));
+    f = c > 0.002 ? 1.0 : 0.0;
   #endif
   pos *= keep * f;
   #ifdef FOLIAGE
@@ -29355,6 +29504,7 @@ void main() {
         uCylLen: { value: L },
         uTime: { value: 0 },
         uLod: { value: new et(85, 115) },
+        uVegBand: { value: new de(0, 0, this.quality.treeR || 500, 0) },
         uBounce: { value: new C() },
         uSdf: { value: tex(sdf.data, sdf.w, sdf.h, Rl) },
         uCover: { value: tex(png.cover.data, png.cover.w, png.cover.h, on) },
@@ -29584,10 +29734,11 @@ void main() {
       this.depthMat.leaves = { hi: mkLeaves("LOD_HI"), mid: mkLeaves("LOD_MID") };
       this.depthMat.under = this.depthMat.leaves.hi;
       const mkD = (defines) => new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
-      this.depthMat.crowns = mkD({ FOLIAGE: 1 });
+      this.depthMat.crowns = mkD({ FOLIAGE: 1, THIN: 1 });
       this.depthMat.boxes = mkD({ BOX: 1 });
-      this.depthMat.proxies = mkD({ FOLIAGE: 1, SPLIT: 1 });
-      this.depthMat.proxies.uniforms = { uLod: this.U.uLod };
+      this.depthMat.crowns.uniforms = { uVegBand: this.U.uVegBand };
+      this.depthMat.proxies = mkD({ FOLIAGE: 1, SPLIT: 1, THIN: 1 });
+      this.depthMat.proxies.uniforms = { uLod: this.U.uLod, uVegBand: this.U.uVegBand };
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
       this.renderer.clear();
@@ -29673,13 +29824,17 @@ void main() {
             m.layers.disable(1);
             continue;
           }
-          shown.push(m, m.count);
+          shown.push(m, m.count, m.visible);
           m.visible = true;
           m.count = t.nTrees;
         }
         if (!casts) {
           m.layers.disable(1);
           continue;
+        }
+        if (kind === "trees" && !m.visible && t.show) {
+          shown.push(m, m.count, m.visible);
+          m.visible = true;
         }
         m.layers.enable(1);
         sw.push(m, m.material);
@@ -29718,9 +29873,9 @@ void main() {
       r.render(this.scene, cam);
       r.setRenderTarget(null);
       for (let i = 0; i < sw.length; i += 2) sw[i].material = sw[i + 1];
-      for (let i = 0; i < shown.length; i += 2) {
-        shown[i].visible = false;
+      for (let i = 0; i < shown.length; i += 3) {
         shown[i].count = shown[i + 1];
+        shown[i].visible = shown[i + 2];
       }
       for (let i = 0; i < geos.length; i += 2) geos[i].geometry = geos[i + 1];
     }
