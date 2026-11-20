@@ -23485,10 +23485,11 @@ void main() {
       c = smoothstep(fi - 25.0, fi + 25.0, dc) * (1.0 - smoothstep(fo - 50.0, fo + 50.0, dc));
       #ifdef CLUMP
         // seen from above, the woods are their aerial photographs on the ground: a clump of crowns stands only where
-        // it is seen low, under about 9 to 15 degrees down, where it makes the woods' edge against the sky
+        // it is seen low, under about 3.5 to 6 degrees down, where it makes the woods' edge against the sky (seen
+        // steeper, rows of clumps over the photographs' canopy read as an orchard)
         vec3 Pi = uCam + wc.xyz;
-        float dep = -dot(wc.xyz / max(dc, 1.0), vec3(0.0, -Pi.y, -Pi.z) / max(length(Pi.yz), 1.0)), dl = mix(0.16, 0.26, jit);
-        c *= 1.0 - smoothstep(dl - 0.04, dl + 0.04, dep);
+        float dep = -dot(wc.xyz / max(dc, 1.0), vec3(0.0, -Pi.y, -Pi.z) / max(length(Pi.yz), 1.0)), dl = mix(0.06, 0.10, jit);
+        c *= 1.0 - smoothstep(dl - 0.02, dl + 0.02, dep);
       #endif
       c *= vegIn(wc.xyz, 8, 1);
     #elif defined(FARTREE)
@@ -23499,7 +23500,9 @@ void main() {
       float kk = clamp(pow(uFarK.x / max(dc, 1.0), 1.25), uFarK.y, 1.0);
       c = smoothstep(fi - 20.0, fi, dc) * (kk >= 1.0 ? 1.0 : smoothstep(aRank - 0.02, aRank + 0.02, kk))
         * (1.0 - smoothstep(fo - 120.0, fo + 120.0, dc)) * vegIn(wc.xyz, 8, 2);
-      farGrow = inversesqrt(kk);
+      // (the ones kept are a scattered share, not evenly spaced as the trees were, so each grows past the share's own
+      // area, to as much again as two fifths of those left out, or the woods open into gaps)
+      farGrow = inversesqrt(kk) * (1.0 + 0.4 * (1.0 - kk));
     #elif defined(FAR_ON)
       // a plain crown: in over the metres before its own point in uVegBand.xy, where its species model goes over the
       // metres after (TREE_POS); out over the 20 m after its own point in uFade, where its far crown has come in
@@ -23522,6 +23525,12 @@ void main() {
     // a tree of a species (aInst.z, 1 to 8; 0 a stand of woods) stands at its model's size (species.js)
     vec3 spf = SP_FIT[int(aInst.z + 0.5)];
     pos *= spf; nl /= spf;
+    #ifdef FARTREE
+      // a far crown grows down as well as out, from its top, so one that stands for several is a fuller mound and not a
+      // flat cushion, and its top stays at the tree's height
+      float topY = (aInst.y > 0.5 ? 14.4 : 12.8) * spf.y, gy = mix(1.0, farGrow, 0.45);
+      pos.y = mix(pos.y, topY - (topY - pos.y) * gy, keep * f); nl.y /= gy;
+    #endif
     pos.xz *= farGrow; nl.xz /= farGrow;
   #endif
   vObj = pos * sc;
@@ -23539,6 +23548,11 @@ void main() {
   #endif
   #ifdef FOLIAGE
     if (aPart < 1.5) vCol *= SP_TINT[int(aInst.z + 0.5)];     // ... and in its colour
+    #ifndef STAND
+      // one side of a crown a little lighter than another (where the vertex is in it, and the tree's seed), so a
+      // crown reads as clumps of leaves, not one even mound
+      if (aPart < 1.5) vCol *= 1.0 + 0.15 * sin(position.x * 1.3 + aInst.x * 40.0) * sin(position.z * 1.1 + position.y * 0.9 + aInst.x * 23.0);
+    #endif
   #endif
   #ifdef FARTREE
     // farther out, in the colours of the photographs where it stands (none at the plain crowns' hand-over, all by 1.5 km)
