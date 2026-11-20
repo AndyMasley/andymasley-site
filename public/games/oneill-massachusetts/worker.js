@@ -12265,22 +12265,28 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
         const u1 = hash2(gi * 7 + 3, gj * 5 + 11), u2 = hash2(gi * 3 + 17, gj * 11 + 2), u3 = hash2(gi * 13 + 5, gj * 7 + 23);
         const mx = mx0 + (i + u1) * cell2, my = my0 + (j + u2) * cell2;
         const lcv = lcAt(mx, my);
-        if (lcv < 3 || lcv > 5) continue;
+        if ((lcv < 3 || lcv > 5) && lcv !== 12 && lcv !== 14) continue;
         let type = lcv === 5 ? 0 : 1;
         const I = f ? Math.floor(mx / FLD) - f.I0 : -1, J = f ? Math.floor(my / FLD) - f.J0 : -1;
         const c = f && I >= 0 && J >= 0 && I < f.w && J < f.h ? f.data[J * f.w + I] : 0;
         if (c >= 64) {
           const g2 = c - 64 >> 4;
-          type = g2 === 0 ? 1 : g2 === 1 ? 2 : g2 === 7 ? 3 : -1;
-        } else if (lcv === 3) type = -1;
-        if (type < 0) continue;
-        const p = type === 0 ? 0.85 : type === 1 ? 0.9 : type === 2 ? 0.8 : 0.6;
-        const hgt = type === 0 ? 0.62 : type === 1 ? 0.5 : type === 2 ? 0.26 : 0.45;
-        if (u3 > p) continue;
+          type = lcv === 12 || lcv === 14 ? -1 : g2 === 0 ? 1 : g2 === 1 ? 2 : g2 === 7 ? 3 : -1;
+        } else if (c > 0) {
+          type = c === 1 ? lcv === 12 || lcv >= 4 && lcv <= 5 ? 5 : -1 : c === 2 || c === 4 ? lcv === 12 || lcv === 5 ? 7 : lcv === 4 ? 1 : -1 : c === 3 ? lcv === 12 || lcv === 5 ? 9 : -1 : c === 6 ? lcv === 5 ? 8 : -1 : c === 7 || c === 8 ? lcv === 5 || lcv === 14 ? 8 : -1 : -1;
+        } else if (lcv === 3 || lcv === 14) type = -1;
+        else if (lcv === 12) type = -2;
+        if (type === -1) continue;
         const h = world.groundH(mx, my, true), g = world.g;
         if (g.water || g.edge < 1.2 || g.deck > -1e8) continue;
+        if (type === -2) type = h < 2.4 && world.levelAt(mx, my) < 1.2 ? 5 : 7;
+        if (type === 5 && world.sdfAt(mx, my) < 7) type = 6;
+        const patch = type === 8 ? smoothstep(0.42, 0.62, vnoise(mx / 9 + 31.7, my / 9 + 7.3)) : 1;
+        const p = [0.85, 0.9, 0.8, 0.6, 0, 0.95, 0.8, 0.6, 0.75, 0.55][type] * patch;
+        const hgt = [0.62, 0.5, 0.26, 0.45, 0, 0.42, 0.9, 1, 0.72, 2.2][type];
+        if (u3 > p) continue;
         cyl(mx, my, h, p32);
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, hgt * (0.65 + 0.7 * hash2(gi + 41, gj + 3)), u1 * 6.2832, type, hash2(gi + 9, gj + 77), 1.1 + 0.5 * u3, -1);
+        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, hgt * (0.65 + 0.7 * hash2(gi + 41, gj + 3)), u1 * 6.2832, type, hash2(gi + 9, gj + 77), type === 8 ? 0.75 + 0.4 * u3 : type === 6 || type === 7 || type === 9 ? 1.35 + 0.5 * u3 : 1.1 + 0.5 * u3, -1);
       }
       const arr2 = new Float32Array(out);
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);

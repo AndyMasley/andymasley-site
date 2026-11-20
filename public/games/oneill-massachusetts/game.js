@@ -20716,24 +20716,41 @@ varying vec3 vLd;
 ${VEG_FS}
 #if defined(GRASS) && !defined(CORN)
 // a card of grass blades (uv across 0..1 and up 0..1, px the pixel across): fourteen blades from its foot, each its own
-// height, lean and shade; their colour by the grass's kind k (0 meadow, 1 hay, 2 pasture, 3 weeds on fallow), linear
+// height, lean and shade; their colour by the grass's kind k (0 meadow, 1 hay, 2 pasture, 3 weeds on fallow; 5 salt
+// marsh hay, lying over in cowlicks, 6 smooth cordgrass, 7 marsh, one in eight with a cattail's brown head, 8 beach grass, thin
+// and arching, 9 reeds, most with a plume), linear
 float grassHash(float n) { return fract(sin(n) * 43758.5453); }
 vec4 grassBlades(vec2 uv, float seed, float k, float px) {
-  float a = 0.0, sh = 0.5, tip = 0.0;
+  float a = 0.0, sh = 0.5, tip = 0.0, head = 0.0;
+  float lean = k > 4.5 && (k < 5.5 || (k > 7.5 && k < 8.5)) ? 0.95 : 0.55;
+  float wide = k > 5.5 && k < 7.5 ? 1.35 : k > 7.5 && k < 8.5 ? 0.7 : 1.0;
+  // (the tall kinds stand in front of more of the screen: eight blades a card, a little wider, for fewer to draw)
+  int nb = (k > 5.5 && k < 7.5) || k > 8.5 ? 8 : 14;
+  if (nb == 8) wide *= 1.3;
   for (int i = 0; i < 14; i++) {
+    if (i >= nb) break;
     float fi = float(i) + seed * 31.7;
     float h1 = grassHash(fi * 12.9898), h2 = grassHash(fi * 39.346 + 1.7), h3 = grassHash(fi * 73.156 + 4.1);
     float top = 0.45 + 0.55 * h2, y = uv.y / top;
     if (y >= 1.0) continue;
-    float xc = 0.06 + 0.88 * h1 + (h3 - 0.5) * 0.55 * y * y;
-    float hw = 0.024 * (1.0 - y * y) + 0.003;
+    float xc = 0.06 + 0.88 * h1 + (h3 - 0.5) * lean * y * y;
+    float hw = (0.024 * (1.0 - y * y) + 0.003) * wide;
     float c = clamp((hw - abs(uv.x - xc)) / max(px, 1e-4) + 0.5, 0.0, 1.0);
-    if (c > a) { a = c; sh = h3; tip = y; }
+    if (c > a) { a = c; sh = h3; tip = y; head = 0.0; }
+    // a cattail's head (one blade in five) or a reed's plume (two in three) near the top of its stem
+    if ((k > 6.5 && k < 7.5 && h2 > 0.87) || (k > 8.5 && h1 > 0.33)) {
+      float y0 = k < 7.5 ? 0.70 : 0.82, y1 = k < 7.5 ? 0.86 : 1.0, hwH = k < 7.5 ? 0.022 : 0.034 * (1.0 - (y - y0) / (y1 - y0) * 0.6);
+      float cH = y > y0 && y < y1 ? clamp((hwH - abs(uv.x - xc)) / max(px, 1e-4) + 0.5, 0.0, 1.0) * (k < 7.5 ? 1.0 : 0.8) : 0.0;
+      if (cH > a) { a = cH; head = 1.0; sh = h3; }
+    }
   }
-  vec3 green = k < 0.5 ? vec3(0.050, 0.090, 0.022) : k < 1.5 ? vec3(0.066, 0.096, 0.026) : k < 2.5 ? vec3(0.044, 0.088, 0.020) : vec3(0.058, 0.086, 0.026);
-  vec3 straw = k < 0.5 ? vec3(0.120, 0.112, 0.052) : k < 1.5 ? vec3(0.130, 0.120, 0.058) : vec3(0.100, 0.098, 0.045);
-  float dry = k < 0.5 ? 0.2 : k < 1.5 ? 0.28 : k < 2.5 ? 0.08 : 0.25;
+  vec3 green = k < 0.5 ? vec3(0.050, 0.090, 0.022) : k < 1.5 ? vec3(0.066, 0.096, 0.026) : k < 2.5 ? vec3(0.044, 0.088, 0.020) : k < 3.5 ? vec3(0.058, 0.086, 0.026)
+    : k < 5.5 ? vec3(0.072, 0.092, 0.034) : k < 6.5 ? vec3(0.038, 0.074, 0.024) : k < 7.5 ? vec3(0.044, 0.080, 0.026) : k < 8.5 ? vec3(0.070, 0.088, 0.052) : vec3(0.058, 0.084, 0.034);
+  vec3 straw = k < 0.5 ? vec3(0.120, 0.112, 0.052) : k < 1.5 ? vec3(0.130, 0.120, 0.058) : k < 3.5 ? vec3(0.100, 0.098, 0.045)
+    : k < 5.5 ? vec3(0.150, 0.132, 0.066) : k < 7.5 ? vec3(0.112, 0.099, 0.050) : k < 8.5 ? vec3(0.160, 0.148, 0.098) : vec3(0.140, 0.115, 0.068);
+  float dry = k < 0.5 ? 0.2 : k < 1.5 ? 0.28 : k < 2.5 ? 0.08 : k < 3.5 ? 0.25 : k < 5.5 ? 0.3 : k < 6.5 ? 0.1 : k < 7.5 ? 0.18 : k < 8.5 ? 0.38 : 0.3;
   vec3 col = mix(green, straw, step(1.0 - dry, sh) * (0.6 + 0.4 * tip)) * (0.85 + 0.3 * sh);
+  if (head > 0.5) col = (k < 7.5 ? vec3(0.072, 0.040, 0.021) : vec3(0.125, 0.098, 0.088)) * (0.85 + 0.3 * sh);
   return vec4(col * 1.35, a);          // (TREE_FS multiplies by the vertex colour: the foot's shade, 0.45 to 1)
 }
 #endif
