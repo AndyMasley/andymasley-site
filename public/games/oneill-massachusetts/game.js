@@ -29369,7 +29369,9 @@ void main() {
     `
 attribute vec3 aCen;      // the centre its detailed piece folds at (decks.js M.C), in this mesh's frame
 attribute vec3 aCol;      // its colour
-attribute vec3 aK;        // its seed (/255), its kind (0 slab or pier, 1 a truss's panel), its deck's width (m)
+attribute vec3 aK;        // its seed (/255), its kind (0 slab or pier, 1 a truss's panel, 2 a member), its deck's width
+                          // (a member's size across, m)
+attribute vec3 aOff;      // a member's corner from its axis (0 for the rest)
 uniform vec2 uHouseFade;  // where the detailed pieces go (terrain.js deckMat): each at its seed's point between
 uniform vec4 uFDk;        // pixels a metre spans at 1 m, this layer's reach
 flat varying vec2 vVeg;
@@ -29383,11 +29385,16 @@ varying float vStyle;
 void main() {
   float dc = length((modelMatrix * vec4(aCen, 1.0)).xyz), thr = mix(uHouseFade.x, uHouseFade.y, aK.x);
   vec4 wp = modelMatrix * vec4(position, 1.0);
-  float dv = length(wp.xyz);
+  float dv = length(wp.xyz), px = aK.z * uFDk.x / max(dv, 1.0);
   // in over the 220 m before its detailed piece goes; out over the last part of this layer's reach, and once its deck
   // is under about a pixel wide
-  float c = smoothstep(thr - 240.0, thr - 20.0, dc) * (1.0 - smoothstep(uFDk.y * 0.85, uFDk.y, dv))
-          * smoothstep(0.5, 1.1, aK.z * uFDk.x / max(dv, 1.0)) * (aK.y > 0.5 ? 0.5 : 1.0);
+  float c = smoothstep(thr - 240.0, thr - 20.0, dc) * (1.0 - smoothstep(uFDk.y * 0.85, uFDk.y, dv));
+  if (aK.y > 1.5) {
+    // a member: widened to a pixel across where it is less, in that share of the pixel; gone under about a fifth
+    float e = max(1.0, 1.0 / max(px, 1e-3));
+    wp = modelMatrix * vec4(position + aOff * (e - 1.0), 1.0);
+    c *= smoothstep(0.12, 0.3, 1.0 / e) / e;
+  } else c *= smoothstep(0.5, 1.1, px) * (aK.y > 0.5 ? 0.5 : 1.0);
   vVeg = vec2(c, fract(aK.x * 3.71 + 0.11 + aK.y * 0.37));
   if (c < 0.004) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); return; }
   vRel = wp.xyz;
@@ -29396,10 +29403,13 @@ void main() {
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`
   );
+  var Z3 = [0, 0, 0];
   var ASPHALT = [0.075, 0.075, 0.08];
   var BALLAST = [0.16, 0.15, 0.13];
   var CONCRETE = [0.4, 0.39, 0.36];
-  var STEEL2 = [0.09, 0.11, 0.105];
+  var STEEL2 = [0.4, 0.42, 0.43];
+  var RAIL_STEEL = [0.085, 0.075, 0.068];
+  var MEMBER = { 8: STEEL2, 5: [0.46, 0.45, 0.42], 1: [0.2, 0.2, 0.21] };
   async function inflate2(buf) {
     const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("deflate"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
@@ -29437,15 +29447,15 @@ void main() {
     // test/far_decks_export.mjs's file: each region's arrays, kept as they are until the region is built
     parse(u8) {
       const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-      if (dv2.getUint32(0, true) !== 827016262) return;
+      if (dv2.getUint32(0, true) !== 843793478) return;
       const n = dv2.getUint32(4, true);
       let p = 8;
       this.blocks = /* @__PURE__ */ new Map();
       for (let b = 0; b < n; b++) {
         const rx2 = dv2.getUint16(p, true), ry2 = dv2.getUint16(p + 2, true);
-        const nR = dv2.getUint32(p + 4, true), nP = dv2.getUint32(p + 8, true), nQ = dv2.getUint32(p + 12, true), nT = dv2.getUint32(p + 16, true), nTP = dv2.getUint32(p + 20, true);
-        const len = 24 + nR * 24 + nP * 20 + nQ * 60 + nT * 32 + nTP * 20;
-        this.blocks.set(ry2 * RNX + rx2, { rx: rx2, ry: ry2, nR, nP, nQ, nT, nTP, bytes: u8.slice(p, p + len) });
+        const nR = dv2.getUint32(p + 4, true), nP = dv2.getUint32(p + 8, true), nQ = dv2.getUint32(p + 12, true), nT = dv2.getUint32(p + 16, true), nTP = dv2.getUint32(p + 20, true), nM = dv2.getUint32(p + 24, true);
+        const len = 28 + nR * 24 + nP * 20 + nQ * 60 + nT * 32 + nTP * 20 + nM * 48;
+        this.blocks.set(ry2 * RNX + rx2, { rx: rx2, ry: ry2, nR, nP, nQ, nT, nTP, nM, bytes: u8.slice(p, p + len) });
         p += len;
       }
     }
@@ -29454,7 +29464,7 @@ void main() {
       const dv2 = new DataView(B.bytes.buffer, B.bytes.byteOffset, B.bytes.byteLength);
       const x02 = B.rx * RS3, y02 = B.ry * RS3, cmx = x02 + RS3 / 2, cmy = y02 + RS3 / 2, th = cmy / R, c = Math.cos(th), sn2 = Math.sin(th);
       const cc2 = cyl(cmx, cmy, 0, new Float64Array(3)), q3 = new Float64Array(3);
-      const pos = [], nor = [], col = [], cen = [], kk = [], idx = [];
+      const pos = [], nor = [], col = [], cen = [], kk = [], off = [], idx = [];
       const P2 = (x, y, h) => {
         cyl(x02 + x, y02 + y, h, q3);
         const dx2 = q3[0] - cc2[0], dy2 = q3[1] - cc2[1], dz = q3[2] - cc2[2];
@@ -29466,21 +29476,24 @@ void main() {
         return [e, c * dy2 + sn2 * dz, -sn2 * dy2 + c * dz];
       };
       let C02 = null, K02 = null;
-      const quad = (a, b2, c2, d, N, rgb) => {
+      const quad = (a, b2, c2, d, N, rgb, O) => {
         const ux2 = b2[0] - a[0], uy2 = b2[1] - a[1], uz = b2[2] - a[2], vx2 = c2[0] - a[0], vy2 = c2[1] - a[1], vz = c2[2] - a[2];
+        let o = O || [Z3, Z3, Z3, Z3];
         if ((uy2 * vz - uz * vy2) * N[0] + (uz * vx2 - ux2 * vz) * N[1] + (ux2 * vy2 - uy2 * vx2) * N[2] < 0) {
           const t = b2;
           b2 = d;
           d = t;
+          o = [o[0], o[3], o[2], o[1]];
         }
         const i = pos.length / 3;
-        for (const v of [a, b2, c2, d]) {
+        [a, b2, c2, d].forEach((v, k) => {
           pos.push(v[0], v[1], v[2]);
           nor.push(N[0], N[1], N[2]);
           col.push(rgb[0], rgb[1], rgb[2]);
           cen.push(C02[0], C02[1], C02[2]);
           kk.push(K02[0], K02[1], K02[2]);
-        }
+          off.push(o[k][0], o[k][1], o[k][2]);
+        });
         idx.push(i, i + 1, i + 2, i, i + 2, i + 3);
       };
       const box = (X, Y, ux2, uy2, vx2, vy2, h02, h1, a, b2, rgb, top) => {
@@ -29489,7 +29502,7 @@ void main() {
           quad(corner(s0, t02, h02), corner(s1, t1, h02), corner(s1, t1, h1), corner(s0, t02, h1), D(Y, nx2, ny2, 0), rgb);
         if (top) quad(corner(-1, -1, h1), corner(1, -1, h1), corner(1, 1, h1), corner(-1, 1, h1), D(Y, 0, 0, 1), rgb);
       };
-      let p = 24;
+      let p = 28;
       const runs = [];
       for (let r = 0; r < B.nR; r++, p += 24)
         runs.push([dv2.getUint32(p, true), dv2.getUint16(p + 4, true), dv2.getUint8(p + 6), dv2.getUint8(p + 7), dv2.getFloat32(p + 8, true), dv2.getFloat32(p + 12, true), dv2.getFloat32(p + 16, true), dv2.getFloat32(p + 20, true)]);
@@ -29533,18 +29546,55 @@ void main() {
       for (let k = 0; k < B.nT; k++, p += 32) tr2.push([dv2.getUint32(p, true), dv2.getUint16(p + 4, true), dv2.getUint8(p + 6), dv2.getUint8(p + 7), dv2.getFloat32(p + 8, true), dv2.getFloat32(p + 12, true), dv2.getFloat32(p + 16, true), dv2.getFloat32(p + 20, true), dv2.getFloat32(p + 24, true), dv2.getFloat32(p + 28, true)]);
       const tp2 = new Float32Array(B.nTP * 5);
       for (let i = 0; i < B.nTP * 5; i++, p += 4) tp2[i] = dv2.getFloat32(p, true);
-      for (const [first, m, seed, , off, y0b, y1b, fx2, fy2, fz] of tr2) {
+      for (const [first, m, seed, fl, off2, y0b, y1b, fx2, fy2, fz] of tr2) {
         C02 = P2(fx2, fy2, fz);
-        K02 = [seed / 255, 1, 2 * off];
+        K02 = [seed / 255, 1, 2 * off2];
+        const rgb = fl & 2 ? RAIL_STEEL : STEEL2;
         for (const side of [-1, 1]) {
-          const o = side * off;
+          const o = side * off2;
           for (let j = 0; j < m - 1; j++) {
             const a = (first + j) * 5, b2 = a + 5;
             const e = (k, h) => P2(tp2[k] + tp2[k + 4] * o, tp2[k + 1] - tp2[k + 3] * o, tp2[k + 2] + h);
             const ym = (tp2[a + 1] + tp2[b2 + 1]) / 2, nx2 = tp2[a + 4] * side, ny2 = -tp2[a + 3] * side;
-            quad(e(a, y0b), e(b2, y0b), e(b2, y1b), e(a, y1b), D(ym, nx2, ny2, 0), STEEL2);
-            quad(e(b2, y0b), e(a, y0b), e(a, y1b), e(b2, y1b), D(ym, -nx2, -ny2, 0), STEEL2);
+            quad(e(a, y0b), e(b2, y0b), e(b2, y1b), e(a, y1b), D(ym, nx2, ny2, 0), rgb);
+            quad(e(b2, y0b), e(a, y0b), e(a, y1b), e(b2, y1b), D(ym, -nx2, -ny2, 0), rgb);
           }
+        }
+      }
+      for (let k = 0; k < (B.nM || 0); k++, p += 48) {
+        const f = (i) => dv2.getFloat32(p + i * 4, true);
+        const a = [f(0), f(1), f(2)], b2 = [f(3), f(4), f(5)], w = f(6), h = f(7);
+        const rgb = MEMBER[dv2.getUint8(p + 44)] || STEEL2;
+        C02 = P2(f(8), f(9), f(10));
+        K02 = [dv2.getUint8(p + 45) / 255, 2, 2 * Math.max(w, h)];
+        const dx2 = b2[0] - a[0], dy2 = b2[1] - a[1], dz = b2[2] - a[2], L2 = Math.hypot(dx2, dy2, dz);
+        if (L2 < 0.05) continue;
+        const d02 = dx2 / L2, d1 = dy2 / L2, d2 = dz / L2;
+        let ex2 = d1, ey2 = -d02, ez = 0, el = Math.hypot(ex2, ey2);
+        if (el < 0.15) {
+          ex2 = 0;
+          ey2 = -d2;
+          ez = d1;
+          el = Math.hypot(ey2, ez);
+          if (el < 0.15) {
+            ex2 = d2;
+            ey2 = 0;
+            ez = -d02;
+            el = Math.hypot(ex2, ez);
+          }
+        }
+        ex2 /= el;
+        ey2 /= el;
+        ez /= el;
+        const fx2 = ey2 * d2 - ez * d1, fy2 = ez * d02 - ex2 * d2, fz = ex2 * d1 - ey2 * d02;
+        const Pa2 = P2(a[0], a[1], a[2]), Pb = P2(b2[0], b2[1], b2[2]), ym = (a[1] + b2[1]) / 2;
+        const corner = (q, Pq, t1, t2) => {
+          const v = P2(q[0] + ex2 * w * t1 + fx2 * h * t2, q[1] + ey2 * w * t1 + fy2 * h * t2, q[2] + ez * w * t1 + fz * h * t2);
+          return [v, [v[0] - Pq[0], v[1] - Pq[1], v[2] - Pq[2]]];
+        };
+        for (const [s1, s210, nx2, ny2, nz] of [[1, 0, ex2, ey2, ez], [-1, 0, -ex2, -ey2, -ez], [0, 1, fx2, fy2, fz], [0, -1, -fx2, -fy2, -fz]]) {
+          const cs2 = s1 !== 0 ? [corner(a, Pa2, s1, -1), corner(b2, Pb, s1, -1), corner(b2, Pb, s1, 1), corner(a, Pa2, s1, 1)] : [corner(a, Pa2, -1, s210), corner(b2, Pb, -1, s210), corner(b2, Pb, 1, s210), corner(a, Pa2, 1, s210)];
+          quad(cs2[0][0], cs2[1][0], cs2[2][0], cs2[3][0], D(ym, nx2, ny2, nz), rgb, cs2.map((c2) => c2[1]));
         }
       }
       if (!idx.length) return null;
@@ -29554,6 +29604,7 @@ void main() {
       g.setAttribute("aCol", new me(new Float32Array(col), 3));
       g.setAttribute("aCen", new me(new Float32Array(cen), 3));
       g.setAttribute("aK", new me(new Float32Array(kk), 3));
+      g.setAttribute("aOff", new me(new Float32Array(off), 3));
       g.setIndex(pos.length / 3 > 65535 ? new me(new Uint32Array(idx), 1) : new me(new Uint16Array(idx), 1));
       g.computeBoundingSphere();
       const mesh = new Ce(g, this.mat);

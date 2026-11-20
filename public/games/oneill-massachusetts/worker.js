@@ -7313,7 +7313,7 @@
       return [c, cuts[k + 1], Math.max(2, Math.round(L2 / panel))];
     });
   }
-  function wayStructure(M, P2, world2, reg, ri, rec, segs, setM, cls, PW, DT) {
+  function wayStructure(M, P2, world2, reg, ri, rec, segs, setM, cls, PW, DT, bm = beam) {
     const des = rec[1], mat = rec[2];
     const a0 = reg.rStart[ri], n = reg.rCount[ri], len = reg.cum[a0 + n - 1] - reg.cum[a0];
     if (len < 4) return;
@@ -7352,7 +7352,7 @@
             d = Math.min(d, top - floor - UNDER_CLEAR);
           }
           if (d < 0.25) continue;
-          beam(M, at(s, o, -DT - d / 2), at(s1, o, -DT - d / 2), 0.22, d / 2, up);
+          bm(M, at(s, o, -DT - d / 2), at(s1, o, -DT - d / 2), 0.22, d / 2, up);
         }
       }
       return;
@@ -7374,20 +7374,20 @@
           const up = upAt((s + sN) / 2);
           for (const side of [-1, 1]) {
             const o = side * off2;
-            beam(M, at(s, o, y0), at(sN, o, y0), cw, ch, up);
+            bm(M, at(s, o, y0), at(sN, o, y0), cw, ch, up);
             const first = j === 0 && end0, last = j === np - 1 && end1;
-            if (first) beam(M, at(s, o, y0), at(sN, o, y1), cw, ch, up);
-            else if (last) beam(M, at(s, o, y1), at(sN, o, y0), cw, ch, up);
-            else beam(M, at(s, o, y1), at(sN, o, y1), cw, ch, up);
-            if (j > 0) beam(M, at(s, o, y0), at(s, o, y1), cw * 0.7, ch * 0.7, up);
+            if (first) bm(M, at(s, o, y0), at(sN, o, y1), cw, ch, up);
+            else if (last) bm(M, at(s, o, y1), at(sN, o, y0), cw, ch, up);
+            else bm(M, at(s, o, y1), at(sN, o, y1), cw, ch, up);
+            if (j > 0) bm(M, at(s, o, y0), at(s, o, y1), cw * 0.7, ch * 0.7, up);
             if (!first && !last) {
-              if (s + pl / 2 < (S0 + S1) / 2) beam(M, at(s, o, y1), at(sN, o, y0), cw * 0.6, ch * 0.6, up);
-              else beam(M, at(s, o, y0), at(sN, o, y1), cw * 0.6, ch * 0.6, up);
+              if (s + pl / 2 < (S0 + S1) / 2) bm(M, at(s, o, y1), at(sN, o, y0), cw * 0.6, ch * 0.6, up);
+              else bm(M, at(s, o, y0), at(sN, o, y1), cw * 0.6, ch * 0.6, up);
             }
           }
-          if (j > 0) beam(M, at(s, -off2, y1), at(s, off2, y1), 0.18, 0.25, up);
-          if (!deck && j === 0 && end0) beam(M, at(sN, -off2, y1 - 1), at(sN, off2, y1 - 1), 0.22, 0.45, up);
-          if (!deck && j === np - 1 && end1) beam(M, at(s, -off2, y1 - 1), at(s, off2, y1 - 1), 0.22, 0.45, up);
+          if (j > 0) bm(M, at(s, -off2, y1), at(s, off2, y1), 0.18, 0.25, up);
+          if (!deck && j === 0 && end0) bm(M, at(sN, -off2, y1 - 1), at(sN, off2, y1 - 1), 0.22, 0.45, up);
+          if (!deck && j === np - 1 && end1) bm(M, at(s, -off2, y1 - 1), at(s, off2, y1 - 1), 0.22, 0.45, up);
         }
       }
       return;
@@ -7410,17 +7410,17 @@
           const up = upAt((u0 + u1) / 2);
           if (stone) {
             const w2 = hw + PW;
-            beam(M, at(u0, 0, yAt(u0) - 0.5), at(u1, 0, yAt(u1) - 0.5), w2, 0.5, up);
+            bm(M, at(u0, 0, yAt(u0) - 0.5), at(u1, 0, yAt(u1) - 0.5), w2, 0.5, up);
             for (const side of [-1, 1]) {
               const ym0 = (yAt(u0) - DT) / 2, ym1 = (yAt(u1) - DT) / 2;
               const hh = Math.max(0.2, (-DT - yAt((u0 + u1) / 2)) / 2);
-              beam(M, at(u0, side * (w2 - 0.3), ym0), at(u1, side * (w2 - 0.3), ym1), 0.3, hh, up);
+              bm(M, at(u0, side * (w2 - 0.3), ym0), at(u1, side * (w2 - 0.3), ym1), 0.3, hh, up);
             }
           } else {
             for (const side of [-1, 1]) {
               const o = side * hw * 0.7;
-              beam(M, at(u0, o, yAt(u0)), at(u1, o, yAt(u1)), 0.45, 0.55, up);
-              if (k > 0 && yAt(u0) < -DT - 1) beam(M, at(u0, o, yAt(u0)), at(u0, o, -DT), 0.3, 0.3, up);
+              bm(M, at(u0, o, yAt(u0)), at(u1, o, yAt(u1)), 0.45, 0.55, up);
+              if (k > 0 && yAt(u0) < -DT - 1) bm(M, at(u0, o, yAt(u0)), at(u0, o, -DT), 0.3, 0.3, up);
             }
           }
         }
@@ -7443,7 +7443,7 @@
     return out;
   }
   var _wz = [0, 0];
-  function bigStructure(M, P2, world2, st2, setM, PW, reg) {
+  function bigStructure(M, P2, world2, st2, setM, PW, reg, bm = beam) {
     const des = st2[0], Ls = clamp2(st2[3] / 10, 12, 400), W = Math.max(st2[6] / 10, 7), cx = st2[7] / 10, cy = st2[8] / 10;
     let tx = st2[9] / 1e3, ty = st2[10] / 1e3;
     const tl = Math.hypot(tx, ty) || 1;
@@ -7477,10 +7477,10 @@
         const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
         for (const side of [-1, 1]) {
           const o = side * off2;
-          beam(M, at(s0, o, yR(s0)), at(s1, o, yR(s1)), 0.55, depth, up);
-          if (k > 0 && yR(s0) > 1.5) beam(M, at(s0, o, yR(s0)), at(s0, o, 0), 0.08, 0.08, up);
+          bm(M, at(s0, o, yR(s0)), at(s1, o, yR(s1)), 0.55, depth, up);
+          if (k > 0 && yR(s0) > 1.5) bm(M, at(s0, o, yR(s0)), at(s0, o, 0), 0.08, 0.08, up);
         }
-        if (k % 2 === 0 && yR(s0) > 6.5) beam(M, at(s0, -off2, yR(s0) + depth * 0.5), at(s0, off2, yR(s0) + depth * 0.5), 0.25, 0.4, up);
+        if (k % 2 === 0 && yR(s0) > 6.5) bm(M, at(s0, -off2, yR(s0) + depth * 0.5), at(s0, off2, yR(s0) + depth * 0.5), 0.25, 0.4, up);
       }
       return;
     }
@@ -7488,9 +7488,9 @@
       const Ht = clamp2(Ls * 0.28, 25, 75), fork = Ht * 0.62, legs = hw + 1.2;
       for (const st0 of [-Ls / 2, Ls / 2]) {
         const zt = zAt(st0);
-        for (const side of [-1, 1]) beam(M, at(st0, side * legs, -8, zt), at(st0, side * 1.6, fork, zt), 1.1, 1.4, up);
-        beam(M, at(st0, 0, fork - 2, zt), at(st0, 0, Ht, zt), 1.4, 1.6, up);
-        beam(M, at(st0, -legs * 0.8, -0.5, zt), at(st0, legs * 0.8, -0.5, zt), 0.8, 0.9, up);
+        for (const side of [-1, 1]) bm(M, at(st0, side * legs, -8, zt), at(st0, side * 1.6, fork, zt), 1.1, 1.4, up);
+        bm(M, at(st0, 0, fork - 2, zt), at(st0, 0, Ht, zt), 1.4, 1.6, up);
+        bm(M, at(st0, -legs * 0.8, -0.5, zt), at(st0, legs * 0.8, -0.5, zt), 0.8, 0.9, up);
         const toward = st0 < 0 ? 1 : -1, back = Math.min(Ls * 0.45, 140);
         const nC = clamp2(Math.round((Ls / 2 - 12) / 9), 4, 16);
         for (let k = 1; k <= nC; k++) {
@@ -7498,7 +7498,7 @@
           for (const dir of [toward, -toward]) {
             const reach = dir === toward ? 12 + (Ls / 2 - 14) * (k / nC) : 12 + (back - 14) * (k / nC);
             const sd = st0 + dir * reach;
-            for (const side of [-1, 1]) beam(M, at(st0, 0, yk, zt), at(sd, side * (hw - 0.6), 0.6), 0.09, 0.09, up);
+            for (const side of [-1, 1]) bm(M, at(st0, 0, yk, zt), at(sd, side * (hw - 0.6), 0.6), 0.09, 0.09, up);
           }
         }
       }
@@ -7506,15 +7506,15 @@
     }
     if (des === D.SUSPENSION) {
       const Ht = clamp2(Ls * 0.16 + 6, 10, 60), sag = Ht * 0.85, off2 = hw + 0.4;
-      for (const st0 of [-Ls / 2, Ls / 2]) for (const side of [-1, 1]) beam(M, at(st0, side * off2, -2), at(st0, side * off2, Ht), 0.7, 0.7, up);
-      for (const st0 of [-Ls / 2, Ls / 2]) beam(M, at(st0, -off2, Ht - 1), at(st0, off2, Ht - 1), 0.5, 0.6, up);
+      for (const st0 of [-Ls / 2, Ls / 2]) for (const side of [-1, 1]) bm(M, at(st0, side * off2, -2), at(st0, side * off2, Ht), 0.7, 0.7, up);
+      for (const st0 of [-Ls / 2, Ls / 2]) bm(M, at(st0, -off2, Ht - 1), at(st0, off2, Ht - 1), 0.5, 0.6, up);
       const N = clamp2(Math.round(Ls / 5), 8, 60), yC = (s) => Ht - sag * (1 - (2 * s / Ls) ** 2);
       for (let k = 0; k < N; k++) {
         const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
         for (const side of [-1, 1]) {
           const o = side * off2;
-          beam(M, at(s0, o, yC(s0)), at(s1, o, yC(s1)), 0.18, 0.18, up);
-          if (k > 0) beam(M, at(s0, o, yC(s0)), at(s0, o, 0.8), 0.04, 0.04, up);
+          bm(M, at(s0, o, yC(s0)), at(s1, o, yC(s1)), 0.18, 0.18, up);
+          if (k > 0) bm(M, at(s0, o, yC(s0)), at(s0, o, 0.8), 0.04, 0.04, up);
         }
       }
       return;
@@ -7523,11 +7523,11 @@
       const Hl = clamp2(Ls * 0.33, 25, 55), off2 = hw + 1;
       for (const st0 of [-Ls / 2, Ls / 2]) {
         const zt = zAt(st0);
-        for (const ds of [-1.8, 1.8]) for (const side of [-1, 1]) beam(M, at(st0 + ds, side * off2, -6, zt), at(st0 + ds, side * off2, Hl, zt), 0.6, 0.6, up);
-        for (const yb of [Hl * 0.35, Hl * 0.7]) for (const side of [-1, 1]) beam(M, at(st0 - 1.8, side * off2, yb, zt), at(st0 + 1.8, side * off2, yb, zt), 0.3, 0.3, up);
+        for (const ds of [-1.8, 1.8]) for (const side of [-1, 1]) bm(M, at(st0 + ds, side * off2, -6, zt), at(st0 + ds, side * off2, Hl, zt), 0.6, 0.6, up);
+        for (const yb of [Hl * 0.35, Hl * 0.7]) for (const side of [-1, 1]) bm(M, at(st0 - 1.8, side * off2, yb, zt), at(st0 + 1.8, side * off2, yb, zt), 0.3, 0.3, up);
         setM(MAT.CONCRETE);
-        beam(M, at(st0, -off2 - 0.8, Hl + 1.6, zt), at(st0, off2 + 0.8, Hl + 1.6, zt), 2.4, 1.6, up);
-        beam(M, at(st0, -off2 + 1, Hl * 0.78, zt), at(st0, off2 - 1, Hl * 0.78, zt), 1.4, 1.8, up);
+        bm(M, at(st0, -off2 - 0.8, Hl + 1.6, zt), at(st0, off2 + 0.8, Hl + 1.6, zt), 2.4, 1.6, up);
+        bm(M, at(st0, -off2 + 1, Hl * 0.78, zt), at(st0, off2 - 1, Hl * 0.78, zt), 1.4, 1.8, up);
         setM(MAT.METAL);
       }
       const H = 6, N = clamp2(Math.round(Ls / 7), 6, 30);
@@ -7535,9 +7535,9 @@
         const s0 = -Ls / 2 + Ls * k / N, s1 = -Ls / 2 + Ls * (k + 1) / N;
         for (const side of [-1, 1]) {
           const o = side * (hw + 0.3);
-          beam(M, at(s0, o, H), at(s1, o, H), 0.25, 0.3, up);
-          beam(M, at(s0, o, 0), at(s0, o, H), 0.2, 0.2, up);
-          beam(M, at(s0, o, k % 2 ? H : 0), at(s1, o, k % 2 ? 0 : H), 0.15, 0.15, up);
+          bm(M, at(s0, o, H), at(s1, o, H), 0.25, 0.3, up);
+          bm(M, at(s0, o, 0), at(s0, o, H), 0.2, 0.2, up);
+          bm(M, at(s0, o, k % 2 ? H : 0), at(s1, o, k % 2 ? 0 : H), 0.15, 0.15, up);
         }
       }
       return;
@@ -7545,9 +7545,9 @@
     if (des === D.BASCULE) {
       setM(MAT.CONCRETE);
       const s0 = Ls / 2 + 4, o = hw + 3.2;
-      beam(M, at(s0, o, -0.5), at(s0, o, 4.2), 2.2, 2.6, up);
+      bm(M, at(s0, o, -0.5), at(s0, o, 4.2), 2.2, 2.6, up);
       setM(MAT.ROOF || MAT.CONCRETE);
-      beam(M, at(s0, o, 4.2), at(s0, o, 4.8), 2.6, 3, up);
+      bm(M, at(s0, o, 4.2), at(s0, o, 4.8), 2.6, 3, up);
     }
   }
 
