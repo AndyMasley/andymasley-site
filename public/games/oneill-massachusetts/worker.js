@@ -340,6 +340,15 @@
     out[2] = -r * Math.sin(th);
     return out;
   }
+  function uncyl(p, out) {
+    const r = Math.hypot(p[1], p[2]);
+    let th = Math.atan2(-p[2], -p[1]);
+    if (th < 0) th += 2 * Math.PI;
+    out[0] = p[0] + L / 2;
+    out[1] = th * R;
+    out[2] = R - r;
+    return out;
+  }
   var RS2 = ROOT / 4;
   var RNX = NX * 4;
   var RNY = NY * 4;
@@ -12144,6 +12153,32 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     const arr = new Float32Array(out);
     postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr, stride: 11 }, [arr.buffer]);
   }
+  function farExport(reg) {
+    const rec = [], out = [], P2 = new Float64Array(3), M = [0, 0, 0];
+    if (reg && reg.nBld) for (let cy = 0; cy < reg.cells; cy++) for (let cx = 0; cx < reg.cells; cx++) {
+      const list = cellBuildings(reg, cx, cy);
+      if (!list) continue;
+      for (let k = 0; k < list.length; k += 16) {
+        out.length = 0;
+        const n = farBoxes(world, list, k, reg, 0, 0, 0, out);
+        if (!n) continue;
+        for (let i = 0; i < n; i++) {
+          const o = i * 17;
+          P2[0] = out[o];
+          P2[1] = out[o + 1];
+          P2[2] = out[o + 2];
+          uncyl(P2, M);
+          const fx = M[0], fy = M[1], fz = M[2];
+          P2[0] = out[o + 12];
+          P2[1] = out[o + 13];
+          P2[2] = out[o + 14];
+          uncyl(P2, M);
+          rec.push(list[k + 14], n, fx, fy, fz, out[o + 3], out[o + 4], out[o + 5], out[o + 6], out[o + 7], out[o + 8], out[o + 9], out[o + 10], out[o + 11], M[0], M[1], M[2], out[o + 15], out[o + 16]);
+        }
+      }
+    }
+    return new Float32Array(rec);
+  }
   function genWebster(m) {
     const raw = m.raw, meta = m.meta, wb = world.meta.webster;
     const q = meta.quantization, ox = wb.ox, oy = wb.oy;
@@ -12203,6 +12238,17 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           else ensureRegion(rx, ry);
         }
         if (lcPacks.size) for (const [x, y] of (m.points || []).slice(1, 4)) lcPromises(x - 250, y - 250, 500, 0);
+        return;
+      }
+      if (m.type === "farbox") {
+        for (const p of [wallsReady, liftedReady, stationsReady, landmarksReady, xsReady, surfReady, sidesReady, shouldersReady]) if (p) await p;
+        const pr = ensureRegion(m.rx, m.ry);
+        if (pr) await pr;
+        const reg = world.regions.get(regionKey(m.rx, m.ry));
+        world.pinned = reg || EMPTY_REGION;
+        const out = farExport(reg);
+        world.pinned = null;
+        postMessage({ type: "farbox", rx: m.rx, ry: m.ry, data: out }, [out.buffer]);
         return;
       }
       world.tick++;

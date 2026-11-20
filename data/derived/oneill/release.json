@@ -60,6 +60,16 @@
       "archiveBytes": 507176960,
       "files": 226,
       "expandedBytes": 506982562
+    },
+    {
+      "tag": "oneill-fb-2026-11-19-747f20111fca",
+      "directory": "fb",
+      "manifestSha256": "747f20111fca893a939a4c162faf4c62ecbca24100e93a3bd2032d5b19431f08",
+      "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/oneill-fb-2026-11-19-747f20111fca/oneill-fb-747f20111fca.tar",
+      "archiveSha256": "edbf463cf38fab5178fe2ffd70256ac53909761d55010d38ba15cd081b8e3908",
+      "archiveBytes": 84674560,
+      "files": 219,
+      "expandedBytes": 84480586
     }
   ]
 }
