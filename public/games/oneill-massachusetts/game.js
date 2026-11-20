@@ -18181,6 +18181,7 @@ uniform float uZoneRange;
 uniform sampler2DArray uGndTex;   // grass, forest floor, soil (the Webster drive's ground tiles)
 uniform sampler2DArray uMatTex;   // the surface set: asphalt is layer 2, concrete 3, granite 4
 uniform vec2 uTex0;               // this chunk's corner, modulo 48 m, so texture coordinates stay small and exact
+uniform vec2 uUvScale;            // 1 / the map's size: a map point's place on the whole-map textures (cover, sdf)
 uniform sampler2D uSdf;
 uniform sampler2D uCover;
 uniform sampler2D uAux;
@@ -18195,6 +18196,7 @@ uniform float uHasTun;        // uHasShore, in b and a a city's surveyed shore: 
 uniform float uHasShore;      // where it holds (World.sdfAt), so the water is drawn to the surveyed edge
 uniform sampler2D uCover2;
 uniform float uHasCover2;    // 1 when measured crop / evergreen / pasture shares are loaded
+uniform float uWaterDepth;   // 1 when its alpha is 2 x the water's depth in metres, + 128 if salt (bake/c83_depth.py)
 uniform sampler2D uLc;       // NOAA C-CAP 2016 land cover, one ground kind per square metre (bake/c11_landcover.py)
 uniform float uHasLc;
 uniform float uLcAO;         // 1 where its second byte is the share of the sky the buildings and trees leave (contact.js)
@@ -19032,9 +19034,54 @@ void main() {
   // ---- water surface
   if (water > 0.001) {
     float fresh = smoothstep(0.6, 2.5, h);
-    float depth = clamp(-sdf / mix(1400.0, 260.0, fresh), 0.0, 1.0);
-    vec3 wcol = mix(vec3(0.020, 0.090, 0.095), vec3(0.004, 0.022, 0.050), pow(depth, 0.55));
-    wcol = mix(wcol, vec3(0.012, 0.030, 0.028), fresh * 0.7);
+    // its colour (items 99, 100): the light the water sends back where it is too deep to see the bottom, and the
+    // bottom's, each colour of it taken by the water at its own rate on the way down and back (red fastest), over the
+    // water's depth (bake/c83_depth.py: NOAA's relief model in the sea and the tidal water joined to it, an estimate on
+    // lakes and rivers; the four 92 m squares round the point read apart, then blended, so salt and fresh never mix into
+    // a false depth; shallowing over the last metres to the shore, which so coarse a grid cannot draw)
+    float depthM = -sdf * mix(0.03, 0.05, fresh), salt = 1.0 - fresh;
+    if (uWaterDepth > 0.5) {
+      ivec2 dS = textureSize(uCover2, 0);
+      vec2 dq = vUv * vec2(dS) - 0.5, df = fract(dq);
+      ivec2 d0 = ivec2(floor(dq));
+      vec4 cd;
+      for (int k = 0; k < 4; k++) {
+        ivec2 dk = d0 + ivec2(k & 1, k >> 1);
+        dk = ivec2(clamp(dk.x, 0, dS.x - 1), (dk.y % dS.y + dS.y) % dS.y);
+        cd[k] = texelFetch(uCover2, dk, 0).a * 255.0 + 0.5;
+      }
+      vec4 sk = step(128.0, cd), dk4 = (cd - 128.0 * sk) * 0.5;
+      vec2 wq = vec2(1.0 - df.x, df.x);
+      vec4 bw = vec4(wq.x * (1.0 - df.y), wq.y * (1.0 - df.y), wq.x * df.y, wq.y * df.y);
+      depthM = dot(floor(dk4 * 2.0) * 0.5, bw); salt = dot(sk, bw);
+    }
+    depthM = min(depthM, 0.15 + 0.1 * max(-sdf, 0.0));
+    // what lies on the bottom and how clear the water is, from the land along the nearest shore (its cover 15 and 45 m
+    // in): sand and bare ground (a pond's sandy bottom, as in the Cape's kettle ponds), marsh (its creeks' mud), built
+    // up (a harbour's silt). The sea's bottom is sand elsewhere, as most of the state's nearshore floor is.
+    float eS = 30.0;
+    vec2 gS = vec2((texture2D(uSdf, (m + vec2(eS, 0.0)) * uUvScale).r - texture2D(uSdf, (m - vec2(eS, 0.0)) * uUvScale).r),
+                   (texture2D(uSdf, (m + vec2(0.0, eS)) * uUvScale).r - texture2D(uSdf, (m - vec2(0.0, eS)) * uUvScale).r));
+    float lS = length(gS);
+    vec2 sh0 = m + (lS > 1e-5 ? gS / lS : vec2(0.0)) * max(-sdf, 0.0);
+    vec4 cS = vec4(0.0);
+    if (lS > 1e-5) cS = max(texture2D(uCover, (sh0 + gS / lS * 15.0) * uUvScale), texture2D(uCover, (sh0 + gS / lS * 45.0) * uUvScale));
+    // (a marsh's mud and its creeks' colour within about 200 m of it, a harbour's silt within about half a kilometre of
+    // the built shore, so the open water between shores of different kinds does not change at a line)
+    float sandy = smoothstep(0.10, 0.40, cS.b);
+    float marshy = smoothstep(0.15, 0.5, cS.a) * (1.0 - smoothstep(60.0, 260.0, -sdf));
+    float built = smoothstep(0.3, 0.7, cS.r) * (1.0 - smoothstep(150.0, 650.0, -sdf));
+    // the sea: clear coastal water, greener and murkier off built shores, brown in the creeks of a marsh
+    vec3 deepC = mix(vec3(0.006, 0.024, 0.045), vec3(0.014, 0.030, 0.030), built);
+    vec3 Kd = mix(vec3(0.40, 0.09, 0.12), vec3(0.80, 0.45, 0.60), built);
+    deepC = mix(deepC, vec3(0.022, 0.030, 0.022), marshy); Kd = mix(Kd, vec3(1.0, 0.9, 1.1), marshy);
+    // lakes, ponds and rivers: tea-coloured, clearer over sand
+    deepC = mix(deepC, vec3(0.010, 0.012, 0.008), 1.0 - salt);
+    Kd = mix(Kd, mix(vec3(0.9, 1.0, 1.6), vec3(0.5, 0.18, 0.30), sandy), 1.0 - salt);
+    float mud = mix(max(marshy, 0.8 * built), 1.0 - sandy, 1.0 - salt);
+    vec3 botC = mix(vec3(0.22, 0.20, 0.15), vec3(0.065, 0.058, 0.045), mud);                      // sand, or mud
+    vec3 tB = exp(-2.0 * Kd * depthM);
+    vec3 wcol = deepC * (1.0 - tB) + botC * tB;
     // wind waves: eight trains, most running north-east before the prevailing south-west wind, each a whole number of
     // cycles in 48 m (tm) so its phase runs on across the chunks, at deep water's speed for its length. A train finer
     // than about three pixels along it fades out and its slope counts as roughness instead, so it widens the lamp's
@@ -21586,6 +21633,459 @@ void main() {
     return b.geometry();
   }
 
+  // src/far.js
+  var PAD = 400;
+  var CLASS_UP = [1e9, 40, 24, 16, 12, 9, 6];
+  var CH = RS3 / 4;
+  var TILES_IN = (
+    /* glsl */
+    `
+float tilesIn(vec2 m) {
+  const float T8 = ${(ROOT / 256).toFixed(5)};
+  ivec2 a = ivec2(floor((m - 6.0) / T8)), b = ivec2(floor((m + 6.0) / T8));
+  int v = int(texelFetch(uIn, a & 63, 0).r * 255.0 + 0.5);
+  if (b.x != a.x) v &= int(texelFetch(uIn, ivec2(b.x, a.y) & 63, 0).r * 255.0 + 0.5);
+  if (b.y != a.y) {
+    v &= int(texelFetch(uIn, ivec2(a.x, b.y) & 63, 0).r * 255.0 + 0.5);
+    if (b.x != a.x) v &= int(texelFetch(uIn, b & 63, 0).r * 255.0 + 0.5);
+  }
+  return float(v);
+}`
+  );
+  var FAR_VS = (
+    /* glsl */
+    `
+attribute float aPart;
+attribute vec4 aP;      // the box's foot: map x and y from the chunk's centre (m), its height (m); its yaw
+attribute vec4 aS;      // width, height to the eave, depth (0.05 m), the roof's rise (0.1 m)
+attribute vec4 aO;      // from the foot to the building's origin, x, y, z (0.05 m); the box's size (0.25 m)
+attribute vec4 aK;      // seed, class + 16 x cladding, its share of the box tiles' reach (/255)
+attribute vec2 aC;      // its roof's and its walls' colours (RGB565, 0 for none)
+uniform vec2 uFade;     // the box tiles' reach (terrain.js bldMat)
+uniform vec2 uFadeIn;   // and where the detailed houses give way to them
+uniform vec4 uFar;      // pixels a metre spans at 1 m, the fewest pixels a building shows at, this layer's reach, how dark it is
+uniform sampler2D uIn;  // which near tiles round the camera are in, by 184 m tile, 64 x 64 wrapped: 1 its box tile, 2 its houses
+uniform vec3 uCam;      // the camera (cylinder space)
+${PALETTE}
+varying vec3 vRel;
+varying vec3 vNor;
+varying vec3 vCol;
+varying vec3 vCol2;
+varying vec3 vObj;
+varying float vAux;
+varying float vStyle;
+const float RH = ${R.toFixed(1)}, LH = ${(L / 2).toFixed(3)}, CIRC = ${C2.toFixed(3)};
+// a point in map metres (from the chunk's centre; height) in the chunk's frame (common.js cyl, about the centre)
+vec3 hull(vec3 m) { float th = m.y / RH, r = RH - m.z; return vec3(m.x, RH - r * cos(th), -r * sin(th)); }
+${TILES_IN}
+void main() {
+  vec3 foot = aP.xyz, org = foot + aO.xyz * 0.05;
+  float dc = length((modelMatrix * vec4(hull(org), 1.0)).xyz);
+  float jit = aK.x / 255.0, h2 = fract(jit * 7.31 + 0.137), h3 = fract(jit * 13.17 + 0.29);
+  float f;
+  if (dc >= mix(uFade.x, uFade.y, jit) * (aK.z / 255.0) * 0.996 - 1.0) {
+    // past where its box tile stops drawing it (SCATTER_VS: the same seed and share; a little early, so the two
+    // overlap); in the dark the lights take over, one building after another as the light goes
+    f = step(uFar.w, h3 * 0.98 + 0.01);
+  } else {
+    // nearer in, its box tile draws it, and nearer still its detailed house: from when that tile is in
+    vec3 cc = uCam + modelMatrix[3].xyz;
+    float my = atan(-cc.z, -cc.y) * RH;
+    vec2 m = vec2(cc.x + LH + org.x, (my < 0.0 ? my + CIRC : my) + org.y);
+    float tin = tilesIn(m);
+    f = dc >= mix(uFadeIn.x, uFadeIn.y, jit) ? 1.0 - mod(tin, 2.0) : 1.0 - step(1.5, tin);
+  }
+  // until it is smaller than about a pixel, or past this layer's reach
+  f *= step(uFar.y * (0.8 + 0.4 * h2), aO.w * 0.25 * uFar.x / max(dc, 1.0));
+  f *= step(dc, uFar.z * (0.9 + 0.1 * h2));
+  if (f < 0.5) {
+    // (most of a chunk near the camera is still the tiles', and much of one far off is under a pixel: nothing to draw)
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    return;
+  }
+  // the walls (part 2) and the gable over them (part 1), as SCATTER_VS shapes the box tiles' box and gable; on a flat
+  // top the gable lies flat over the walls and is drawn as the box's top
+  vec3 sc = vec3(aS.x * 0.05, max(aS.y * 0.05, 0.3), aS.z * 0.05);
+  float rise = aS.w * 0.1, part = aPart;
+  vec3 pos = position, nl = normal;
+  if (aPart > 0.5 && aPart < 1.5) {
+    if (rise > 0.3) {
+      float k = rise / max(sc.y, 0.3) / 0.42;
+      pos.y = 1.0 + (pos.y - 1.0) * k;
+      nl.y /= max(k, 0.02);
+    } else {
+      pos = vec3(pos.x * (0.5 / 0.54), 1.0, pos.z * (0.5 / 0.54));
+      nl = vec3(0.0, 1.0, 0.0);
+      part = 2.0;
+    }
+  }
+  vObj = pos * sc;
+  // turned by its yaw about its up, and tilted with the hull where it stands (skyline.js does the same)
+  float cy = cos(aP.w), sy = sin(aP.w), th = foot.y / RH, ct = cos(th), st = sin(th);
+  vec3 p = pos * sc;
+  p = vec3(cy * p.x + sy * p.z, p.y, cy * p.z - sy * p.x);
+  p = vec3(p.x, ct * p.y - st * p.z, st * p.y + ct * p.z);
+  vec3 n = vec3(cy * nl.x + sy * nl.z, nl.y, cy * nl.z - sy * nl.x);
+  n = vec3(n.x, ct * n.y - st * n.z, st * n.y + ct * n.z);
+  vec4 wp = modelMatrix * vec4(hull(foot) + p, 1.0);
+  vRel = wp.xyz;
+  vNor = normalize(mat3(modelMatrix) * n);
+  // its colours, as the tiles give them (SCATTER_VS BLD)
+  float seed = aK.x, cls = mod(aK.y, 16.0), clad = floor(aK.y / 16.0);
+  vStyle = part < 1.5 ? 1.0 : 0.0;
+  vCol = part < 1.5 ? roofColor(cls, 1.0, seed) : claddingColor(clad, cls, seed);
+  vCol2 = roofColor(cls, 0.0, seed);
+  if (aC.x > 0.5) {
+    vec3 rc = aerialRoof(rgb565(aC.x));
+    if (part < 1.5) vCol = rc;
+    vCol2 = rc;
+  }
+  if (aC.y > 0.5 && part > 1.5) vCol = photoWall(rgb565(aC.y));
+  vAux = seed / 255.0;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`
+  );
+  function regionDist(rx2, ry2, mx2, my2) {
+    const ex2 = Math.max(0, Math.abs((rx2 + 0.5) * RS3 - mx2) - RS3 / 2);
+    let dy2 = Math.abs((ry2 + 0.5) * RS3 - my2) % C2;
+    dy2 = Math.min(dy2, C2 - dy2);
+    return Math.hypot(ex2, Math.max(0, dy2 - RS3 / 2));
+  }
+  function farGeometry(src) {
+    const P2 = src.attributes.position, N = src.attributes.normal, A = src.attributes.aPart, I = src.index;
+    const pos = [], nor = [], prt = [], idx = [], seen = /* @__PURE__ */ new Map();
+    const vert = (i) => {
+      const key2 = [P2.getX(i), P2.getY(i), P2.getZ(i), N.getX(i), N.getY(i), N.getZ(i), A.getX(i)].map((v) => v.toFixed(4)).join(",");
+      let j = seen.get(key2);
+      if (j === void 0) {
+        j = pos.length / 3;
+        seen.set(key2, j);
+        pos.push(P2.getX(i), P2.getY(i), P2.getZ(i));
+        nor.push(N.getX(i), N.getY(i), N.getZ(i));
+        prt.push(A.getX(i));
+      }
+      return j;
+    };
+    for (let t = 0; t < I.count; t += 3) {
+      const a = I.getX(t), b = I.getX(t + 1), c = I.getX(t + 2);
+      if (A.getX(a) > 1.5 && Math.abs(N.getY(a)) > 0.5) continue;
+      idx.push(vert(a), vert(b), vert(c));
+    }
+    const g = new Yt();
+    g.setAttribute("position", new me(new Float32Array(pos), 3));
+    g.setAttribute("normal", new me(new Float32Array(nor), 3));
+    g.setAttribute("aPart", new me(new Float32Array(prt), 1));
+    g.setIndex(idx);
+    return g;
+  }
+  async function inflate(buf) {
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("deflate"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  var Far = class {
+    constructor(game2) {
+      this.game = game2;
+      this.regions = /* @__PURE__ */ new Map();
+      this.queue = [];
+      this.loading = 0;
+      this.chunks = [];
+      const q = game2.quality, F = game2.meta.files && game2.meta.files.far, t = game2.terrain;
+      this.R = q.farR || 0;
+      this.ready = !!(F && this.R > 0 && game2.realBuildings && t.bldMat && t.bldGeo && typeof DecompressionStream !== "undefined");
+      if (!this.ready) return;
+      this.dir = F.dir;
+      this.tiles = new Set(F.tiles);
+      this.inData = new Uint8Array(64 * 64);
+      this.inTex = new an(this.inData, 64, 64, Rl, cn);
+      this.inTex.magFilter = this.inTex.minFilter = Te;
+      this.inTex.unpackAlignment = 1;
+      this.inTex.needsUpdate = true;
+      this.U = { uFar: { value: new de(900, q.farPx || 1, this.R, 0) }, uIn: { value: this.inTex } };
+      this.mat = new Rn({
+        vertexShader: FAR_VS,
+        fragmentShader: LIT_FS,
+        side: Mi,
+        defines: Object.assign({ SCATTER: 1, BLD: 1, FARL: 1 }, t.defines),
+        uniforms: Object.assign({}, game2.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: t.bldMat.uniforms.uFadeIn, uFar: this.U.uFar, uIn: this.U.uIn })
+      });
+      this.geo = farGeometry(t.bldGeo);
+    }
+    // the light of the day as a whole: the lights' rule (nightlights.js darkness)
+    darkness() {
+      const s30 = this.game.sky;
+      return (s30.isNight ? 1 : 1 - smoothstep(0.03, 0.2, s30.dayness)) * this.game.U.uLights.value;
+    }
+    update(camC) {
+      if (!this.ready) return;
+      const g = this.game, cm2 = g.camMap, my2 = wrapY(cm2[1]), U = this.U.uFar.value;
+      const pr2 = Math.min(window.devicePixelRatio || 1, g.quality.pr);
+      U.x = (g.vh || window.innerHeight) * pr2 / (2 * Math.tan(g.camera.fov * Math.PI / 360));
+      U.w = this.darkness();
+      this.on = true;
+      if ((this.tick & 1) === 0) {
+        const T = this.game.terrain, d = this.inData;
+        d.fill(0);
+        let missing = 0;
+        for (const t of T.scatter.values()) {
+          if (t.kind !== "houses" && t.kind !== "buildings") continue;
+          if (T.frame - t.cur >= 3) continue;
+          if (t.state !== "ready" || t.redoAt) {
+            missing++;
+            continue;
+          }
+          if (t.kind === "houses") d[(t.iy & 63) * 64 + (t.ix & 63)] |= 2;
+          else for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) d[(t.iy * 2 + b & 63) * 64 + (t.ix * 2 + a & 63)] |= 1;
+        }
+        this.allIn = missing === 0;
+        this.inTex.needsUpdate = true;
+      }
+      if ((this.tick = (this.tick || 0) + 1) % 30 === 1) {
+        const rx0 = Math.floor(cm2[0] / RS3), ry0 = Math.floor(my2 / RS3), n = Math.ceil(this.R / RS3) + 1, want = [];
+        for (let dy2 = -n; dy2 <= n; dy2++) for (let dx2 = -n; dx2 <= n; dx2++) {
+          const rx2 = rx0 + dx2, ry2 = ((ry0 + dy2) % RNY + RNY) % RNY;
+          if (rx2 < 0 || rx2 >= RNX) continue;
+          const key2 = regionKey(rx2, ry2);
+          if (!this.tiles.has(key2) || want.some((w) => w[3] === key2)) continue;
+          const d = regionDist(rx2, ry2, cm2[0], my2);
+          if (d < this.R + 1500) want.push([d, rx2, ry2, key2]);
+        }
+        want.sort((a, b) => a[0] - b[0]);
+        this.queue = want.filter((w) => !this.regions.has(w[3]));
+        for (const [k, r] of this.regions) {
+          if (regionDist(r.rx, r.ry, cm2[0], my2) > this.R + 6e3) {
+            for (const c of r.chunks || []) this.drop(c);
+            this.regions.delete(k);
+          }
+        }
+      }
+      while (this.loading < 2 && this.queue.length) {
+        const [, rx2, ry2, key2] = this.queue.shift();
+        if (this.regions.has(key2)) continue;
+        this.loading++;
+        const r = { rx: rx2, ry: ry2, chunks: null };
+        this.regions.set(key2, r);
+        fetch(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".bin")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? inflate(b) : null).then((u8) => {
+          if (u8 && this.regions.get(key2) === r) this.parse(r, u8);
+        }).catch((e) => console.warn("far buildings " + rx2 + "_" + ry2 + " unavailable:", e)).finally(() => {
+          this.loading--;
+        });
+      }
+      const vis = this.vis || (this.vis = []), todo = this.todo || (this.todo = []);
+      vis.length = 0;
+      todo.length = 0;
+      const near2 = this.game.terrain.bldMat.uniforms.uFade.value.x * 0.45 * 0.99 - 2, minPx = U.y * 0.8;
+      this.nearMin = near2;
+      for (const r of this.regions.values()) {
+        if (!r.chunks) continue;
+        for (const c of r.chunks) {
+          if (!c.n) continue;
+          const d02 = Math.hypot(c.C[0] - camC[0], c.C[1] - camC[1], c.C[2] - camC[2]) - c.half;
+          if (!c.subs) {
+            if (d02 - 1200 < this.R + 1e3) todo.push([d02, r, c]);
+            continue;
+          }
+          if (d02 - 1200 > this.R + 4e3) {
+            this.drop(c);
+            continue;
+          }
+          if (c.split === 2 && d02 > 6e3 || c.split === 1 && d02 < 3e3) todo.push([d02, r, c]);
+          for (const u of c.subs) this.show(u, camC, near2, minPx);
+        }
+      }
+      if (todo.length) {
+        todo.sort((a, b) => a[0] - b[0]);
+        let boxes = 0;
+        for (const [d02, r, c] of todo) {
+          if (boxes > 16e3) break;
+          const old = c.subs;
+          c.subs = null;
+          this.build(r, c, d02 < 4500 ? 2 : 1);
+          if (old) {
+            this.release(old);
+            for (const u of c.subs) this.show(u, camC, near2, minPx);
+          }
+          boxes += c.n;
+        }
+      }
+    }
+    // a part of a chunk this frame: whether it is drawn, how far into its list, and where it is from the camera
+    show(u, camC, near2, minPx) {
+      const U = this.U.uFar.value, d = Math.hypot(u.M[0] - camC[0], u.M[1] - camC[1], u.M[2] - camC[2]);
+      const dNear = Math.max(0, d - u.half), dFar = d + u.half, sMin = minPx * dNear / U.x;
+      let k = 0;
+      while (k < CLASS_UP.length - 1 && CLASS_UP[k + 1] >= sMin) k++;
+      const count = u.ends[k];
+      u.on = count > 0 && dNear < this.R && (dFar > near2 || !this.allIn) && (U.w < 0.995 || !this.allIn);
+      u.mesh.visible = u.on;
+      if (!u.on) return;
+      u.mesh.geometry.instanceCount = count;
+      u.d = d;
+      const m = u.mesh.matrix;
+      m.copy(u.basis);
+      m.elements[12] = u.C[0] - camC[0];
+      m.elements[13] = u.C[1] - camC[1];
+      m.elements[14] = u.C[2] - camC[2];
+      u.mesh.matrixWorld.copy(m);
+      this.vis.push(u);
+    }
+    // a region's file (bake/c80_far_boxes.py) into its chunks' arrays
+    parse(r, u8) {
+      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      if (dv2.getUint32(0, true) !== 827867718) return;
+      const nB = dv2.getUint32(4, true), nX = dv2.getUint32(8, true);
+      let p = 16 + 256;
+      const a16 = (n, T) => {
+        const a = new T(u8.buffer, u8.byteOffset + p, n);
+        p += n * 2;
+        return a;
+      };
+      const a8 = (n) => {
+        const a = u8.subarray(p, p + n);
+        p += n;
+        return a;
+      };
+      const B = { ox: a16(nB, Uint16Array), oy: a16(nB, Uint16Array), oz: a16(nB, Int16Array), roof: a16(nB, Uint16Array), wall: a16(nB, Uint16Array) };
+      const X = { dx: a16(nX, Int16Array), dy: a16(nX, Int16Array), dz: a16(nX, Int16Array), yaw: a16(nX, Uint16Array), W: a16(nX, Uint16Array), D: a16(nX, Uint16Array), H: a16(nX, Uint16Array) };
+      B.nb = a8(nB);
+      B.seed = a8(nB);
+      B.cc = a8(nB);
+      B.reach = a8(nB);
+      X.rise = a8(nX);
+      r.B = B;
+      r.X = X;
+      r.chunks = [];
+      for (let c = 0; c < 16; c++) {
+        const o = 16 + c * 16, b02 = dv2.getUint32(o, true), nb = dv2.getUint32(o + 4, true), x02 = dv2.getUint32(o + 8, true), nx2 = dv2.getUint32(o + 12, true);
+        const C3 = cyl(r.rx * RS3 + ((c & 3) + 0.5) * CH, r.ry * RS3 + ((c >> 2) + 0.5) * CH, 0, new Float64Array(3));
+        r.chunks.push({ ci: c, b0: b02, nb, x0: x02, n: nx2, C: C3, half: CH * 0.7072 + 250, subs: null });
+      }
+    }
+    // a chunk's boxes onto the graphics card, in its four quarters (a quarter is drawn only where it can be seen): one
+    // instance a box, by the box's own size, largest first, so a quarter far off draws only the start of its list
+    build(r, c, split) {
+      const B = r.B, X = r.X, x02 = r.rx * RS3 - PAD, y02 = r.ry * RS3 - PAD, nC = CLASS_UP.length, sz = CH / split;
+      const q = new Uint8Array(c.n), k = new Uint8Array(c.n), cnt = new Uint32Array(4 * nC);
+      const cx0 = r.rx * RS3 + (c.ci & 3) * CH, cy0 = r.ry * RS3 + (c.ci >> 2) * CH;
+      let j = 0;
+      for (let b = c.b0; b < c.b0 + c.nb; b++) {
+        const ox2 = x02 + B.ox[b] * 0.2, oy2 = y02 + B.oy[b] * 0.2;
+        const qq = split === 1 ? 0 : (ox2 - cx0 >= CH / 2 ? 1 : 0) + (oy2 - cy0 >= CH / 2 ? 2 : 0);
+        for (let i = 0; i < B.nb[b]; i++, j++) {
+          const x = c.x0 + j, size = Math.max(X.W[x] * 0.05, X.D[x] * 0.05, Math.max(X.H[x] * 0.05, 0.3) + X.rise[x] * 0.1);
+          let kk = 0;
+          while (kk < nC - 1 && size < CLASS_UP[kk + 1]) kk++;
+          q[j] = qq;
+          k[j] = kk;
+          cnt[qq * nC + kk]++;
+        }
+      }
+      c.subs = [];
+      c.split = split;
+      for (let qq = 0; qq < split * split; qq++) {
+        let n = 0;
+        const ends = new Uint32Array(nC), at = new Uint32Array(nC);
+        for (let kk = 0; kk < nC; kk++) {
+          at[kk] = n;
+          n += cnt[qq * nC + kk];
+          ends[kk] = n;
+        }
+        if (!n) continue;
+        const cxm = cx0 + ((qq & 1) + 0.5) * sz, cym = cy0 + ((qq >> 1) + 0.5) * sz;
+        const P2 = new Float32Array(n * 4), S2 = new Uint16Array(n * 4), O = new Int16Array(n * 4), K = new Uint8Array(n * 4), Cc2 = new Uint16Array(n * 2);
+        let hMin = 1e9, hMax = -1e9;
+        j = 0;
+        for (let b = c.b0; b < c.b0 + c.nb; b++) {
+          const nbx = B.nb[b];
+          if (q[j] !== qq) {
+            j += nbx;
+            continue;
+          }
+          const ox2 = x02 + B.ox[b] * 0.2, oy2 = y02 + B.oy[b] * 0.2, oz = B.oz[b] * 0.1;
+          for (let i = 0; i < nbx; i++, j++) {
+            const x = c.x0 + j, w = at[k[j]]++, o = w * 4;
+            const h = Math.max(X.H[x] * 0.05, 0.3) + X.rise[x] * 0.1, fz = oz + X.dz[x] * 0.05;
+            P2[o] = ox2 + X.dx[x] * 0.05 - cxm;
+            P2[o + 1] = oy2 + X.dy[x] * 0.05 - cym;
+            P2[o + 2] = fz;
+            P2[o + 3] = X.yaw[x] / 65536 * 2 * Math.PI;
+            S2[o] = X.W[x];
+            S2[o + 1] = X.H[x];
+            S2[o + 2] = X.D[x];
+            S2[o + 3] = X.rise[x];
+            O[o] = -X.dx[x];
+            O[o + 1] = -X.dy[x];
+            O[o + 2] = -X.dz[x];
+            O[o + 3] = Math.min(32767, Math.ceil(Math.max(X.W[x] * 0.05, X.D[x] * 0.05, h) / 0.25));
+            K[o] = B.seed[b];
+            K[o + 1] = B.cc[b];
+            K[o + 2] = B.reach[b];
+            Cc2[w * 2] = B.roof[b];
+            Cc2[w * 2 + 1] = B.wall[b];
+            hMin = Math.min(hMin, fz);
+            hMax = Math.max(hMax, fz + h);
+          }
+        }
+        const g = new gl(), src = this.geo;
+        g.setIndex(src.index);
+        for (const name in src.attributes) g.setAttribute(name, src.attributes[name]);
+        const free = function() {
+          this.array = null;
+        };
+        const add2 = (name, arr, kk) => {
+          const a = new vi(arr, kk, false);
+          a.onUpload(free);
+          g.setAttribute(name, a);
+        };
+        add2("aP", P2, 4);
+        add2("aS", S2, 4);
+        add2("aO", O, 4);
+        add2("aK", K, 4);
+        add2("aC", Cc2, 2);
+        g.instanceCount = n;
+        const hMid = (hMin + hMax) / 2, half = sz * 0.7072 + (hMax - hMin) / 2 + 150;
+        g.boundingSphere = new Ie(new C(0, hMid, 0), half);
+        const mesh = new Ce(g, this.mat);
+        mesh.matrixAutoUpdate = false;
+        mesh.frustumCulled = true;
+        mesh.visible = false;
+        this.game.scene.add(mesh);
+        const th = cym / R, cs2 = Math.cos(th), sn2 = Math.sin(th);
+        c.subs.push({
+          mesh,
+          ends,
+          n,
+          half,
+          C: cyl(cxm, cym, 0, new Float64Array(3)),
+          M: cyl(cxm, cym, hMid, new Float64Array(3)),
+          basis: new Ht().set(1, 0, 0, 0, 0, cs2, -sn2, 0, 0, sn2, cs2, 0, 0, 0, 0, 1),
+          on: false,
+          d: 0
+        });
+      }
+    }
+    drop(c) {
+      if (!c.subs) return;
+      this.release(c.subs);
+      c.subs = null;
+    }
+    release(subs) {
+      for (const u of subs) {
+        const g = u.mesh.geometry;
+        this.game.scene.remove(u.mesh);
+        for (const name of Object.keys(g.attributes)) if (!(name in this.geo.attributes)) g.attributes[name].array = null;
+        for (const name of Object.keys(this.geo.attributes)) g.deleteAttribute(name);
+        g.setIndex(null);
+        g.dispose();
+      }
+    }
+    // the frame's two depth ranges: a chunk is in the near one only where some of it is within it
+    passVisibility(nearPass, nearFar) {
+      if (!this.ready || !this.vis) return;
+      const none = nearPass && this.nearMin >= nearFar && this.allIn;
+      for (const u of this.vis) u.mesh.visible = u.on && !none && (!nearPass || u.d - u.half < nearFar);
+    }
+  };
+
   // src/cars.js
   var CM = { PAINT: 0, GLASS: 1, DARK: 2, TYRE: 3, HUB: 4, HEAD: 5, TAIL: 6, PLATE: 7, CLAD: 8 };
   var SPEC = [
@@ -23395,6 +23895,13 @@ attribute vec4 aCen;       // the building's origin (tile frame): a box and the 
 #ifdef SKY
 attribute float aFar;      // the skyline (skyline.js): how far off the building still shows, by its height
 uniform vec2 uSky;         // where the skyline's near band ends (0: none), and a scale on aFar
+#if defined(SKYIN) && !defined(FOLIAGE)
+// nearer than its tile's reach the skyline draws a building while the tile that would is not in (far.js uIn and
+// tilesIn), as the far layer does its own
+uniform vec3 uCam;         // the camera (cylinder space)
+uniform sampler2D uIn;
+${TILES_IN}
+#endif
 #endif
 #endif
 uniform vec2 uFade;
@@ -23521,7 +24028,19 @@ void main() {
   // size), and never grows or shrinks.  The skyline takes a big building over where the box tiles leave it: all its
   // boxes out to uSky.x (SKY1), then its tallest and widest (SKY2)
   #if defined(SKY1)
-    float f = step(mix(uFade.x, uFade.y, jit) * reach, dc) * step(dc, uSky.x * (0.9 + 0.1 * jit));
+    // from where its box tile stops drawing it (the same seed and share; a little early, so the two overlap, as the
+    // far layer's do) out to the near band's end
+    float fo = mix(uFade.x, uFade.y, jit) * reach * 0.996 - 1.0;
+    float f = step(fo, dc) * step(dc, uSky.x * (0.9 + 0.1 * jit));
+    #ifdef SKYIN
+    if (dc < fo) {
+      // nearer in its box tile draws it, and nearer still its detailed house: while that tile is not in, this does
+      vec3 cc = uCam + wc.xyz;
+      float my = atan(-cc.z, -cc.y) * ${R.toFixed(1)};
+      float tin = tilesIn(vec2(cc.x + ${(L / 2).toFixed(3)}, my < 0.0 ? my + ${C2.toFixed(3)} : my));
+      f = dc >= mix(uFadeIn.x, uFadeIn.y, jit) ? 1.0 - mod(tin, 2.0) : 1.0 - step(1.5, tin);
+    }
+    #endif
   #elif defined(SKY2)
     float f = step(max(mix(uFade.x, uFade.y, jit) * reach, uSky.x * (0.9 + 0.1 * jit)), dc) * step(dc, aFar * uSky.y * (0.92 + 0.08 * jit));
   #elif defined(BLD) && defined(COVER)
@@ -28134,7 +28653,7 @@ void main() {
   };
 
   // src/nightlights.js
-  function regionDist(rx2, ry2, mx2, my2) {
+  function regionDist2(rx2, ry2, mx2, my2) {
     const ex2 = Math.max(0, Math.abs((rx2 + 0.5) * RS3 - mx2) - RS3 / 2);
     let dy2 = Math.abs((ry2 + 0.5) * RS3 - my2) % C2;
     dy2 = Math.min(dy2, C2 - dy2);
@@ -28265,13 +28784,13 @@ void main() {
           if (rx2 < 0 || rx2 >= RNX) continue;
           const key2 = regionKey(rx2, ryw);
           if (!this.tiles.has(key2) || want.some((x) => x[3] === key2)) continue;
-          const d = regionDist(rx2, ryw, cm2[0], my2);
+          const d = regionDist2(rx2, ryw, cm2[0], my2);
           if (d < this.R) want.push([d, rx2, ryw, key2]);
         }
         want.sort((a, b) => a[0] - b[0]);
         this.queue = want.filter((w) => !this.regions.has(w[3]));
         for (const [k, r] of this.regions) {
-          if (r.pts && !want.some((w) => w[3] === k) && regionDist(r.rx, r.ry, cm2[0], my2) > this.R * 1.3) {
+          if (r.pts && !want.some((w) => w[3] === k) && regionDist2(r.rx, r.ry, cm2[0], my2) > this.R * 1.3) {
             g.scene.remove(r.pts);
             r.pts.geometry.dispose();
             this.regions.delete(k);
@@ -28782,14 +29301,21 @@ void main() {
       const oR = 16, oB = oR + nReg * 20, oX = oB + nB * BS2;
       this.U = { uSky: { value: new et(q.skyNear || 0, q.skyFar) } };
       this.uFadeH = { value: new et(q.deckR || 4e3, q.deckR || 4e3) };
+      const inMap = g.far && g.far.ready ? g.far.U.uIn : null;
       const mat = (band3, hid) => {
+        const tilesIn = band3 === 1 && !hid && inMap;
         const m = new Rn({
           vertexShader: SCATTER_VS,
           fragmentShader: LIT_FS,
           side: Mi,
-          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band3 === 1 ? { SKY1: 1 } : { SKY2: 1 }, t.defines),
+          defines: Object.assign({ SCATTER: 1, BLD: 1, SKY: 1 }, band3 === 1 ? { SKY1: 1 } : { SKY2: 1 }, tilesIn ? { SKYIN: 1 } : {}, t.defines),
           // the tiles' own reach (it follows the camera's height) and the same lighting
-          uniforms: Object.assign({}, g.U, { uKind: { value: 2 }, uFade: hid ? this.uFadeH : t.bldMat.uniforms.uFade, uFadeIn: { value: new et(-2, -1) }, uSky: this.U.uSky })
+          uniforms: Object.assign(
+            {},
+            g.U,
+            { uKind: { value: 2 }, uFade: hid ? this.uFadeH : t.bldMat.uniforms.uFade, uFadeIn: tilesIn ? t.bldMat.uniforms.uFadeIn : { value: new et(-2, -1) }, uSky: this.U.uSky },
+            tilesIn ? { uIn: inMap } : {}
+          )
         });
         return m;
       };
@@ -28930,450 +29456,6 @@ void main() {
     passVisibility(nearPass, nearFar) {
       if (!this.ready) return;
       for (const ch of this.chunks) ch.mesh.visible = ch.on && (!nearPass || ch.d - ch.half < nearFar);
-    }
-  };
-
-  // src/far.js
-  var PAD = 400;
-  var CLASS_UP = [1e9, 40, 24, 16, 12, 9, 6];
-  var CH = RS3 / 4;
-  var FAR_VS = (
-    /* glsl */
-    `
-attribute float aPart;
-attribute vec4 aP;      // the box's foot: map x and y from the chunk's centre (m), its height (m); its yaw
-attribute vec4 aS;      // width, height to the eave, depth (0.05 m), the roof's rise (0.1 m)
-attribute vec4 aO;      // from the foot to the building's origin, x, y, z (0.05 m); the box's size (0.25 m)
-attribute vec4 aK;      // seed, class + 16 x cladding, its share of the box tiles' reach (/255)
-attribute vec2 aC;      // its roof's and its walls' colours (RGB565, 0 for none)
-uniform vec2 uFade;     // the box tiles' reach (terrain.js bldMat)
-uniform vec2 uFadeIn;   // and where the detailed houses give way to them
-uniform vec4 uFar;      // pixels a metre spans at 1 m, the fewest pixels a building shows at, this layer's reach, how dark it is
-uniform sampler2D uIn;  // which near tiles round the camera are in, by 184 m tile, 64 x 64 wrapped: 1 its box tile, 2 its houses
-uniform vec3 uCam;      // the camera (cylinder space)
-${PALETTE}
-varying vec3 vRel;
-varying vec3 vNor;
-varying vec3 vCol;
-varying vec3 vCol2;
-varying vec3 vObj;
-varying float vAux;
-varying float vStyle;
-const float RH = ${R.toFixed(1)}, LH = ${(L / 2).toFixed(3)}, CIRC = ${C2.toFixed(3)}, T8 = ${(ROOT / 256).toFixed(5)};
-// a point in map metres (from the chunk's centre; height) in the chunk's frame (common.js cyl, about the centre)
-vec3 hull(vec3 m) { float th = m.y / RH, r = RH - m.z; return vec3(m.x, RH - r * cos(th), -r * sin(th)); }
-void main() {
-  vec3 foot = aP.xyz, org = foot + aO.xyz * 0.05;
-  float dc = length((modelMatrix * vec4(hull(org), 1.0)).xyz);
-  float jit = aK.x / 255.0, h2 = fract(jit * 7.31 + 0.137), h3 = fract(jit * 13.17 + 0.29);
-  float f;
-  if (dc >= mix(uFade.x, uFade.y, jit) * (aK.z / 255.0) * 0.996 - 1.0) {
-    // past where its box tile stops drawing it (SCATTER_VS: the same seed and share; a little early, so the two
-    // overlap); in the dark the lights take over, one building after another as the light goes
-    f = step(uFar.w, h3 * 0.98 + 0.01);
-  } else {
-    // nearer in, its box tile draws it, and nearer still its detailed house: from when that tile is in
-    vec3 cc = uCam + modelMatrix[3].xyz;
-    float my = atan(-cc.z, -cc.y) * RH;
-    vec2 m = vec2(cc.x + LH + org.x, (my < 0.0 ? my + CIRC : my) + org.y);
-    ivec2 ti = ivec2(floor(m / T8));
-    float tin = texelFetch(uIn, ivec2(ti.x & 63, ti.y & 63), 0).r * 255.0;
-    f = dc >= mix(uFadeIn.x, uFadeIn.y, jit) ? 1.0 - mod(floor(tin + 0.5), 2.0) : 1.0 - step(1.5, tin);
-  }
-  // until it is smaller than about a pixel, or past this layer's reach
-  f *= step(uFar.y * (0.8 + 0.4 * h2), aO.w * 0.25 * uFar.x / max(dc, 1.0));
-  f *= step(dc, uFar.z * (0.9 + 0.1 * h2));
-  if (f < 0.5) {
-    // (most of a chunk near the camera is still the tiles', and much of one far off is under a pixel: nothing to draw)
-    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
-    return;
-  }
-  // the walls (part 2) and the gable over them (part 1), as SCATTER_VS shapes the box tiles' box and gable; on a flat
-  // top the gable lies flat over the walls and is drawn as the box's top
-  vec3 sc = vec3(aS.x * 0.05, max(aS.y * 0.05, 0.3), aS.z * 0.05);
-  float rise = aS.w * 0.1, part = aPart;
-  vec3 pos = position, nl = normal;
-  if (aPart > 0.5 && aPart < 1.5) {
-    if (rise > 0.3) {
-      float k = rise / max(sc.y, 0.3) / 0.42;
-      pos.y = 1.0 + (pos.y - 1.0) * k;
-      nl.y /= max(k, 0.02);
-    } else {
-      pos = vec3(pos.x * (0.5 / 0.54), 1.0, pos.z * (0.5 / 0.54));
-      nl = vec3(0.0, 1.0, 0.0);
-      part = 2.0;
-    }
-  }
-  vObj = pos * sc;
-  // turned by its yaw about its up, and tilted with the hull where it stands (skyline.js does the same)
-  float cy = cos(aP.w), sy = sin(aP.w), th = foot.y / RH, ct = cos(th), st = sin(th);
-  vec3 p = pos * sc;
-  p = vec3(cy * p.x + sy * p.z, p.y, cy * p.z - sy * p.x);
-  p = vec3(p.x, ct * p.y - st * p.z, st * p.y + ct * p.z);
-  vec3 n = vec3(cy * nl.x + sy * nl.z, nl.y, cy * nl.z - sy * nl.x);
-  n = vec3(n.x, ct * n.y - st * n.z, st * n.y + ct * n.z);
-  vec4 wp = modelMatrix * vec4(hull(foot) + p, 1.0);
-  vRel = wp.xyz;
-  vNor = normalize(mat3(modelMatrix) * n);
-  // its colours, as the tiles give them (SCATTER_VS BLD)
-  float seed = aK.x, cls = mod(aK.y, 16.0), clad = floor(aK.y / 16.0);
-  vStyle = part < 1.5 ? 1.0 : 0.0;
-  vCol = part < 1.5 ? roofColor(cls, 1.0, seed) : claddingColor(clad, cls, seed);
-  vCol2 = roofColor(cls, 0.0, seed);
-  if (aC.x > 0.5) {
-    vec3 rc = aerialRoof(rgb565(aC.x));
-    if (part < 1.5) vCol = rc;
-    vCol2 = rc;
-  }
-  if (aC.y > 0.5 && part > 1.5) vCol = photoWall(rgb565(aC.y));
-  vAux = seed / 255.0;
-  gl_Position = projectionMatrix * viewMatrix * wp;
-}`
-  );
-  function regionDist2(rx2, ry2, mx2, my2) {
-    const ex2 = Math.max(0, Math.abs((rx2 + 0.5) * RS3 - mx2) - RS3 / 2);
-    let dy2 = Math.abs((ry2 + 0.5) * RS3 - my2) % C2;
-    dy2 = Math.min(dy2, C2 - dy2);
-    return Math.hypot(ex2, Math.max(0, dy2 - RS3 / 2));
-  }
-  function farGeometry(src) {
-    const P2 = src.attributes.position, N = src.attributes.normal, A = src.attributes.aPart, I = src.index;
-    const pos = [], nor = [], prt = [], idx = [], seen = /* @__PURE__ */ new Map();
-    const vert = (i) => {
-      const key2 = [P2.getX(i), P2.getY(i), P2.getZ(i), N.getX(i), N.getY(i), N.getZ(i), A.getX(i)].map((v) => v.toFixed(4)).join(",");
-      let j = seen.get(key2);
-      if (j === void 0) {
-        j = pos.length / 3;
-        seen.set(key2, j);
-        pos.push(P2.getX(i), P2.getY(i), P2.getZ(i));
-        nor.push(N.getX(i), N.getY(i), N.getZ(i));
-        prt.push(A.getX(i));
-      }
-      return j;
-    };
-    for (let t = 0; t < I.count; t += 3) {
-      const a = I.getX(t), b = I.getX(t + 1), c = I.getX(t + 2);
-      if (A.getX(a) > 1.5 && Math.abs(N.getY(a)) > 0.5) continue;
-      idx.push(vert(a), vert(b), vert(c));
-    }
-    const g = new Yt();
-    g.setAttribute("position", new me(new Float32Array(pos), 3));
-    g.setAttribute("normal", new me(new Float32Array(nor), 3));
-    g.setAttribute("aPart", new me(new Float32Array(prt), 1));
-    g.setIndex(idx);
-    return g;
-  }
-  async function inflate(buf) {
-    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("deflate"));
-    return new Uint8Array(await new Response(stream).arrayBuffer());
-  }
-  var Far = class {
-    constructor(game2) {
-      this.game = game2;
-      this.regions = /* @__PURE__ */ new Map();
-      this.queue = [];
-      this.loading = 0;
-      this.chunks = [];
-      const q = game2.quality, F = game2.meta.files && game2.meta.files.far, t = game2.terrain;
-      this.R = q.farR || 0;
-      this.ready = !!(F && this.R > 0 && game2.realBuildings && t.bldMat && t.bldGeo && typeof DecompressionStream !== "undefined");
-      if (!this.ready) return;
-      this.dir = F.dir;
-      this.tiles = new Set(F.tiles);
-      this.inData = new Uint8Array(64 * 64);
-      this.inTex = new an(this.inData, 64, 64, Rl, cn);
-      this.inTex.magFilter = this.inTex.minFilter = Te;
-      this.inTex.unpackAlignment = 1;
-      this.inTex.needsUpdate = true;
-      this.U = { uFar: { value: new de(900, q.farPx || 1, this.R, 0) }, uIn: { value: this.inTex } };
-      this.mat = new Rn({
-        vertexShader: FAR_VS,
-        fragmentShader: LIT_FS,
-        side: Mi,
-        defines: Object.assign({ SCATTER: 1, BLD: 1, FARL: 1 }, t.defines),
-        uniforms: Object.assign({}, game2.U, { uKind: { value: 2 }, uFade: t.bldMat.uniforms.uFade, uFadeIn: t.bldMat.uniforms.uFadeIn, uFar: this.U.uFar, uIn: this.U.uIn })
-      });
-      this.geo = farGeometry(t.bldGeo);
-    }
-    // main.js adaptQuality, with the resolution at its floor: a pixel threshold up to four times this level's, for fewer of
-    // the smallest far buildings (k > 1), or back towards it (k < 1)
-    lighten(k) {
-      if (!this.ready) return;
-      const U = this.U.uFar.value, base = this.game.quality.farPx || 1;
-      U.y = Math.min(base * 4, Math.max(base, U.y * k));
-    }
-    // the light of the day as a whole: the lights' rule (nightlights.js darkness)
-    darkness() {
-      const s30 = this.game.sky;
-      return (s30.isNight ? 1 : 1 - smoothstep(0.03, 0.2, s30.dayness)) * this.game.U.uLights.value;
-    }
-    update(camC) {
-      if (!this.ready) return;
-      const g = this.game, cm2 = g.camMap, my2 = wrapY(cm2[1]), U = this.U.uFar.value;
-      U.x = g.renderer.domElement.height / (2 * Math.tan(g.camera.fov * Math.PI / 360));
-      U.w = this.darkness();
-      this.on = true;
-      if ((this.tick & 1) === 0) {
-        const T = this.game.terrain, d = this.inData;
-        d.fill(0);
-        let missing = 0;
-        for (const t of T.scatter.values()) {
-          if (t.kind !== "houses" && t.kind !== "buildings") continue;
-          if (T.frame - t.cur >= 3) continue;
-          if (t.state !== "ready" || t.redoAt) {
-            missing++;
-            continue;
-          }
-          if (t.kind === "houses") d[(t.iy & 63) * 64 + (t.ix & 63)] |= 2;
-          else for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) d[(t.iy * 2 + b & 63) * 64 + (t.ix * 2 + a & 63)] |= 1;
-        }
-        this.allIn = missing === 0;
-        this.inTex.needsUpdate = true;
-      }
-      if ((this.tick = (this.tick || 0) + 1) % 30 === 1) {
-        const rx0 = Math.floor(cm2[0] / RS3), ry0 = Math.floor(my2 / RS3), n = Math.ceil(this.R / RS3) + 1, want = [];
-        for (let dy2 = -n; dy2 <= n; dy2++) for (let dx2 = -n; dx2 <= n; dx2++) {
-          const rx2 = rx0 + dx2, ry2 = ((ry0 + dy2) % RNY + RNY) % RNY;
-          if (rx2 < 0 || rx2 >= RNX) continue;
-          const key2 = regionKey(rx2, ry2);
-          if (!this.tiles.has(key2) || want.some((w) => w[3] === key2)) continue;
-          const d = regionDist2(rx2, ry2, cm2[0], my2);
-          if (d < this.R + 1500) want.push([d, rx2, ry2, key2]);
-        }
-        want.sort((a, b) => a[0] - b[0]);
-        this.queue = want.filter((w) => !this.regions.has(w[3]));
-        for (const [k, r] of this.regions) {
-          if (regionDist2(r.rx, r.ry, cm2[0], my2) > this.R + 6e3) {
-            for (const c of r.chunks || []) this.drop(c);
-            this.regions.delete(k);
-          }
-        }
-      }
-      while (this.loading < 2 && this.queue.length) {
-        const [, rx2, ry2, key2] = this.queue.shift();
-        if (this.regions.has(key2)) continue;
-        this.loading++;
-        const r = { rx: rx2, ry: ry2, chunks: null };
-        this.regions.set(key2, r);
-        fetch(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".bin")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? inflate(b) : null).then((u8) => {
-          if (u8 && this.regions.get(key2) === r) this.parse(r, u8);
-        }).catch((e) => console.warn("far buildings " + rx2 + "_" + ry2 + " unavailable:", e)).finally(() => {
-          this.loading--;
-        });
-      }
-      const vis = this.vis || (this.vis = []), todo = this.todo || (this.todo = []);
-      vis.length = 0;
-      todo.length = 0;
-      const near2 = this.game.terrain.bldMat.uniforms.uFade.value.x * 0.45 * 0.99 - 2, minPx = U.y * 0.8;
-      this.nearMin = near2;
-      for (const r of this.regions.values()) {
-        if (!r.chunks) continue;
-        for (const c of r.chunks) {
-          if (!c.n) continue;
-          const d02 = Math.hypot(c.C[0] - camC[0], c.C[1] - camC[1], c.C[2] - camC[2]) - c.half;
-          if (!c.subs) {
-            if (d02 - 1200 < this.R + 1e3) todo.push([d02, r, c]);
-            continue;
-          }
-          if (d02 - 1200 > this.R + 4e3) {
-            this.drop(c);
-            continue;
-          }
-          if (c.split === 2 && d02 > 6e3 || c.split === 1 && d02 < 3e3) todo.push([d02, r, c]);
-          for (const u of c.subs) this.show(u, camC, near2, minPx);
-        }
-      }
-      if (todo.length) {
-        todo.sort((a, b) => a[0] - b[0]);
-        let boxes = 0;
-        for (const [d02, r, c] of todo) {
-          if (boxes > 16e3) break;
-          const old = c.subs;
-          c.subs = null;
-          this.build(r, c, d02 < 4500 ? 2 : 1);
-          if (old) {
-            this.release(old);
-            for (const u of c.subs) this.show(u, camC, near2, minPx);
-          }
-          boxes += c.n;
-        }
-      }
-    }
-    // a part of a chunk this frame: whether it is drawn, how far into its list, and where it is from the camera
-    show(u, camC, near2, minPx) {
-      const U = this.U.uFar.value, d = Math.hypot(u.M[0] - camC[0], u.M[1] - camC[1], u.M[2] - camC[2]);
-      const dNear = Math.max(0, d - u.half), dFar = d + u.half, sMin = minPx * dNear / U.x;
-      let k = 0;
-      while (k < CLASS_UP.length - 1 && CLASS_UP[k + 1] >= sMin) k++;
-      const count = u.ends[k];
-      u.on = count > 0 && dNear < this.R && (dFar > near2 || !this.allIn) && (U.w < 0.995 || !this.allIn);
-      u.mesh.visible = u.on;
-      if (!u.on) return;
-      u.mesh.geometry.instanceCount = count;
-      u.d = d;
-      const m = u.mesh.matrix;
-      m.copy(u.basis);
-      m.elements[12] = u.C[0] - camC[0];
-      m.elements[13] = u.C[1] - camC[1];
-      m.elements[14] = u.C[2] - camC[2];
-      u.mesh.matrixWorld.copy(m);
-      this.vis.push(u);
-    }
-    // a region's file (bake/c80_far_boxes.py) into its chunks' arrays
-    parse(r, u8) {
-      const dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-      if (dv2.getUint32(0, true) !== 827867718) return;
-      const nB = dv2.getUint32(4, true), nX = dv2.getUint32(8, true);
-      let p = 16 + 256;
-      const a16 = (n, T) => {
-        const a = new T(u8.buffer, u8.byteOffset + p, n);
-        p += n * 2;
-        return a;
-      };
-      const a8 = (n) => {
-        const a = u8.subarray(p, p + n);
-        p += n;
-        return a;
-      };
-      const B = { ox: a16(nB, Uint16Array), oy: a16(nB, Uint16Array), oz: a16(nB, Int16Array), roof: a16(nB, Uint16Array), wall: a16(nB, Uint16Array) };
-      const X = { dx: a16(nX, Int16Array), dy: a16(nX, Int16Array), dz: a16(nX, Int16Array), yaw: a16(nX, Uint16Array), W: a16(nX, Uint16Array), D: a16(nX, Uint16Array), H: a16(nX, Uint16Array) };
-      B.nb = a8(nB);
-      B.seed = a8(nB);
-      B.cc = a8(nB);
-      B.reach = a8(nB);
-      X.rise = a8(nX);
-      r.B = B;
-      r.X = X;
-      r.chunks = [];
-      for (let c = 0; c < 16; c++) {
-        const o = 16 + c * 16, b02 = dv2.getUint32(o, true), nb = dv2.getUint32(o + 4, true), x02 = dv2.getUint32(o + 8, true), nx2 = dv2.getUint32(o + 12, true);
-        const C3 = cyl(r.rx * RS3 + ((c & 3) + 0.5) * CH, r.ry * RS3 + ((c >> 2) + 0.5) * CH, 0, new Float64Array(3));
-        r.chunks.push({ ci: c, b0: b02, nb, x0: x02, n: nx2, C: C3, half: CH * 0.7072 + 250, subs: null });
-      }
-    }
-    // a chunk's boxes onto the graphics card, in its four quarters (a quarter is drawn only where it can be seen): one
-    // instance a box, by the box's own size, largest first, so a quarter far off draws only the start of its list
-    build(r, c, split) {
-      const B = r.B, X = r.X, x02 = r.rx * RS3 - PAD, y02 = r.ry * RS3 - PAD, nC = CLASS_UP.length, sz = CH / split;
-      const q = new Uint8Array(c.n), k = new Uint8Array(c.n), cnt = new Uint32Array(4 * nC);
-      const cx0 = r.rx * RS3 + (c.ci & 3) * CH, cy0 = r.ry * RS3 + (c.ci >> 2) * CH;
-      let j = 0;
-      for (let b = c.b0; b < c.b0 + c.nb; b++) {
-        const ox2 = x02 + B.ox[b] * 0.2, oy2 = y02 + B.oy[b] * 0.2;
-        const qq = split === 1 ? 0 : (ox2 - cx0 >= CH / 2 ? 1 : 0) + (oy2 - cy0 >= CH / 2 ? 2 : 0);
-        for (let i = 0; i < B.nb[b]; i++, j++) {
-          const x = c.x0 + j, size = Math.max(X.W[x] * 0.05, X.D[x] * 0.05, Math.max(X.H[x] * 0.05, 0.3) + X.rise[x] * 0.1);
-          let kk = 0;
-          while (kk < nC - 1 && size < CLASS_UP[kk + 1]) kk++;
-          q[j] = qq;
-          k[j] = kk;
-          cnt[qq * nC + kk]++;
-        }
-      }
-      c.subs = [];
-      c.split = split;
-      for (let qq = 0; qq < split * split; qq++) {
-        let n = 0;
-        const ends = new Uint32Array(nC), at = new Uint32Array(nC);
-        for (let kk = 0; kk < nC; kk++) {
-          at[kk] = n;
-          n += cnt[qq * nC + kk];
-          ends[kk] = n;
-        }
-        if (!n) continue;
-        const cxm = cx0 + ((qq & 1) + 0.5) * sz, cym = cy0 + ((qq >> 1) + 0.5) * sz;
-        const P2 = new Float32Array(n * 4), S2 = new Uint16Array(n * 4), O = new Int16Array(n * 4), K = new Uint8Array(n * 4), Cc2 = new Uint16Array(n * 2);
-        let hMin = 1e9, hMax = -1e9;
-        j = 0;
-        for (let b = c.b0; b < c.b0 + c.nb; b++) {
-          const nbx = B.nb[b];
-          if (q[j] !== qq) {
-            j += nbx;
-            continue;
-          }
-          const ox2 = x02 + B.ox[b] * 0.2, oy2 = y02 + B.oy[b] * 0.2, oz = B.oz[b] * 0.1;
-          for (let i = 0; i < nbx; i++, j++) {
-            const x = c.x0 + j, w = at[k[j]]++, o = w * 4;
-            const h = Math.max(X.H[x] * 0.05, 0.3) + X.rise[x] * 0.1, fz = oz + X.dz[x] * 0.05;
-            P2[o] = ox2 + X.dx[x] * 0.05 - cxm;
-            P2[o + 1] = oy2 + X.dy[x] * 0.05 - cym;
-            P2[o + 2] = fz;
-            P2[o + 3] = X.yaw[x] / 65536 * 2 * Math.PI;
-            S2[o] = X.W[x];
-            S2[o + 1] = X.H[x];
-            S2[o + 2] = X.D[x];
-            S2[o + 3] = X.rise[x];
-            O[o] = -X.dx[x];
-            O[o + 1] = -X.dy[x];
-            O[o + 2] = -X.dz[x];
-            O[o + 3] = Math.min(32767, Math.ceil(Math.max(X.W[x] * 0.05, X.D[x] * 0.05, h) / 0.25));
-            K[o] = B.seed[b];
-            K[o + 1] = B.cc[b];
-            K[o + 2] = B.reach[b];
-            Cc2[w * 2] = B.roof[b];
-            Cc2[w * 2 + 1] = B.wall[b];
-            hMin = Math.min(hMin, fz);
-            hMax = Math.max(hMax, fz + h);
-          }
-        }
-        const g = new gl(), src = this.geo;
-        g.setIndex(src.index);
-        for (const name in src.attributes) g.setAttribute(name, src.attributes[name]);
-        const free = function() {
-          this.array = null;
-        };
-        const add2 = (name, arr, kk) => {
-          const a = new vi(arr, kk, false);
-          a.onUpload(free);
-          g.setAttribute(name, a);
-        };
-        add2("aP", P2, 4);
-        add2("aS", S2, 4);
-        add2("aO", O, 4);
-        add2("aK", K, 4);
-        add2("aC", Cc2, 2);
-        g.instanceCount = n;
-        const hMid = (hMin + hMax) / 2, half = sz * 0.7072 + (hMax - hMin) / 2 + 150;
-        g.boundingSphere = new Ie(new C(0, hMid, 0), half);
-        const mesh = new Ce(g, this.mat);
-        mesh.matrixAutoUpdate = false;
-        mesh.frustumCulled = true;
-        mesh.visible = false;
-        this.game.scene.add(mesh);
-        const th = cym / R, cs2 = Math.cos(th), sn2 = Math.sin(th);
-        c.subs.push({
-          mesh,
-          ends,
-          n,
-          half,
-          C: cyl(cxm, cym, 0, new Float64Array(3)),
-          M: cyl(cxm, cym, hMid, new Float64Array(3)),
-          basis: new Ht().set(1, 0, 0, 0, 0, cs2, -sn2, 0, 0, sn2, cs2, 0, 0, 0, 0, 1),
-          on: false,
-          d: 0
-        });
-      }
-    }
-    drop(c) {
-      if (!c.subs) return;
-      this.release(c.subs);
-      c.subs = null;
-    }
-    release(subs) {
-      for (const u of subs) {
-        const g = u.mesh.geometry;
-        this.game.scene.remove(u.mesh);
-        for (const name of Object.keys(g.attributes)) if (!(name in this.geo.attributes)) g.attributes[name].array = null;
-        for (const name of Object.keys(this.geo.attributes)) g.deleteAttribute(name);
-        g.setIndex(null);
-        g.dispose();
-      }
-    }
-    // the frame's two depth ranges: a chunk is in the near one only where some of it is within it
-    passVisibility(nearPass, nearFar) {
-      if (!this.ready || !this.vis) return;
-      const none = nearPass && this.nearMin >= nearFar && this.allIn;
-      for (const u of this.vis) u.mesh.visible = u.on && !none && (!nearPass || u.d - u.half < nearFar);
     }
   };
 
@@ -30397,6 +30479,8 @@ void main() {
         uSdfRange: { value: meta.mask.sdfRange },
         uCover2: { value: png.cover2 ? tex(png.cover2.data, png.cover2.w, png.cover2.h, on) : null },
         uHasCover2: { value: png.cover2 ? 1 : 0 },
+        // its fourth byte, where bake/c83_depth.py wrote it: 2 x the water's depth in metres, + 128 where it is salt
+        uWaterDepth: { value: png.cover2 && F.cover2 && F.cover2.alpha === "depth2s" ? 1 : 0 },
         uRealRoads: { value: meta.tiles && meta.tiles.streets ? 1 : 0 },
         // where the hull is glass, and how far the habitat has turned (what is outside wheels past once a rotation)
         uZone: { value: png.zone ? tex(png.zone.data, png.zone.w, png.zone.h, Rl, true, false) : tex(new Uint8Array([0]), 1, 1, Rl, true, false) },
@@ -31496,9 +31580,8 @@ void main() {
           this.pixelRatio = Math.max(floor, this.pixelRatio * Math.max(0.8, Math.sqrt(target / avg) * 0.98));
           A.hold = A.wait;
           this.resize();
-        } else if (this.far) this.far.lighten(1.35);
+        }
       } else if (avg < target * 1.07) {
-        if (this.far) this.far.lighten(1 / 1.15);
         if (A.probe && ++A.good >= 2) {
           A.probe = 0;
           A.wait = 10;
