@@ -17806,7 +17806,7 @@ vec3 spaceSkyAt(vec3 P, vec3 dh, float pix) {
   var VEG_VS = (
     /* glsl */
     `
-uniform sampler2D uVeg8;    // 64 x 64 tiles of 184 m round the camera, wrapped: r trees, g stands of woods (1 come in)
+uniform sampler2D uVeg8;    // 64 x 64 tiles of 184 m round the camera, wrapped: r trees, g stands of woods, b far crowns (1 come in)
 uniform sampler2D uVeg9;    // of 92 m: r shrubs, g corn
 uniform sampler2D uVeg10;   // of 46 m: r grass
 uniform vec4 uVegBand;      // where the species models give way to the plain crowns (from, to), the plants' reach
@@ -17817,7 +17817,7 @@ float vegIn(vec3 rel, int lvl, int ch) {
   float size = ${(ROOT / 256).toFixed(5)} / (lvl == 8 ? 1.0 : lvl == 9 ? 2.0 : 4.0);
   ivec2 ti = ivec2(floor(m / size)), t = ivec2(ti.x & 63, ti.y & 63);
   vec4 v = lvl == 8 ? texelFetch(uVeg8, t, 0) : lvl == 9 ? texelFetch(uVeg9, t, 0) : texelFetch(uVeg10, t, 0);
-  return ch == 0 ? v.r : v.g;
+  return ch == 0 ? v.r : ch == 1 ? v.g : v.b;
 }
 float vegSeed(float a) { return fract(a * 3.71 + 0.11); }`
   );
@@ -21191,8 +21191,8 @@ void main() {
     }
     // An ellipsoid's normal is the gradient (x/rx², y/ry², z/rz²), then rotated with the crown. Using a radial
     // vector instead gives stretched crowns the wrong lighting; using triangle normals makes the forest faceted.
-    lobe(C3, R2, yaw, colour, part, tint = 1) {
-      const ico = new Go(1, 0), pos = ico.attributes.position;
+    lobe(C3, R2, yaw, colour, part, tint = 1, faces = 20) {
+      const ico = faces === 8 ? new Br(1, 0) : new Go(1, 0), pos = ico.attributes.position;
       const c = Math.cos(yaw), s29 = Math.sin(yaw), ids = /* @__PURE__ */ new Map();
       for (let i = 0; i < pos.count; i++) {
         const qx2 = pos.getX(i), qy2 = pos.getY(i), qz = pos.getZ(i), key2 = qx2 + "," + qy2 + "," + qz;
@@ -21203,6 +21203,7 @@ void main() {
           const shade = tint * (0.72 + 0.28 * (qy2 * 0.5 + 0.5));
           id2 = this.vertex(P2, N, colour.map((v) => v * shade), part);
           ids.set(key2, id2);
+          (this.unit || (this.unit = []))[id2] = [qx2, qy2, qz];
         }
         this.idx.push(id2);
       }
@@ -21320,6 +21321,37 @@ void main() {
     b.fit(0, 12.8, 3.9);
     b.fit(1, 14.4, 2.9);
     return b.geometry();
+  }
+  function farTreeGeometry() {
+    const b = new ForestMesh();
+    b.lobe(V2(-0.35, 8, 0.2), V2(3.6, 3, 3.4), 0.4, [0.05, 0.1, 0.029], 0, 0.95);
+    const n1 = b.part.length;
+    b.lobe(V2(0.75, 10.2, -0.45), V2(2.7, 2.7, 2.6), 1.2, [0.05, 0.1, 0.029], 0, 1, 8);
+    const n2 = b.part.length;
+    b.trunk(-0.4, 5.4, 0.4, 0.2, 3);
+    b.fit(0, 12.8, 3.9);
+    const g = b.geometry(), nv2 = b.part.length;
+    const p2 = new Float32Array(g.attributes.position.array), n2a = new Float32Array(g.attributes.normal.array), c2 = new Float32Array(g.attributes.aCol.array);
+    const tiers = [[0, n1, 3.3, 10.5, 2.9, 0.15], [n1, n2, 7.4, 14.4, 2.15, 0.6]];
+    for (const [a, z, y02, y1, rb, turn] of tiers) for (let i = a; i < z; i++) {
+      const [qx2, qy2, qz] = b.unit[i], t = qy2 * 0.5 + 0.5, h = Math.hypot(qx2, qz);
+      const r = rb * (1 - t) * (h > 1e-6 ? 1 : 0), ph2 = Math.atan2(qz, qx2) + turn, cx2 = Math.cos(ph2), cz = Math.sin(ph2);
+      p2[i * 3] = cx2 * r;
+      p2[i * 3 + 1] = y02 + (y1 - y02) * t;
+      p2[i * 3 + 2] = cz * r;
+      const N = h > 1e-6 ? V2(cx2, rb / (y1 - y02), cz).normalize() : V2(0, qy2 > 0 ? 1 : -1, 0);
+      n2a[i * 3] = N.x;
+      n2a[i * 3 + 1] = N.y;
+      n2a[i * 3 + 2] = N.z;
+      const shade = 0.74 + 0.23 * (p2[i * 3 + 1] - 3.3) / 11.1;
+      c2[i * 3] = 0.022 * shade;
+      c2[i * 3 + 1] = 0.052 * shade;
+      c2[i * 3 + 2] = 0.026 * shade;
+    }
+    g.setAttribute("aPos2", new me(p2, 3));
+    g.setAttribute("aNor2", new me(n2a, 3));
+    g.setAttribute("aCol2", new me(c2, 3));
+    return g;
   }
   function canopyGeometry() {
     const b = new ForestMesh();
@@ -21546,6 +21578,8 @@ void main() {
   // src/terrain.js
   var tmp = new Float64Array(3);
   var VEG_FADE = 700;
+  var FAR_D0 = 450;
+  var FAR_KMIN = 0.12;
   var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "kerbs", "rails", "pwires"]);
   var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
@@ -21601,10 +21635,10 @@ void main() {
       this.dirty = true;
       this.prefetchT = 0;
       this.prefetchKey = "";
-      this.vegData = [new Uint8Array(64 * 64 * 2), new Uint8Array(64 * 64 * 2), new Uint8Array(64 * 64 * 2)];
-      this.vegTex = this.vegData.map((d) => {
+      this.vegData = [new Uint8Array(64 * 64 * 4), new Uint8Array(64 * 64 * 2), new Uint8Array(64 * 64 * 2)];
+      this.vegTex = this.vegData.map((d, i) => {
         d.fill(255);
-        const t = new an(d, 64, 64, bi, cn);
+        const t = new an(d, 64, 64, i ? bi : on, cn);
         t.magFilter = t.minFilter = Te;
         t.unpackAlignment = 1;
         t.needsUpdate = true;
@@ -21923,9 +21957,10 @@ void main() {
         const a = Math.min(1, (now - t.born) / VEG_FADE), v = Math.round(a * a * (3 - 2 * a) * 255);
         if (v >= 255) continue;
         const k = t.kind, x = t.ix, y = t.iy;
-        if (k === "trees") d8[((y & 63) * 64 + (x & 63)) * 2] = v;
-        else if (k === "clumps") {
-          for (let b = 0; b < 4; b++) for (let c = 0; c < 4; c++) d8[((y * 4 + b & 63) * 64 + (x * 4 + c & 63)) * 2 + 1] = v;
+        if (k === "trees") d8[((y & 63) * 64 + (x & 63)) * 4] = v;
+        else if (k === "clumps" || k === "ftrees") {
+          const ch = k === "clumps" ? 1 : 2;
+          for (let b = 0; b < 4; b++) for (let c = 0; c < 4; c++) d8[((y * 4 + b & 63) * 64 + (x * 4 + c & 63)) * 4 + ch] = v;
         } else if (k === "under") d9[((y & 63) * 64 + (x & 63)) * 2] = v;
         else if (k === "corn") d9[((y & 63) * 64 + (x & 63)) * 2 + 1] = v;
         else if (k === "grass") d10[((y & 63) * 64 + (x & 63)) * 2] = v;
@@ -22111,7 +22146,14 @@ void main() {
         // (a plant's share of its coverage: VEG_FS)
       });
       const q = this.game.quality;
-      this.treeMat = mk(1, [q.treeR * 0.8, q.treeR * 0.97], [-2, -1], { FOLIAGE: 1 });
+      this.farTreeR = q.farTreeR || 0;
+      const sw = [q.treeR * 0.7, q.treeR * 0.8];
+      this.treeMat = this.farTreeR ? mk(1, sw, [-2, -1], { FOLIAGE: 1, FAR_ON: 1 }) : mk(1, [q.treeR * 0.8, q.treeR * 0.97], [-2, -1], { FOLIAGE: 1 });
+      if (this.farTreeR) {
+        this.farTreeGeo = farTreeGeometry();
+        this.farTreeMat = mk(1, [this.farTreeR * 0.72, this.farTreeR * 0.94], sw, { FOLIAGE: 1, FARTREE: 1 });
+        this.farTreeMat.uniforms.uFarK = { value: new et(FAR_D0, FAR_KMIN) };
+      }
       {
         const CC = [[-1, 0, 0], [0.03, 0.045, 0.06], [0.02, 0.02, 0.022], [0.015, 0.015, 0.017], [0.36, 0.37, 0.39], [-2, 0, 0], [-3, 0, 0], [0.55, 0.55, 0.52], [0.035, 0.035, 0.038]];
         const one = (variant) => {
@@ -22542,7 +22584,8 @@ void main() {
         this.U.uPlants3D.value = 1;
         this.spExt = this.leafGeos.hi.map((g) => new C(Math.max(-g.boundingBox.min.x, g.boundingBox.max.x), g.boundingBox.max.y, Math.max(-g.boundingBox.min.z, g.boundingBox.max.z)));
       }
-      this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], [q.treeR * 0.72, q.treeR * 0.95], Object.assign({ FOLIAGE: 1, STAND: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
+      const standIn = this.farTreeR ? [this.farTreeR * 0.8, this.farTreeR * 0.95] : [q.treeR * 0.72, q.treeR * 0.95];
+      this.clumpMat = mk(1, [q.clumpR * 0.82, q.clumpR * 0.98], standIn, Object.assign({ FOLIAGE: 1, STAND: 1 }, this.game.aerial && this.game.aerial.near ? { CLUMP: 1 } : {}));
       this.houseR = this.game.realBuildings ? q.houseR || 0 : 0;
       this.bldMat = mk(2, [q.bldR * 0.85, q.bldR * 0.98], this.houseR ? [this.houseR - 16, this.houseR] : [-2, -1], { BLD: 1 });
       this.bldMat.side = Mi;
@@ -22569,6 +22612,7 @@ void main() {
       const bldR = clamp2(Math.max(q.bldR, alt * 2.4 + 300), q.bldR, q.bldR * 3);
       this.bldMat.uniforms.uFade.value.set(bldR * 0.85, bldR * 0.98);
       const kinds = [["trees", 8, q.treeR * 1.3, q.treeR], ["clumps", 6, q.clumpR * 1.1, q.clumpR], ["buildings", 7, bldR]];
+      if (this.farTreeR) kinds.push(["ftrees", 6, this.farTreeR * 1.1, this.farTreeR]);
       if (this.deckMat) {
         const deckR = clamp2(Math.max(q.deckR, alt * 2.4 + 300), q.deckR, q.deckR * 2);
         this.deckReach = deckR;
@@ -22641,6 +22685,19 @@ void main() {
           if (t.show) {
             t.d = Math.hypot(t.mid[0] - camC[0], t.mid[1] - camC[1], t.mid[2] - camC[2]);
             vis.push(t);
+            if (t.kind === "ftrees") {
+              const dn2 = Math.max(1, t.d - t.rad);
+              t.plain = t.d + t.rad > q.treeR * 0.7 - 25;
+              t.mesh.visible = t.plain;
+              const k = Math.min(1, Math.pow(FAR_D0 / dn2, 1.25)) + 0.03;
+              let lo2 = 0, hi2 = t.n;
+              if (k < 1) while (lo2 < hi2) {
+                const md = lo2 + hi2 >> 1;
+                if (t.rank[md] < k) lo2 = md + 1;
+                else hi2 = md;
+              }
+              t.mesh.count = k < 1 ? lo2 : t.n;
+            }
             if (t.kind === "trees") {
               const near2 = !!this.leafR && t.d - t.rad < this.leafR + (t.near ? 40 : 10);
               if (near2 !== t.near) {
@@ -22648,7 +22705,7 @@ void main() {
                 if (near2 && !t.nm) this.nearTrees(t);
               }
               t.mesh.count = t.nTrees || 0;
-              t.plain = t.d - t.rad < q.treeR;
+              t.plain = t.d - t.rad < (this.farTreeR ? q.treeR * 0.8 + 25 : q.treeR);
               t.mesh.visible = t.plain;
               if (near2) {
                 const hi2 = t.d - t.rad < this.U.uLod.value.y + 14;
@@ -22674,7 +22731,7 @@ void main() {
     // lying wholly inside the near range is left out of the far pass, so it is drawn once and not twice.
     passVisibility(nearPass, nearFar) {
       for (const t of this.visScatter) {
-        const on2 = nearPass || t.d + t.rad > nearFar;
+        const on2 = nearPass ? t.d - t.rad < nearFar : t.d + t.rad > nearFar;
         t.mesh.visible = on2 && t.plain !== false;
         if (t.near && t.nm) for (const m of t.nm) m.visible = on2 && m.userData.want;
       }
@@ -22873,8 +22930,8 @@ void main() {
       }
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
-      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "under" ? this.underMat : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
+      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "ftrees" ? this.farTreeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "ftrees" ? this.farTreeMat : m.kind === "under" ? this.underMat : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
@@ -22882,7 +22939,7 @@ void main() {
       const wallA = m.kind === "buildings" && st >= 17 ? new Float32Array(n * 4) : null;
       const M = new Ht(), P2 = new C(), Q = new ke(), S2 = new C(), Y = new C(0, 1, 0);
       let rad = 0, vegetationPad = 0;
-      const vegetation = m.kind === "trees" || m.kind === "clumps" || m.kind === "under" || m.kind === "grass" || m.kind === "corn";
+      const vegetation = m.kind === "trees" || m.kind === "ftrees" || m.kind === "clumps" || m.kind === "under" || m.kind === "grass" || m.kind === "corn";
       if (vegetation) {
         t.born = performance.now();
         this.vegUntil = t.born + VEG_FADE + 100;
@@ -22993,6 +23050,12 @@ void main() {
       if (wallA) g2.setAttribute("aWall", new vi(wallA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
+      if (m.kind === "ftrees") {
+        const rank = new Float32Array(n);
+        for (let i = 0; i < n; i++) rank[i] = d[i * st + 9];
+        g2.setAttribute("aRank", new vi(rank, 1));
+        t.rank = rank;
+      }
       if (m.kind === "trees") {
         t.inst = inst;
         t.near = false;
@@ -23051,6 +23114,48 @@ uniform vec3 uCam;
 ${VEG_VS}
 flat varying vec2 vVeg;
 #endif
+#ifdef FARTREE
+attribute vec3 aPos2;      // the far crown's shape for an evergreen (forest.js farTreeGeometry), its normal and colour
+attribute vec3 aNor2;
+attribute vec3 aCol2;
+attribute float aRank;     // its place in its tile's shuffled list (0..1): kept where the share kept is over it
+uniform vec2 uFarK;        // all kept to x metres, then the share kept falls as (x / distance)^1.25, to y
+// the aerial photographs (aerial.js; read as TERRAIN_FS reads them): a far crown takes their colour where it stands
+uniform float uHasAerial;
+uniform sampler2D uAerial;
+uniform highp sampler2DArray uAerNear;
+uniform vec2 uAerBlock;
+uniform vec4 uAerOk;
+uniform vec2 uAer0Block;
+uniform float uAer0Ok[16];
+uniform vec4 uAerCol;
+uniform vec3 uPhotoMean[18];
+// How the photographs over a crown differ from the woods' average in them (the 1 m land cover's broadleaf woods, or its
+// conifers), as TERRAIN_FS colours the ground: so the far crowns run on into the photographs past them in their colours.
+vec3 farPhoto(vec2 m, float conifer) {
+  if (uHasAerial < 0.5) return vec3(1.0);
+  const float RSZ = ${(2 * Math.PI * R / 16).toFixed(4)};
+  vec2 rg = m / RSZ;
+  vec2 bq = rg - uAerBlock;
+  bq.y -= 16.0 * floor((bq.y + 8.0) / 16.0);
+  vec2 sq = mod(floor(rg), 2.0);
+  float ok = sq.y < 0.5 ? (sq.x < 0.5 ? uAerOk.x : uAerOk.y) : (sq.x < 0.5 ? uAerOk.z : uAerOk.w);
+  vec2 eb = min(bq, 2.0 - bq) * RSZ;
+  float k1 = ok * smoothstep(0.0, 800.0, min(eb.x, eb.y));
+  vec2 tg = rg * 4.0;
+  vec2 bt = tg - uAer0Block;
+  bt.y -= 64.0 * floor((bt.y + 32.0) / 64.0);
+  vec2 st = mod(floor(tg), 4.0);
+  vec2 et = min(bt, 4.0 - bt) * (RSZ * 0.25);
+  float k0 = uAer0Ok[int(st.x + 4.0 * st.y + 0.5)] * smoothstep(0.0, 500.0, min(et.x, et.y));
+  float kN = k0 + (1.0 - k0) * k1;
+  vec3 a1 = textureLod(uAerNear, vec3(rg * 0.5, 0.0), 1.0).rgb, a0 = textureLod(uAerNear, vec3(rg, 1.0), 1.0).rgb;
+  vec3 aN = (k0 * a0 + (1.0 - k0) * k1 * a1) / max(kN, 1e-4);
+  vec3 aF = textureLod(uAerial, m / vec2(${L.toFixed(3)}, ${C2.toFixed(3)}), 0.0).rgb;
+  vec3 a = max(mix(aF, aN, kN) * uAerCol.x + uAerCol.yzw, vec3(0.0));
+  return clamp(a / max(uPhotoMean[conifer > 0.5 ? 7 : 6], vec3(0.003)), vec3(0.55), vec3(1.7));
+}
+#endif
 ${PALETTE}
 #ifdef FOLIAGE
 ${SP_GLSL}
@@ -23073,6 +23178,9 @@ void main() {
   vCol2 = vec3(0.0);
   vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
   vec3 nl = normal;
+  #ifdef FARTREE
+    if (aInst.y > 0.5) { pos = aPos2; nl = aNor2; }       // an evergreen's crown from the same vertices
+  #endif
   #ifdef BLD
     float keep = (aPart > 1.5 || aInst.y > 0.3) ? 1.0 : 0.0;
     vec4 wc = modelMatrix * vec4(aCen.xyz, 1.0);
@@ -23102,7 +23210,11 @@ void main() {
     float jit = fract(aInst.x * 7.77 + 0.31 + aInst.y * 0.13);
     float reach = 1.0;
   #else
-    float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+    #ifdef FARTREE
+      float keep = 1.0;
+    #else
+      float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+    #endif
     vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
     float jit = fract(aInst.x * 7.77 + 0.31);
     float reach = 1.0;
@@ -23120,7 +23232,7 @@ void main() {
   #endif
   #ifdef FOLIAGE
     // a plant never pops: it shows in a share of its coverage (VEG_FS, in LIT_FS) that grows and shrinks smoothly
-    float c;
+    float c, farGrow = 1.0;
     #ifdef STAND
       // a stand of woods: in from where the trees thin out, out to its own reach, each at its own distance
       float fi = mix(uFadeIn.x, uFadeIn.y, jit), fo = mix(uFade.x, uFade.y, jit);
@@ -23133,6 +23245,20 @@ void main() {
         c *= 1.0 - smoothstep(dl - 0.04, dl + 0.04, dep);
       #endif
       c *= vegIn(wc.xyz, 8, 1);
+    #elif defined(FARTREE)
+      // a far crown: the same tree as its plain crown, coming in over the 20 m before the point where that goes (uFadeIn
+      // here, uFade there), out to its own reach; past uFarK.x fewer stay (those ranked under the share kept), each one
+      // that stays wider by as much as keeps the woods' cover (farGrow, below)
+      float fi = mix(uFadeIn.x, uFadeIn.y, jit), fo = mix(uFade.x, uFade.y, jit);
+      float kk = clamp(pow(uFarK.x / max(dc, 1.0), 1.25), uFarK.y, 1.0);
+      c = smoothstep(fi - 20.0, fi, dc) * (kk >= 1.0 ? 1.0 : smoothstep(aRank - 0.02, aRank + 0.02, kk))
+        * (1.0 - smoothstep(fo - 120.0, fo + 120.0, dc)) * vegIn(wc.xyz, 8, 2);
+      farGrow = inversesqrt(kk);
+    #elif defined(FAR_ON)
+      // a plain crown: in over the metres before its own point in uVegBand.xy, where its species model goes over the
+      // metres after (TREE_POS); out over the 20 m after its own point in uFade, where its far crown has come in
+      float thrN = mix(uVegBand.x, uVegBand.y, jit), fo = mix(uFade.x, uFade.y, jit);
+      c = (uVegBand.y > 0.0 ? smoothstep(thrN - 24.0, thrN, dc) : 1.0) * (1.0 - smoothstep(fo, fo + 20.0, dc)) * vegIn(wc.xyz, 8, 0);
     #else
       // a plain crown: in over the metres before its own point in uVegBand.xy, where its species model goes over the
       // metres after (TREE_POS); fewer of them farther out as the stands take over, each going at its own distance;
@@ -23150,6 +23276,7 @@ void main() {
     // a tree of a species (aInst.z, 1 to 8; 0 a stand of woods) stands at its model's size (species.js)
     vec3 spf = SP_FIT[int(aInst.z + 0.5)];
     pos *= spf; nl /= spf;
+    pos.xz *= farGrow; nl.xz /= farGrow;
   #endif
   vObj = pos * sc;
   vec4 wp = modelMatrix * (instanceMatrix * vec4(pos, 1.0));
@@ -23161,8 +23288,20 @@ void main() {
     vNor = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * (nl / sc)));
   #endif
   vCol = aCol;
+  #ifdef FARTREE
+    if (aInst.y > 0.5) vCol = aCol2;
+  #endif
   #ifdef FOLIAGE
     if (aPart < 1.5) vCol *= SP_TINT[int(aInst.z + 0.5)];     // ... and in its colour
+  #endif
+  #ifdef FARTREE
+    // farther out, in the colours of the photographs where it stands (none at the plain crowns' hand-over, all by 1.5 km)
+    float kPh = smoothstep(450.0, 1500.0, dc);
+    if (kPh > 0.0) {
+      vec3 Pc = uCam + wc.xyz;
+      float myc = atan(-Pc.z, -Pc.y) * ${R.toFixed(1)};
+      vCol *= mix(vec3(1.0), farPhoto(vec2(Pc.x + ${(L / 2).toFixed(3)}, myc < 0.0 ? myc + ${C2.toFixed(3)} : myc), aInst.y), kPh);
+    }
   #endif
   vAux = aInst.x;
   #ifdef CAR
@@ -29334,8 +29473,8 @@ void main() {
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
     low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 16, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3, farR: 0 },
-    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, clumpR: 2300, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, leafHiR: 105, streetR: 290, signR: 330, powerR: 4500, traffic: 96, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4, farR: 12e3, farPx: 1.5 },
-    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, clumpR: 3e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, leafHiR: 140, streetR: 420, signR: 450, powerR: 6500, traffic: 144, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3, farR: 2e4, farPx: 1 }
+    med: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 1.9, maxLevel: 9, atmosMid: 4, atmosFar: 5, sdf: "sdfHi", pr: 1.25, scatter: true, treeR: 540, farTreeR: 2e3, clumpR: 3e3, bldR: 1300, deckR: 4e3, houseR: 420, leafR: 330, leafHiR: 105, streetR: 290, signR: 330, powerR: 4500, traffic: 96, boats: 26, matSize: 1024, shadow: 2048, chunkCache: 620, workers: 3, skyNear: 6e3, skyFar: 1, lightsR: 3e4, farR: 12e3, farPx: 1.5 },
+    high: { height: "heightHi", aerial: "aerialHi", aerialNear: true, chunkN: 32, lodK: 2.3, maxLevel: 10, atmosMid: 4, atmosFar: 6, sdf: "sdfHi", pr: 2, scatter: true, treeR: 700, farTreeR: 2800, clumpR: 4e3, bldR: 1600, deckR: 6e3, houseR: 600, leafR: 440, leafHiR: 140, streetR: 420, signR: 450, powerR: 6500, traffic: 144, boats: 40, matSize: 1024, shadow: 4096, chunkCache: 820, workers: 4, skyNear: 8e3, skyFar: 1.2, lightsR: 45e3, farR: 2e4, farPx: 1 }
   };
   var GAME = null;
   function fatal(msg) {

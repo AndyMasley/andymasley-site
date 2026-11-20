@@ -11961,6 +11961,166 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     if (lc) tr.push(lc.buffer);
     postMessage(res, tr);
   }
+  function plants(kind, s, mx0, my0, reg, cx, cy, cz, out, order, under2) {
+    const p32 = new Float64Array(3);
+    const sp = kind === "trees" ? 8.5 : 30;
+    const n = Math.round(s / sp), cell = s / n;
+    const cs = RS2 / 32;
+    const near = (kind === "trees" || kind === "under") && realBuildings && reg && reg.nBld ? cellBuildings(reg, Math.floor((mx0 + s / 2 - reg.x0) / cs), Math.floor((my0 + s / 2 - reg.y0) / cs)) : null;
+    const tr = kind === "trees" && reg && reg.trees ? reg.trees : null;
+    let tI = -1;
+    if (tr) {
+      const tx = Math.floor((mx0 + s / 2 - reg.x0) / s), ty = Math.floor((my0 + s / 2 - reg.y0) / s);
+      if (tx >= 0 && ty >= 0 && tx < tr.T && ty < tr.T && tr.mode[ty * tr.T + tx] === 1) tI = ty * tr.T + tx;
+    }
+    const cg = reg && reg.trees && reg.trees.cn ? reg.trees : null, can = [0, 0];
+    const canopy = (mx, my) => {
+      if (!cg) return false;
+      const lx = mx - reg.x0, ly = my - reg.y0, ts = RS2 / cg.T;
+      const tx = Math.floor(lx / ts), ty = Math.floor(ly / ts);
+      if (tx < 0 || ty < 0 || tx >= cg.T || ty >= cg.T || cg.mode[ty * cg.T + tx] !== 1) return false;
+      const k = Math.min(cg.cn - 1, Math.floor(ly / RS2 * cg.cn)) * cg.cn + Math.min(cg.cn - 1, Math.floor(lx / RS2 * cg.cn));
+      can[0] = cg.cov[k] / 255;
+      can[1] = cg.ch[k] * 0.25;
+      return true;
+    };
+    const byBridge = (mx, my, h, d) => reg && reg.nDeck > 0 && world.nearestDeck(mx, my) < d && world._nd.z - h > 5;
+    if (kind !== "under") for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const gi = Math.round(mx0 / cell) + i, gj = Math.round(my0 / cell) + j;
+      const r1 = hash2(gi * 3 + 1, gj * 3 + 7), r2 = hash2(gi * 5 + 11, gj * 5 + 3), r3 = hash2(gi * 7 + 5, gj * 7 + 13), r4 = hash2(gi + 91, gj + 17);
+      const mx = mx0 + (i + 0.15 + 0.7 * r1) * cell, my = my0 + (j + 0.15 + 0.7 * r2) * cell;
+      let forest = world.coverBilinear(mx, my, 1), tall = 0;
+      const dev = world.coverBilinear(mx, my, 0), seen = canopy(mx, my);
+      if (seen) {
+        forest = can[0];
+        tall = can[1];
+      }
+      let p;
+      if (kind === "trees") p = world.cover2 || seen ? forest * 0.95 : forest * 0.9 + (1 - forest) * (0.03 + 0.1 * dev);
+      else p = smoothstep(0.35, 0.8, forest);
+      const lcv = kind === "trees" ? lcAt(mx, my) : -1;
+      if (lcv >= 0) {
+        p = lcv >= 6 && lcv <= 8 || lcv === 10 ? 0.92 : lcv === 9 || lcv === 11 || lcv === 16 || lcv === 17 ? 0.45 : 0;
+      }
+      if (r3 > p) continue;
+      if (seen && tall < 2.5) continue;
+      if (world.sdfAt(mx, my) < (kind === "trees" ? 5 : 22)) continue;
+      const h = world.groundH(mx, my, true);
+      const g = world.g;
+      if (g.water || g.edge < (kind === "trees" ? 2.5 : 16) || g.deck > -1e8) continue;
+      if (seen && byBridge(mx, my, h, kind === "trees" ? 7 : 14)) continue;
+      if (overMouth(reg, mx, my, h)) continue;
+      if (inRightOfWay(reg, mx, my)) continue;
+      const sand = world.coverBilinear(mx, my, 2);
+      if (sand > 0.5) continue;
+      if (tI >= 0 && world.nearestRoad(mx, my) < 28 && world._nr.reg.rCls[world._nr.road] < 14) continue;
+      if (near) {
+        let hit = false;
+        for (let k = 0; k < near.length; k += 16) {
+          const dx = mx - near[k], dy = my - near[k + 1], rr = tI >= 0 ? Math.max(near[k + 2], near[k + 3]) * 0.5 + 38 : Math.max(near[k + 2], near[k + 3]) * 0.6 + 3;
+          if (dx * dx + dy * dy < rr * rr) {
+            hit = true;
+            break;
+          }
+        }
+        if (hit) continue;
+      }
+      let pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
+      if (lcv >= 0) pc = lcv === 7 || lcv === 17 ? 0.97 : lcv === 8 ? 0.5 : lcv === 10 ? 0.35 : lcv === 6 || lcv === 16 ? 0.03 : pc;
+      const conifer = r4 < pc ? 1 : 0;
+      const r5 = hash2(gi * 11 + 3, gj * 13 + 1), yard = lcv === 16 || lcv === 1 || lcv === 2;
+      const sp2 = kind === "trees" ? pickSpecies(conifer, mx, my, h, lcv, yard && r5 < 0.5, hash2(gi * 17 + 9, gj * 19 + 4)) : -1;
+      cyl(mx, my, h, p32);
+      const wide = 0.75 + 0.65 * hash2(gi + 3, gj + 29), measuredClump = seen && kind === "clumps";
+      const sc = measuredClump ? tall / 16 : seen && kind === "trees" ? clamp2(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / SPECIES[sp2].H, 0.25, 2.9) : wide;
+      out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5), measuredClump ? wide : 0, sp2);
+      order.push(hash2(gi * 13 + 1, gj * 17 + 5));
+    }
+    if (kind === "under") {
+      const nu = Math.round(s / 5), cu = s / nu;
+      for (let j = 0; j < nu; j++) for (let i = 0; i < nu; i++) {
+        const gi = Math.round(mx0 / cu) + i, gj = Math.round(my0 / cu) + j;
+        const u1 = hash2(gi * 7 + 3, gj * 5 + 11), u2 = hash2(gi * 3 + 17, gj * 11 + 2), u3 = hash2(gi * 13 + 5, gj * 7 + 23);
+        const mx = mx0 + (i + 0.1 + 0.8 * u1) * cu, my = my0 + (j + 0.1 + 0.8 * u2) * cu;
+        const lcv = lcAt(mx, my);
+        let p = lcv === 6 || lcv === 8 ? 0.28 : lcv === 10 ? 0.36 : lcv === 7 ? 0.1 : lcv === 9 || lcv === 11 ? 0.5 : lcv < 0 ? 0.25 * smoothstep(0.5, 0.9, world.coverBilinear(mx, my, 1)) : 0;
+        if (canopy(mx, my) && can[1] < 2.5 && can[0] > 0.3 && lcv !== 1 && lcv !== 2 && lcv < 12) p = Math.max(p, 0.5);
+        if (u3 > p * 1.8) continue;
+        const h = world.groundH(mx, my, true), g = world.g;
+        if (g.water || g.edge < 1.5 || g.deck > -1e8) continue;
+        if (u3 > (g.edge < 14 ? p * 1.8 : p)) continue;
+        if (world.sdfAt(mx, my) < 3 || overMouth(reg, mx, my, h) || inRightOfWay(reg, mx, my)) continue;
+        if (near) {
+          let hit = false;
+          for (let k = 0; k < near.length; k += 16) {
+            const dx = mx - near[k], dy = my - near[k + 1], rr = Math.max(near[k + 2], near[k + 3]) * 0.6 + 2;
+            if (dx * dx + dy * dy < rr * rr) {
+              hit = true;
+              break;
+            }
+          }
+          if (hit) continue;
+        }
+        cyl(mx, my, h, p32);
+        under2.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, 0.5 + 1.1 * hash2(gi + 41, gj + 3), u1 * 6.2832, 0, hash2(gi + 9, gj + 77), 0, 16 + 7);
+      }
+    }
+    if (tI >= 0) {
+      const q0 = tr.off[tI], q1 = tr.off[tI + 1], nn = new Float32Array(q1 - q0).fill(99), cell2 = 8, gw = Math.ceil(s / cell2) + 1, grid = /* @__PURE__ */ new Map();
+      for (let q = q0; q < q1; q++) {
+        const k = Math.floor((tr.rec[q * 4 + 1] + 0.5) * s / 256 / cell2) * gw + Math.floor((tr.rec[q * 4] + 0.5) * s / 256 / cell2);
+        if (!grid.has(k)) grid.set(k, []);
+        grid.get(k).push(q);
+      }
+      for (let q = q0; q < q1; q++) {
+        const x = (tr.rec[q * 4] + 0.5) * s / 256, y = (tr.rec[q * 4 + 1] + 0.5) * s / 256, ci = Math.floor(x / cell2), cj = Math.floor(y / cell2);
+        let best = 99;
+        for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+          const L2 = grid.get((cj + dj) * gw + ci + di);
+          if (L2) {
+            for (const p of L2) if (p !== q) best = Math.min(best, Math.hypot((tr.rec[p * 4] + 0.5) * s / 256 - x, (tr.rec[p * 4 + 1] + 0.5) * s / 256 - y));
+          }
+        }
+        nn[q - q0] = best;
+      }
+      for (let q = tr.off[tI]; q < tr.off[tI + 1]; q++) {
+        let mx = mx0 + (tr.rec[q * 4] + 0.5) * s / 256, my = my0 + (tr.rec[q * 4 + 1] + 0.5) * s / 256;
+        const tall = tr.rec[q * 4 + 2] * 0.25;
+        const e = world.nearestRoad(mx, my);
+        if (e < 1.5 && world._nr.reg.rCls[world._nr.road] >= 14 && world._nr.reg.rCls[world._nr.road] <= 15) continue;
+        if (e < -1 && world._nr.reg.rCls[world._nr.road] <= 3) continue;
+        if (e < 1 && world._nr.reg.rCls[world._nr.road] < 14) {
+          const nr = world._nr, k = (1.3 - e) * nr.side;
+          mx += nr.ty * k;
+          my -= nr.tx * k;
+        }
+        const h = world.groundH(mx, my, true);
+        if (world.g.water || world.g.deck > -1e8 || byBridge(mx, my, h, 7) || overMouth(reg, mx, my, h)) continue;
+        const gi = Math.round(mx * 2), gj = Math.round(my * 2);
+        const sand = world.coverBilinear(mx, my, 2);
+        const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
+        const conifer = tr.kinds ? tr.rec[q * 4 + 3] >> 7 : hash2(gi + 91, gj + 17) < pc ? 1 : 0;
+        cyl(mx, my, h, p32);
+        const rad = (tr.kinds ? tr.rec[q * 4 + 3] & 127 : tr.rec[q * 4 + 3]) * 0.1;
+        const crown = clamp2(Math.min(rad || 3, Math.max(1, 0.6 * nn[q - tr.off[tI]])), 0.8, 12.7);
+        const lcv = lcAt(mx, my), yard = lcv === 16 || lcv === 1 || lcv === 2, r5 = hash2(gi * 11 + 3, gj * 13 + 1);
+        const open = yard ? r5 < 0.65 : crown > 0.4 * tall && nn[q - tr.off[tI]] > 1.6 * crown;
+        const sp2 = pickSpecies(conifer, mx, my, h, lcv, open, hash2(gi * 17 + 9, gj * 19 + 4));
+        out.push(
+          p32[0] - cx,
+          p32[1] - cy,
+          p32[2] - cz,
+          clamp2(tall / SPECIES[sp2].H, 0.22, 2.9),
+          hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832,
+          conifer,
+          hash2(gi + 57, gj + 5),
+          crown / SPECIES[sp2].R,
+          sp2
+        );
+        order.push(hash2(gi * 13 + 1, gj * 17 + 5));
+      }
+    }
+  }
   function genScatter(q) {
     const { kind, level, ix, iy } = q;
     const s = ROOT / (1 << level), mx0 = ix * s, my0 = iy * s;
@@ -12069,169 +12229,28 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       return;
     }
     if (kind === "trees" || kind === "clumps" || kind === "under") {
-      const sp2 = kind === "trees" ? 8.5 : 30, order = [];
-      const n2 = Math.round(s / sp2), cell2 = s / n2;
-      const cs = RS2 / 32;
-      const near = (kind === "trees" || kind === "under") && realBuildings && reg && reg.nBld ? cellBuildings(reg, Math.floor((mx0 + s / 2 - reg.x0) / cs), Math.floor((my0 + s / 2 - reg.y0) / cs)) : null;
-      const tr = kind === "trees" && reg && reg.trees ? reg.trees : null;
-      let tI = -1;
-      if (tr) {
-        const tx = Math.floor((mx0 + s / 2 - reg.x0) / s), ty = Math.floor((my0 + s / 2 - reg.y0) / s);
-        if (tx >= 0 && ty >= 0 && tx < tr.T && ty < tr.T && tr.mode[ty * tr.T + tx] === 1) tI = ty * tr.T + tx;
-      }
-      const cg = reg && reg.trees && reg.trees.cn ? reg.trees : null, can = [0, 0];
-      const canopy = (mx, my) => {
-        if (!cg) return false;
-        const lx = mx - reg.x0, ly = my - reg.y0, ts = RS2 / cg.T;
-        const tx = Math.floor(lx / ts), ty = Math.floor(ly / ts);
-        if (tx < 0 || ty < 0 || tx >= cg.T || ty >= cg.T || cg.mode[ty * cg.T + tx] !== 1) return false;
-        const k = Math.min(cg.cn - 1, Math.floor(ly / RS2 * cg.cn)) * cg.cn + Math.min(cg.cn - 1, Math.floor(lx / RS2 * cg.cn));
-        can[0] = cg.cov[k] / 255;
-        can[1] = cg.ch[k] * 0.25;
-        return true;
-      };
-      const byBridge = (mx, my, h, d) => reg && reg.nDeck > 0 && world.nearestDeck(mx, my) < d && world._nd.z - h > 5;
-      if (kind !== "under") for (let j = 0; j < n2; j++) for (let i = 0; i < n2; i++) {
-        const gi = Math.round(mx0 / cell2) + i, gj = Math.round(my0 / cell2) + j;
-        const r1 = hash2(gi * 3 + 1, gj * 3 + 7), r2 = hash2(gi * 5 + 11, gj * 5 + 3), r3 = hash2(gi * 7 + 5, gj * 7 + 13), r4 = hash2(gi + 91, gj + 17);
-        const mx = mx0 + (i + 0.15 + 0.7 * r1) * cell2, my = my0 + (j + 0.15 + 0.7 * r2) * cell2;
-        let forest = world.coverBilinear(mx, my, 1), tall = 0;
-        const dev = world.coverBilinear(mx, my, 0), seen = canopy(mx, my);
-        if (seen) {
-          forest = can[0];
-          tall = can[1];
-        }
-        let p;
-        if (kind === "trees") p = world.cover2 || seen ? forest * 0.95 : forest * 0.9 + (1 - forest) * (0.03 + 0.1 * dev);
-        else p = smoothstep(0.35, 0.8, forest);
-        const lcv = kind === "trees" ? lcAt(mx, my) : -1;
-        if (lcv >= 0) {
-          p = lcv >= 6 && lcv <= 8 || lcv === 10 ? 0.92 : lcv === 9 || lcv === 11 || lcv === 16 || lcv === 17 ? 0.45 : 0;
-        }
-        if (r3 > p) continue;
-        if (seen && tall < 2.5) continue;
-        if (world.sdfAt(mx, my) < (kind === "trees" ? 5 : 22)) continue;
-        const h = world.groundH(mx, my, true);
-        const g = world.g;
-        if (g.water || g.edge < (kind === "trees" ? 2.5 : 16) || g.deck > -1e8) continue;
-        if (seen && byBridge(mx, my, h, kind === "trees" ? 7 : 14)) continue;
-        if (overMouth(reg, mx, my, h)) continue;
-        if (inRightOfWay(reg, mx, my)) continue;
-        const sand = world.coverBilinear(mx, my, 2);
-        if (sand > 0.5) continue;
-        if (tI >= 0 && world.nearestRoad(mx, my) < 28 && world._nr.reg.rCls[world._nr.road] < 14) continue;
-        if (near) {
-          let hit = false;
-          for (let k = 0; k < near.length; k += 16) {
-            const dx = mx - near[k], dy = my - near[k + 1], rr = tI >= 0 ? Math.max(near[k + 2], near[k + 3]) * 0.5 + 38 : Math.max(near[k + 2], near[k + 3]) * 0.6 + 3;
-            if (dx * dx + dy * dy < rr * rr) {
-              hit = true;
-              break;
-            }
-          }
-          if (hit) continue;
-        }
-        let pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
-        if (lcv >= 0) pc = lcv === 7 || lcv === 17 ? 0.97 : lcv === 8 ? 0.5 : lcv === 10 ? 0.35 : lcv === 6 || lcv === 16 ? 0.03 : pc;
-        const conifer = r4 < pc ? 1 : 0;
-        const r5 = hash2(gi * 11 + 3, gj * 13 + 1), yard = lcv === 16 || lcv === 1 || lcv === 2;
-        const sp3 = kind === "trees" ? pickSpecies(conifer, mx, my, h, lcv, yard && r5 < 0.5, hash2(gi * 17 + 9, gj * 19 + 4)) : -1;
-        cyl(mx, my, h, p32);
-        const wide = 0.75 + 0.65 * hash2(gi + 3, gj + 29), measuredClump = seen && kind === "clumps";
-        const sc = measuredClump ? tall / 16 : seen && kind === "trees" ? clamp2(tall * 1.15 * (0.82 + 0.36 * hash2(gi + 3, gj + 29)) / SPECIES[sp3].H, 0.25, 2.9) : wide;
-        out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, sc, r1 * 6.2832, conifer, hash2(gi + 57, gj + 5), measuredClump ? wide : 0, sp3);
-        order.push(hash2(gi * 13 + 1, gj * 17 + 5));
-      }
-      const under2 = [];
-      if (kind === "under") {
-        const nu = Math.round(s / 5), cu = s / nu;
-        for (let j = 0; j < nu; j++) for (let i = 0; i < nu; i++) {
-          const gi = Math.round(mx0 / cu) + i, gj = Math.round(my0 / cu) + j;
-          const u1 = hash2(gi * 7 + 3, gj * 5 + 11), u2 = hash2(gi * 3 + 17, gj * 11 + 2), u3 = hash2(gi * 13 + 5, gj * 7 + 23);
-          const mx = mx0 + (i + 0.1 + 0.8 * u1) * cu, my = my0 + (j + 0.1 + 0.8 * u2) * cu;
-          const lcv = lcAt(mx, my);
-          let p = lcv === 6 || lcv === 8 ? 0.28 : lcv === 10 ? 0.36 : lcv === 7 ? 0.1 : lcv === 9 || lcv === 11 ? 0.5 : lcv < 0 ? 0.25 * smoothstep(0.5, 0.9, world.coverBilinear(mx, my, 1)) : 0;
-          if (canopy(mx, my) && can[1] < 2.5 && can[0] > 0.3 && lcv !== 1 && lcv !== 2 && lcv < 12) p = Math.max(p, 0.5);
-          if (u3 > p * 1.8) continue;
-          const h = world.groundH(mx, my, true), g = world.g;
-          if (g.water || g.edge < 1.5 || g.deck > -1e8) continue;
-          if (u3 > (g.edge < 14 ? p * 1.8 : p)) continue;
-          if (world.sdfAt(mx, my) < 3 || overMouth(reg, mx, my, h) || inRightOfWay(reg, mx, my)) continue;
-          if (near) {
-            let hit = false;
-            for (let k = 0; k < near.length; k += 16) {
-              const dx = mx - near[k], dy = my - near[k + 1], rr = Math.max(near[k + 2], near[k + 3]) * 0.6 + 2;
-              if (dx * dx + dy * dy < rr * rr) {
-                hit = true;
-                break;
-              }
-            }
-            if (hit) continue;
-          }
-          cyl(mx, my, h, p32);
-          under2.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, 0.5 + 1.1 * hash2(gi + 41, gj + 3), u1 * 6.2832, 0, hash2(gi + 9, gj + 77), 0, 16 + 7);
-        }
-      }
-      if (tI >= 0) {
-        const q0 = tr.off[tI], q1 = tr.off[tI + 1], nn = new Float32Array(q1 - q0).fill(99), cell3 = 8, gw = Math.ceil(s / cell3) + 1, grid = /* @__PURE__ */ new Map();
-        for (let q2 = q0; q2 < q1; q2++) {
-          const k = Math.floor((tr.rec[q2 * 4 + 1] + 0.5) * s / 256 / cell3) * gw + Math.floor((tr.rec[q2 * 4] + 0.5) * s / 256 / cell3);
-          if (!grid.has(k)) grid.set(k, []);
-          grid.get(k).push(q2);
-        }
-        for (let q2 = q0; q2 < q1; q2++) {
-          const x = (tr.rec[q2 * 4] + 0.5) * s / 256, y = (tr.rec[q2 * 4 + 1] + 0.5) * s / 256, ci = Math.floor(x / cell3), cj = Math.floor(y / cell3);
-          let best = 99;
-          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
-            const L2 = grid.get((cj + dj) * gw + ci + di);
-            if (L2) {
-              for (const p of L2) if (p !== q2) best = Math.min(best, Math.hypot((tr.rec[p * 4] + 0.5) * s / 256 - x, (tr.rec[p * 4 + 1] + 0.5) * s / 256 - y));
-            }
-          }
-          nn[q2 - q0] = best;
-        }
-        for (let q2 = tr.off[tI]; q2 < tr.off[tI + 1]; q2++) {
-          let mx = mx0 + (tr.rec[q2 * 4] + 0.5) * s / 256, my = my0 + (tr.rec[q2 * 4 + 1] + 0.5) * s / 256;
-          const tall = tr.rec[q2 * 4 + 2] * 0.25;
-          const e = world.nearestRoad(mx, my);
-          if (e < 1.5 && world._nr.reg.rCls[world._nr.road] >= 14 && world._nr.reg.rCls[world._nr.road] <= 15) continue;
-          if (e < -1 && world._nr.reg.rCls[world._nr.road] <= 3) continue;
-          if (e < 1 && world._nr.reg.rCls[world._nr.road] < 14) {
-            const nr = world._nr, k = (1.3 - e) * nr.side;
-            mx += nr.ty * k;
-            my -= nr.tx * k;
-          }
-          const h = world.groundH(mx, my, true);
-          if (world.g.water || world.g.deck > -1e8 || byBridge(mx, my, h, 7) || overMouth(reg, mx, my, h)) continue;
-          const gi = Math.round(mx * 2), gj = Math.round(my * 2);
-          const sand = world.coverBilinear(mx, my, 2);
-          const pc = world.cover2 ? 0.04 + 0.92 * world.coverBilinear(mx, my, 1, true) : 0.22 + 0.4 * smoothstep(380, 850, h) + 0.45 * sand;
-          const conifer = tr.kinds ? tr.rec[q2 * 4 + 3] >> 7 : hash2(gi + 91, gj + 17) < pc ? 1 : 0;
-          cyl(mx, my, h, p32);
-          const rad = (tr.kinds ? tr.rec[q2 * 4 + 3] & 127 : tr.rec[q2 * 4 + 3]) * 0.1;
-          const crown = clamp2(Math.min(rad || 3, Math.max(1, 0.6 * nn[q2 - tr.off[tI]])), 0.8, 12.7);
-          const lcv = lcAt(mx, my), yard = lcv === 16 || lcv === 1 || lcv === 2, r5 = hash2(gi * 11 + 3, gj * 13 + 1);
-          const open = yard ? r5 < 0.65 : crown > 0.4 * tall && nn[q2 - tr.off[tI]] > 1.6 * crown;
-          const sp3 = pickSpecies(conifer, mx, my, h, lcv, open, hash2(gi * 17 + 9, gj * 19 + 4));
-          out.push(
-            p32[0] - cx,
-            p32[1] - cy,
-            p32[2] - cz,
-            clamp2(tall / SPECIES[sp3].H, 0.22, 2.9),
-            hash2(gi * 3 + 1, gj * 3 + 7) * 6.2832,
-            conifer,
-            hash2(gi + 57, gj + 5),
-            crown / SPECIES[sp3].R,
-            sp3
-          );
-          order.push(hash2(gi * 13 + 1, gj * 17 + 5));
-        }
-      }
+      const order = [], under2 = [];
+      plants(kind, s, mx0, my0, reg, cx, cy, cz, out, order, under2);
       const nT = order.length, perm = Array.from({ length: nT }, (_, i) => i).sort((a, b) => order[a] - order[b]);
       const arr2 = new Float32Array(nT * 9 + under2.length);
       for (let i = 0; i < nT; i++) for (let k = 0; k < 9; k++) arr2[i * 9 + k] = out[perm[i] * 9 + k];
       arr2.set(under2, nT * 9);
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
+      return;
+    }
+    if (kind === "ftrees") {
+      const order = [], s8 = ROOT / 256;
+      for (let b = 0; b < 4; b++) for (let a = 0; a < 4; a++) {
+        const x0 = (ix * 4 + a) * s8, y0 = (iy * 4 + b) * s8;
+        plants("trees", s8, x0, y0, world.regionAt(x0 + s8 / 2, y0 + s8 / 2), cx, cy, cz, out, order, null);
+      }
+      const nT = order.length, perm = Array.from({ length: nT }, (_, i) => i).sort((a, b) => order[a] - order[b]);
+      const arr2 = new Float32Array(nT * 10);
+      for (let i = 0; i < nT; i++) {
+        for (let k = 0; k < 9; k++) arr2[i * 10 + k] = out[perm[i] * 9 + k];
+        arr2[i * 10 + 9] = order[perm[i]];
+      }
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 10 }, [arr2.buffer]);
       return;
     }
     if (kind === "decks") {
@@ -12433,7 +12452,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           await Promise.all(prs);
         }
       }
-      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn" || m.kind === "streets" || m.kind === "kerbs") && lcPacks.size) {
+      if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "ftrees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn" || m.kind === "streets" || m.kind === "kerbs") && lcPacks.size) {
         for (let tries = 0; tries < 4; tries++) {
           const pad = m.kind === "houses" ? 40 : 0, prs = lcPromises(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
           if (!prs.length) break;
