@@ -18197,6 +18197,7 @@ uniform sampler2D uCover2;
 uniform float uHasCover2;    // 1 when measured crop / evergreen / pasture shares are loaded
 uniform sampler2D uLc;       // NOAA C-CAP 2016 land cover, one ground kind per square metre (bake/c11_landcover.py)
 uniform float uHasLc;
+uniform float uLcAO;         // 1 where its second byte is the share of the sky the buildings and trees leave (contact.js)
 uniform float uRealRoads;    // 1 when every street is in the road data (no invented street pattern on distant towns)
 uniform sampler2D uWebMask;
 uniform float uHasRoad;
@@ -19004,6 +19005,18 @@ void main() {
   vec3 E = irradiance(P, N, up, Ld, sunE);
   float sh = sunShadow(vRel, up, Ld);
   E -= sunE * max(dot(N, Ld), 0.0) * (1.0 - sh);
+  // contact shadows: the sky's light less what the walls and crowns round this square metre hide of the sky (contact.js,
+  // blended between the squares), out to 650 m; a quarter of what they hide comes back as the light off the walls and
+  // through the leaves
+  if (uLcAO > 0.5 && dist < 650.0) {
+    ivec2 sz = textureSize(uLc, 0), hiT = sz - 1;
+    vec2 tq = vLoc / uSize * vec2(sz) - 0.5, fq = fract(tq);
+    ivec2 iq = ivec2(floor(tq));
+    float a00 = texelFetch(uLc, clamp(iq, ivec2(0), hiT), 0).g, a10 = texelFetch(uLc, clamp(iq + ivec2(1, 0), ivec2(0), hiT), 0).g;
+    float a01 = texelFetch(uLc, clamp(iq + ivec2(0, 1), ivec2(0), hiT), 0).g, a11 = texelFetch(uLc, clamp(iq + ivec2(1, 1), ivec2(0), hiT), 0).g;
+    float skyOpen = mix(mix(a00, a10, fq.x), mix(a01, a11, fq.x), fq.y);
+    E -= ambient(N, up) * (0.75 * (1.0 - skyOpen) * (1.0 - smoothstep(450.0, 650.0, dist)) * (1.0 - water));
+  }
   vec3 col = land * (E + headlamp(vRel, N)) * 1.55;      // palette lifted a little from measured reflectance
   float daySurface = surfaceDaylight();
   float reliefK = kT * (1.0 - smoothstep(0.055, 0.22, fp)) * (1.0 - mark) * (1.0 - water);
@@ -21927,7 +21940,7 @@ void main() {
       }
       let lcTex = null;
       if (m.lc) {
-        lcTex = new an(m.lc, m.lcN, m.lcN, Rl, cn);
+        lcTex = new an(m.lc, m.lcN, m.lcN, m.lcAO ? bi : Rl, cn);
         lcTex.magFilter = lcTex.minFilter = Te;
         lcTex.wrapS = lcTex.wrapT = rn;
         lcTex.unpackAlignment = 1;
@@ -21950,6 +21963,7 @@ void main() {
           uRoadT: { value: m.roadT },
           uHasLc: { value: lcTex ? 1 : 0 },
           uLc: { value: lcTex || this.dummyK },
+          uLcAO: { value: lcTex && m.lcAO ? 1 : 0 },
           uHasTun: { value: tunTex ? 1 : 0 },
           uTun: { value: tunTex || this.dummyRoad },
           uHasShore: { value: tunTex && m.shore ? 1 : 0 },
