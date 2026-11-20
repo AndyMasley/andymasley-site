@@ -11519,6 +11519,94 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       for (let cx = Math.floor(x0 / WCELL); cx <= Math.floor((x0 + size) / WCELL); cx++) if (W.cells.has(cy * 65536 + cx)) return true;
     return false;
   }
+  function morphTargets(N, G, cell, hs, pos, nor, sea, across2, hasAcross, my0, off2, hOut) {
+    const N1 = N + 1, nv = N1 * N1 + 4 * N1;
+    const mor = new Float32Array(nv * 6), morN = new Int8Array(nv * 6);
+    if (sea || N % 4) {
+      for (let v = 0; v < nv; v++) for (let k = 0; k < 3; k++) {
+        morN[v * 6 + k] = nor[v * 3 + k];
+        morN[v * 6 + 3 + k] = nor[v * 3 + k];
+      }
+      return { mor, morN };
+    }
+    const hAt = (i, j) => i >= -1 && i <= N + 1 && j >= -1 && j <= N + 1 ? hs[(j + 1) * G + i + 1] : hOut(i, j);
+    const coarseNormals = (st2) => {
+      const M = N / st2 + 1, a = new Float32Array(M * M * 3);
+      for (let J = 0; J < M; J++) for (let I = 0; I < M; I++) {
+        const i = I * st2, j = J * st2, o = (j + 1) * G + i + 1;
+        const hl = hAt(i - st2, j), hr = hAt(i + st2, j), hd = hAt(i, j - st2), hu = hAt(i, j + st2), h0 = hs[o];
+        const inG = (ii, jj) => ii >= -1 && ii <= N + 1 && jj >= -1 && jj <= N + 1;
+        const l = hasAcross && inG(i - st2, j) && across2(o, o - st2), r = hasAcross && inG(i + st2, j) && across2(o, o + st2);
+        const d = hasAcross && inG(i, j - st2) && across2(o, o - st2 * G), u = hasAcross && inG(i, j + st2) && across2(o, o + st2 * G);
+        const w = st2 * cell;
+        const dx = l && r ? 0 : l ? (hr - h0) / w : r ? (h0 - hl) / w : (hr - hl) / (2 * w);
+        const dy = d && u ? 0 : d ? (hu - h0) / w : u ? (h0 - hd) / w : (hu - hd) / (2 * w);
+        const il2 = 1 / Math.hypot(dx, dy, 1), q = (J * M + I) * 3;
+        a[q] = -dx * il2;
+        a[q + 1] = -dy * il2;
+        a[q + 2] = il2;
+      }
+      return a;
+    };
+    const cn = [coarseNormals(2), coarseNormals(4)];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+      const v = j * N1 + i;
+      const oy = off2 ? off2[((j + 1) * G + i + 1) * 2 + 1] : 0;
+      const th = (my0 + j * cell + oy) / R, c = Math.cos(th), sn = Math.sin(th);
+      for (let t = 0; t < 2; t++) {
+        const st2 = t ? 4 : 2, M = N / st2 + 1, C2 = cn[t];
+        const I = Math.min(Math.floor(i / st2), N / st2 - 1), J = Math.min(Math.floor(j / st2), N / st2 - 1);
+        const a = (i - I * st2) / st2, b = (j - J * st2) / st2;
+        let x0, y0, w0, x1, y1, w1, x2, y2, w2;
+        if (a + b <= 1) {
+          x0 = I;
+          y0 = J;
+          w0 = 1 - a - b;
+          x1 = I + 1;
+          y1 = J;
+          w1 = a;
+          x2 = I;
+          y2 = J + 1;
+          w2 = b;
+        } else {
+          x0 = I + 1;
+          y0 = J + 1;
+          w0 = a + b - 1;
+          x1 = I + 1;
+          y1 = J;
+          w1 = 1 - b;
+          x2 = I;
+          y2 = J + 1;
+          w2 = 1 - a;
+        }
+        const v0 = y0 * st2 * N1 + x0 * st2, v1 = y1 * st2 * N1 + x1 * st2, v2 = y2 * st2 * N1 + x2 * st2, o = v * 6 + t * 3;
+        for (let k = 0; k < 3; k++) mor[o + k] = w0 * pos[v0 * 3 + k] + w1 * pos[v1 * 3 + k] + w2 * pos[v2 * 3 + k] - pos[v * 3 + k];
+        const q0 = (y0 * M + x0) * 3, q1 = (y1 * M + x1) * 3, q2 = (y2 * M + x2) * 3;
+        let ne = w0 * C2[q0] + w1 * C2[q1] + w2 * C2[q2], nn = w0 * C2[q0 + 1] + w1 * C2[q1 + 1] + w2 * C2[q2 + 1], nu = w0 * C2[q0 + 2] + w1 * C2[q1 + 2] + w2 * C2[q2 + 2];
+        const il = 1 / Math.hypot(ne, nn, nu);
+        ne *= il;
+        nn *= il;
+        nu *= il;
+        morN[o] = Math.round(ne * 127);
+        morN[o + 1] = Math.round((nn * sn + nu * c) * 127);
+        morN[o + 2] = Math.round((-nn * c + nu * sn) * 127);
+      }
+    }
+    let s = N1 * N1;
+    const copy = (i, j) => {
+      const v = j * N1 + i;
+      for (let k = 0; k < 6; k++) {
+        mor[s * 6 + k] = mor[v * 6 + k];
+        morN[s * 6 + k] = morN[v * 6 + k];
+      }
+      s++;
+    };
+    for (let i = 0; i <= N; i++) copy(i, 0);
+    for (let i = 0; i <= N; i++) copy(i, N);
+    for (let j = 0; j <= N; j++) copy(0, j);
+    for (let j = 0; j <= N; j++) copy(N, j);
+    return { mor, morN };
+  }
   function genChunk(q) {
     const { level, ix, iy } = q;
     const s = ROOT / (1 << level), mx0 = ix * s, my0 = iy * s;
@@ -11690,6 +11778,17 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     for (let i = 0; i <= N; i++) edge(i, N);
     for (let j = 0; j <= N; j++) edge(0, j);
     for (let j = 0; j <= N; j++) edge(N, j);
+    const outH = /* @__PURE__ */ new Map();
+    const hOut = (i, j) => {
+      const k = j * 4096 + i;
+      let h = outH.get(k);
+      if (h === void 0) {
+        h = world.groundH(mx0 + i * cell, my0 + j * cell, carve, !realBuildings);
+        outH.set(k, h);
+      }
+      return h;
+    };
+    const { mor, morN } = morphTargets(N, G, cell, hs, pos, nor, sea, across2, wside || rs, my0, off2, hOut);
     const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2, bcz = (bz0 + bz1) / 2;
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
@@ -11954,8 +12053,8 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       const reg2 = world.regionAt(mx0 + s / 2, my0 + s / 2);
       if (reg2 && reg2.feat && reg2.feat.nA) [lc, lcN] = paintAreas(reg2, lc, lcN, mx0, my0, s);
     }
-    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, roadsChecked: level >= 6 && !!reg, tun, shore, lc, lcN, size: s, mx0, my0 };
-    const tr = [pos.buffer, nor.buffer, loc.buffer];
+    const res = { type: "chunk", id: q.id, key: q.key, level, ix, iy, n: N, sea, pos, nor, loc, mor, morN, center: [cx, cy, cz], sphere: [bcx, bcy, bcz, brad], hmin, hmax, road, roadK, roadT: T, roadsChecked: level >= 6 && !!reg, tun, shore, lc, lcN, size: s, mx0, my0 };
+    const tr = [pos.buffer, nor.buffer, loc.buffer, mor.buffer, morN.buffer];
     if (road) tr.push(road.buffer, roadK.buffer);
     if (tun) tr.push(tun.buffer);
     if (lc) tr.push(lc.buffer);
