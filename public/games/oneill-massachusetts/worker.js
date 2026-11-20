@@ -11759,7 +11759,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       for (let cx = Math.floor(x0 / WCELL); cx <= Math.floor((x0 + size) / WCELL); cx++) if (W.cells.has(cy * 65536 + cx)) return true;
     return false;
   }
-  function morphTargets(N, G, cell, hs, pos, nor, sea, across2, hasAcross, my0, off2, hOut) {
+  function morphTargets(N, G, cell, hs, pos, nor, sea, across2, hasAcross, my0, off2, hOut, cgs) {
     const N1 = N + 1, nv = N1 * N1 + 4 * N1;
     const mor = new Float32Array(nv * 6), morN = new Int8Array(nv * 6);
     if (sea || N % 4) {
@@ -11788,7 +11788,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
       return a;
     };
-    const cn = [coarseNormals(2), coarseNormals(4)];
+    const cn = [cgs && cgs[0] ? cgs[0].nrm : coarseNormals(2), cgs && cgs[1] ? cgs[1].nrm : coarseNormals(4)];
     for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
       const v = j * N1 + i;
       const oy = off2 ? off2[((j + 1) * G + i + 1) * 2 + 1] : 0;
@@ -11819,8 +11819,14 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           y2 = J + 1;
           w2 = 1 - a;
         }
-        const v0 = y0 * st2 * N1 + x0 * st2, v1 = y1 * st2 * N1 + x1 * st2, v2 = y2 * st2 * N1 + x2 * st2, o = v * 6 + t * 3;
-        for (let k = 0; k < 3; k++) mor[o + k] = w0 * pos[v0 * 3 + k] + w1 * pos[v1 * 3 + k] + w2 * pos[v2 * 3 + k] - pos[v * 3 + k];
+        const o = v * 6 + t * 3, cg = cgs && cgs[t];
+        if (cg) {
+          const P2 = cg.cp, c0 = (y0 * M2 + x0) * 3, c1 = (y1 * M2 + x1) * 3, c2 = (y2 * M2 + x2) * 3;
+          for (let k = 0; k < 3; k++) mor[o + k] = w0 * P2[c0 + k] + w1 * P2[c1 + k] + w2 * P2[c2 + k] - pos[v * 3 + k];
+        } else {
+          const v0 = y0 * st2 * N1 + x0 * st2, v1 = y1 * st2 * N1 + x1 * st2, v2 = y2 * st2 * N1 + x2 * st2;
+          for (let k = 0; k < 3; k++) mor[o + k] = w0 * pos[v0 * 3 + k] + w1 * pos[v1 * 3 + k] + w2 * pos[v2 * 3 + k] - pos[v * 3 + k];
+        }
         const q0 = (y0 * M2 + x0) * 3, q1 = (y1 * M2 + x1) * 3, q2 = (y2 * M2 + x2) * 3;
         let ne = w0 * C2[q0] + w1 * C2[q1] + w2 * C2[q2], nn = w0 * C2[q0 + 1] + w1 * C2[q1 + 1] + w2 * C2[q2 + 1], nu = w0 * C2[q0 + 2] + w1 * C2[q1 + 2] + w2 * C2[q2 + 2];
         const il = 1 / Math.hypot(ne, nn, nu);
@@ -11915,7 +11921,8 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
     }
     let rs = null;
-    if (carve && hasRoads && cell <= 8) {
+    const wallOff = off2 ? off2.slice() : null;
+    if (carve && hasRoads && cell <= 25) {
       off2 = off2 || new Float32Array(G * G * 2);
       rs = new Int8Array(G * G);
       const re = new Float32Array(G * G), rnx = new Float32Array(G * G), rny = new Float32Array(G * G);
@@ -12028,7 +12035,78 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
       return h;
     };
-    const { mor, morN } = morphTargets(N, G, cell, hs, pos, nor, sea, across2, wside || rs, my0, off2, hOut);
+    const coarseGrid = (st2) => {
+      if (sea || N % 4) return null;
+      const cc = st2 * cell, warp = carve && hasRoads && cc <= 25, wl = cc <= 12 ? wallOff : null;
+      if (!warp && !rs && !(wallOff && !wl)) return null;
+      const M2 = N / st2, W = M2 + 5, ox = new Float32Array(W * W), oy = new Float32Array(W * W), hh = new Float32Array(W * W), sd = new Int8Array(W * W);
+      const re = new Float32Array(W * W).fill(NaN), rnx = new Float32Array(W * W), rny = new Float32Array(W * W);
+      const childO = (I, J) => {
+        const i = I * st2 + 1, j = J * st2 + 1;
+        return i >= 0 && j >= 0 && i < G && j < G ? j * G + i : -1;
+      };
+      for (let J = -2; J <= M2 + 2; J++) for (let I = -2; I <= M2 + 2; I++) {
+        const q2 = (J + 2) * W + I + 2, co = childO(I, J);
+        if (co >= 0 && wl && (wl[co * 2] || wl[co * 2 + 1])) {
+          ox[q2] = wl[co * 2];
+          oy[q2] = wl[co * 2 + 1];
+          continue;
+        }
+        if (!warp) continue;
+        const e = world.nearestRoad(mx0 + I * cc, my0 + J * cc), nr = world._nr;
+        if (!(e < 40) || nr.road < 0 || nr.reg.rCls[nr.road] >= 18) continue;
+        re[q2] = e - 0.6;
+        rnx[q2] = nr.side * nr.ty;
+        rny[q2] = -nr.side * nr.tx;
+        sd[q2] = re[q2] > 0 ? 1 : -1;
+      }
+      if (warp) for (let J = -1; J <= M2 + 1; J++) for (let I = -1; I <= M2 + 1; I++) {
+        const q2 = (J + 2) * W + I + 2, e = re[q2];
+        if (!(Math.abs(e) < 0.71 * cc)) continue;
+        let acr = false;
+        for (let b = -1; b <= 1 && !acr; b++) for (let a = -1; a <= 1; a++) {
+          const p = q2 + b * W + a;
+          if ((a || b) && sd[p] && sd[p] !== sd[q2]) {
+            acr = true;
+            break;
+          }
+        }
+        if (!acr) continue;
+        const mv = (e > 0 ? 0.02 : -0.02) - e;
+        ox[q2] = rnx[q2] * mv;
+        oy[q2] = rny[q2] * mv;
+      }
+      const cp = new Float32Array((M2 + 1) * (M2 + 1) * 3);
+      for (let J = -1; J <= M2 + 1; J++) for (let I = -1; I <= M2 + 1; I++) {
+        const q2 = (J + 2) * W + I + 2, co = childO(I, J);
+        const x = mx0 + I * cc + ox[q2], y = my0 + J * cc + oy[q2];
+        hh[q2] = co >= 0 && (off2 ? off2[co * 2] : 0) === ox[q2] && (off2 ? off2[co * 2 + 1] : 0) === oy[q2] ? hs[co] : world.groundH(x, y, carve, !realBuildings);
+        if (I < 0 || J < 0 || I > M2 || J > M2) continue;
+        const th = y / R, r = R - hh[q2], k = (J * (M2 + 1) + I) * 3;
+        cp[k] = x - L / 2 - cx;
+        cp[k + 1] = -r * Math.cos(th) - cy;
+        cp[k + 2] = -r * Math.sin(th) - cz;
+      }
+      const acrossC = (q2, p, I, J, a, b) => {
+        if (sd[q2] && sd[p] && sd[q2] !== sd[p]) return true;
+        if (!wl || !wside) return false;
+        const o = childO(I, J), o2 = childO(I + a, J + b);
+        return o >= 0 && o2 >= 0 && !!wside[o * 4 + 3] && crossesWall(wside, o, o2, a * cc, b * cc);
+      };
+      const nrm2 = new Float32Array((M2 + 1) * (M2 + 1) * 3);
+      for (let J = 0; J <= M2; J++) for (let I = 0; I <= M2; I++) {
+        const q2 = (J + 2) * W + I + 2;
+        const l = acrossC(q2, q2 - 1, I, J, -1, 0), r = acrossC(q2, q2 + 1, I, J, 1, 0), d = acrossC(q2, q2 - W, I, J, 0, -1), u = acrossC(q2, q2 + W, I, J, 0, 1);
+        const dx = l && r ? 0 : l ? (hh[q2 + 1] - hh[q2]) / cc : r ? (hh[q2] - hh[q2 - 1]) / cc : (hh[q2 + 1] - hh[q2 - 1]) / (2 * cc);
+        const dy = d && u ? 0 : d ? (hh[q2 + W] - hh[q2]) / cc : u ? (hh[q2] - hh[q2 - W]) / cc : (hh[q2 + W] - hh[q2 - W]) / (2 * cc);
+        const il = 1 / Math.hypot(dx, dy, 1), k = (J * (M2 + 1) + I) * 3;
+        nrm2[k] = -dx * il;
+        nrm2[k + 1] = -dy * il;
+        nrm2[k + 2] = il;
+      }
+      return { cp, nrm: nrm2 };
+    };
+    const { mor, morN } = morphTargets(N, G, cell, hs, pos, nor, sea, across2, wside || rs, my0, off2, hOut, [coarseGrid(2), coarseGrid(4)]);
     const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2, bcz = (bz0 + bz1) / 2;
     const brad = Math.hypot(bx1 - bx0, by1 - by0, bz1 - bz0) / 2;
     let road = null, roadK = null;
