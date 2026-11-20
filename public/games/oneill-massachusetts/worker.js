@@ -3143,6 +3143,8 @@
       this.k = new Uint8Array(this.cap * 4);
       this.j = new Uint8Array(this.cap * 4);
       this.t = new Uint16Array(this.cap * 4);
+      this.l = new Float32Array(this.cap * 4);
+      this.dd = new Uint16Array(this.cap * 4);
       this.idx = new Uint32Array(this.icap);
       this.W = [0, 0, 0, -1];
       this.M = [0, 0, 0, 0];
@@ -3150,6 +3152,9 @@
       this.K = [0, 0, 0, 0];
       this.J = [0, 0, 0, 0];
       this.T = [0, 0, 0, 0];
+      this.anyLay = false;
+      this.L = [0, 0, 0, 0];
+      this.D = [0, 0, 0, 0];
       this.ox = 0;
       this.oy = 0;
       this.oz = 0;
@@ -3173,6 +3178,8 @@
       this.k = g(this.k, 4);
       this.j = g(this.j, 4);
       this.t = g(this.t, 4);
+      this.l = g(this.l, 4);
+      this.dd = g(this.dd, 4);
       this.cap *= 2;
     }
     // a vertex given in the building's frame (u along the footprint's yaw, y up, v across), with its normal there.  The
@@ -3196,6 +3203,8 @@
       this.k.set(this.K, i * 4);
       this.j.set(this.J, i * 4);
       this.t.set(this.T, i * 4);
+      this.l.set(this.L, i * 4);
+      this.dd.set(this.D, i * 4);
       return i;
     }
     tri(a, b, c) {
@@ -3308,6 +3317,7 @@
       return;
     }
     setM(MAT.WALL);
+    const lays = isHome(cls) ? faceLayouts(frontOf(env.reg, id, B, k), env, W4.map((q) => [q[0], q[1], q[2], q[3], q[6]])) : null;
     for (let s = 0; s < 4; s++) {
       const [p0u, p0v, p1u, p1v, nu, nv, len] = W4[s];
       const gableEnd = !flat2 && roof !== ROOF.HIP && (s === 1 || s === 3);
@@ -3323,6 +3333,12 @@
         flags |= 4;
       }
       if (split) flags |= 32;
+      const lay = lays && lays.get(s);
+      layoutAttrs(M, lay || null, len);
+      if (lay) {
+        flags |= 64;
+        door = lay.doors.length ? lay.doors[0] : -1;
+      }
       const lv = split ? clamp2(Math.round((He - y0 - SPLIT_FLOOR - 0.3) / FLOOR[cls]), 1, 3) : levels;
       M.W[0] = len;
       M.W[1] = He - y0;
@@ -3367,6 +3383,7 @@
     }
     M.W[3] = -1;
     M.W[2] = 0;
+    layoutAttrs(M, null);
     if (LF) {
       const P2 = [-w / 2, -d / 2, 0, w / 2, -d / 2, 0, w / 2, d / 2, 0, -w / 2, d / 2, 0];
       if (!LF.R) underside(M, setM, P2, null, [], LF.soff);
@@ -3462,7 +3479,7 @@
         M.tri(i0, i1, i2);
       }
     }
-    if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, split ? 0.45 : found, y0, yb, r1, r2, r3, env);
+    if (!LF && !env.raised) site(M, setM, W4[side], side === 0 || side === 2 ? w : d, cls, levels, seed, porch, split ? 0.45 : found, y0, yb, r1, r2, r3, env, lays && lays.get(side));
   }
   function porchAt(M, setM, p0u, p0v, tu, tv, nu, nv, a0, a1, dep, floorY, roofY, yb, stepAl, decks, fh) {
     const pw = a1 - a0;
@@ -3544,6 +3561,112 @@
     for (let i = 0; i < st2; i++) wbox(s0, s1, dep + i * 0.28, dep + (i + 1) * 0.28, yb, floorY - 0.19 * (i + 1), 55);
     return dep + st2 * 0.28;
   }
+  function frontOf(reg, id, B, k) {
+    const fs = featsOf(reg, id);
+    if (!fs) return null;
+    for (const [kind, o, n] of fs) {
+      if (kind !== 4 || n < 21) continue;
+      const dv = reg.hf.dv, cx = B[k], cy = B[k + 1], info2 = dv.getUint8(o + 8);
+      const F = {
+        L: [cx + dv.getInt16(o, true) * 0.01, cy + dv.getInt16(o + 2, true) * 0.01],
+        R: [cx + dv.getInt16(o + 4, true) * 0.01, cy + dv.getInt16(o + 6, true) * 0.01],
+        face: info2 & 3,
+        gable: (info2 & 4) !== 0,
+        storeys: info2 >> 4,
+        porch: dv.getUint8(o + 9),
+        pf: dv.getUint8(o + 10) / 250,
+        pt: dv.getUint8(o + 11) / 250,
+        gcol: dv.getUint16(o + 12, true),
+        doors: null,
+        win: null,
+        attic: null,
+        gar: null
+      };
+      let q = o + 20;
+      const take = (c2) => {
+        const a = [];
+        for (let i = 0; i < c2; i++) a.push(dv.getUint8(q++) / 250);
+        return a;
+      };
+      const c = [];
+      for (let i = 0; i < 6; i++) c.push(dv.getUint8(o + 14 + i));
+      F.doors = take(c[0]);
+      F.win = [take(c[1]), take(c[2]), take(c[3])];
+      F.attic = take(c[4]);
+      const g = take(c[5]), gw = dv.getUint8(q);
+      F.gar = g.map((x, i) => [x, gw >> i & 1]);
+      return F;
+    }
+    return null;
+  }
+  function faceLayouts(F, env, walls) {
+    if (!F) return null;
+    const tf = (X, Y) => {
+      const dx = X - env.mx, dy = Y - env.my;
+      return [env.ca * dx + env.sa * dy, -env.sa * dx + env.ca * dy];
+    };
+    const L2 = tf(F.L[0], F.L[1]), R3 = tf(F.R[0], F.R[1]), W = Math.hypot(R3[0] - L2[0], R3[1] - L2[1]);
+    if (W < 2) return null;
+    const tu = (R3[0] - L2[0]) / W, tv = (R3[1] - L2[1]) / W, nu = tv, nv = -tu;
+    let out = null;
+    for (let i = 0; i < walls.length; i++) {
+      const [u0, v0, u1, v1, len] = walls[i];
+      if (len < 1.2) continue;
+      const eu = (u1 - u0) / len, ev = (v1 - v0) / len;
+      if (eu * tu + ev * tv < 0.96) continue;
+      if (Math.abs((u0 - L2[0]) * nu + (v0 - L2[1]) * nv) > 1.6 || Math.abs((u1 - L2[0]) * nu + (v1 - L2[1]) * nv) > 1.6) continue;
+      const s0 = (u0 - L2[0]) * tu + (v0 - L2[1]) * tv, s1 = (u1 - L2[0]) * tu + (v1 - L2[1]) * tv;
+      if (Math.min(s1, W) - Math.max(s0, 0) < Math.min(len, W) * 0.4) continue;
+      const at = (q) => (L2[0] + tu * q * W - u0) * eu + (L2[1] + tv * q * W - v0) * ev;
+      const inW = (u) => u > -0.3 && u < len + 0.3;
+      const lay = { win: [[], [], []], attic: [], doors: [], gar: [], porch: null, gcol: F.gcol };
+      for (let f = 0; f < 3; f++) for (const q of F.win[f]) {
+        const u = at(q);
+        if (inW(u)) lay.win[f].push(clamp2(u, 0, len));
+      }
+      for (const q of F.attic) {
+        const u = at(q);
+        if (inW(u)) lay.attic.push(clamp2(u, 0, len));
+      }
+      for (const q of F.doors) {
+        const u = at(q);
+        if (inW(u)) lay.doors.push(clamp2(u, 0.6, len - 0.6));
+      }
+      for (const [q, d] of F.gar) {
+        const u = at(q);
+        if (inW(u)) lay.gar.push([clamp2(u, 0, len), d]);
+      }
+      if (F.pt > F.pf) {
+        const a = clamp2(at(F.pf), 0, len), b = clamp2(at(F.pt), 0, len);
+        if (b - a > 1.5) lay.porch = [a, b];
+      }
+      (out || (out = /* @__PURE__ */ new Map())).set(i, lay);
+    }
+    return out;
+  }
+  function layoutAttrs(M, lay, len) {
+    if (!lay) {
+      M.L[0] = M.L[1] = M.L[2] = M.L[3] = 0;
+      M.D[0] = M.D[1] = M.D[2] = M.D[3] = 0;
+      return;
+    }
+    M.anyLay = true;
+    const slot = (u) => clamp2(Math.floor(u / len * 24), 0, 23);
+    for (let f = 0; f < 3; f++) {
+      let m = 0;
+      for (const u of lay.win[f]) m |= 1 << slot(u);
+      M.L[f] = m;
+    }
+    let a = 0;
+    for (const u of lay.attic) a |= 1 << slot(u);
+    M.L[3] = a;
+    M.D[0] = lay.doors.length > 1 ? 32768 | Math.min(Math.round(lay.doors[1] * 10), 16383) : 0;
+    for (let g = 0; g < 2; g++) {
+      const G = lay.gar[g];
+      M.D[1 + g] = G ? 32768 | (G[1] ? 16384 : 0) | Math.min(Math.round(G[0] * 10), 16383) : 0;
+    }
+    M.D[3] = lay.gar.length ? lay.gcol : 0;
+  }
   function featsOf(reg, id) {
     const F = reg && reg.hf;
     if (!F || !F.n) return null;
@@ -3573,7 +3696,7 @@
     if (!r || h1(id * 13 + 7, seed + 41) >= r[0]) return -1;
     return h1(id * 17 + 3, seed + 59) < r[1] ? 2 : 0;
   }
-  function porchesOf(reg, id, P2, nv, front, cls, seed, tb) {
+  function porchesOf(reg, id, P2, nv, front, cls, seed, tb, lay) {
     if (front < 0) return null;
     let type = -1;
     const fs = featsOf(reg, id);
@@ -3588,15 +3711,20 @@
     const j = (front + 1) % nv, len = Math.hypot(P2[j * 3] - P2[front * 3], P2[j * 3 + 1] - P2[front * 3 + 1]);
     if (len < 3) return null;
     const multi = cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW;
-    const du = doorAt(len, cls, seed, tb), pw = multi || len < 9 ? len : clamp2(len * 0.45, 3, 6);
-    const a0 = clamp2(du - pw / 2, 0, len - pw);
-    return [{ edge: front, a0, a1: a0 + pw, dep: type === 2 ? 2.1 : 1.9, decks: type === 2 ? 3 : 1, type, door: NaN }];
+    const du = lay && lay.doors.length ? lay.doors[0] : doorAt(len, cls, seed, tb), pw = multi || len < 9 ? len : clamp2(len * 0.45, 3, 6);
+    let a0 = clamp2(du - pw / 2, 0, len - pw), a1 = a0 + pw;
+    if (lay && lay.porch && lay.porch[1] - lay.porch[0] >= 2) {
+      a0 = lay.porch[0];
+      a1 = lay.porch[1];
+    }
+    return [{ edge: front, a0, a1, dep: type === 2 ? 2.1 : 1.9, decks: type === 2 ? 3 : 1, type, door: NaN }];
   }
-  function site(M, setM, wall2, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env) {
+  function site(M, setM, wall2, depth, cls, levels, seed, porch, found, y0, yb, r1, r2, r3, env, lay) {
     if (!(cls <= CLS.TRIPLE || cls === CLS.ROW || cls === CLS.MULTI)) return;
     const [p0u, p0v, p1u, p1v, nu, nv, len] = wall2;
     const tu = (p1u - p0u) / len, tv = (p1v - p0v) / len;
-    const du = porch && typeof porch === "object" && porch.door === porch.door ? porch.door : doorAt(len, cls, seed, M.T[3]);
+    const noDoor = !!lay && !lay.doors.length && !(porch && typeof porch === "object");
+    const du = porch && typeof porch === "object" && porch.door === porch.door ? porch.door : lay && lay.doors.length ? lay.doors[0] : doorAt(len, cls, seed, M.T[3]);
     const floorY = y0 + found;
     let walkFrom = 0.25;
     const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
@@ -3606,6 +3734,8 @@
     };
     if (porch && typeof porch === "object") {
       walkFrom = porch.walkFrom;
+    } else if (noDoor) {
+      walkFrom = -1;
     } else if (porch && len > 4.2) {
       const full = cls !== CLS.TRIPLE || (seed & 2) > 0;
       const pw = full ? len : Math.max(3, len * 0.55);
@@ -3641,14 +3771,28 @@
       M.W[1] = 0;
       M.W[2] = 0;
       M.W[3] = -1;
-      const P2 = at(du, walkFrom + 0.3);
-      const reach = env.roadEdge(P2[0], P2[1], nu, nv, 30);
-      if (reach > 0.5) {
-        setM(MAT.CONCRETE);
-        strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
+      if (walkFrom >= 0) {
+        const P2 = at(du, walkFrom + 0.3);
+        const reach = env.roadEdge(P2[0], P2[1], nu, nv, 30);
+        if (reach > 0.5) {
+          setM(MAT.CONCRETE);
+          strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
+        }
       }
       let al = NaN, run = -1, known = false, bestF = 0.6;
-      if (cls !== CLS.ROW && len > 4) {
+      let dw = 2.7;
+      if (lay && lay.gar.length) {
+        const G = lay.gar.reduce((a, b) => b[1] > a[1] ? b : a);
+        const Q = at(G[0], 0.4);
+        const r = env.roadEdge(Q[0], Q[1], nu, nv, 40);
+        if (r > 2.5) {
+          al = G[0];
+          run = r;
+          known = true;
+          if (G[1]) dw = 5.2;
+        }
+      }
+      if (Number.isNaN(al) && cls !== CLS.ROW && len > 4) {
         const cands = [-1.85, len + 1.85, -3.6, len + 3.6];
         for (const f of [0.2, 0.5, 0.8]) if (Math.abs(len * f - du) > 2.4 && !(porch && typeof porch === "object" && len * f > porch.a0 - 1.6 && len * f < porch.a1 + 1.6)) cands.push(len * f);
         for (const c of cands) {
@@ -3669,7 +3813,7 @@
             run = r;
           }
         }
-        if (!known && r3 < 0.74) {
+        if (!known && r3 < 0.74 && !(lay && lay.gar.length)) {
           al = seed & 8 ? -1.85 : len + 1.85;
           const Q = at(al, 0.4);
           run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
@@ -3680,7 +3824,7 @@
           const beside = al < 0 || al > len;
           const back = beside ? Math.min(6.5, Math.max(3, depth * 0.6)) : -0.15;
           setM(MAT.ASPHALT);
-          strip(al, 2.7, -back, 0.4 + run + 0.3);
+          strip(al, dw, -back, 0.4 + run + 0.3);
           if (r2 < 0.55) {
             const oc = -back + 2.6 + r1 * Math.min(run + back - 6, 6), Cc = at(al, oc), gy = env.groundAt(Cc[0], Cc[1]) + 0.07;
             putCar(M, setM, r3 * 7.3 % 1 > 0.55 ? 1 : 0, Cc[0], gy, Cc[1], seed & 16 ? nu : -nu, seed & 16 ? nv : -nv);
@@ -4298,11 +4442,25 @@
         front = i;
       }
     }
-    const porches = isHome(cls) && !LF ? porchesOf(env.reg, id, P2, nv, front, cls, seed, M.T[3]) : null;
+    let lays = null;
+    if (isHome(cls)) {
+      const F = frontOf(env.reg, id, B, k);
+      if (F) {
+        const E = [];
+        for (let i = 0; i < nv; i++) {
+          const j = (i + 1) % nv;
+          E.push([P2[i * 3], P2[i * 3 + 1], P2[j * 3], P2[j * 3 + 1], Math.hypot(P2[j * 3] - P2[i * 3], P2[j * 3 + 1] - P2[i * 3 + 1])]);
+        }
+        lays = faceLayouts(F, env, E);
+      }
+    }
+    const frontLay = lays && front >= 0 ? lays.get(front) || null : null;
+    const porches = isHome(cls) && !LF ? porchesOf(env.reg, id, P2, nv, front, cls, seed, M.T[3], frontLay) : null;
     const edgeDoor = /* @__PURE__ */ new Map();
     if (porches) for (const pc of porches) {
       const i = pc.edge, j = (i + 1) % nv, len = Math.hypot(P2[j * 3] - P2[i * 3], P2[j * 3 + 1] - P2[i * 3 + 1]);
-      pc.door = clamp2(doorAt(len, cls, seed, M.T[3]), pc.a0 + 0.7, pc.a1 - 0.7);
+      const lay = lays && lays.get(i);
+      pc.door = clamp2(lay && lay.doors.length ? lay.doors[0] : doorAt(len, cls, seed, M.T[3]), pc.a0 + 0.7, pc.a1 - 0.7);
       edgeDoor.set(i, pc.door);
     }
     const cuts = [];
@@ -4328,9 +4486,11 @@
         }
         if (LF) corrCuts(LF, u0, v0, u1, v1, cuts);
         cuts.sort((x, y) => x - y);
-        const isFront = i === front2, door = R3 === P2 && edgeDoor.has(i) ? edgeDoor.get(i) : isFront ? doorAt(len, cls, seed, M.T[3]) : -1;
+        const lay = R3 === P2 && lays ? lays.get(i) || null : null;
+        const isFront = i === front2, door = R3 === P2 && edgeDoor.has(i) ? edgeDoor.get(i) : lay ? lay.doors.length ? lay.doors[0] : -1 : isFront ? doorAt(len, cls, seed, M.T[3]) : -1;
         if (isFront) frontWall = [u0, v0, u1, v1, (v1 - v0) / len, -(u1 - u0) / len, len];
         setM(MAT.WALL);
+        layoutAttrs(M, lay, len);
         for (let c = 0; c + 1 < cuts.length; c++) {
           const ta = cuts[c], tb = cuts[c + 1];
           if (tb - ta < 1e-4) continue;
@@ -4349,6 +4509,7 @@
               if ((cls === CLS.COMM || cls === CLS.RETAIL) && len > 5) flags |= 8;
             }
             if (plainRec) flags |= 16;
+            if (lay) flags |= 64;
             if (split) return [eave, clamp2(Math.round((eave - SPLIT_FLOOR - 0.3) / FLOOR[cls]), 1, 3) + 64 * (flags | 32), door, y0];
             return [eave, clamp2(Math.round((eave - found - 0.3) / FLOOR[cls]), 1, 60) + 64 * flags, door, y0];
           });
@@ -4356,7 +4517,9 @@
       }
     };
     ringWalls(P2, front);
+    layoutAttrs(M, null);
     for (const H of holes) ringWalls(H, -1);
+    layoutAttrs(M, null);
     M.W[0] = 0;
     M.W[1] = 0;
     M.W[2] = 0;
@@ -4498,7 +4661,7 @@
       M.W[2] = 0;
       M.W[3] = -1;
     }
-    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, frontPorch, split ? 0.45 : found, y0, yb, r1, r2, r3, env);
+    if (frontWall && !LF) site(M, setM, frontWall, Math.min(maxu - minu, maxv - minv), cls, 1, seed, frontPorch, split ? 0.45 : found, y0, yb, r1, r2, r3, env, frontLay);
     return true;
   }
   var D_HE = 1.6;
@@ -4850,7 +5013,7 @@
       plainRec = false;
       count++;
     }
-    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), idx: M.idx.slice(0, M.ni) };
+    return { n: M.n, count, pos: M.pos.slice(0, M.n * 3), nor: M.nor.slice(0, M.n * 4), uv: M.uv.slice(0, M.n * 2), w: M.w.slice(0, M.n * 4), m: M.m.slice(0, M.n * 4), c: M.c.slice(0, M.n * 3), k: M.k.slice(0, M.n * 4), j: M.j.slice(0, M.n * 4), t: M.t.slice(0, M.n * 4), l: M.anyLay ? M.l.slice(0, M.n * 4) : null, dd: M.anyLay ? M.dd.slice(0, M.n * 4) : null, idx: M.idx.slice(0, M.ni) };
   }
 
   // src/street.js
@@ -12074,7 +12237,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     if (kind === "decks") {
       const t = buildDeckTile(world, reg, ix, iy, s, cx, cy, cz, (my0 + s / 2) / R, NBI);
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : []) : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : [], t.l ? [t.l.buffer, t.dd.buffer] : []) : []);
       return;
     }
     if (kind === "houses") {
@@ -12087,7 +12250,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       }
       const t = sel.length ? buildHouseTile(world, list, sel, cx, cy, cz, (my0 + s / 2) / R, reg) : null;
       const msg = { type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, house: t, data: new Float32Array(0), stride: 1 };
-      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : []) : []);
+      postMessage(msg, t ? [t.pos.buffer, t.nor.buffer, t.uv.buffer, t.w.buffer, t.m.buffer, t.c.buffer, t.k.buffer, t.idx.buffer].concat(t.j ? [t.j.buffer] : [], t.t ? [t.t.buffer] : [], t.l ? [t.l.buffer, t.dd.buffer] : []) : []);
       return;
     }
     if (realBuildings) {

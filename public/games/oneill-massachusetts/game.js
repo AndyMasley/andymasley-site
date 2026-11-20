@@ -19762,6 +19762,10 @@ attribute vec4 aJ;      // its walls' colour from the street photos (sRGB), alph
 attribute vec4 aT;      // its trim, shutter and door colours from the street photos (RGB565) and which of them a photo
                         // showed (bits: 1 trim, 2 whether it has shutters, 4 it has, 8 door; bits 4-11 the width of its
                         // window bays in decimetres, where a photo showed them); all 0 where none did
+attribute vec4 aL;      // a wall its street photo showed from end to end (flag 64): its windows on three floors and in the
+                        // gable, each a 24-bit mask of slots along the wall (houses.js layoutAttrs)
+attribute vec4 aD;      // and its second door, two garage doors (decimetres along it; bit 15 there, bit 14 two cars wide)
+                        // and the garage doors' colour (RGB565)
 uniform vec2 uHouseFade;
 ${PALETTE}
 ${PAVEMENT}
@@ -19776,7 +19780,12 @@ flat varying vec3 vColC;
 flat varying vec3 vColD;     // shutters
 flat varying float vShut;    // shutters: -1 by rule, 0 none, 1 there
 flat varying float vBay;     // the width of its window bays from a street photo, 0 by rule
+flat varying vec4 vL;        // the photo's layout (aL, aD)
+flat varying vec4 vD;
+flat varying vec3 vColG;     // its garage doors' colour
 void main() {
+  vL = aL; vD = aD;
+  vColG = aD.w > 0.5 ? photoWall(rgb565(aD.w)) : vec3(0.72, 0.72, 0.70);
   // beyond the detail radius the far boxes take over: each building switches at its own distance inside the band
   // (its seed), the same distance its boxes switch on at, and never grows or shrinks
   vec4 wc = modelMatrix * vec4(aC, 1.0);
@@ -19844,6 +19853,9 @@ flat varying vec3 vColC;
 flat varying vec3 vColD;
 flat varying float vShut;
 flat varying float vBay;
+flat varying vec4 vL;
+flat varying vec4 vD;
+flat varying vec3 vColG;
 
 const float FOUND[16] = float[16](0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0.0, 0.15, 0.7, 0.6);
 const float KNEE[16] = float[16](0.0, 0.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6);
@@ -19922,6 +19934,29 @@ void main() {
       if (v < ff) { fl = 0.0; fv = v; }
       else { fl = 1.0 + floor((v - ff) / fh); fv = v - ff - (fl - 1.0) * fh; }
     }
+    // a face its street photo showed from end to end (flag 64, houses.js layoutAttrs): its windows where the photo has
+    // them, each centred in one of 24 slots along the wall, floor by floor (the third floor's for any above it), and
+    // shutters only where a window has room beside it
+    bool lay = (flags & 64) != 0, layWin = false;
+    float sw = len / 24.0, layGap = 1e3;
+    if (lay) {
+      float mf = fl < 0.5 ? vL.x : (fl < 1.5 ? vL.y : vL.z);
+      uint m = uint(mf + 0.5);
+      int si = int(clamp(floor(u / sw), 0.0, 23.0)), best = -1;
+      float bd = 1e3;
+      for (int k = -4; k <= 4; k++) {
+        int sj = si + k;
+        if (sj < 0 || sj > 23 || ((m >> uint(sj)) & 1u) == 0u) continue;
+        float d = abs(u - (float(sj) + 0.5) * sw);
+        if (d < bd) { bd = d; best = sj; }
+      }
+      if (best >= 0) {
+        bi = float(best); bu = u - (bi + 0.5) * sw; layWin = true;
+        for (int k = 1; k <= 8; k++) {
+          if ((best - k >= 0 && ((m >> uint(best - k)) & 1u) != 0u) || (best + k <= 23 && ((m >> uint(best + k)) & 1u) != 0u)) { layGap = float(k) * sw; break; }
+        }
+      } else bu = 1e3;
+    }
     bool deep = !house && cls != 9 && cls != 12;                 // large buildings on a slope show lower storeys downhill
     bool inFloors = !plain && (v > found || (deep && v < found - 0.7)) && fl < levels + (split ? 1.0 : 0.0) && v < eave - 0.05;
     float wh = hash2(ivec2(int(bi) + int(seed) * 7 + flags * 31, int(fl) + int(len * 13.0)));
@@ -19939,6 +19974,7 @@ void main() {
     if (clad == 7) { ww = bw * 0.5 - 0.03; sill = 0.08; head = fh - 0.05; }                // a station's glass runs floor to roof
     if (split && fl < 0.5) { sill = 0.35; head = 1.05; }
     bool hasWin = inFloors && !(cls == 4 && !front && wh > 0.35) && !(cls == 5 && wh > 0.5) && !(clad == 4 && wh > 0.3) && !(house && !front && wh > 0.86);
+    if (lay) hasWin = inFloors && layWin;
     if (cls == 13 && !front && len > 26.0) hasWin = false;      // a big store's side and back walls are blank; a shop's are not
     float gw = 0.0, frame = 0.0, lintel = 0.0;
     vec2 wp = vec2(bu, fv);
@@ -19948,21 +19984,56 @@ void main() {
     // door
     float door = 0.0, doorFrame = 0.0, dw = bigDoor ? ((cls == 8 || cls == 5) ? 1.9 : 1.25) : (cls >= 6 && cls <= 13 ? 0.85 : 0.47), dh = bigDoor ? ((cls == 8 || cls == 5) ? min(fh - 0.6, 3.8) : 2.12) : 2.05;
     float du = u - doorU;
-    bool doorBay = !plain && doorU >= 0.0 && fl < (split ? 1.5 : 0.5) && abs(du) < bw * 0.5 && v > found - 0.05;
+    if (lay && vD.x > 32767.5) { float u2 = (vD.x - 32768.0) * 0.1; if (abs(u - u2) < abs(du)) du = u - u2; }      // the photo's second door
+    bool doorBay = !plain && doorU >= 0.0 && fl < (split ? 1.5 : 0.5) && abs(du) < (lay ? dw + 0.45 : bw * 0.5) && v > found - 0.05;
     if (!plain && doorU >= 0.0 && v < doorBase + dh + 0.3) {
       door = box2(vec2(du, v - doorBase), vec2(-dw, -0.5), vec2(dw, dh), px);
       doorFrame = box2(vec2(du, v - doorBase), vec2(-dw - 0.11, -0.5), vec2(dw + 0.11, dh + 0.13), px) - door;
     }
     if (doorBay && !store) hasWin = false;
     if (doorBay && store && abs(du) < dw + 0.3) hasWin = false;
+    // garage doors where the photo showed them in this face, from the ground up (one car wide or two)
+    float gdoor = 0.0, gframe = 0.0;
+    if (lay) {
+      for (int g = 0; g < 2; g++) {
+        float e = g == 0 ? vD.y : vD.z;
+        if (e < 32767.5) continue;
+        e -= 32768.0;
+        bool dbl = e > 16383.5;
+        float uc = (dbl ? e - 16384.0 : e) * 0.1, hw = dbl ? 2.45 : 1.3;
+        gdoor = max(gdoor, box2(vec2(u - uc, v), vec2(-hw, -0.5), vec2(hw, 2.15), px));
+        gframe = max(gframe, box2(vec2(u - uc, v), vec2(-hw - 0.12, -0.5), vec2(hw + 0.12, 2.29), px));
+        float wc = (bi + 0.5) * sw;
+        if (fl < 0.5 && abs(wc - uc) < hw + 0.35) hasWin = false;
+        // a window over a garage door (a split foyer's main floor) sits clear above it
+        if (hasWin && abs(wc - uc) < hw + ww + 0.1 && v - fv + sill < 2.45) { sill = 2.45 - (v - fv); if (head - sill < 0.7) hasWin = false; }
+      }
+      gframe -= gdoor;
+    }
     if (hasWin) {
       gw = box2(wp, vec2(-ww, sill), vec2(ww, head), px);
       frame = box2(wp, vec2(-ww - 0.085, sill - 0.10), vec2(ww + 0.085, head + 0.10), px) - gw;
       if (clad == 1 || clad == 2 || clad == 6) lintel = box2(wp, vec2(-ww - 0.16, head + 0.02), vec2(ww + 0.16, head + 0.24), px) + box2(wp, vec2(-ww - 0.12, sill - 0.16), vec2(ww + 0.12, sill - 0.02), px);
     }
-    // attic window in a gable
-    if (gableEnd && v > eave + 0.55 && v < eave + 1.65 && (len * 0.5 - abs(u - len * 0.5)) > 1.6 && cls != 4) {
-      vec2 ap = vec2(u - len * 0.5, v - eave);
+    // attic window in a gable (where the photo showed this face, its gable windows)
+    float auc = len * 0.5;
+    bool attic = gableEnd;
+    if (lay) {
+      uint am = uint(vL.w + 0.5);
+      attic = gableEnd && am != 0u;
+      if (attic) {
+        int si = int(clamp(floor(u / sw), 0.0, 23.0));
+        float bd = 1e3;
+        for (int k = -6; k <= 6; k++) {
+          int sj = si + k;
+          if (sj < 0 || sj > 23 || ((am >> uint(sj)) & 1u) == 0u) continue;
+          float c = (float(sj) + 0.5) * sw;
+          if (abs(u - c) < bd) { bd = abs(u - c); auc = c; }
+        }
+      }
+    }
+    if (attic && v > eave + 0.55 && v < eave + 1.65 && (len * 0.5 - abs(auc - len * 0.5)) > 1.6 && cls != 4) {
+      vec2 ap = vec2(u - auc, v - eave);
       float ag = box2(ap, vec2(-0.36, 0.6), vec2(0.36, 1.55), px);
       frame = max(frame, box2(ap, vec2(-0.44, 0.52), vec2(0.44, 1.64), px) - ag); gw = max(gw, ag); wp = vec2(ap.x, ap.y + 0.3); sill = 0.9; head = 1.85; ww = 0.36;
     }
@@ -19975,7 +20046,7 @@ void main() {
     if (cls == 3 || cls == 14) boards = max(boards, seg(v, eave - 0.55, eave + 0.2, px.y));          // deep cornice band on flat-topped houses
     // shutters on some houses
     float shut = 0.0;
-    if (hasWin && house && cls != 4 && cls != 5 && (vShut < -0.5 ? sr3(seed) < 0.42 : vShut > 0.5) && bw > ww * 2.0 + 1.0)
+    if (hasWin && house && cls != 4 && cls != 5 && (vShut < -0.5 ? sr3(seed) < 0.42 : vShut > 0.5) && (lay ? layGap > ww * 2.0 + 0.9 : bw > ww * 2.0 + 1.0))
       shut = box2(vec2(abs(bu), fv), vec2(ww + 0.10, sill - 0.02), vec2(ww + 0.44, head + 0.02), px);
     // masonry: a band between storeys, the street-floor sign band on shops, and the cap of a parapet
     float band = 0.0;
@@ -20074,6 +20145,13 @@ void main() {
       alb = mix(alb, trim, clamp(doorFrame, 0.0, 1.0) * step(doorBase - 0.02, v));
       alb = mix(alb, dc, door * step(doorBase - 0.02, v));
       if (!bigDoor && house) emis += vec3(1.0, 0.78, 0.5) * dark * 0.25 * box2(vec2(abs(du), pv), vec2(0.0, dh + 0.25), vec2(0.22, dh + 0.5), px);   // porch light
+    }
+    if (gdoor > 0.0 || gframe > 0.0) {
+      vec3 gc = max(vColG, vec3(0.05));                  // (a door read as near black is dark paint, not a hole)
+      gc *= 0.86 + 0.14 * step(0.06, fract(v / 0.53));                  // its panels
+      alb = mix(alb, trim, clamp(gframe, 0.0, 1.0));
+      alb = mix(alb, gc, gdoor);
+      reliefMask *= 1.0 - gdoor;
     }
     if (aaH > 0.0 && dark > 0.001) {
       float wppH = max(fwH.x, fwH.y), sparkH = 0.0;
@@ -22688,6 +22766,10 @@ void main() {
         g.setAttribute("aK", new me(h.k, 4, true));
         g.setAttribute("aJ", new me(h.j || new Uint8Array(h.k.length), 4, true));
         g.setAttribute("aT", new me(h.t || new Uint16Array(h.k.length), 4));
+        if (h.l) {
+          g.setAttribute("aL", new me(h.l, 4));
+          g.setAttribute("aD", new me(h.dd, 4));
+        }
         g.setIndex(new me(h.idx, 1));
         const pp2 = h.pos;
         let x02 = 1e9, y02 = 1e9, z02 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9;
