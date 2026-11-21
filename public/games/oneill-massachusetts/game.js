@@ -20182,7 +20182,7 @@ void main() {
   vec2 uvDx = dFdx(uv), uvDy = dFdy(uv);
   vec3 alb = vColA;
   vec3 emis = vec3(0.0);
-  float glass = 0.0, occ = 1.0;
+  float glass = 0.0, occ = 1.0, paneTilt = 0.0;
   float relief = 0.0, reliefMask = 0.0, finishMask = 0.0, roughness = 0.90;
   float detailK = (1.0 - smoothstep(50.0, 180.0, dist)) * (1.0 - smoothstep(0.055, 0.22, max(px.x, px.y)));
   float finishK = 1.0 - smoothstep(100.0, 480.0, dist);
@@ -20386,28 +20386,47 @@ void main() {
     float aaH = inFloors ? smoothstep(0.3, 0.8, max(fwH.x, fwH.y)) : 0.0;
     // glass: sash bars, a blind or curtain, the room behind, and light after dark
     if (gw > 0.0) {
-      vec2 g = vec2(wp.x / ww, (wp.y - sill) / max(head - sill, 0.1));       // -1..1 across, 0..1 up
+      // the glass sits back in the wall by the depth of its reveal (deep in brick and concrete, shallow in siding, next
+      // to none in a curtain wall), so seen from the side the reveal's inner face shows on one side of the opening, in
+      // the sun or in shade, and the sash shifts behind the opening's edge.  Where the reveal is under a pixel or two
+      // (beyond a few dozen metres) the opening is drawn flat, as before.
+      float uvSign = sign(uvDx.x * uvDy.y - uvDx.y * uvDy.x);
+      vec3 tu = (relDx * uvDy.y - relDy * uvDx.y) * uvSign;
+      vec3 tv = (relDy * uvDx.x - relDx * uvDy.x) * uvSign;
+      tu /= max(length(tu), 1e-5); tv /= max(length(tv), 1e-5);
+      float rd = clad == 1 ? 0.18 : (clad == 2 ? 0.15 : (clad == 6 ? 0.12 : (clad == 3 || clad == 7 ? 0.02 : (store ? 0.08 : 0.06))));
+      float rk = 1.0 - smoothstep(rd * 0.5, rd * 2.0, max(px.x, px.y));
+      vec3 vt = vec3(dot(V, tu), dot(V, tv), dot(V, N));
+      vec2 shv = -rd * rk * vt.xy / max(vt.z, 0.2);
+      vec2 gp = wp + shv;                                                 // where the view meets the glass
+      float gwv = gw * mix(1.0, box2(gp, vec2(-ww, sill), vec2(ww, head), px), rk);
+      float rev = max(gw - gwv, 0.0);
+      if (rev > 0.0) {
+        // the face of the reveal the view meets first (its normal faces into the opening), lit as it faces the sun
+        float tx = shv.x < 0.0 ? (wp.x + ww) / max(-shv.x, 1e-4) : (ww - wp.x) / max(shv.x, 1e-4);
+        float ty = shv.y < 0.0 ? (wp.y - sill) / max(-shv.y, 1e-4) : (head - wp.y) / max(shv.y, 1e-4);
+        vec3 rn = tx < ty ? -sign(shv.x) * tu : -sign(shv.y) * tv;
+        float soffit = tx < ty ? 0.0 : step(0.0, shv.y);
+        vec3 revC = (clad == 1 || clad == 2 || clad == 6) ? alb : trim;
+        alb = mix(alb, revC * (0.58 + 0.62 * max(dot(rn, Ld), 0.0) * daySurface) * (1.0 - 0.22 * soffit), rev);
+      }
+      vec2 g = vec2(gp.x / ww, (gp.y - sill) / max(head - sill, 0.1));       // -1..1 across, 0..1 up
       float bars = 0.0;
       // a station's clear glass (clad 7, stations.js): a fine grid of slim mullions and transoms
-      if (clad == 7) bars = max(1.0 - seg(abs(fract(wp.x / 1.5) - 0.5), 0.025 / 1.5, 1.0, px.x / 1.5), 1.0 - seg(abs(fract(wp.y / 1.25) - 0.5), 0.025 / 1.25, 1.0, px.y / 1.25));
-      else if (store || clad == 3) bars = 1.0 - seg(abs(fract(wp.x / 1.6) - 0.5), 0.03 / 1.6, 1.0, px.x / 1.6);
+      if (clad == 7) bars = max(1.0 - seg(abs(fract(gp.x / 1.5) - 0.5), 0.025 / 1.5, 1.0, px.x / 1.5), 1.0 - seg(abs(fract(gp.y / 1.25) - 0.5), 0.025 / 1.25, 1.0, px.y / 1.25));
+      else if (store || clad == 3) bars = 1.0 - seg(abs(fract(gp.x / 1.6) - 0.5), 0.03 / 1.6, 1.0, px.x / 1.6);
       else if (ww < 0.75) bars = max(1.0 - seg(abs(g.y - 0.5), 0.02, 1.0, px.y), (cls == 1 || sr1(seed) < 0.55) ? (1.0 - seg(abs(g.x), 0.035, 1.0, px.x / ww)) : 0.0);
-      else bars = 1.0 - seg(abs(fract(wp.x / 0.95) - 0.5), 0.03, 1.0, px.x / 0.95);
+      else bars = 1.0 - seg(abs(fract(gp.x / 0.95) - 0.5), 0.03, 1.0, px.x / 0.95);
       float blind = (store || clad == 3 || clad == 7) ? 0.0 : step(g.y, 1.0) * step(1.0 - 0.75 * wh2 * wh2, g.y);
       vec3 room = mix(vec3(0.022, 0.026, 0.030), vec3(0.42, 0.40, 0.35), blind * 0.8);
       // through a station's clear glass the daylit hall and the far side show, tinted by the glass, not a dark room
       if (clad == 7) room = mix(vec3(0.19, 0.23, 0.22), vColA, 0.3);
       room *= 0.75 + 0.25 * seg(g.y, 0.0, 0.93, 0.03);                            // the head of the opening shades the top of the pane
       if (daySurface > 0.0) {
-        // A shallow reveal shades the already drawn opening from the actual lamp
-        // direction. Its dimensions, sash pattern and recorded trim remain intact.
-        float uvSign = sign(uvDx.x * uvDy.y - uvDx.y * uvDy.x);
-        vec3 tu = (relDx * uvDy.y - relDy * uvDx.y) * uvSign;
-        vec3 tv = (relDy * uvDx.x - relDx * uvDy.x) * uvSign;
-        tu /= max(length(tu), 1e-5); tv /= max(length(tv), 1e-5);
-        vec2 intoLight = vec2(dot(Ld, tu), dot(Ld, tv)) * (0.11 / max(dot(N, Ld), 0.25));
-        float open = box2(wp + intoLight, vec2(-ww, sill), vec2(ww, head), px * 1.5);
-        room *= 1.0 - (1.0 - open) * (0.24 * daySurface * finishK);
+        // the reveal's shadow on the glass, from the sun's direction: deeper reveals cast wider shadows
+        vec2 intoLight = vec2(dot(Ld, tu), dot(Ld, tv)) * (max(rd, 0.05) / max(dot(N, Ld), 0.25));
+        float open = box2(gp + intoLight, vec2(-ww, sill), vec2(ww, head), px * 1.5);
+        room *= 1.0 - (1.0 - open) * (0.30 * daySurface * finishK);
       }
       float pLit = clad == 3 || clad == 7 || cls == 11 ? 0.55 : 0.42;
       #ifdef DECKS
@@ -20421,14 +20440,17 @@ void main() {
       vec3 lamp = mix(vec3(1.0, 0.70, 0.36), vec3(0.95, 0.90, 0.78), step(0.8, wh2)) * (0.55 + 0.45 * wh2);
       if (store) { litW = dark * step(0.25, wh); lamp = vec3(1.0, 0.92, 0.78); }
       vec3 pane = mix(room, trim, bars * 0.9);
-      alb = mix(alb, pane, gw);
+      alb = mix(alb, pane, gwv);
       // a lit room is brightest round its lamp, dimmer behind curtains at the sides and behind a drawn blind
       vec2 lq = vec2(g.x - (wh2 - 0.5) * 0.9, (g.y - 0.38) * 1.6);
       float glow = 0.42 + 0.58 * exp(-dot(lq, lq) * 1.3);
       if (!store && clad != 3 && clad != 7 && wh2 > 0.35) glow *= 1.0 - 0.45 * smoothstep(0.5, 0.85, abs(g.x));
       // seen from across town a window is a point of light at full strength; close to, it is turned down so it keeps its colour
-      emis += lamp * litW * gw * (1.0 - bars * 0.93) * glow * (0.5 + 0.5 * (1.0 - blind * 0.6)) * mix(0.5, 1.0, smoothstep(25.0, 170.0, dist)) * (1.0 - aaH);
-      glass = gw * (1.0 - bars) * (1.0 - blind * 0.6);
+      emis += lamp * litW * gwv * (1.0 - bars * 0.93) * glow * (0.5 + 0.5 * (1.0 - blind * 0.6)) * mix(0.5, 1.0, smoothstep(25.0, 170.0, dist)) * (1.0 - aaH);
+      glass = gwv * (1.0 - bars) * (1.0 - blind * 0.6);
+      // no two panes lie quite in one plane, so each catches a little more or less of the bright sky above and the dark
+      // street below (a fixed lean per window, from its own hash: flat over the pane, so it cannot flicker)
+      paneTilt = fract(wh * 7.31 + wh2 * 3.17) - 0.5;
     }
     // door leaf with panels, and the big doors of garages, barns and loading bays
     if (door > 0.0 || doorFrame > 0.0) {
@@ -20598,7 +20620,7 @@ void main() {
     if (daySurface > 0.0) {
       // The current sky reflection gains a directional sky/ground balance, not a
       // fabricated reflected streetscape. Close windows also catch the sun.
-      float sky = 0.55 + 0.80 * smoothstep(-0.25, 0.75, dot(reflect(-V, N), up));
+      float sky = 0.55 + 0.80 * smoothstep(-0.25, 0.75, dot(reflect(-V, N), up) + paneTilt * 0.22);
       col += uSkyRefl * (sky - 1.0) * fres * glass * (0.9 * daySurface * finishK);
       if (mat == 0) col += sunE0 * sh * pow(max(dot(N, (Ld + V) / max(length(Ld + V), 1e-5)), 0.0), 220.0) * glass * (0.70 * daySurface * finishK) * step(0.0, dot(N, Ld));
     }
