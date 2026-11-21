@@ -21001,9 +21001,15 @@ void main() {
 precision highp float;
 uniform vec3 uAmbIrr;
 uniform vec3 uSunCol;
+uniform float uPxK;                  // a pixel's width at a metre's distance (main.js)
+uniform float uWireW;                // the wire's thickness, metres
 varying float vD;
 void main() {
-  float a = clamp(1.3 - vD / 130.0, 0.0, 1.0) * 0.9;
+  // a line is drawn a pixel wide however far off it is, so a wire takes only its own share of that pixel: its
+  // thickness over the pixel's width there.  (Drawn at full strength to 130 m, the far wires were dark crawling lines,
+  // flickering from pixel to pixel as the camera moved.)
+  float cover = clamp(uWireW / max(vD * uPxK, 1e-5), 0.0, 1.0);
+  float a = clamp(1.3 - vD / 130.0, 0.0, 1.0) * 0.9 * cover;
   if (a < 0.02) discard;
   gl_FragColor = vec4(vec3(0.05) * (uAmbIrr + uSunCol * 0.25), a);
   #include <tonemapping_fragment>
@@ -23046,7 +23052,7 @@ void main() {
         this.carMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1 });
         this.poleMat.alphaToCoverage = this.carMat.alphaToCoverage = true;
         this.carMat.side = Mi;
-        this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol } });
+        this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.03 } } });
       }
       this.signR = this.game.realBuildings ? q.signR || 0 : 0;
       this.powerR = this.game.realBuildings ? q.powerR || 0 : 0;
@@ -23283,7 +23289,7 @@ void main() {
         this.towerGeo.computeVertexNormals();
         this.towerMat = mk(0, [this.powerR * 0.85, this.powerR * 0.98], [-2, -1], { PARTS: 1, COVER: 1 });
         this.towerMat.alphaToCoverage = true;
-        this.pwireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol } });
+        this.pwireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.045 } } });
         const LM = [], lAdd = (g, c, p) => LM.push(part(col(g, ...c), p));
         const orange = [0.62, 0.12, 0.02], paleW = [0.6, 0.6, 0.58], steel = [0.27, 0.28, 0.29], conc = [0.33, 0.31, 0.28];
         const tri = (b, y) => [0, 1, 2].map((k) => {
@@ -30520,6 +30526,7 @@ void main() {
         uCam: { value: new C() },
         uSunPos: { value: new C() },
         uSunCol: { value: new C(1, 1, 1) },
+        uPxK: { value: 1e-3 },
         uAmbRad: { value: new C() },
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
@@ -31518,6 +31525,7 @@ void main() {
         this.time += dt;
         U.uTime.value = this.time;
       }
+      U.uPxK.value = 2 * Math.tan(this.camera.fov * Math.PI / 360) / Math.max(this.renderer.domElement.height, 1);
       const lum = this.sky.update(this.paused && !this.title ? 0 : dt, camC);
       let target = clamp2(1.25 / (Math.pow(lum, 0.62) + 0.14), 0.9, 8);
       const cm2 = p.camMap, above = cm2[2] - this.groundUnderCam;
