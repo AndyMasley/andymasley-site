@@ -372,6 +372,17 @@
     const h = VERSIONS && VERSIONS[path];
     return h ? path + "?h=" + h : path;
   }
+  async function fetchRetry(url, opts) {
+    for (let i = 0; ; i++) {
+      try {
+        const r = await fetch(url, opts);
+        if (r.ok || i >= 4 || r.status < 500 && r.status !== 408 && r.status !== 429) return r;
+      } catch (e) {
+        if (i >= 4) throw e;
+      }
+      await new Promise((res) => setTimeout(res, 500 * 2 ** i));
+    }
+  }
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -11347,9 +11358,14 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var DASH = 12.192;
   var pending = /* @__PURE__ */ new Map();
   var regionFails = /* @__PURE__ */ new Map();
+  var givenUp = /* @__PURE__ */ new Map();
   var jobDegraded = false;
+  var jobRetryIn = 0;
   var postMessage = (m, t) => {
-    if (jobDegraded && m && (m.type === "chunk" || m.type === "scatter")) m.degraded = true;
+    if (jobDegraded && m && (m.type === "chunk" || m.type === "scatter")) {
+      m.degraded = true;
+      m.retryIn = jobRetryIn;
+    }
     self.postMessage(m, t || []);
   };
   var NBI = null;
@@ -11389,7 +11405,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     LCP = meta.lcPack || 8192;
     towers = realBuildings ? [] : meta.landmarks.filter((l) => l.k === "tower");
     const wf = meta.files && meta.files.walls, swf = meta.files && meta.files.seawalls;
-    const getJ = (f) => f ? fetch(vurl("data/" + f.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+    const getJ = (f) => f ? fetchRetry(vurl("data/" + f.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
     const damf = meta.files && meta.files.dams, solf = meta.files && meta.files.solar, stf = meta.files && meta.files.steeples;
     wallsReady = wf || swf || damf || solf || stf ? Promise.all([getJ(wf), getJ(swf), getJ(damf), getJ(solf), getJ(stf)]).then(([a, b, d, so, sp]) => {
       const l = (a || []).concat(b || []);
@@ -11400,12 +11416,12 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const lf = meta.files && meta.files.lifted;
-    liftedReady = lf ? fetch(vurl("data/" + lf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    liftedReady = lf ? fetchRetry(vurl("data/" + lf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (j) world.setLifted(j);
     }).catch(() => {
     }) : null;
     const sf = meta.files && meta.files.stations;
-    stationsReady = sf ? fetch(vurl("data/" + sf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    stationsReady = sf ? fetchRetry(vurl("data/" + sf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (j) {
         setStations(j);
         world.setHidden(j.hide);
@@ -11413,7 +11429,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const lmf = meta.files && meta.files.landmarks;
-    landmarksReady = lmf ? fetch(vurl("data/" + lmf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    landmarksReady = lmf ? fetchRetry(vurl("data/" + lmf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (j) {
         world.setLandmarks(j.models, j.steeples);
         world.setHidden(j.hide);
@@ -11422,7 +11438,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const xf = meta.files && meta.files.xs;
-    xsReady = xf ? fetch(vurl("data/" + xf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    xsReady = xf ? fetchRetry(vurl("data/" + xf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       const X = /* @__PURE__ */ new Map(), K = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) X.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
@@ -11431,7 +11447,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const nf = meta.files && meta.files.lanes;
-    lanesReady = nf ? fetch(vurl("data/" + nf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    lanesReady = nf ? fetchRetry(vurl("data/" + nf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       const M2 = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M2.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
@@ -11439,7 +11455,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const df = meta.files && meta.files.sides;
-    sidesReady = df ? fetch(vurl("data/" + df.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    sidesReady = df ? fetchRetry(vurl("data/" + df.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       const M2 = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M2.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
@@ -11447,7 +11463,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const hf = meta.files && meta.files.shoulders;
-    shouldersReady = hf ? fetch(vurl("data/" + hf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    shouldersReady = hf ? fetchRetry(vurl("data/" + hf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       const M2 = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M2.set(+k, new Map(Object.entries(v).map(([ri, rec]) => [+ri, rec])));
@@ -11455,7 +11471,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const uf = meta.files && meta.files.surf;
-    surfReady = uf ? fetch(vurl("data/" + uf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    surfReady = uf ? fetchRetry(vurl("data/" + uf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       const M2 = /* @__PURE__ */ new Map();
       for (const [k, v] of Object.entries(j.r)) M2.set(+k, new Map(Object.entries(v).map(([ri, c]) => [+ri, c])));
@@ -11463,19 +11479,19 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }).catch(() => {
     }) : null;
     const rbf = meta.files && meta.files.rbt;
-    rbtReady = rbf ? fetch(vurl("data/" + rbf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    rbtReady = rbf ? fetchRetry(vurl("data/" + rbf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (j) setRoundabouts(j);
     }).catch(() => {
     }) : null;
     const pf = meta.files && meta.files.piers;
-    piersReady = pf ? fetch(vurl("data/" + pf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    piersReady = pf ? fetchRetry(vurl("data/" + pf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       if (!j || !j.r) return;
       setPiers(...piersFromJSON(j));
     }).catch(() => {
     }) : null;
     const empty = () => ({ ways: /* @__PURE__ */ new Map(), structures: /* @__PURE__ */ new Map() });
     const bf = meta.files && meta.files.bridges;
-    nbiReady = bf ? fetch(vurl("data/" + bf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+    nbiReady = bf ? fetchRetry(vurl("data/" + bf.file)).then((r) => r.ok ? r.json() : null).then((j) => {
       NBI = empty();
       if (!j) return;
       for (const [k, v] of Object.entries(j.ways || {})) NBI.ways.set(+k, new Map(v.map((r) => [r[0], r])));
@@ -11520,6 +11536,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }
     return pr;
   }
+  var quadFails = /* @__PURE__ */ new Map();
   function ensureQuad(t, I, J, q) {
     const k = (J * 1024 + I) * 32 + q;
     const c = quadCache[t].get(k);
@@ -11527,12 +11544,16 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       c.last = world.tick;
       return null;
     }
+    const qf = quadFails.get(k);
+    if (qf && Date.now() < qf[1]) return null;
     let pr = quadPending.get(k);
     if (!pr) {
       pr = ensurePack(I, J).then((p) => p.len[q] ? decodePNG(p.buf.slice(p.off[q], p.off[q] + p.len[q])).then((img) => img.data) : null).then((data) => {
         quadCache[t].set(k, { data, last: world.tick });
+        quadFails.delete(k);
       }).catch((err) => {
-        quadCache[t].set(k, { data: null, last: world.tick });
+        const n = (quadFails.has(k) ? quadFails.get(k)[0] : 0) + 1;
+        quadFails.set(k, [n, Date.now() + 1e3 * (n >= 6 ? 120 : Math.min(60, 2 ** n))]);
         postMessage({ type: "warn", message: "land cover: " + String(err && err.message || err) });
       }).finally(() => {
         quadPending.delete(k);
@@ -11557,6 +11578,20 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     const side = t ? 4096 : 2048, res = side / LCQ;
     const x0 = Math.floor(mx / side) * side, y0 = Math.floor(my / side) * side;
     return c.data[Math.floor((my - y0) / res) * LCQ + Math.floor((mx - x0) / res)];
+  }
+  function lcRetryIn(mx0, my0, s, t) {
+    const side = t ? 4096 : 2048, per = LCP / side, now = Date.now();
+    let r = 0;
+    for (let gy = Math.floor(my0 / side); gy <= Math.floor((my0 + s - 1e-6) / side); gy++) for (let gx = Math.floor(mx0 / side); gx <= Math.floor((mx0 + s - 1e-6) / side); gx++) {
+      const I = Math.floor(gx / per), J = Math.floor(gy / per);
+      if (!lcPacks.has(J * 1024 + I)) continue;
+      const qx = gx - I * per, qy = gy - J * per, f = quadFails.get((J * 1024 + I) * 32 + (t ? 16 + qx + 2 * qy : qx + 4 * qy));
+      if (f && !quadCache[t].has((J * 1024 + I) * 32 + (t ? 16 + qx + 2 * qy : qx + 4 * qy))) {
+        const w = Math.max(1, f[1] - now);
+        r = r ? Math.min(r, w) : w;
+      }
+    }
+    return r;
   }
   function lcPromises(mx0, my0, s, t) {
     const out = [], side = t ? 4096 : 2048, per = LCP / side;
@@ -11611,12 +11646,19 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     }
     if (missing.length) {
       const n = reg.partial ? reg.partial.n + 1 : 1;
-      reg.partial = n >= 6 ? null : { which: missing, n, next: Date.now() + 1e3 * Math.min(60, 2 ** n) };
+      reg.partial = { which: missing, n: Math.min(n, 6), next: Date.now() + 1e3 * (n >= 6 ? 120 : Math.min(60, 2 ** n)) };
     } else reg.partial = null;
   }
   function ensureRegion(rx, ry) {
     const k = regionKey(rx, ry);
-    if (world.regions.has(k) || !world.have.has(k)) return null;
+    if (world.regions.has(k)) {
+      const g = givenUp.get(k);
+      if (g === void 0 || Date.now() < g) return null;
+      world.regions.delete(k);
+      givenUp.delete(k);
+      regionFails.set(k, { n: 5, next: 0 });
+    }
+    if (!world.have.has(k)) return null;
     const f = regionFails.get(k);
     if (f && Date.now() < f.next) return null;
     let pr = pending.get(k);
@@ -11641,10 +11683,13 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
           await readParts(reg, rx, ry, parts, got);
           world.addRegion(rx, ry, reg);
           regionFails.delete(k);
+          givenUp.delete(k);
         } catch (err) {
-          const n = (f ? f.n : 0) + 1;
-          if (n >= 6) world.addRegion(rx, ry, EMPTY_REGION);
-          else regionFails.set(k, { n, next: Date.now() + 1e3 * Math.min(60, 2 ** n) });
+          const n = (regionFails.get(k) || f ? (regionFails.get(k) || f).n : 0) + 1;
+          if (n >= 6) {
+            world.addRegion(rx, ry, EMPTY_REGION);
+            givenUp.set(k, Date.now() + 12e4);
+          } else regionFails.set(k, { n, next: Date.now() + 1e3 * Math.min(60, 2 ** n) });
           postMessage({ type: "warn", message: String(err && err.message || err) });
         }
         pending.delete(k);
@@ -12895,7 +12940,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
         return;
       }
       world.tick++;
-      jobDegraded = false;
+      let deg = false, retry = 0;
       if (m.type === "scatter" || m.level >= 5) {
         const s2 = ROOT / (1 << m.level);
         const rx = Math.floor((m.ix + 0.5) * s2 / RS2), ry = Math.floor((m.iy + 0.5) * s2 / RS2), k = regionKey(rx, ry);
@@ -12903,22 +12948,34 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
         if (pr) await pr;
         const reg = world.regions.get(k);
         if (reg && reg.partial && Date.now() >= reg.partial.next) await readParts(reg, rx, ry, reg.partial.which);
-        jobDegraded = world.have.has(k) && (!reg || !!reg.partial);
+        const gu = givenUp.get(k), rf = regionFails.get(k), now = Date.now();
+        deg = world.have.has(k) && (!reg || !!reg.partial || gu !== void 0);
+        retry = Math.max(0, gu !== void 0 ? gu - now : reg && reg.partial ? reg.partial.next - now : rf ? rf.next - now : 0);
       }
       const s = ROOT / (1 << m.level);
+      const lcMiss = (mx0, my0, sz, t) => {
+        const r = lcRetryIn(mx0, my0, sz, t);
+        if (r) {
+          retry = deg ? Math.min(retry, r) : r;
+          deg = true;
+        }
+      };
       if (m.type === "chunk" && m.level >= 6 && lcPacks.size) {
         for (let tries = 0; tries < 4; tries++) {
           const prs = lcPromises(m.ix * s, m.iy * s, s, m.level >= 7 ? 0 : 1);
           if (!prs.length) break;
           await Promise.all(prs);
         }
+        lcMiss(m.ix * s, m.iy * s, s, m.level >= 7 ? 0 : 1);
       }
       if (m.type === "scatter" && (m.kind === "houses" || m.kind === "trees" || m.kind === "ftrees" || m.kind === "under" || m.kind === "grass" || m.kind === "corn" || m.kind === "streets" || m.kind === "kerbs") && lcPacks.size) {
+        const pad = m.kind === "houses" ? 40 : 0;
         for (let tries = 0; tries < 4; tries++) {
-          const pad = m.kind === "houses" ? 40 : 0, prs = lcPromises(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
+          const prs = lcPromises(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
           if (!prs.length) break;
           await Promise.all(prs);
         }
+        if (lcPacks.size) lcMiss(m.ix * s - pad, m.iy * s - pad, s + 2 * pad, 0);
       }
       if (m.type === "scatter" && m.kind === "decks" && nbiReady) await nbiReady;
       if (m.type === "scatter" && m.kind === "decks" && piersReady) await piersReady;
@@ -12931,6 +12988,8 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (surfReady) await surfReady;
       if (sidesReady) await sidesReady;
       if (shouldersReady) await shouldersReady;
+      jobDegraded = deg;
+      jobRetryIn = retry;
       world.pinned = m.type === "scatter" || m.level >= 5 ? world.regionAt((m.ix + 0.5) * s, (m.iy + 0.5) * s) || EMPTY_REGION : EMPTY_REGION;
       if (m.type === "chunk") genChunk(m);
       else if (m.type === "scatter") genScatter(m);

@@ -15250,6 +15250,17 @@ void main() {
     const h = VERSIONS && VERSIONS[path];
     return h ? path + "?h=" + h : path;
   }
+  async function fetchRetry(url, opts) {
+    for (let i = 0; ; i++) {
+      try {
+        const r = await fetch(url, opts);
+        if (r.ok || i >= 4 || r.status < 500 && r.status !== 408 && r.status !== 429) return r;
+      } catch (e) {
+        if (i >= 4) throw e;
+      }
+      await new Promise((res) => setTimeout(res, 500 * 2 ** i));
+    }
+  }
   var WALL_GAP = 0.9;
   var TUN_H = 5.6;
   var DECKS = false;
@@ -21939,7 +21950,7 @@ void main() {
         this.loading++;
         const r = { rx: rx2, ry: ry2, chunks: null };
         this.regions.set(key2, r);
-        fetch(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".bin")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? inflate(b) : null).then((u8) => {
+        fetchRetry(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".bin")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? inflate(b) : null).then((u8) => {
           if (u8 && this.regions.get(key2) === r) this.parse(r, u8);
         }).catch((e) => console.warn("far buildings " + rx2 + "_" + ry2 + " unavailable:", e)).finally(() => {
           this.loading--;
@@ -22561,7 +22572,7 @@ void main() {
       c.hmin = m.hmin;
       c.hmax = m.hmax;
       c.sea = m.sea;
-      if (m.degraded) c.redoAt = performance.now() + 5e3;
+      if (m.degraded) c.redoAt = performance.now() + Math.max(5e3, (m.retryIn || 0) + 500);
     }
     request(key2, level, ix2, iy2, prio) {
       this.chunks.set(key2, { state: "pending", level, ix: ix2, iy: iy2, last: this.frame, prio });
@@ -23675,7 +23686,7 @@ void main() {
       const t = this.scatter.get(m.key);
       if (!t) return;
       t.state = "ready";
-      if (m.degraded) t.redoAt = performance.now() + 5e3;
+      if (m.degraded) t.redoAt = performance.now() + Math.max(5e3, (m.retryIn || 0) + 500);
       const th = m.my / R, c = Math.cos(th), s30 = Math.sin(th);
       const basis = new Ht().set(1, 0, 0, 0, 0, c, -s30, 0, 0, s30, c, 0, 0, 0, 0, 1);
       if (m.kind === "houses" || m.kind === "decks") {
@@ -28126,7 +28137,7 @@ void main() {
     }
     load() {
       if (this.loading) return this.loading;
-      this.loading = fetch(vurl("data/dunkin.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
+      this.loading = fetchRetry(vurl("data/dunkin.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
         if (!d || !d.pts || !d.pts.length) return false;
         const w = this.game.world, n = d.pts.length, pos = new Float32Array(n * 3), seed = new Float32Array(n), p = new Float64Array(3);
         d.pts.forEach(([mx2, my2], i) => {
@@ -28237,7 +28248,7 @@ void main() {
     load() {
       if (!this.loadingData) {
         const F = this.g.meta.files && this.g.meta.files.radio;
-        this.loadingData = !F ? Promise.resolve(null) : fetch(vurl("data/" + F.file)).then((r) => r.ok ? r.json() : null).then((j) => {
+        this.loadingData = !F ? Promise.resolve(null) : fetchRetry(vurl("data/" + F.file)).then((r) => r.ok ? r.json() : null).then((j) => {
           if (!j) return null;
           j.tileSet = new Set(j.tiles);
           j.byFreq = { FM: /* @__PURE__ */ new Map(), AM: /* @__PURE__ */ new Map() };
@@ -28261,7 +28272,7 @@ void main() {
       }
       if (!this.data || !this.data.tileSet.has(rk) || this.tileLoads.has(rk)) return null;
       const rx2 = rk % RNX, ry2 = Math.floor(rk / RNX);
-      this.tileLoads.set(rk, fetch(vurl("data/radio/" + rx2 + "_" + ry2 + ".png")).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+      this.tileLoads.set(rk, fetchRetry(vurl("data/radio/" + rx2 + "_" + ry2 + ".png")).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
         if (!img) return;
         const u8 = img.data, W = img.w, dv2 = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
         if (W !== NC || u8[0] !== 82 || u8[1] !== 68 || u8[2] !== 79 || u8[3] !== 51) return;
@@ -28815,7 +28826,7 @@ void main() {
       this.ready = !!this.dir && this.R > 0;
       const G = game2.meta.files && game2.meta.files.glow;
       if (G) {
-        fetch(vurl("data/" + G.file)).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+        fetchRetry(vurl("data/" + G.file)).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
           if (!img || img.w !== G.w || img.h !== G.h) return;
           const t2 = new an(img.data, img.w, img.h, bi, cn);
           t2.wrapS = rn;
@@ -28878,7 +28889,7 @@ void main() {
         this.loading++;
         const r = { rx: rx2, ry: ry2, pts: null };
         this.regions.set(key2, r);
-        fetch(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".png")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
+        fetchRetry(vurl("data/" + this.dir + "/" + rx2 + "_" + ry2 + ".png")).then((res) => res.ok ? res.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((img) => {
           if (img && this.regions.get(key2) === r) this.build(r, img.data);
         }).catch(() => {
         }).finally(() => {
@@ -29017,7 +29028,7 @@ void main() {
     }
     load() {
       if (this.loading) return this.loading;
-      this.loading = fetch(vurl("data/lights.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
+      this.loading = fetchRetry(vurl("data/lights.json")).then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => {
         if (!d || !d.lights) return false;
         this.build(d);
         return true;
@@ -29347,8 +29358,8 @@ void main() {
       if (this.loading) return this.loading;
       if (!q.skyFar || !g.realBuildings || !g.terrain.bldGeo) return this.loading = Promise.resolve(false);
       const lmf = g.meta.files && g.meta.files.landmarks;
-      const hid = lmf ? fetch(vurl("data/" + lmf.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
-      this.loading = Promise.all([fetch(vurl("data/skyline.png")).then((r) => r.ok ? r.arrayBuffer() : null), hid]).then(([b, j]) => {
+      const hid = lmf ? fetchRetry(vurl("data/" + lmf.file)).then((r) => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+      this.loading = Promise.all([fetchRetry(vurl("data/skyline.png")).then((r) => r.ok ? r.arrayBuffer() : null), hid]).then(([b, j]) => {
         this.hide = /* @__PURE__ */ new Map();
         for (const e of j && j.hide || []) {
           if (e.length < 5) continue;
@@ -29611,7 +29622,7 @@ void main() {
         defines: Object.assign({ COVER: 1 }, t.defines),
         uniforms: Object.assign({}, game2.U, { uKind: { value: 0 }, uHouseFade: t.deckMat.uniforms.uHouseFade, uFDk: this.U.uFDk })
       });
-      fetch(vurl("data/" + F.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? inflate2(b) : null).then((u8) => {
+      fetchRetry(vurl("data/" + F.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? inflate2(b) : null).then((u8) => {
         if (u8) this.parse(u8);
       }).catch((e) => console.warn("far bridges unavailable:", e));
     }
@@ -29890,7 +29901,7 @@ void main() {
       const g = this.game, t = g.terrain;
       if (this.loading) return this.loading;
       if (!t.lmGeos || !g.meta.files || !g.meta.files.structures) return this.loading = Promise.resolve(false);
-      this.loading = fetch(vurl("data/" + g.meta.files.structures.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((p) => {
+      this.loading = fetchRetry(vurl("data/" + g.meta.files.structures.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => b ? decodePNG(b) : null).then((p) => {
         if (!p) return false;
         this.build(p.data);
         return true;
@@ -30124,7 +30135,7 @@ void main() {
       const A = F[key2];
       if (!A) return;
       (async () => {
-        const res = await fetch(vurl("data/" + A.file));
+        const res = await fetchRetry(vurl("data/" + A.file));
         if (!res.ok) throw new Error(A.file + " " + res.status);
         const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
         const t = new Ae(bmp);
@@ -30221,7 +30232,7 @@ void main() {
         let blob;
         if (L2.pack) blob = await this.piece(L2.dir, k);
         else {
-          const res = await fetch(vurl("data/" + L2.dir + "/" + k + ".webp"));
+          const res = await fetchRetry(vurl("data/" + L2.dir + "/" + k + ".webp"));
           if (!res.ok) throw new Error(k + " " + res.status);
           blob = await res.blob();
         }
@@ -30244,7 +30255,7 @@ void main() {
       const [rk, off, len] = this.pieces.get(dir + "/" + k), url = vurl("data/" + dir + "/" + rk + ".bin");
       if (this.ranges === void 0 && this.probe) await this.probe;
       if (this.ranges !== false && !this.packs.has(url)) {
-        const p = fetch(url, { headers: { Range: "bytes=" + off + "-" + (off + len - 1) } });
+        const p = fetchRetry(url, { headers: { Range: "bytes=" + off + "-" + (off + len - 1) } });
         if (this.ranges === void 0) this.probe = p.then(() => {
         }, () => {
         });
@@ -30258,7 +30269,7 @@ void main() {
         if (res.status === 200 && !this.packs.has(url)) this.keep(url, res.arrayBuffer());
         else if (res.body) res.body.cancel();
       }
-      if (!this.packs.has(url)) this.keep(url, fetch(url).then((r) => {
+      if (!this.packs.has(url)) this.keep(url, fetchRetry(url).then((r) => {
         if (!r.ok) throw new Error(rk + " " + r.status);
         return r.arrayBuffer();
       }));
@@ -30402,12 +30413,12 @@ void main() {
       setLoad("Fetching the Commonwealth", 0.02);
       let versions = null;
       try {
-        const mr2 = await fetch("data/manifest.json", { cache: "no-cache" });
+        const mr2 = await fetchRetry("data/manifest.json", { cache: "no-cache" });
         if (mr2.ok) versions = await mr2.json();
       } catch (e) {
       }
       setVersions(versions);
-      const meta = await (await fetch(vurl("data/world.json"))).json();
+      const meta = await (await fetchRetry(vurl("data/world.json"))).json();
       meta.versions = versions;
       if (params.get("measured") === "0" && meta.tiles) {
         delete meta.tiles.measured;
@@ -30433,7 +30444,7 @@ void main() {
       let got = 0;
       const png = {};
       await Promise.all(want.map(async (k) => {
-        const res = await fetch(vurl("data/" + F[k].file));
+        const res = await fetchRetry(vurl("data/" + F[k].file));
         if (!res.ok) throw new Error("could not load " + F[k].file + " (" + res.status + ")");
         const buf = await res.arrayBuffer();
         got += F[k].bytes;
@@ -30456,7 +30467,7 @@ void main() {
         this.loadRegion(rx2, ry2);
       };
       if (F.walls || F.seawalls) {
-        const getJ = (f2) => f2 ? fetch(vurl("data/" + f2.file)).then((r) => r.json()).catch(() => null) : Promise.resolve(null);
+        const getJ = (f2) => f2 ? fetchRetry(vurl("data/" + f2.file)).then((r) => r.json()).catch(() => null) : Promise.resolve(null);
         Promise.all([getJ(F.walls), getJ(F.seawalls)]).then(([a, b]) => {
           const l = (a || []).concat(b || []);
           if (l.length) {
@@ -30466,42 +30477,42 @@ void main() {
         }).catch(() => {
         });
       }
-      if (F.dams) fetch(vurl("data/" + F.dams.file)).then((r) => r.json()).then((d) => {
+      if (F.dams) fetchRetry(vurl("data/" + F.dams.file)).then((r) => r.json()).then((d) => {
         if (d && d.length) this.world.setDams(d);
       }).catch(() => {
       });
-      if (F.lifted) fetch(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
+      if (F.lifted) fetchRetry(vurl("data/" + F.lifted.file)).then((r) => r.json()).then((j) => {
         this.world.setLifted(j);
         if (this.player) this.player.bCache = null;
       }).catch(() => {
       });
-      if (F.xs) fetch(vurl("data/" + F.xs.file)).then((r) => r.json()).then((j) => {
+      if (F.xs) fetchRetry(vurl("data/" + F.xs.file)).then((r) => r.json()).then((j) => {
         const X = /* @__PURE__ */ new Map(), K = /* @__PURE__ */ new Map();
         for (const [k, v] of Object.entries(j.r || {})) X.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
         for (const [k, v] of Object.entries(j.k || {})) K.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
         setXS(X, K);
       }).catch(() => {
       });
-      this.lanesReady = F.lanes ? fetch(vurl("data/" + F.lanes.file)).then((r) => r.json()).then((j) => {
+      this.lanesReady = F.lanes ? fetchRetry(vurl("data/" + F.lanes.file)).then((r) => r.json()).then((j) => {
         const M = /* @__PURE__ */ new Map();
         for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
         setLanes(M);
       }).catch(() => {
       }) : null;
-      if (F.shoulders) fetch(vurl("data/" + F.shoulders.file)).then((r) => r.json()).then((j) => {
+      if (F.shoulders) fetchRetry(vurl("data/" + F.shoulders.file)).then((r) => r.json()).then((j) => {
         const M = /* @__PURE__ */ new Map();
         for (const [k, v] of Object.entries(j.r || {})) M.set(+k, new Map(Object.entries(v).map(([ri2, rec]) => [+ri2, rec])));
         setShoulders(M);
       }).catch(() => {
       });
-      if (F.aadt) fetch(vurl("data/" + F.aadt.file)).then((r) => r.json()).then(setAadt).catch(() => {
+      if (F.aadt) fetchRetry(vurl("data/" + F.aadt.file)).then((r) => r.json()).then(setAadt).catch(() => {
       });
-      if (F.piers) fetch(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
+      if (F.piers) fetchRetry(vurl("data/" + F.piers.file)).then((r) => r.json()).then((j) => {
         setPiers(...piersFromJSON(j));
       }).catch(() => {
       });
       this.names = null;
-      if (F.names) fetch(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
+      if (F.names) fetchRetry(vurl("data/" + F.names.file)).then((r) => r.json()).then((j) => {
         this.names = j;
       }).catch(() => {
       });
@@ -30631,10 +30642,10 @@ void main() {
       const nTraffic = params.has("traffic") ? +params.get("traffic") : this.quality.traffic || 0;
       this.traffic = this.world.have.size && nTraffic > 0 ? new Traffic(this, nTraffic) : null;
       const nBoats = params.has("boats") ? +params.get("boats") : this.quality.boats || 0;
-      if (nBoats > 0) fetch(vurl("data/ferries.json")).then((r) => r.ok ? r.json() : []).catch(() => []).then((routes) => {
+      if (nBoats > 0) fetchRetry(vurl("data/ferries.json")).then((r) => r.ok ? r.json() : []).catch(() => []).then((routes) => {
         this.boats = new Boats(this, nBoats, routes);
       });
-      if (F.trains && params.get("trains") !== "0") fetch(vurl("data/" + F.trains.file)).then((r) => r.ok ? r.json() : null).catch(() => null).then((j) => {
+      if (F.trains && params.get("trains") !== "0") fetchRetry(vurl("data/" + F.trains.file)).then((r) => r.ok ? r.json() : null).catch(() => null).then((j) => {
         if (j) this.trains = new Trains(this, j);
       });
       this.webster = { state: "idle", meshes: [] };
@@ -30949,7 +30960,7 @@ void main() {
         const ctx = cv2.getContext("2d", { willReadFrequently: true });
         const data = new Uint8Array(S2 * S2 * 4 * names.length);
         for (let i = 0; i < names.length; i++) {
-          const res = await fetch(vurl("data/mat/" + names[i] + ".webp"));
+          const res = await fetchRetry(vurl("data/mat/" + names[i] + ".webp"));
           if (!res.ok) throw new Error(names[i] + " " + res.status);
           const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
           ctx.clearRect(0, 0, S2, S2);
@@ -30991,7 +31002,7 @@ void main() {
       };
       this.U.uGndTex = { value: mkG(gph, 1) };
       (async () => {
-        let res = await fetch(vurl("data/mat/foliage2.webp"));
+        let res = await fetchRetry(vurl("data/mat/foliage2.webp"));
         if (!res.ok) throw new Error("foliage " + res.status);
         const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
         const t = new Ae(bmp);
@@ -31005,7 +31016,7 @@ void main() {
         t.needsUpdate = true;
         this.U.uLeafTex.value = t;
         this.leafReady = true;
-        res = await fetch(vurl("data/mat/corn.webp"));
+        res = await fetchRetry(vurl("data/mat/corn.webp"));
         if (res.ok) {
           const cb = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none", imageOrientation: "flipY" });
           const ct = new Ae(cb);
@@ -31020,7 +31031,7 @@ void main() {
           ct.needsUpdate = true;
           this.U.uCornTex.value = ct;
         }
-        res = await fetch(vurl("data/mat/ground.png"));
+        res = await fetchRetry(vurl("data/mat/ground.png"));
         if (!res.ok) throw new Error("ground " + res.status);
         const gb = await createImageBitmap(await res.blob(), { colorSpaceConversion: "none", premultiplyAlpha: "none" });
         const G = gb.height, cv2 = document.createElement("canvas");
@@ -31050,7 +31061,7 @@ void main() {
       if (!pr2) {
         pr2 = (async () => {
           try {
-            const res = await fetch(vurl("data/r2/" + rx2 + "_" + ry2 + ".png"));
+            const res = await fetchRetry(vurl("data/r2/" + rx2 + "_" + ry2 + ".png"));
             if (!res.ok) throw new Error("region " + rx2 + "_" + ry2 + " " + res.status);
             const png = await decodePNG(await res.arrayBuffer());
             const d = png.data;
@@ -31097,7 +31108,7 @@ void main() {
         const missing = [];
         for (const dir of which) {
           try {
-            const r = await fetch(vurl("data/" + dir + "/" + rx2 + "_" + ry2 + ".png"));
+            const r = await fetchRetry(vurl("data/" + dir + "/" + rx2 + "_" + ry2 + ".png"));
             if (!r.ok) throw new Error(dir + " " + rx2 + "_" + ry2 + " " + r.status);
             const p = await decodePNG(await r.arrayBuffer());
             if (dir === "g3") reg.ground = parseGround(p.data);
@@ -31368,7 +31379,7 @@ void main() {
       wbs.state = "loading";
       try {
         const F = this.meta.files.websterOverview;
-        const res = await fetch(vurl("data/" + F.file));
+        const res = await fetchRetry(vurl("data/" + F.file));
         if (!res.ok) throw new Error("webster overview " + res.status);
         const png = await decodePNG(await res.arrayBuffer());
         const raw = png.data.buffer.slice(0, F.length);
