@@ -18039,6 +18039,54 @@ float vegCover() {
   return vVeg.x >= 0.999 ? 1.0 : clamp(vVeg.x + (fract(vegIgn(gl_FragCoord.xy) + vVeg.y) - 0.5) * 0.24, 0.0, 1.0);
 }`
   );
+  var AUTUMN = (
+    /* glsl */
+    `
+uniform float uAutumn;
+vec3 autumnPeak(int grp, float r2) {
+  if (grp == 0) return r2 < 0.55 ? vec3(0.180, 0.026, 0.013) : vec3(0.190, 0.068, 0.011);    // red maple; sugar maple
+  if (grp == 1) return r2 < 0.25 ? vec3(0.120, 0.024, 0.013) : vec3(0.086, 0.034, 0.013);    // scarlet oak; red and white oak
+  if (grp == 2) return vec3(0.165, 0.128, 0.020);                                          // birch, aspen
+  if (grp == 7) return r2 < 0.35 ? vec3(0.160, 0.022, 0.020) : vec3(0.120, 0.080, 0.022);    // burning bush, sumac; the rest
+  return r2 < 0.3 ? vec3(0.086, 0.042, 0.036) : vec3(0.150, 0.102, 0.020);                 // white ash; linden, elm, hickory
+}
+// the group a tree turns as (-1: it stays green): its species (species.js: 0 maple, 1 oak, 2 birch, 3 shade tree, 4 to
+// 6 the pines and hemlock, 7 shrub), or for a stand's tree of no recorded kind (sp -1) one by the state's mix, from r
+int autumnGroup(int sp, float conif, float r) {
+  if (sp >= 4 && sp <= 6) return -1;
+  if (sp >= 0) return sp;
+  if (conif > 0.5) return -1;
+  return r < 0.30 ? 0 : r < 0.42 ? 2 : r < 0.62 ? 3 : r < 0.94 ? 1 : -1;
+}
+// how far a tree of group grp has come: x 0 green to 1 at its colour, y how much of its leaves it has dropped
+vec2 autumnStage(int grp, float r1, float elev) {
+  float t0 = grp == 0 ? 0.25 : grp == 2 ? 0.35 : grp == 1 ? 0.60 : grp == 7 ? 0.30 : 0.40;
+  float p = uAutumn + 0.22 * smoothstep(100.0, 700.0, elev) + (r1 - 0.5) * 0.24;
+  return vec2(smoothstep(t0, t0 + 0.35, p), grp == 1 ? 0.0 : smoothstep(t0 + 0.55, t0 + 0.9, p));
+}`
+  );
+  var AUTUMN_WOODS = (
+    /* glsl */
+    `
+// a stretch of broadleaf woods at m (the ground's canopy, too far for the trees themselves) from its summer colour c: a
+// crown's kind and timing from its cell of about 11 m (in the state's mix: red maple and oak most, then the shade trees,
+// birch, a few still green), and where a pixel takes in many crowns (fp, its footprint in m) their mean
+vec3 autumnWoods(vec3 c, vec2 m, float elev, float fp) {
+  vec3 base = c / vec3(0.030, 0.064, 0.018), acc = c * 0.06;
+  acc += 0.30 * mix(c, base * autumnPeak(0, 0.5), autumnStage(0, 0.5, elev).x);
+  acc += 0.12 * mix(c, base * autumnPeak(2, 0.5), autumnStage(2, 0.5, elev).x);
+  acc += 0.20 * mix(c, base * autumnPeak(3, 0.5), autumnStage(3, 0.5, elev).x);
+  acc += 0.32 * mix(c, base * autumnPeak(1, 0.5), autumnStage(1, 0.5, elev).x);
+  float kCell = 1.0 - smoothstep(6.0, 22.0, fp);
+  if (kCell <= 0.0) return acc;
+  vec2 q = m / 11.0 + vec2(vnoise(m / 37.0), vnoise(m / 37.0 + 17.3)) * 1.3;
+  ivec2 cell = ivec2(floor(q));
+  float f = fract(hash2(cell) * 0.7 + vnoise(m / 70.0) * 0.6), r1 = hash2(cell + ivec2(911, 37)), r2 = hash2(cell + ivec2(53, 701));
+  int grp = f < 0.30 ? 0 : f < 0.42 ? 2 : f < 0.62 ? 3 : f < 0.94 ? 1 : -1;
+  vec3 one = grp < 0 ? c : mix(c, base * autumnPeak(grp, r2), autumnStage(grp, r1, elev).x);
+  return mix(acc, one, kCell);
+}`
+  );
   var SHADOW = (
     /* glsl */
     `
@@ -18229,6 +18277,8 @@ precision highp sampler2DArray;
 ${ATMOS}
 ${MIRROR}
 ${NOISE}
+${AUTUMN}
+${AUTUMN_WOODS}
 ${SHADOW}
 ${SPACE}
 ${SURFACE_SHADING}
@@ -18293,6 +18343,14 @@ float band(float x, float c, float w, float aa) { return 1.0 - smoothstep(w - aa
 // A road texel (worker.js: metres right of the centre line, half width, phase in 12.192 m cycles, and the direction
 // the phase grows in, the offset growing to its right; above 6.5 none) carried d metres to a point along its own road:
 // the offset, half width and phase there
+// whether texel i (its road texture R and fourth layer W) is a street crossing the own texel's (Ro, Wo) rather than the
+// same one: different ways (worker.js wearBytes' hash of the way) running more than 30 degrees apart.  Two streets of
+// one width can agree on the offset where they cross, and their lines had been averaged together across the junction
+// (item 31); a way and the next one along the same street, end to end, still blend
+bool crossesOwn(vec4 Ri, vec4 Ro, vec4 Wi, vec4 Wo) {
+  float hi = floor(Wi.b * 255.0 + 0.5), ho = floor(Wo.b * 255.0 + 0.5);
+  return hi != ho && hi > 0.0 && ho > 0.0 && abs(sin(Ri.w - Ro.w)) > 0.5;
+}
 vec3 roadAt(vec4 t, vec2 d) {
   if (t.a > 6.5) return t.rgb;
   vec2 u = vec2(cos(t.a), sin(t.a));
@@ -18526,7 +18584,7 @@ void main() {
     vec2 rf0 = floor(rst), rfr = rst - rf0;
     ivec2 rb = ivec2(rf0), rmx = ivec2(int(uRoadT) - 1);
     vec4 R4[4], K4[4], L4[4];
-    vec4 J4[4];
+    vec4 J4[4], Q4[4];
     vec3 E4[4];
     for (int i = 0; i < 4; i++) {
       ivec2 o = ivec2(i & 1, i >> 1);
@@ -18534,6 +18592,7 @@ void main() {
       K4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 0), 0);
       L4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 1), 0);      // the second layer: tone, eased lane count
       J4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 2), 0);      // the third: the junction field and the street's side
+      Q4[i] = texelFetch(uRoadK, ivec3(clamp(rb + o, ivec2(0), rmx), 3), 0);      // the fourth: passing, the dash stretch, the way
       E4[i] = roadAt(R4[i], (rfr - vec2(o)) * (uSize / (uRoadT - 1.0)));
     }
     vec4 rw4 = vec4((1.0 - rfr.x) * (1.0 - rfr.y), rfr.x * (1.0 - rfr.y), (1.0 - rfr.x) * rfr.y, rfr.x * rfr.y);
@@ -18542,7 +18601,7 @@ void main() {
       float eo = abs(E4[own].x) - E4[own].y;
       bool yo = givesWay(K4[own]);
       for (int i = 0; i < 4; i++) {
-        if (E4[i].y < 0.5 || (abs(E4[i].y - E4[own].y) < 0.15 && abs(E4[i].x - E4[own].x) < 0.5)) continue;
+        if (E4[i].y < 0.5 || (abs(E4[i].y - E4[own].y) < 0.15 && abs(E4[i].x - E4[own].x) < 0.5 && !crossesOwn(R4[i], R4[own], Q4[i], Q4[own]))) continue;
         float ei = abs(E4[i].x) - E4[i].y;
         bool yi = givesWay(K4[i]);
         if (eo >= 0.0 ? ei < eo : (ei < 0.0 && yo && !yi)) { own = i; eo = ei; yo = yi; }
@@ -18550,7 +18609,7 @@ void main() {
     }
     // the fourth layer, the own texel's: where passing is allowed, and which 12.192 m stretch of which road it is in
     // (worker.js wearBytes), so each stretch draws its own wear
-    vec4 W4 = texelFetch(uRoadK, ivec3(clamp(rb + ivec2(own & 1, own >> 1), ivec2(0), rmx), 3), 0);
+    vec4 W4 = Q4[own];
     // (two texels are of one road where, carried to the point, they agree on its offset, and their widths are near:
     // two ways side by side, two tracks, are told apart by the offset, and a highway's width eases along it by a few
     // centimetres a texel where it meets another, worker.js)
@@ -18561,7 +18620,7 @@ void main() {
     vec4 rf = vec4(0.0);
     float nlf = 0.0, nbf = 0.0, ccf = 0.0, tbs = 0.0, tbw = 0.0, rsf = 0.0, lsf = 0.0;
     for (int i = 0; i < 4; i++) {
-      if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5) continue;
+      if (abs(E4[i].y - E4[own].y) >= 0.15 || abs(E4[i].x - E4[own].x) >= 0.5 || crossesOwn(R4[i], R4[own], Q4[i], Q4[own])) continue;
       float wi = rw4[i] + 1e-3, dph = E4[i].z - E4[own].z;
       rf += wi * vec4(E4[i].x, E4[i].y, dph - floor(dph + 0.5), 1.0);
       float fi = L4[i].g > 0.0 ? L4[i].g * 255.0 / 32.0 : float((int(K4[i].r * 255.0 + 0.5) >> 2) & 7);
@@ -18862,7 +18921,9 @@ void main() {
   float conif = uHasCover2 > 0.5 ? cov2.g : clamp(0.22 + 0.4 * smoothstep(380.0, 850.0, h) + 0.45 * cov.b, 0.0, 1.0);
   if (kLc > 0.0) conif = mix(conif, lc == 7 ? 0.95 : lc == 8 ? 0.5 : lc == 10 ? 0.35 : 0.04, kLc);
   float cmix = smoothstep(conif - 0.25, conif + 0.25, mix(0.5, vnoise(m / 37.0), 1.0 - smoothstep(14.0, 37.0, fp)));
-  vec3 canopy = mix(vec3(0.016, 0.036, 0.018), vec3(0.030, 0.064, 0.018), cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
+  vec3 decid = vec3(0.030, 0.064, 0.018);
+  if (uAutumn > 0.0) decid = autumnWoods(decid, m, h, fp);
+  vec3 canopy = mix(vec3(0.016, 0.036, 0.018), decid, cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
   vec3 litter = mix(vec3(0.060, 0.047, 0.027), vec3(0.045, 0.058, 0.022), nB) * (0.8 + 0.4 * nC);
   if (kLc > 0.0) litter = mix(litter, mix(vec3(0.050, 0.036, 0.022), vec3(0.040, 0.044, 0.020), nB) * (0.8 + 0.4 * nC), (lc == 7 ? 1.0 : lc == 8 ? 0.5 : 0.0) * kLc);   // needles under pines
   // from above the treetops the woods are their canopy, with shade in its gaps, not the litter under it
@@ -18991,6 +19052,12 @@ void main() {
   if (uHasAerial > 0.5) {
     kAer = mix(smoothstep(uAerFar.x, uAerFar.y, dist), smoothstep(1500.0, 2600.0, dist), kN);
     land = mix(land, mix(aerF, aerN, kN), kAer);
+    // autumn in the photographs' broadleaf woods: where the ground is woods and green, the summer canopy turned
+    if (uAutumn > 0.0 && kAer > 0.0) {
+      float green = smoothstep(0.0, 0.25, (land.g - max(land.r, land.b)) / max(land.g, 1e-4));
+      float woods = forest * (1.0 - conif) * green * kAer;
+      if (woods > 0.0) land = mix(land, autumnWoods(land, m, h, fp), woods);
+    }
   }
   // wet margin and a pale strand right at the waterline
   land = mix(land, vec3(0.30, 0.27, 0.20), (1.0 - smoothstep(0.0, 14.0, sdf)) * 0.55);
@@ -20695,11 +20762,17 @@ uniform vec2 uLod;
 #ifdef THIN
 uniform vec4 uVegBand;
 #endif
+#ifdef PARKED
+uniform float uParked;     // the share of the kerbside spaces taken just now (main.js; terrain.js SCATTER_VS)
+#endif
 void main() {
   #ifdef BOX
     float keep = aPart > 1.5 ? 1.0 : 0.0;
   #else
     float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
+  #endif
+  #ifdef PARKED
+    if (fract(aInst.x * 7.31 + 0.13) > uParked) keep = 0.0;       // (a car that has driven off casts no shadow)
   #endif
   vec3 pos = position;
   #ifdef SPLIT
@@ -20796,6 +20869,7 @@ bool treeVertex(out vec4 tp, out vec3 sc3, out vec2 veg) {
 ${ATMOS}
 ${TREE_POS}
 attribute vec3 aCol;
+varying float vElev;
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec3 vCol;
@@ -20816,6 +20890,7 @@ void main() {
   // the air between the camera and the tree, and the lamp's light reaching it, change too little across a tree to work
   // out for every pixel of it (a forest close up is many layers of sprays)
   vec3 P = uCam + wp.xyz;
+  vElev = RC - length(P.yz);
   atmosphere(P, vT, vS);
   float sd; vSunE = uSunCol * sunTrans(P, vLd, sd);
   // leaves are lit by their crown's envelope, which scales with the anchors (the inverse transpose); bark by its own
@@ -20828,7 +20903,7 @@ void main() {
   #ifdef GRASS
     vSp = aInst.y;                     // (the grass's kind: worker.js 'grass')
   #else
-    vSp = aInst.z - 1.0;
+    vSp = aInst.z > 0.5 ? aInst.z - 1.0 : -1.0 - aInst.y;     // (a stand's tree of no recorded kind: -1 broadleaf, -2 conifer)
   #endif
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
@@ -20842,7 +20917,9 @@ precision highp int;
 ${ATMOS}
 ${NOISE}
 ${SHADOW}
+${AUTUMN}
 uniform sampler2D uLeafTex;
+varying float vElev;
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec3 vCol;
@@ -20933,6 +21010,15 @@ void main() {
     // far off the atlas blurs toward its average cover, so the cut drops with distance and crowns stay full; a spray
     // seen edge on would be a smear, so it fades out (its face from the slope of the surface across the screen)
     float cut = mix(0.45, 0.16, smoothstep(18.0, 170.0, dist));
+    // autumn: how far this broadleaf has turned and how many leaves it has let go (fewer leaves: a higher cut)
+    vec2 aut = vec2(0.0);
+    int agrp = -1;
+    #if !defined(GRASS) && !defined(CORN)
+      int asp = int(floor(vSp + 0.5));
+      agrp = autumnGroup(max(asp, -1), asp < -1 ? 1.0 : 0.0, fract(vAux * 41.3 + 0.37));
+      if (uAutumn > 0.0 && agrp >= 0) aut = autumnStage(agrp, fract(vAux * 13.37 + 0.21), vElev);
+      cut = mix(cut, 0.95, aut.y * 0.55);
+    #endif
     float edge = abs(dot(normalize(cross(dFdx(vRel), dFdy(vRel))), V));
     #ifdef CORN
       cut = mix(0.97, cut, smoothstep(0.0, 0.04, edge));    // (a row seen along its length is still a row)
@@ -20943,6 +21029,9 @@ void main() {
     cov = clamp((t.a - cut) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0);
     if (cov <= 0.0) discard;
     alb *= t.rgb * mix(vec3(1.10, 1.03, 0.84), vec3(0.88, 0.97, 1.06), vAux);
+    // its own leaves' light and dark kept on its autumn colour; and through the thinning crown, its bare twigs
+    if (aut.x > 0.0) alb = mix(alb, alb / max(vCol, vec3(1e-3)) * autumnPeak(agrp, fract(vAux * 29.71 + 0.67)), aut.x);
+    alb = mix(alb, vec3(0.060, 0.052, 0.046), aut.y * 0.35);
   } else {
     alb *= bark(-vUV.x - 1.0, vUV.y);
   }
@@ -23972,6 +24061,9 @@ void main() {
     `
 attribute vec3 aCol;
 attribute float aPart;
+#if defined(CAR) && defined(COVER)
+uniform float uParked;     // the share of the kerbside spaces taken just now (main.js)
+#endif
 attribute vec4 aInst;      // trees: tint, species.  buildings: seed, roof rise (m), cladding, class
 #ifdef BLD
 attribute vec4 aRoof;      // the roof's colour from the aerial (sRGB), w 2 where there is one
@@ -24049,6 +24141,7 @@ vec3 farPhoto(vec2 m, float conifer) {
 ${PALETTE}
 #ifdef FOLIAGE
 ${SP_GLSL}
+${AUTUMN}
 #endif
 varying vec3 vRel;
 varying vec3 vNor;
@@ -24218,6 +24311,18 @@ void main() {
   #endif
   #ifdef FOLIAGE
     if (aPart < 1.5) vCol *= SP_TINT[int(aInst.z + 0.5)];     // ... and in its colour
+    // autumn (shaders.js AUTUMN): a broadleaf crown takes its kind's colour as far as it has turned, at its own
+    // brightness, and greys toward its bare twigs as it drops
+    if (uAutumn > 0.0 && aPart < 1.5) {
+      int ag = autumnGroup(int(aInst.z + 0.5) - 1, aInst.y, fract(aInst.x * 41.3 + 0.37));    // (aInst.z: species + 1)
+      if (ag >= 0) {
+        vec3 Pa = uCam + (modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0))).xyz;
+        vec2 st = autumnStage(ag, fract(aInst.x * 13.37 + 0.21), ${R.toFixed(1)} - length(Pa.yz));
+        float lum = dot(vCol, vec3(0.2126, 0.7152, 0.0722)) / 0.0749;
+        vCol = mix(vCol, autumnPeak(ag, fract(aInst.x * 29.71 + 0.67)) * lum, st.x);
+        vCol = mix(vCol, vec3(0.060, 0.052, 0.046) * lum, st.y * 0.35);
+      }
+    }
     #ifndef STAND
       // one side of a crown a little lighter than another (where the vertex is in it, and the tree's seed), so a
       // crown reads as clumps of leaves, not one even mound
@@ -24240,6 +24345,11 @@ void main() {
     else if (aCol.r < -2.5) { vCol = vec3(0.30, 0.02, 0.02); vStyle = 3.0; }
     else if (aCol.r < -1.5) { vCol = vec3(0.55, 0.55, 0.50); vStyle = 2.0; }
     else if (aCol.r < -0.5) { vCol = carPaint(aInst.x); vStyle = 1.0; }
+    #ifdef COVER
+      // a parked car is there for a while, not for good (item 130): each space along the kerb (street.js) is taken or
+      // free by the hour, more of them overnight when the street's people are home than in the working day
+      if (fract(aInst.x * 7.31 + 0.13) > uParked) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    #endif
   #endif
   #ifdef SIGNS
     // a signal's lenses: -6 red, -7 yellow, -8 green (LIT_FS lights the one its cycle is on)
@@ -26286,7 +26396,7 @@ void main() {
       let q = "?at=" + r1(c.mx) + "," + r1(c.my) + "," + Math.round(hdg) + "&h=" + c.h.toFixed(2);
       if (fly) q += "&fly=" + [r1(f.mx), r1(f.my), r1(f.alt), d1(f.yaw), d1(f.pitch)].join(",");
       else q += "&cam=" + [p.cam.kind, d1(p.cam.yaw), d1(p.cam.pitch)].join(",");
-      q += "&t=" + g.sky.hours.toFixed(2) + (g.sky.running ? "" : "&run=0") + "&q=" + g.qualityName;
+      q += "&t=" + g.sky.hours.toFixed(2) + (g.sky.running ? "" : "&run=0") + (g.season ? "&season=" + g.season : "") + "&q=" + g.qualityName;
       const url = location.origin + location.pathname + q;
       const ti2 = w.townAt(mx2, my2), t = ti2 ? m.towns[ti2 - 1] : null;
       const [lon, lat] = lonLat(mx2 + m.E0, my2 + m.N0);
@@ -26458,6 +26568,10 @@ void main() {
       $("b-time").onclick = () => {
         g.sky.hours = (g.sky.hours + 2) % 24;
         this.sayTime();
+      };
+      $("b-season").onclick = () => {
+        g.setSeason(((g.season || 0) + 1) % 4);
+        this.toast(["Summer", "Early October: the red maples turning", "Mid-October: the maples and birches at their colour", "Late October: the oaks russet, the maples thinning"][g.season]);
       };
       $("b-labels").onclick = () => this.toggleLabels();
       $("b-lines").onclick = () => this.toggleLines();
@@ -30291,6 +30405,10 @@ void main() {
   };
 
   // src/main.js
+  var smooth01 = (x) => {
+    const t = Math.min(1, Math.max(0, x));
+    return t * t * (3 - 2 * t);
+  };
   var $2 = (id2) => document.getElementById(id2);
   var QUAL = {
     low: { height: "heightLo", aerial: "aerialLo", chunkN: 24, lodK: 1.5, maxLevel: 8, atmosMid: 3, atmosFar: 4, sdf: "sdfLo", pr: 1, scatter: true, treeR: 360, clumpR: 1400, bldR: 800, deckR: 1600, houseR: 230, leafR: 0, streetR: 0, signR: 150, powerR: 2200, traffic: 16, boats: 10, matSize: 512, shadow: 0, chunkCache: 380, workers: 1, skyNear: 0, skyFar: 0.5, lightsR: 12e3, farR: 0 },
@@ -30538,6 +30656,8 @@ void main() {
         uSunPos: { value: new C() },
         uSunCol: { value: new C(1, 1, 1) },
         uPxK: { value: 1e-3 },
+        uAutumn: { value: 0 },
+        uParked: { value: 1 },
         uAmbRad: { value: new C() },
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
@@ -30698,6 +30818,7 @@ void main() {
         this.sky.running = saved.run;
       }
       if (params.get("t")) this.sky.hours = +params.get("t");
+      if (params.get("season")) this.setSeason(+params.get("season") | 0);
       if (params.get("run") === "0") this.sky.running = false;
       this.player.mode = "fly";
       const f = this.player.fly;
@@ -30762,7 +30883,8 @@ void main() {
       this.U.uShadowInfo2.value.set(1 / S2, Rs22, 0);
       const mk = (vs2) => new Rn({ vertexShader: vs2, fragmentShader: DEPTH_FS, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
-      this.depthMat.poles = this.depthMat.cars = this.depthMat.trees;
+      this.depthMat.poles = this.depthMat.trees;
+      this.depthMat.cars = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { PARKED: 1 }, uniforms: { uParked: this.U.uParked }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.decks = this.depthMat.houses;
       this.depthMat.rails = mk(DEPTH_RAILS_VS);
       this.depthMat.trains = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { TRAIN: 1 }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
@@ -31135,6 +31257,12 @@ void main() {
       return pr2;
     }
     // test hook: park a free camera somewhere (map metres, altitude above sea level, degrees)
+    // the season (item 125; the Season button): 0 summer, then the first week, the middle and the end of October, which
+    // the trees and the woods' canopy take as uAutumn (shaders.js AUTUMN)
+    setSeason(i) {
+      this.season = Math.max(0, Math.min(3, i | 0));
+      this.U.uAutumn.value = [0, 0.4, 0.7, 1][this.season];
+    }
     debugView(o) {
       if (!this.started) {
         this.started = true;
@@ -31537,6 +31665,10 @@ void main() {
         U.uTime.value = this.time;
       }
       U.uPxK.value = 2 * Math.tan(this.camera.fov * Math.PI / 360) / Math.max(this.renderer.domElement.height, 1);
+      {
+        const hr2 = this.sky.hours, day = smooth01((hr2 - 6) / 3) * (1 - smooth01((hr2 - 16) / 5));
+        U.uParked.value = 1 - 0.33 * day;
+      }
       const lum = this.sky.update(this.paused && !this.title ? 0 : dt, camC);
       let target = clamp2(1.25 / (Math.pow(lum, 0.62) + 0.14), 0.9, 8);
       const cm2 = p.camMap, above = cm2[2] - this.groundUnderCam;
