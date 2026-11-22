@@ -18322,6 +18322,7 @@ uniform sampler2D uGlow;     // past them, the same lights summed over each 92 m
 uniform float uHasGlow;
 uniform float uGlowK;        // one building's point of light, far off, as nightlights.js draws it
 uniform vec3 uSkyRefl;
+uniform float uWet;              // after rain (main.js; the Weather button)
 uniform float uPlants3D;     // 1 where corn and grass are drawn in 3D near the camera (terrain.js cornMat, grassMat)
 uniform sampler2DArray uAerNear; // nearer the camera (aerial.js), layer 0: the 2 x 2 regions round it at 5.75 m, region
                              // (rx, ry) in quarter (rx, ry) mod 2; layer 1: the 4 x 4 tiles of 2.95 km at 2.88 m, tile
@@ -19144,6 +19145,19 @@ void main() {
     float skyOpen = mix(mix(a00, a10, fq.x), mix(a01, a11, fq.x), fq.y);
     E -= ambient(N, up) * (0.75 * (1.0 - skyOpen) * (1.0 - smoothstep(450.0, 650.0, dist)) * (1.0 - water));
   }
+  // after rain (items 124, 127): the hard surfaces darken as water fills their pores, the ground a little; and water
+  // stands where the pavement is low: along the kerbs, where a street's crown sheds it, and in shallow hollows (a noise
+  // of a few metres, fixed in place), dark there as a mirror and a thin sheen elsewhere (the sky in it below)
+  float wetHard = 0.0, puddle = 0.0;
+  if (uWet > 0.0) {
+    wetHard = uWet * clamp(hardSurface + mark * paved, 0.0, 1.0) * (1.0 - water);
+    float gutter = streetEdge < 0.0 ? 1.0 - smoothstep(0.15, 0.9, -streetEdge) : 0.0;
+    float hollow = vnoise(m * 0.45) * 0.65 + vnoise(m * 1.7 + 7.1) * 0.35;
+    puddle = wetHard * smoothstep(0.67, 0.73, hollow + 0.22 * gutter);
+    land *= mix(1.0, 0.82, uWet * (1.0 - wetHard) * (1.0 - water));
+    land *= mix(1.0, 0.55, wetHard) * mix(1.0, 0.55, puddle);
+    surfaceRoughness = mix(surfaceRoughness, 0.22, wetHard);
+  }
   vec3 col = land * (E + headlamp(vRel, N)) * 1.55;      // palette lifted a little from measured reflectance
   float daySurface = surfaceDaylight();
   float reliefK = kT * (1.0 - smoothstep(0.055, 0.22, fp)) * (1.0 - mark) * (1.0 - water);
@@ -19154,6 +19168,14 @@ void main() {
     float diffuse = max(dot(detailN, Ld), 0.0) - max(dot(N, Ld), 0.0);
     float sheen = surfaceReflection(detailN, V, Ld, surfaceRoughness) * hardSurface * kT;
     col += sunE * sh * (land * diffuse * 1.55 + vec3(sheen)) * daySurface;
+  }
+  if (wetHard > 0.0) {
+    // what the wet mirrors, by water's Fresnel (2% head on): a sheen on the wet paving and a mirror in the puddles.  Seen
+    // from near the ground the reflection looks back up at a low angle, at the trees and walls across the way, dark;
+    // only reflections looking higher see the sky (by night the far wall's glow, as the open water's)
+    float fres = 0.02 + 0.98 * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0);
+    float sv = smoothstep(0.08, 0.55, dot(reflect(-V, N), up));
+    col += mix(uAmbIrr * 0.35, uSkyRefl, sv) * fres * (0.35 * wetHard + puddle);
   }
 
   // ---- water surface
@@ -20210,6 +20232,7 @@ ${COAST}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
+uniform float uWet;              // after rain (main.js)
 #ifdef DECKS
 uniform float uHouseR;               // the houses' reach (terrain.js deckMat): past it only the decks' tiles draw in this shader
 #endif
@@ -20684,7 +20707,15 @@ void main() {
     float lamps = 0.16 * dot(sunE0 + uAmbIrr, vec3(0.333)) * (1.0 - dark) + 0.30 * dark;
     E = E * day + vec3(1.0, 0.91, 0.76) * lamps * (mat == 19 && int(vW.x + 0.5) == 2 ? 0.45 : 1.0);
   }
+  // after rain: roofs and paving soaked and darker, walls a little (the eaves keep most of the rain off them); the
+  // sky's sheen on the roofs below
+  float wetRoof = 0.0;
+  if (uWet > 0.0 && mat != 19) {
+    wetRoof = mat == 1 ? uWet : 0.0;
+    alb *= mat == 1 ? 1.0 - 0.38 * uWet : mat == 0 ? 1.0 - 0.12 * uWet * (1.0 - glass) : 1.0 - 0.35 * uWet;
+  }
   vec3 col = alb * (E + headlamp(vRel, N)) * 1.55 + emis;
+  if (wetRoof > 0.0) col += uSkyRefl * (0.02 + 0.98 * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 5.0)) * 0.5 * wetRoof;
   vec3 detailN = surfaceNormal(N, relDx, relDy, relief, reliefMask * detailK);
   if (daySurface > 0.0) {
     float diffuse = max(dot(detailN, Ld), 0.0) - ndl;
@@ -24473,13 +24504,22 @@ void main() {
       }
       this.isNight = !day;
       this.dayness = day ? k : 0;
+      const ov2 = this.game.U.uWet.value * this.dayness;
+      if (ov2 > 0) {
+        col = col.map((c) => c * (1 - 0.68 * ov2));
+        disc = disc.map((c) => c * (1 - 0.6 * ov2));
+      }
       this.sunX = XE + (-XE - XE) * f;
       U.uSunPos.value.set(this.sunX, 0, 0);
       U.uSunCol.value.set(col[0], col[1], col[2]);
       const dn2 = this.dayness;
-      U.uMie.value = 1 + (this.hazeDay - 1) * dn2;
+      U.uMie.value = (1 + (this.hazeDay - 1) * dn2) * (1 + 0.7 * ov2);
       U.uAmbIrr.value.set(0.05 * dn2 + 35e-4, 0.066 * dn2 + 45e-4, 0.098 * dn2 + 75e-4);
       U.uAmbRad.value.set(0.04 * dn2 + 12e-4, 0.052 * dn2 + 16e-4, 0.075 * dn2 + 3e-3);
+      if (ov2 > 0) for (const v of [U.uAmbIrr.value, U.uAmbRad.value]) {
+        const g2 = (v.x + v.y + v.z) / 3;
+        v.set((v.x + (g2 - v.x) * 0.45 * ov2) * (1 + 0.5 * ov2), (v.y + (g2 - v.y) * 0.45 * ov2) * (1 + 0.5 * ov2), (v.z + (g2 - v.z) * 0.45 * ov2) * (1 + 0.5 * ov2));
+      }
       const here = this.lampAt(camC[0], Math.hypot(camC[1], camC[2]));
       {
         const e = Math.max(Math.sin(here.elev), 0), A = U.uAmbIrr.value, B = [0.055, 0.06, 0.04];
@@ -24487,6 +24527,10 @@ void main() {
       }
       const lum = (day ? k : 0.03 * k) * (0.3 * here.T[0] + 0.5 * here.T[1] + 0.2 * here.T[2]);
       U.uSkyRefl.value.set(0.16 * lum + 4e-3, 0.24 * lum + 5e-3, 0.36 * lum + 9e-3);
+      if (ov2 > 0) {
+        const v = U.uSkyRefl.value, g2 = (v.x + v.y + v.z) / 3;
+        v.set(v.x + (g2 - v.x) * 0.6 * ov2, v.y + (g2 - v.y) * 0.6 * ov2, v.z + (g2 - v.z) * 0.6 * ov2);
+      }
       this.sun.material.uniforms.uSunSize.value = size;
       this.sun.material.uniforms.uDiscCol.value.setRGB(disc[0] * (day ? k : k), disc[1] * (day ? k : k), disc[2] * (day ? k : k));
       this.sun.visible = k > 2e-3;
@@ -26396,7 +26440,7 @@ void main() {
       let q = "?at=" + r1(c.mx) + "," + r1(c.my) + "," + Math.round(hdg) + "&h=" + c.h.toFixed(2);
       if (fly) q += "&fly=" + [r1(f.mx), r1(f.my), r1(f.alt), d1(f.yaw), d1(f.pitch)].join(",");
       else q += "&cam=" + [p.cam.kind, d1(p.cam.yaw), d1(p.cam.pitch)].join(",");
-      q += "&t=" + g.sky.hours.toFixed(2) + (g.sky.running ? "" : "&run=0") + (g.season ? "&season=" + g.season : "") + "&q=" + g.qualityName;
+      q += "&t=" + g.sky.hours.toFixed(2) + (g.sky.running ? "" : "&run=0") + (g.season ? "&season=" + g.season : "") + (g.U.uWet.value ? "&wet=1" : "") + "&q=" + g.qualityName;
       const url = location.origin + location.pathname + q;
       const ti2 = w.townAt(mx2, my2), t = ti2 ? m.towns[ti2 - 1] : null;
       const [lon, lat] = lonLat(mx2 + m.E0, my2 + m.N0);
@@ -26568,6 +26612,11 @@ void main() {
       $("b-time").onclick = () => {
         g.sky.hours = (g.sky.hours + 2) % 24;
         this.sayTime();
+      };
+      $("b-weather").onclick = () => {
+        const U = g.U.uWet;
+        U.value = U.value > 0 ? 0 : 1;
+        this.toast(U.value ? "After rain: an overcast sky, the streets wet" : "Weather: clear");
       };
       $("b-season").onclick = () => {
         g.setSeason(((g.season || 0) + 1) % 4);
@@ -30658,6 +30707,7 @@ void main() {
         uPxK: { value: 1e-3 },
         uAutumn: { value: 0 },
         uParked: { value: 1 },
+        uWet: { value: 0 },
         uAmbRad: { value: new C() },
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
@@ -30819,6 +30869,7 @@ void main() {
       }
       if (params.get("t")) this.sky.hours = +params.get("t");
       if (params.get("season")) this.setSeason(+params.get("season") | 0);
+      if (params.get("wet") === "1") this.U.uWet.value = 1;
       if (params.get("run") === "0") this.sky.running = false;
       this.player.mode = "fly";
       const f = this.player.fly;
