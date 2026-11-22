@@ -18068,6 +18068,14 @@ vec2 autumnStage(int grp, float r1, float elev) {
   var AUTUMN_WOODS = (
     /* glsl */
     `
+// fallen leaves on the ground at m: maple scarlet and orange, birch yellow, oak brown, a leaf to a cell of 17 cm where a
+// pixel is smaller than that, their mean where it is larger (fp: its footprint, m)
+vec3 fallenLeaves(vec2 m, float fp) {
+  ivec2 c = ivec2(floor(m * 6.0));
+  float h = hash2(c + ivec2(31, 7));
+  vec3 one = h < 0.3 ? vec3(0.16, 0.03, 0.015) : h < 0.55 ? vec3(0.17, 0.07, 0.012) : h < 0.75 ? vec3(0.15, 0.11, 0.02) : vec3(0.08, 0.04, 0.015);
+  return mix(vec3(0.13, 0.058, 0.016), one * (0.75 + 0.5 * hash2(c)), 1.0 - smoothstep(0.03, 0.12, fp));
+}
 // a stretch of broadleaf woods at m (the ground's canopy, too far for the trees themselves) from its summer colour c: a
 // crown's kind and timing from its cell of about 11 m (in the state's mix: red maple and oak most, then the shade trees,
 // birch, a few still green), and where a pixel takes in many crowns (fp, its footprint in m) their mean
@@ -18927,6 +18935,9 @@ void main() {
   vec3 canopy = mix(vec3(0.016, 0.036, 0.018), decid, cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
   vec3 litter = mix(vec3(0.060, 0.047, 0.027), vec3(0.045, 0.058, 0.022), nB) * (0.8 + 0.4 * nC);
   if (kLc > 0.0) litter = mix(litter, mix(vec3(0.050, 0.036, 0.022), vec3(0.040, 0.044, 0.020), nB) * (0.8 + 0.4 * nC), (lc == 7 ? 1.0 : lc == 8 ? 0.5 : 0.0) * kLc);   // needles under pines
+  // autumn: the woods' floor takes the fallen leaves, fresh and bright by the middle of October (a leaf to a cell of 17
+  // cm up close, their mean beyond), as their crowns thin above (AUTUMN)
+  if (uAutumn > 0.45) litter = mix(litter, fallenLeaves(m, fp) * (0.7 + 0.6 * nC), smoothstep(0.45, 1.0, uAutumn) * 0.75);
   // from above the treetops the woods are their canopy, with shade in its gaps, not the litter under it
   float overTrees = smoothstep(18.0, 60.0, -dot(vRel, up));
   vec3 forestCol = mix(litter, canopy, max(smoothstep(350.0, 2200.0, dist), 0.9 * overTrees));
@@ -19144,6 +19155,11 @@ void main() {
     float a01 = texelFetch(uLc, clamp(iq + ivec2(0, 1), ivec2(0), hiT), 0).g, a11 = texelFetch(uLc, clamp(iq + ivec2(1, 1), ivec2(0), hiT), 0).g;
     float skyOpen = mix(mix(a00, a10, fq.x), mix(a01, a11, fq.x), fq.y);
     E -= ambient(N, up) * (0.75 * (1.0 - skyOpen) * (1.0 - smoothstep(450.0, 650.0, dist)) * (1.0 - water));
+  }
+  // late in October the leaves drift against the kerbs of streets under trees, in heaps along the gutter
+  if (uAutumn > 0.7 && streetEdge < 0.0 && forest > 0.05) {
+    float heap = (1.0 - smoothstep(0.1, 0.9, -streetEdge)) * smoothstep(0.35, 0.6, vnoise(m * 0.6 + 3.7));
+    land = mix(land, fallenLeaves(m, fp), heap * paved * smoothstep(0.7, 1.0, uAutumn) * min(forest * 3.0, 1.0) * (1.0 - mark));
   }
   // after rain (items 124, 127): the hard surfaces darken as water fills their pores, the ground a little; and water
   // stands where the pavement is low: along the kerbs, where a street's crown sheds it, and in shallow hollows (a noise
