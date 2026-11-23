@@ -18043,6 +18043,8 @@ float vegCover() {
     /* glsl */
     `
 uniform float uAutumn;
+uniform float uWinter;               // January after a snowfall (item 126; main.js setSeason)
+const vec3 SNOW = vec3(0.62, 0.64, 0.68);
 vec3 autumnPeak(int grp, float r2) {
   if (grp == 0) return r2 < 0.55 ? vec3(0.180, 0.026, 0.013) : vec3(0.190, 0.068, 0.011);    // red maple; sugar maple
   if (grp == 1) return r2 < 0.25 ? vec3(0.120, 0.024, 0.013) : vec3(0.086, 0.034, 0.013);    // scarlet oak; red and white oak
@@ -18331,6 +18333,7 @@ uniform float uHasGlow;
 uniform float uGlowK;        // one building's point of light, far off, as nightlights.js draws it
 uniform vec3 uSkyRefl;
 uniform float uWet;              // after rain (main.js; the Weather button)
+uniform float uWind;             // the wind on the water (1 a usual breeze; sky.js: more after rain)
 uniform float uPlants3D;     // 1 where corn and grass are drawn in 3D near the camera (terrain.js cornMat, grassMat)
 uniform sampler2DArray uAerNear; // nearer the camera (aerial.js), layer 0: the 2 x 2 regions round it at 5.75 m, region
                              // (rx, ry) in quarter (rx, ry) mod 2; layer 1: the 4 x 4 tiles of 2.95 km at 2.88 m, tile
@@ -18932,8 +18935,12 @@ void main() {
   float cmix = smoothstep(conif - 0.25, conif + 0.25, mix(0.5, vnoise(m / 37.0), 1.0 - smoothstep(14.0, 37.0, fp)));
   vec3 decid = vec3(0.030, 0.064, 0.018);
   if (uAutumn > 0.0) decid = autumnWoods(decid, m, h, fp);
-  vec3 canopy = mix(vec3(0.016, 0.036, 0.018), decid, cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
+  vec3 conC = vec3(0.016, 0.036, 0.018);
+  // winter: the broadleaf woods bare, their grey twigs over the snow under them; the evergreens dusted
+  if (uWinter > 0.0) { decid = mix(decid, mix(vec3(0.066, 0.056, 0.046), SNOW, 0.42), uWinter); conC = mix(conC, SNOW, 0.12 * uWinter); }
+  vec3 canopy = mix(conC, decid, cmix) * (0.72 + 0.56 * nB) * (0.85 + 0.3 * nC);
   vec3 litter = mix(vec3(0.060, 0.047, 0.027), vec3(0.045, 0.058, 0.022), nB) * (0.8 + 0.4 * nC);
+  if (uWinter > 0.0) litter = mix(litter, SNOW * (0.9 + 0.2 * nC), uWinter * (1.0 - 0.6 * conif));    // (less under the evergreens)
   if (kLc > 0.0) litter = mix(litter, mix(vec3(0.050, 0.036, 0.022), vec3(0.040, 0.044, 0.020), nB) * (0.8 + 0.4 * nC), (lc == 7 ? 1.0 : lc == 8 ? 0.5 : 0.0) * kLc);   // needles under pines
   // autumn: the woods' floor takes the fallen leaves, fresh and bright by the middle of October (a leaf to a cell of 17
   // cm up close, their mean beyond), as their crowns thin above (AUTUMN)
@@ -19064,6 +19071,14 @@ void main() {
   if (uHasAerial > 0.5) {
     kAer = mix(smoothstep(uAerFar.x, uAerFar.y, dist), smoothstep(1500.0, 2600.0, dist), kN);
     land = mix(land, mix(aerF, aerN, kN), kAer);
+    // winter in the photographs: green open land under snow, green woods bare and grey over snow (dusted where they
+    // are evergreen); the paving, roofs and water as they are
+    if (uWinter > 0.0 && kAer > 0.0) {
+      float green = smoothstep(0.0, 0.25, (land.g - max(land.r, land.b)) / max(land.g, 1e-4));
+      float lum = dot(land, vec3(0.2126, 0.7152, 0.0722));
+      vec3 wood = mix(mix(vec3(0.066, 0.056, 0.046), SNOW, 0.42), mix(land, SNOW, 0.12), conif) * clamp(lum / 0.05, 0.6, 1.4);
+      land = mix(land, mix(SNOW * (0.85 + 0.3 * nC), wood, forest), green * kAer * uWinter);
+    }
     // autumn in the photographs' broadleaf woods: where the ground is woods and green, the summer canopy turned
     if (uAutumn > 0.0 && kAer > 0.0) {
       float green = smoothstep(0.0, 0.25, (land.g - max(land.r, land.b)) / max(land.g, 1e-4));
@@ -19155,6 +19170,30 @@ void main() {
     float a01 = texelFetch(uLc, clamp(iq + ivec2(0, 1), ivec2(0), hiT), 0).g, a11 = texelFetch(uLc, clamp(iq + ivec2(1, 1), ivec2(0), hiT), 0).g;
     float skyOpen = mix(mix(a00, a10, fq.x), mix(a01, a11, fq.x), fq.y);
     E -= ambient(N, up) * (0.75 * (1.0 - skyOpen) * (1.0 - smoothstep(450.0, 650.0, dist)) * (1.0 - water));
+  }
+  // winter (item 126): snow on the open ground, thinning on slopes steeper than about 40 degrees, drifting a little;
+  // the streets, lots and drives plowed (a salted grey film left), the walks half cleared, and the plowed snow banked
+  // along the paving's edge; the woods take theirs in their floor and canopy (above), the water stays open.  The
+  // paving, the water and the woods' dark keep the place's shape readable under it
+  float iceW = 0.0;
+  if (uWinter > 0.0) {
+    float slopeK = smoothstep(0.62, 0.86, dot(N, up)), drift = 0.88 + 0.24 * vnoise(m * 0.35 + 9.1);
+    float bank = streetEdge > 0.0 ? (1.0 - smoothstep(0.4, 1.8, streetEdge)) * smoothstep(0.0, 0.25, streetEdge) : 0.0;
+    // (the land cover's square metres of paving beside a street are its shoulders, where the plowed snow is banked:
+    // cleared only from about 6 m out, the lots and drives)
+    float cleared = clamp(max(paved, lcPave * smoothstep(4.5, 7.5, streetEdge)) * (1.0 - walk) + walk * 0.5, 0.0, 1.0);
+    float snow = uWinter * (1.0 - water) * (1.0 - forest) * max(slopeK * drift * (1.0 - cleared * 0.9), bank);
+    // the bank greyed by what the plows and the traffic throw up, in streaks
+    vec3 snowC = mix(SNOW * (0.92 + 0.16 * nC), vec3(0.36, 0.345, 0.33) * (0.85 + 0.3 * vnoise(m * vec2(0.9, 0.25))), 0.45 * bank);
+    land = mix(land, snowC, clamp(snow, 0.0, 1.0));
+    land = mix(land, land * 1.25 + vec3(0.02), uWinter * cleared * 0.35 * (1.0 - water));     // the salt's film
+    // the ponds, lakes and rivers frozen over and snowed on, the wind's scoured patches of grey ice in it; the sea and
+    // the tidal water open (as the water's colour below, salt where the ground is under 0.6 m)
+    iceW = uWinter * water * smoothstep(0.6, 2.5, h);
+    if (iceW > 0.0) {
+      float scour = smoothstep(0.42, 0.62, vnoise(m * 0.013 + 4.1) * 0.7 + vnoise(m * 0.06 + 1.7) * 0.3);
+      land = mix(land, mix(SNOW * (0.94 + 0.12 * nC), vec3(0.26, 0.29, 0.31) * (0.9 + 0.2 * nB), scour * 0.8), iceW);
+    }
   }
   // late in October the leaves drift against the kerbs of streets under trees, in heaps along the gutter
   if (uAutumn > 0.7 && streetEdge < 0.0 && forest > 0.05) {
@@ -19252,7 +19291,7 @@ void main() {
     // less on ponds and rivers and in the lee of the shore)
     float open = smoothstep(2.0, 60.0, -sdf);
     // and the wind comes in gusts, roughening some patches and leaving others smooth, drifting downwind
-    float gust = 0.35 + 1.3 * vnoise(m / 85.0 - uTime * vec2(0.016, 0.011));
+    float gust = (0.35 + 1.3 * vnoise(m / 85.0 - uTime * vec2(0.016, 0.011))) * uWind;
     float msl = mix(0.030, 0.011, fresh) * mix(0.45, 1.0, open) * gust * gust;
     float s0 = sqrt(msl / 4.0);
     vec2 sl = vec2(0.0);
@@ -19293,7 +19332,7 @@ void main() {
     vec3 wsurf = wcol * wE * (1.0 - fres) + refl * fres + sunE * spec * sh;
     float surf = (1.0 - smoothstep(-9.0, -1.0, sdf)) ;
     wsurf = mix(wsurf + vec3(0.25, 0.27, 0.26) * wE * (0.5 + 0.5 * mix(0.5, vnoise(m / 4.0 + uTime * 0.3), kC)) * (1.0 - fresh) * 0.5, wsurf, surf);
-    col = mix(col, wsurf, water);
+    col = mix(col, wsurf, water * (1.0 - iceW));
   }
 
   // ---- the window: where a neighbouring state would be the hull is glass, behind a quay at the edge of the border sea
@@ -19419,6 +19458,9 @@ ${SHADOW}
 uniform float uLights;
 uniform vec3 uSkyRefl;
 uniform float uKind;      // 0 plain vertex colour, 1 foliage, 2 building walls, 3 water, 4 emissive
+#if defined(BLD) || (defined(CAR) && defined(COVER))
+uniform float uWinter;    // January after snow: on the boxes' roofs, as HOUSE_FS puts it on the detailed ones, and on parked cars
+#endif
 varying vec3 vRel;
 varying vec3 vNor;
 varying vec3 vCol;
@@ -19656,6 +19698,9 @@ void main() {
         sf = (1.0 - vStyle) * smoothstep(0.5, 0.8, wall);
         alb = vStyle > 0.5 ? vCol : mix(vCol2, vCol, smoothstep(0.25, 0.6, wall));
       }
+      #ifdef BLD
+        if (uWinter > 0.0) alb = mix(alb, vec3(0.62, 0.64, 0.68), uWinter * smoothstep(0.5, 0.78, dot(N, up)));
+      #endif
       float lum = dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6;
       float dark = (1.0 - smoothstep(0.035, 0.16, lum)) * uLights;
       float lit = step(0.55, hash2(ivec2(floor(gq)) + ivec2(int(vAux * 977.0), 3)));
@@ -19681,6 +19726,10 @@ void main() {
       emis = vec3(1.0, 0.72, 0.38) * (win * lit + spark * 1.2) * dark * 0.9;
     }
     if (uKind > 3.5) emis = vCol * (0.6 + 2.2 * (1.0 - smoothstep(0.03, 0.2, dot(sunE, vec3(0.33)) * max(dot(up, Ld), 0.0))));
+    #if defined(CAR) && defined(COVER)
+      // a parked car after the snowfall: snow on its roof, hood and trunk, and on the glass that faces up (paint, glass)
+      if (uWinter > 0.0 && (vStyle > 0.5 && vStyle < 1.5 || vStyle > 3.5 && vStyle < 4.5)) alb = mix(alb, vec3(0.62, 0.64, 0.68), uWinter * smoothstep(0.72, 0.9, dot(N, up)));
+    #endif
     #ifdef LAMPS
       // traffic runs with its lamps on: white ahead, red behind, brighter as the light goes
       if (vStyle > 1.5) {
@@ -20248,6 +20297,8 @@ ${COAST}
 uniform sampler2DArray uMatTex;      // clapboard, shingles, asphalt, concrete, granite, foundation, cedar, brick
 uniform float uLights;
 uniform vec3 uSkyRefl;
+uniform float uWinter;           // January after snow (main.js)
+const vec3 SNOW = vec3(0.62, 0.64, 0.68);
 uniform float uWet;              // after rain (main.js)
 #ifdef DECKS
 uniform float uHouseR;               // the houses' reach (terrain.js deckMat): past it only the decks' tiles draw in this shader
@@ -20725,6 +20776,8 @@ void main() {
   }
   // after rain: roofs and paving soaked and darker, walls a little (the eaves keep most of the rain off them); the
   // sky's sheen on the roofs below
+  // winter: snow on the roofs pitched under about 55 degrees and on the flat ones, drifting a little
+  if (uWinter > 0.0 && (mat == 1 || mat == 3)) alb = mix(alb, SNOW * (0.9 + 0.2 * fract(sin(dot(floor(uv * 0.7), vec2(12.9898, 78.233))) * 43758.5453)), uWinter * smoothstep(0.5, 0.78, dot(N, up)));
   float wetRoof = 0.0;
   if (uWet > 0.0 && mat != 19) {
     wetRoof = mat == 1 ? uWet : 0.0;
@@ -20812,6 +20865,9 @@ uniform vec4 uVegBand;
 #ifdef PARKED
 uniform float uParked;     // the share of the kerbside spaces taken just now (main.js; terrain.js SCATTER_VS)
 #endif
+#if defined(FOLIAGE) || defined(TREES)
+uniform float uWinter;     // (a bare broadleaf crown casts no shadow but its trunk's)
+#endif
 void main() {
   #ifdef BOX
     float keep = aPart > 1.5 ? 1.0 : 0.0;
@@ -20820,6 +20876,9 @@ void main() {
   #endif
   #ifdef PARKED
     if (fract(aInst.x * 7.31 + 0.13) > uParked) keep = 0.0;       // (a car that has driven off casts no shadow)
+  #endif
+  #if defined(FOLIAGE) || defined(TREES)
+    if (uWinter > 0.5 && aPart < 0.5) keep = 0.0;          // (part 0: a broadleaf's crown; 1 an evergreen's, 2 the trunk)
   #endif
   vec3 pos = position;
   #ifdef SPLIT
@@ -20849,6 +20908,7 @@ attribute vec2 aTuv;       // a spray's place in the atlas; on bark -1 - the way
 attribute vec2 aWind;      // how high in the tree (it sways), how far out along its spray (it flutters)
 attribute vec4 aInst;      // tint, conifer, species + 1, understory
 uniform vec2 uLod;
+uniform float uWind;       // the wind (1 a usual breeze; sky.js: more after rain)
 #ifndef TREE_DEPTH
 ${VEG_VS}
 #endif
@@ -20902,7 +20962,7 @@ bool treeVertex(out vec4 tp, out vec3 sc3, out vec2 veg) {
   float g = min(sqrt(sc3.x * sc3.y), 1.25 * min(sc3.x, sc3.y));
   tp = instanceMatrix * vec4(lp + aOff * (g / sc3), 1.0);
   float ph = aInst.x * 6.2832;
-  float gust = 0.6 + 0.4 * sin(uTime * 0.23 + org.x * 0.011 + org.z * 0.007);
+  float gust = (0.6 + 0.4 * sin(uTime * 0.23 + org.x * 0.011 + org.z * 0.007)) * uWind;
   float sway = (sin(uTime * 1.07 + ph) * 0.7 + sin(uTime * 2.3 + ph * 2.1) * 0.3) * gust;
   tp.xz += vec2(0.83, 0.55) * (sway * 0.10 * aWind.x * sc3.y);
   float fl = sin(uTime * 6.1 + dot(position, vec3(2.3, 1.7, 3.1)) + ph * 5.0) * 0.045 * aWind.y * g * gust;
@@ -20928,9 +20988,21 @@ varying vec3 vS;
 varying vec3 vSunE;
 varying vec3 vLd;
 flat varying vec2 vVeg;
+#ifdef GRASS
+uniform float uWinter;
+#endif
 void main() {
   vec4 tp; vec3 sc3; vec2 veg;
   if (!treeVertex(tp, sc3, veg)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  #ifdef GRASS
+    // winter: the meadows, hay, pastures and fallow under the snow, and the corn long cut (the marshes' grasses, the
+    // beach grass and the reeds stand dormant over it: TREE_FS)
+    #ifdef CORN
+      if (uWinter > 0.5) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    #else
+      if (uWinter > 0.5 && aInst.y < 4.5) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    #endif
+  #endif
   vVeg = veg;
   vec4 wp = modelMatrix * tp;
   vRel = wp.xyz;
@@ -21060,11 +21132,14 @@ void main() {
     // autumn: how far this broadleaf has turned and how many leaves it has let go (fewer leaves: a higher cut)
     vec2 aut = vec2(0.0);
     int agrp = -1;
+    bool bareW = false;
     #if !defined(GRASS) && !defined(CORN)
       int asp = int(floor(vSp + 0.5));
       agrp = autumnGroup(max(asp, -1), asp < -1 ? 1.0 : 0.0, fract(vAux * 41.3 + 0.37));
       if (uAutumn > 0.0 && agrp >= 0) aut = autumnStage(agrp, fract(vAux * 13.37 + 0.21), vElev);
       cut = mix(cut, 0.95, aut.y * 0.55);
+      // winter: a broadleaf's leaves are gone (its limbs stay, and its twigs: below); an evergreen keeps its needles
+      bareW = uWinter > 0.5 && !(asp == 4 || asp == 5 || asp == 6 || asp == -2);
     #endif
     float edge = abs(dot(normalize(cross(dFdx(vRel), dFdy(vRel))), V));
     #ifdef CORN
@@ -21074,11 +21149,18 @@ void main() {
     #endif
     // the cut spread over a pixel, which the multisampling turns into coverage: crisp edges without stair steps
     cov = clamp((t.a - cut) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0);
-    if (cov <= 0.0) discard;
+    // (a bare crown's twigs, too fine to draw one by one: a thin grey haze where its sprays were, from a little way off)
+    if (bareW) cov = textureLod(uLeafTex, vUV, 4.0).a * 0.45 * smoothstep(8.0, 45.0, dist);
+    if (cov <= 0.01) discard;
     alb *= t.rgb * mix(vec3(1.10, 1.03, 0.84), vec3(0.88, 0.97, 1.06), vAux);
     // its own leaves' light and dark kept on its autumn colour; and through the thinning crown, its bare twigs
     if (aut.x > 0.0) alb = mix(alb, alb / max(vCol, vec3(1e-3)) * autumnPeak(agrp, fract(vAux * 29.71 + 0.67)), aut.x);
     alb = mix(alb, vec3(0.060, 0.052, 0.046), aut.y * 0.35);
+    if (uWinter > 0.0) alb = mix(alb, SNOW, uWinter * 0.45 * smoothstep(0.2, 0.8, dot(N, up)));     // snow on the boughs
+    if (bareW) alb = vec3(0.060, 0.052, 0.046) * (0.85 + 0.3 * vAux);
+    #if defined(GRASS) && !defined(CORN)
+      if (uWinter > 0.0) { float gl = dot(alb, vec3(0.2126, 0.7152, 0.0722)); alb = mix(alb, gl * vec3(1.5, 1.0, 0.55), uWinter * 0.9); }    // (dormant, straw)
+    #endif
   } else {
     alb *= bark(-vUV.x - 1.0, vUV.y);
   }
@@ -21115,10 +21197,13 @@ void main() {
 uniform float uTime;
 ${TREE_POS}
 varying vec2 vUV;
+varying float vEverg;
 void main() {
   vec4 tp; vec3 sc3; vec2 veg;
   if (!treeVertex(tp, sc3, veg)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vUV = aTuv;
+  float sp = aInst.z - 1.0;
+  vEverg = (sp > 3.5 && sp < 6.5) || (aInst.z < 0.5 && aInst.y > 0.5) ? 1.0 : 0.0;
   gl_Position = projectionMatrix * viewMatrix * modelMatrix * tp;
 }`
   );
@@ -21127,9 +21212,12 @@ void main() {
     `
 precision highp float;
 uniform sampler2D uLeafTex;
+uniform float uWinter;
 varying vec2 vUV;
+varying float vEverg;
 void main() {
   if (vUV.x > -0.5 && texture2D(uLeafTex, vUV).a < 0.3) discard;      // light comes through between the leaves
+  if (vUV.x > -0.5 && uWinter > 0.5 && vEverg < 0.5) discard;          // (and in winter a broadleaf has none)
 }`
   );
   var WIRE_VS = (
@@ -24330,6 +24418,18 @@ void main() {
     vVeg = vec2(c, vegSeed(aInst.x));
     f = c > 0.002 ? 1.0 : 0.0;
   #endif
+  #ifdef FOLIAGE
+    // winter: a bare broadleaf crown lets the sky and the snow through its twigs; a far crown, standing for several,
+    // and a stand of woods, many deep, less (aInst.y: an evergreen; a far crown's lobes and a stand's are its parts 0
+    // and 2 whatever its kind)
+    #if defined(STAND)
+      if (uWinter > 0.5 && aInst.y < 0.5) vVeg.x *= 0.7;
+    #elif defined(FARTREE)
+      if (uWinter > 0.5 && aInst.y < 0.5 && aPart < 1.5) vVeg.x *= 0.55;
+    #else
+      if (uWinter > 0.5 && aInst.y < 0.5 && aPart < 1.5) vVeg.x *= 0.3;
+    #endif
+  #endif
   pos *= keep * f;
   #ifdef FOLIAGE
     // a tree of a species (aInst.z, 1 to 8; 0 a stand of woods) stands at its model's size (species.js)
@@ -24370,6 +24470,23 @@ void main() {
         vCol = mix(vCol, vec3(0.060, 0.052, 0.046) * lum, st.y * 0.35);
       }
     }
+    // winter (item 126): a broadleaf's crown bare, its grey twigs, and see-through (its coverage share, above); an
+    // evergreen's snow on its boughs
+    #ifdef STAND
+      bool crownW = true;
+    #else
+      bool crownW = aPart < 1.5;
+    #endif
+    if (uWinter > 0.0 && crownW) {
+      float lumW = clamp(dot(vCol, vec3(0.2126, 0.7152, 0.0722)) / 0.0749, 0.7, 1.3);
+      if (aInst.y < 0.5) vCol = mix(vCol, vec3(0.082, 0.073, 0.064) * lumW, uWinter);
+      else {
+        // (an evergreen's snow lies on the tops of its boughs: the crown's upper faces whitened, its sides still dark)
+        vec3 Pw = uCam + wp.xyz;
+        float upW = dot(vNor, vec3(0.0, -Pw.y, -Pw.z) / max(length(Pw.yz), 1.0));
+        vCol = mix(vCol * mix(vec3(1.0), vec3(0.74, 0.8, 0.84), uWinter), SNOW, uWinter * (0.04 + 0.3 * smoothstep(0.35, 0.9, upW)));      // (darker against the snow)
+      }
+    }
     #ifndef STAND
       // one side of a crown a little lighter than another (where the vertex is in it, and the tree's seed), so a
       // crown reads as clumps of leaves, not one even mound
@@ -24382,7 +24499,9 @@ void main() {
     if (kPh > 0.0) {
       vec3 Pc = uCam + wc.xyz;
       float myc = atan(-Pc.z, -Pc.y) * ${R.toFixed(1)};
-      vCol *= mix(vec3(1.0), farPhoto(vec2(Pc.x + ${(L / 2).toFixed(3)}, myc < 0.0 ? myc + ${C2.toFixed(3)} : myc), aInst.y), kPh);
+      vec3 fph = farPhoto(vec2(Pc.x + ${(L / 2).toFixed(3)}, myc < 0.0 ? myc + ${C2.toFixed(3)} : myc), aInst.y);
+      if (uWinter > 0.5 && aInst.y < 0.5) fph = vec3(dot(fph, vec3(0.2126, 0.7152, 0.0722)));     // (the summer's green not on bare twigs)
+      vCol *= mix(vec3(1.0), fph, kPh);
     }
   #endif
   vAux = aInst.x;
@@ -24525,6 +24644,7 @@ void main() {
         col = col.map((c) => c * (1 - 0.68 * ov2));
         disc = disc.map((c) => c * (1 - 0.6 * ov2));
       }
+      U.uWind.value = 1 + 0.6 * this.game.U.uWet.value;
       this.sunX = XE + (-XE - XE) * f;
       U.uSunPos.value.set(this.sunX, 0, 0);
       U.uSunCol.value.set(col[0], col[1], col[2]);
@@ -26632,11 +26752,11 @@ void main() {
       $("b-weather").onclick = () => {
         const U = g.U.uWet;
         U.value = U.value > 0 ? 0 : 1;
-        this.toast(U.value ? "After rain: an overcast sky, the streets wet" : "Weather: clear");
+        this.toast(U.value ? "After rain: an overcast sky, a breeze, the streets wet" : "Weather: clear");
       };
       $("b-season").onclick = () => {
-        g.setSeason(((g.season || 0) + 1) % 4);
-        this.toast(["Summer", "Early October: the red maples turning", "Mid-October: the maples and birches at their colour", "Late October: the oaks russet, the maples thinning"][g.season]);
+        g.setSeason(((g.season || 0) + 1) % 5);
+        this.toast(["Summer", "Early October: the red maples turning", "Mid-October: the maples and birches at their colour", "Late October: the oaks russet, the maples thinning", "January, after a snowfall: the roads plowed"][g.season]);
       };
       $("b-labels").onclick = () => this.toggleLabels();
       $("b-lines").onclick = () => this.toggleLines();
@@ -30722,8 +30842,10 @@ void main() {
         uSunCol: { value: new C(1, 1, 1) },
         uPxK: { value: 1e-3 },
         uAutumn: { value: 0 },
+        uWinter: { value: 0 },
         uParked: { value: 1 },
         uWet: { value: 0 },
+        uWind: { value: 1 },
         uAmbRad: { value: new C() },
         uAmbIrr: { value: new C() },
         uHaze: { value: 1 },
@@ -30951,6 +31073,7 @@ void main() {
       const mk = (vs2) => new Rn({ vertexShader: vs2, fragmentShader: DEPTH_FS, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
       this.depthMat.poles = this.depthMat.trees;
+      this.depthMat.trees = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { TREES: 1 }, uniforms: { uWinter: this.U.uWinter }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.cars = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { PARKED: 1 }, uniforms: { uParked: this.U.uParked }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.decks = this.depthMat.houses;
       this.depthMat.rails = mk(DEPTH_RAILS_VS);
@@ -30959,7 +31082,7 @@ void main() {
         vertexShader: DEPTH_TREE_VS,
         fragmentShader: DEPTH_TREE_FS,
         defines: { [lod]: 1 },
-        uniforms: { uLeafTex: this.U.uLeafTex, uTime: this.U.uTime, uLod: this.U.uLod },
+        uniforms: { uLeafTex: this.U.uLeafTex, uTime: this.U.uTime, uLod: this.U.uLod, uWinter: this.U.uWinter, uWind: this.U.uWind },
         side: Bn,
         colorWrite: false,
         polygonOffset: true,
@@ -30971,9 +31094,9 @@ void main() {
       const mkD = (defines) => new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.crowns = mkD({ FOLIAGE: 1, THIN: 1 });
       this.depthMat.boxes = mkD({ BOX: 1 });
-      this.depthMat.crowns.uniforms = { uVegBand: this.U.uVegBand };
+      this.depthMat.crowns.uniforms = { uVegBand: this.U.uVegBand, uWinter: this.U.uWinter };
       this.depthMat.proxies = mkD({ FOLIAGE: 1, SPLIT: 1, THIN: 1 });
-      this.depthMat.proxies.uniforms = { uLod: this.U.uLod, uVegBand: this.U.uVegBand };
+      this.depthMat.proxies.uniforms = { uLod: this.U.uLod, uVegBand: this.U.uVegBand, uWinter: this.U.uWinter };
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
       this.renderer.clear();
@@ -31324,11 +31447,12 @@ void main() {
       return pr2;
     }
     // test hook: park a free camera somewhere (map metres, altitude above sea level, degrees)
-    // the season (item 125; the Season button): 0 summer, then the first week, the middle and the end of October, which
-    // the trees and the woods' canopy take as uAutumn (shaders.js AUTUMN)
+    // the season (items 125, 126; the Season button): 0 summer, then the first week, the middle and the end of October,
+    // which the trees and the woods' canopy take as uAutumn (shaders.js AUTUMN), and 4 January after a snowfall (uWinter)
     setSeason(i) {
-      this.season = Math.max(0, Math.min(3, i | 0));
-      this.U.uAutumn.value = [0, 0.4, 0.7, 1][this.season];
+      this.season = Math.max(0, Math.min(4, i | 0));
+      this.U.uAutumn.value = [0, 0.4, 0.7, 1, 0][this.season];
+      this.U.uWinter.value = this.season === 4 ? 1 : 0;
     }
     debugView(o) {
       if (!this.started) {
