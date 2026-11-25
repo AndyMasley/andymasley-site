@@ -26,7 +26,7 @@ const aiEnvironment: Appearance[] = [
   { title: 'Good Morning America', href: 'https://www.youtube.com/watch?v=_Ird91qfPZs', date: 'Feb 2026' },
   { title: 'The Cognitive Revolution', href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0', date: 'Dec 2025' },
   { title: 'NYT Hard Fork', href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0', date: 'Dec 2025' },
-  { title: 'Chain of Thought', href: 'https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9', date: 'Nov 2025' },
+  { title: 'Chain of Thought', href: 'https://chainofthought.show/podcast/45-debunking-ais-environmental-panic-andy-masley/', date: 'Nov 2025' },
   { title: 'Conspicuous Cognition', href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5', date: 'Nov 2025' },
 ];
 
