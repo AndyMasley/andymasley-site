@@ -3921,16 +3921,48 @@
           run = env.roadEdge(Q[0], Q[1], nu, nv, 32);
         }
       }
+      let mbAl = NaN, mbOut = 0, mbW = 0;
+      if (walkFrom >= 0) {
+        const P2 = at(walkAl, walkFrom + 0.3), r = env.roadEdge(P2[0], P2[1], nu, nv, 30);
+        if (r > 1.5 && r < 25) {
+          mbAl = walkAl;
+          mbOut = walkFrom + 0.3 + r;
+          mbW = 1.15;
+        }
+      }
       if (!Number.isNaN(al)) {
         if (run > 2.5) {
           const beside = al < 0 || al > len;
           const back = beside ? Math.min(6.5, Math.max(3, depth * 0.6)) : -0.15;
+          if (run < 30) {
+            mbAl = al;
+            mbOut = 0.4 + run;
+            mbW = dw;
+          }
           setM(MAT.ASPHALT);
           strip(al, dw, -back, 0.4 + run + 0.3);
           if (r2 < 0.55) {
             const oc = -back + 2.6 + r1 * Math.min(run + back - 6, 6), Cc = at(al, oc), gy = env.groundAt(Cc[0], Cc[1]) + 0.07;
             putCar(M2, setM, r3 * 7.3 % 1 > 0.55 ? 1 : 0, Cc[0], gy, Cc[1], seed & 16 ? nu : -nu, seed & 16 ? nv : -nv);
           }
+        }
+      }
+      if (!Number.isNaN(mbAl) && cls <= CLS.RANCH) {
+        const side = seed & 32 ? 1 : -1, a = mbAl + side * (mbW / 2 + 0.45), o = mbOut - 0.7;
+        const E = at(mbAl, mbOut + 0.5), wk = env.walk(E[0], E[1]);
+        if (wk !== null && wk <= 0 && o > 1) {
+          const B = at(a, o), gb = env.groundAt(B[0], B[1]);
+          const pbox = (a0, a1, o0, o1, ya, yb2) => wbox(a0, a1, o0, o1, ya, yb2, 63);
+          setM(MAT.TRIM);
+          M2.W[0] = 0;
+          M2.W[1] = 0;
+          M2.W[2] = 0;
+          M2.W[3] = -1;
+          pbox(a - 0.045, a + 0.045, o - 0.045, o + 0.045, gb - 0.3, gb + 1);
+          pbox(a - 0.05, a + 0.05, o - 0.24, o + 0.05, gb + 0.96, gb + 1);
+          setM(MAT.CARDARK);
+          pbox(a - 0.09, a + 0.09, o - 0.17, o + 0.31, gb + 1, gb + 1.17);
+          pbox(a - 0.065, a + 0.065, o - 0.17, o + 0.31, gb + 1.17, gb + 1.215);
         }
       }
     }
@@ -5012,6 +5044,10 @@
       lc(u, v) {
         return world2.lcAt ? world2.lcAt(this.mx + this.ca * u - this.sa * v, this.my + this.sa * u + this.ca * v) : -1;
       },
+      // the street's side at (u, v): 1 with a sidewalk, 0 a kerb and none, -1 no kerb, null where it is not known
+      walk(u, v) {
+        return world2.sidewalkAt ? world2.sidewalkAt(this.mx + this.ca * u - this.sa * v, this.my + this.sa * u + this.ca * v) : null;
+      },
       // how far from (u, v) along (nu, nv) the nearest street's edge is, or -1 if none within `max` metres
       roadEdge(u, v, nu, nv, max) {
         let o = 0;
@@ -5699,6 +5735,10 @@
   function pavingEdge(world2, x, y) {
     return info(world2, x, y, _pe).ue;
   }
+  function sidewalkAt(world2, x, y) {
+    const o = info(world2, x, y, _pe);
+    return !o.k ? -1 : o.w1 > KERB_W + 0.01 ? 1 : 0;
+  }
   var _cx = {};
   function info(world2, x, y, o) {
     o.ue = 56;
@@ -6017,7 +6057,12 @@
     SIGNAL_MAST: 29,
     NAME_POST: 30,
     NAME_TOP: 31,
-    SPEED: 32
+    SPEED: 32,
+    PADDLE: 33,
+    ONE_WAY: 34,
+    NO_ENTRY: 35,
+    PED_XING: 36,
+    THICK: 37
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -6415,7 +6460,7 @@
   }
   var ks = { x: 0, y: 0, yaw: 0 };
   var NAMED = (c) => c === 2 || c === 4 || c === 6 || c === 8 || c === 10 || c === 11 || c === 12;
-  function nameSigns(world2, reg, lx0, ly0, s, put2) {
+  function nameSigns(world2, reg, lx0, ly0, s, put2, hyds) {
     if (!reg.nRoads || !reg.gstart) return;
     const px = reg.px, py = reg.py, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems;
     const ok = (ri) => NAMED(reg.rCls[ri]) && reg.rName[ri] > 0 && !(reg.rTun && reg.rTun[ri]) && !(reg.rFlags[ri] & 6) && reg.rCount[ri] >= 2;
@@ -6510,7 +6555,19 @@
           const yA = Math.atan2(da[1], da[0]), yB = Math.atan2(db[1], db[0]);
           if (put2(x, y, yA, PART.NAME_POST, reg.rName[A], 0) === void 0) continue;
           put2(x, y, yB, PART.NAME_TOP, reg.rName[B], 0);
+          let low = 0;
+          for (const [W, qw] of [[A, qa], [B, qb]]) {
+            if (!(reg.rFlags[W] & 1)) continue;
+            put2(x, y, Math.atan2(py[qw + 1] - py[qw], px[qw + 1] - px[qw]), PART.ONE_WAY, 0, 0, low);
+            low -= 0.37;
+          }
           placed = true;
+          if (hyds && hash2(Math.round(ix * 7), Math.round(iy * 7)) < 0.45 && world2.coverAt(mx, my, 0) >= 0.3 && !hyds.some(([hx, hy, mapped]) => Math.hypot(hx - ix, hy - iy) < (mapped ? 90 : 70))) {
+            const ca = armsA[(kk + 1) % armsA.length], cb = armsB[(Math.floor(kk / armsA.length) + 1) % armsB.length];
+            const ox = mx + ca[0] * (hwB + 2.5) / sn + cb[0] * (hwA + 0.5) / sn, oy = my + ca[1] * (hwB + 2.5) / sn + cb[1] * (hwA + 0.5) / sn;
+            if (kerbSide(world2, ox, oy, 0.6, ks) && pavingEdge(world2, ks.x, ks.y) > 0.3 && world2.sdfAt(ks.x, ks.y) > 2 && put2(ks.x, ks.y, ks.yaw, PART.HYDRANT, 0, 0) !== void 0)
+              hyds.push([ks.x - reg.x0, ks.y - reg.y0, 0]);
+          }
         }
         if (placed) break;
       }
@@ -6592,6 +6649,388 @@
       }
     }
   }
+  function noEntrySigns(world2, reg, lx0, ly0, s, put2) {
+    if (!reg.nRoads || !reg.gstart) return;
+    const px = reg.px, py = reg.py, cum = reg.cum, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems;
+    const ways = /* @__PURE__ */ new Set();
+    const gx0 = clamp2(Math.floor((lx0 - 30 + RM) / RCELL), 0, gw - 1), gx1 = clamp2(Math.floor((lx0 + s + 30 + RM) / RCELL), 0, gw - 1);
+    const gy0 = clamp2(Math.floor((ly0 - 30 + RM) / RCELL), 0, gw - 1), gy1 = clamp2(Math.floor((ly0 + s + 30 + RM) / RCELL), 0, gw - 1);
+    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
+      const c = gy * gw + gx;
+      for (let k = gs[c]; k < gs[c + 1]; k++) ways.add(segR[gi[k]]);
+    }
+    for (const ri of ways) {
+      const cl = reg.rCls[ri];
+      if (!(reg.rFlags[ri] & 1) || !NAMED(cl) || reg.rFlags[ri] & 6 || reg.rTun && reg.rTun[ri] || reg.rCount[ri] < 2) continue;
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1, ex = px[b], ey = py[b];
+      if (ex < lx0 - 30 || ex >= lx0 + s + 30 || ey < ly0 - 30 || ey >= ly0 + s + 30) continue;
+      let L2 = 0, dx = 0, dy = 0;
+      for (let q = b; q > a && L2 < 1; q--) {
+        dx = px[q] - px[q - 1];
+        dy = py[q] - py[q - 1];
+        L2 = Math.hypot(dx, dy);
+      }
+      if (L2 < 1) continue;
+      dx /= L2;
+      dy /= L2;
+      const c = clamp2(Math.floor((ey + RM) / RCELL), 0, gw - 1) * gw + clamp2(Math.floor((ex + RM) / RCELL), 0, gw - 1);
+      let meets = false, goesOn = false;
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], rj = segR[q];
+        if (rj === ri || reg.rCls[rj] > 13) continue;
+        for (const pq of [q, q + 1]) {
+          if (Math.hypot(px[pq] - ex, py[pq] - ey) > 0.5) continue;
+          meets = true;
+          if (reg.rName[rj] === reg.rName[ri] && reg.rName[ri] > 0) goesOn = true;
+        }
+      }
+      if (!meets || goesOn) continue;
+      const back = Math.min(7, (cum[b] - cum[a]) * 0.4), hw = paintHw(reg, ri, cum[b] - cum[a] - back);
+      for (const side of [1, -1]) {
+        for (const c2 of [0.7, 1.2, 1.8]) {
+          const x = ex - dx * back + dy * (hw + c2) * side, y = ey - dy * back - dx * (hw + c2) * side;
+          if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) break;
+          const mx = reg.x0 + x, my = reg.y0 + y;
+          if (pavingEdge(world2, mx, my) < 0.4 || world2.sdfAt(mx, my) < 2) continue;
+          if (put2(mx, my, Math.atan2(dx, -dy), PART.NO_ENTRY, 0, 0) !== void 0) break;
+        }
+      }
+    }
+  }
+  function thickSigns(world2, reg, lx0, ly0, s, put2) {
+    if (!reg.nRoads || !reg.nBld || !reg.gstart || !reg.b) return;
+    const px = reg.px, py = reg.py, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems, b = reg.b;
+    const cellOf = (x, y) => clamp2(Math.floor((y + RM) / RCELL), 0, gw - 1) * gw + clamp2(Math.floor((x + RM) / RCELL), 0, gw - 1);
+    const OK = (c) => c === 4 || c === 6 || c === 8 || c === 10;
+    const ways = /* @__PURE__ */ new Set();
+    for (let cj = Math.floor((ly0 + RM) / RCELL); cj <= Math.floor((ly0 + s + RM) / RCELL); cj++)
+      for (let ci = Math.floor((lx0 + RM) / RCELL); ci <= Math.floor((lx0 + s + RM) / RCELL); ci++) {
+        if (ci < 0 || cj < 0 || ci >= gw || cj >= gw) continue;
+        const c = cj * gw + ci;
+        for (let k = gs[c]; k < gs[c + 1]; k++) {
+          const rj = segR[gi[k]];
+          if (OK(reg.rCls[rj]) && !(reg.rFlags[rj] & 6)) ways.add(rj);
+        }
+      }
+    if (!ways.size) return;
+    const cz = RS2 / reg.cells, G = 40, gx0 = lx0 - 1e3, gy0 = ly0 - 1e3, gn = Math.ceil((s + 2e3) / G) + 1;
+    const grid = /* @__PURE__ */ new Map(), BX = [], BY = [];
+    for (let cj = Math.max(0, Math.floor(gy0 / cz)); cj <= Math.min(reg.cells - 1, Math.floor((ly0 + s + 1e3) / cz)); cj++)
+      for (let ci = Math.max(0, Math.floor(gx0 / cz)); ci <= Math.min(reg.cells - 1, Math.floor((lx0 + s + 1e3) / cz)); ci++) {
+        const c = cj * reg.cells + ci, a = reg.bCell[c], n = reg.bCell[c + 1] - a;
+        for (let i = 0; i < n; i++) {
+          const o = (a + i) * BREC, w = b[o + 4] / 16, d = b[o + 5] / 16;
+          if (w * w * d * d < 70) break;
+          const x = (b[o] | b[o + 1] << 8) * 0.2, y = (b[o + 2] | b[o + 3] << 8) * 0.2;
+          const kx = Math.floor((x - gx0) / G), ky = Math.floor((y - gy0) / G);
+          if (kx < 0 || ky < 0 || kx >= gn || ky >= gn) continue;
+          const key2 = ky * gn + kx;
+          let L2 = grid.get(key2);
+          if (!L2) grid.set(key2, L2 = []);
+          L2.push(BX.length);
+          BX.push(x);
+          BY.push(y);
+        }
+      }
+    const next = (W, x, y, dx, dy) => {
+      const c = cellOf(x, y);
+      let best = null, bc = 0.82;
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], rj = segR[q];
+        if (rj === W || !OK(reg.rCls[rj]) || reg.rName[rj] !== reg.rName[W]) continue;
+        const a = reg.rStart[rj], e = a + reg.rCount[rj] - 1;
+        let fwd;
+        if (q === a && Math.hypot(px[a] - x, py[a] - y) < 0.5) fwd = true;
+        else if (q + 1 === e && Math.hypot(px[e] - x, py[e] - y) < 0.5) fwd = false;
+        else continue;
+        const ex = fwd ? px[a + 1] - px[a] : px[e - 1] - px[e], ey = fwd ? py[a + 1] - py[a] : py[e - 1] - py[e];
+        const cs = (ex * dx + ey * dy) / (Math.hypot(ex, ey) || 1);
+        if (cs > bc) {
+          bc = cs;
+          best = [rj, fwd];
+        }
+      }
+      return best;
+    };
+    const beyond = (W, atEnd, max) => {
+      const X = [], Y = [], seen = /* @__PURE__ */ new Set([W]);
+      let cur = W, end = atEnd, len = 0;
+      for (let hop = 0; hop < 40 && len < max; hop++) {
+        const a = reg.rStart[cur], e = a + reg.rCount[cur] - 1, k = end ? e : a, k2 = end ? e - 1 : a + 1;
+        const dl = Math.hypot(px[k] - px[k2], py[k] - py[k2]) || 1;
+        const nx = next(cur, px[k], py[k], (px[k] - px[k2]) / dl, (py[k] - py[k2]) / dl);
+        if (!nx || seen.has(nx[0])) break;
+        const [rj, fwd] = nx, ra = reg.rStart[rj], m = reg.rCount[rj];
+        seen.add(rj);
+        let lx = px[k], ly = py[k];
+        for (let i = 1; i < m && len < max; i++) {
+          const q = fwd ? ra + i : ra + m - 1 - i;
+          len += Math.hypot(px[q] - lx, py[q] - ly);
+          lx = px[q];
+          ly = py[q];
+          X.push(lx);
+          Y.push(ly);
+        }
+        cur = rj;
+        end = fwd;
+      }
+      return [X, Y];
+    };
+    const inReg = (x, y) => x > 20 && y > 20 && x < RS2 - 20 && y < RS2 - 20;
+    for (const W of ways) {
+      const a = reg.rStart[W], m = reg.rCount[W];
+      if (m < 2) continue;
+      const [BXs, BYs] = beyond(W, false, 440), [FX, FY] = beyond(W, true, 440);
+      const X = [], Y = [];
+      for (let i = BXs.length - 1; i >= 0; i--) {
+        X.push(BXs[i]);
+        Y.push(BYs[i]);
+      }
+      const iW0 = X.length;
+      for (let i = 0; i < m; i++) {
+        X.push(px[a + i]);
+        Y.push(py[a + i]);
+      }
+      const iW1 = X.length - 1;
+      for (let i = 0; i < FX.length; i++) {
+        X.push(FX[i]);
+        Y.push(FY[i]);
+      }
+      const n = X.length, S = new Float64Array(n);
+      for (let i = 1; i < n; i++) S[i] = S[i - 1] + Math.hypot(X[i] - X[i - 1], Y[i] - Y[i - 1]);
+      const sW0 = S[iW0], sW1 = S[iW1], sEnd = S[n - 1];
+      if (sW1 - sW0 < 1) continue;
+      const near = /* @__PURE__ */ new Map();
+      for (let i = 0; i + 1 < n; i++) {
+        const x0 = X[i], y0 = Y[i], dx = X[i + 1] - x0, dy = Y[i + 1] - y0, l2 = dx * dx + dy * dy;
+        if (!(l2 > 1e-6)) continue;
+        const k0x = Math.floor((Math.min(x0, x0 + dx) - 45 - gx0) / G), k1x = Math.floor((Math.max(x0, x0 + dx) + 45 - gx0) / G);
+        const k0y = Math.floor((Math.min(y0, y0 + dy) - 45 - gy0) / G), k1y = Math.floor((Math.max(y0, y0 + dy) + 45 - gy0) / G);
+        for (let ky = Math.max(0, k0y); ky <= Math.min(gn - 1, k1y); ky++)
+          for (let kx = Math.max(0, k0x); kx <= Math.min(gn - 1, k1x); kx++) {
+            const L2 = grid.get(ky * gn + kx);
+            if (!L2) continue;
+            for (const j of L2) {
+              const t = clamp2(((BX[j] - x0) * dx + (BY[j] - y0) * dy) / l2, 0, 1);
+              const dd = Math.hypot(x0 + dx * t - BX[j], y0 + dy * t - BY[j]);
+              if (dd > 45) continue;
+              const o = near.get(j);
+              if (!o || dd < o[0]) near.set(j, [dd, S[i] + Math.sqrt(l2) * t]);
+            }
+          }
+      }
+      const A = Float64Array.from([...near.values()].map((v) => v[1])).sort();
+      if (A.length < 8) continue;
+      const cnt = (lo, hi) => {
+        let i0 = 0, i1 = A.length;
+        while (i0 < i1) {
+          const h = i0 + i1 >> 1;
+          if (A[h] < lo) i0 = h + 1;
+          else i1 = h;
+        }
+        let j0 = i0, j1 = A.length;
+        while (j0 < j1) {
+          const h = j0 + j1 >> 1;
+          if (A[h] < hi) j0 = h + 1;
+          else j1 = h;
+        }
+        return j0 - i0;
+      };
+      const at = (sv) => {
+        let i = 0;
+        while (i < n - 2 && S[i + 1] < sv) i++;
+        const l = S[i + 1] - S[i] || 1, t = clamp2((sv - S[i]) / l, 0, 1);
+        return [X[i] + (X[i + 1] - X[i]) * t, Y[i] + (Y[i + 1] - Y[i]) * t, (X[i + 1] - X[i]) / l, (Y[i + 1] - Y[i]) / l];
+      };
+      const one = reg.rFlags[W] & 1, hw = reg.rHw[W];
+      const full = (i, dir) => i >= 0 && i < A.length && (dir > 0 ? cnt(A[i], A[i] + 402) : cnt(A[i] - 402, A[i] + 1e-3)) >= 8;
+      for (const dir of one ? [1] : [1, -1]) {
+        for (let i = 0; i < A.length; i++) {
+          const b0 = A[i], sg = b0 - 25 * dir;
+          if (sg < sW0 || sg > sW1) continue;
+          if (dir > 0 ? b0 - 427 < 0 || b0 + 402 > sEnd : b0 - 402 < 0 || b0 + 427 > sEnd) continue;
+          if (!full(i, dir) || full(i - dir, dir)) continue;
+          if (dir > 0 ? cnt(b0 - 427, b0 - 25) > 3 : cnt(b0 + 25 + 1e-3, b0 + 427) > 3) continue;
+          const P2 = at(sg), E0 = at(b0 - 427 * dir), E1 = at(b0 + 402 * dir);
+          if (!inReg(P2[0], P2[1]) || !inReg(E0[0], E0[1]) || !inReg(E1[0], E1[1])) continue;
+          if (P2[0] < lx0 || P2[0] >= lx0 + s || P2[1] < ly0 || P2[1] >= ly0 + s) continue;
+          if (hash2(Math.round(P2[0] / 5) + 17, Math.round(P2[1] / 5) * 3 + dir) > 0.67) continue;
+          const tx = P2[2] * dir, ty = P2[3] * dir;
+          if (!kerbSide(world2, reg.x0 + P2[0] + ty * (hw + 1.2), reg.y0 + P2[1] - tx * (hw + 1.2), 0.7, ks)) continue;
+          put2(ks.x, ks.y, Math.atan2(-tx, ty), PART.THICK, 0, 0);
+        }
+      }
+    }
+  }
+  function exitSigns(world2, reg, lx0, ly0, s, put2) {
+    if (!reg.nRoads || !reg.gstart) return;
+    const px = reg.px, py = reg.py, cum = reg.cum, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems;
+    const cellOf = (x, y) => clamp2(Math.floor((y + RM) / RCELL), 0, gw - 1) * gw + clamp2(Math.floor((x + RM) / RCELL), 0, gw - 1);
+    const LINK = (c) => c === 1 || c === 3, MAIN = (c) => c === 0 || c === 2;
+    const endsAt = (x, y, not) => {
+      const c = cellOf(x, y), out = [];
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], rj = segR[q];
+        if (rj === not) continue;
+        const a = reg.rStart[rj], b = a + reg.rCount[rj] - 1;
+        if (q === a && Math.hypot(px[a] - x, py[a] - y) < 0.5) out.push([rj, true]);
+        if (q + 1 === b && Math.hypot(px[b] - x, py[b] - y) < 0.5) out.push([rj, false]);
+      }
+      return out;
+    };
+    const crossing = (x, y) => {
+      const c = cellOf(x, y);
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], cl = reg.rCls[segR[q]];
+        if (cl < 4 || cl > 12) continue;
+        if (Math.hypot(px[q] - x, py[q] - y) < 0.5 || Math.hypot(px[q + 1] - x, py[q + 1] - y) < 0.5) return true;
+      }
+      return false;
+    };
+    const back = (M2, q, d) => {
+      let ri = M2, k = q, left = d;
+      for (let hop = 0; hop < 40; hop++) {
+        const a = reg.rStart[ri];
+        while (k > a) {
+          const l = cum[k] - cum[k - 1];
+          if (crossing(px[k], py[k])) return null;
+          if (l >= left) {
+            const t = 1 - left / (l || 1), tx = (px[k] - px[k - 1]) / (l || 1), ty = (py[k] - py[k - 1]) / (l || 1);
+            return [px[k - 1] + (px[k] - px[k - 1]) * t, py[k - 1] + (py[k] - py[k - 1]) * t, tx, ty, ri, cum[k - 1] + l * t - cum[a]];
+          }
+          left -= l;
+          k--;
+        }
+        if (crossing(px[a], py[a])) return null;
+        const dx = px[a + 1] - px[a], dy = py[a + 1] - py[a], dl = Math.hypot(dx, dy) || 1;
+        let best = -1, bc = 0.87;
+        for (const [rj, first] of endsAt(px[a], py[a], ri)) {
+          if (first || !MAIN(reg.rCls[rj]) || !(reg.rFlags[rj] & 1)) continue;
+          const b = reg.rStart[rj] + reg.rCount[rj] - 1, ex = px[b] - px[b - 1], ey = py[b] - py[b - 1];
+          const cs = (ex * dx + ey * dy) / ((Math.hypot(ex, ey) || 1) * dl) + (reg.rName[rj] === reg.rName[ri] ? 1 : 0);
+          if (cs > bc) {
+            bc = cs;
+            best = rj;
+          }
+        }
+        if (best < 0) return null;
+        ri = best;
+        k = reg.rStart[ri] + reg.rCount[ri] - 1;
+      }
+      return null;
+    };
+    const placed = [];
+    const stand = (gx, gy, yaw, name, gore, ex, ey) => {
+      if (placed.some(([x, y]) => Math.hypot(x - gx, y - gy) < 40)) return;
+      placed.push([gx, gy]);
+      const ox = clamp2(Math.round((reg.x0 + ex - gx) / 8), -1024, 1023), oy = clamp2(Math.round((reg.y0 + ey - gy) / 8), -1024, 1023);
+      put2(gx, gy, yaw, name, gore + 2 * (ox + 1024 + 2048 * (oy + 1024)));
+    };
+    const face = (tx, ty) => Math.atan2(-tx, ty);
+    const level = (rx, ry, gx, gy) => {
+      if (!(world2.nearestRoad(reg.x0 + rx, reg.y0 + ry) < 0)) return false;
+      const zr = world2._nr.z, h = world2.groundH(gx, gy, true);
+      return !world2.g.water && !(world2.g.deck > -1e8) && Math.abs(h - zr) < 2;
+    };
+    for (let L2 = 0; L2 < reg.nRoads; L2++) {
+      if (!LINK(reg.rCls[L2]) || reg.rTun && reg.rTun[L2] || reg.rCount[L2] < 2) continue;
+      const a = reg.rStart[L2], x0 = px[a], y0 = py[a];
+      if (x0 < lx0 - 450 || x0 > lx0 + s + 450 || y0 < ly0 - 450 || y0 > ly0 + s + 450) continue;
+      const c = cellOf(x0, y0);
+      let M2 = -1, qM = -1, pre = 0, onSeg = -1;
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], rj = segR[q];
+        if (rj === L2 || !MAIN(reg.rCls[rj])) continue;
+        if (Math.hypot(px[q + 1] - x0, py[q + 1] - y0) < 0.5) {
+          M2 = rj;
+          qM = q + 1;
+          pre = 0;
+          break;
+        }
+        if (M2 < 0 && Math.hypot(px[q] - x0, py[q] - y0) < 0.5) {
+          M2 = rj;
+          qM = q;
+          pre = 0;
+        }
+        if (M2 < 0 && onSeg < 0) {
+          const dx = px[q + 1] - px[q], dy = py[q + 1] - py[q], l2 = dx * dx + dy * dy || 1, t = ((x0 - px[q]) * dx + (y0 - py[q]) * dy) / l2;
+          if (t > 0 && t < 1 && Math.hypot(px[q] + dx * t - x0, py[q] + dy * t - y0) < 0.6) onSeg = q;
+        }
+      }
+      if (M2 < 0 && onSeg >= 0) {
+        M2 = segR[onSeg];
+        qM = onSeg;
+        pre = Math.hypot(x0 - px[onSeg], y0 - py[onSeg]);
+      }
+      if (M2 < 0 || !(reg.rFlags[M2] & 1) || reg.rFlags[M2] & 4) continue;
+      const ma = reg.rStart[M2], mb = ma + reg.rCount[M2] - 1, ra = reg.rStart[L2], rb = ra + reg.rCount[L2] - 1;
+      let k0 = qM;
+      while (k0 > ma && Math.hypot(x0 - px[k0], y0 - py[k0]) < 30) k0--;
+      let k1 = qM;
+      if (Math.hypot(x0 - px[k0], y0 - py[k0]) < 5) while (k1 < mb && Math.hypot(px[k1] - x0, py[k1] - y0) < 30) k1++;
+      const bx = k1 > qM ? px[k1] : x0, by = k1 > qM ? py[k1] : y0, fx0 = k1 > qM ? x0 : px[k0], fy0 = k1 > qM ? y0 : py[k0];
+      const ml = Math.hypot(bx - fx0, by - fy0) || 1, mx = (bx - fx0) / ml, my = (by - fy0) / ml;
+      let r1 = ra + 1;
+      while (r1 < rb && Math.hypot(px[r1] - x0, py[r1] - y0) < 30) r1++;
+      const ll = Math.hypot(px[r1] - x0, py[r1] - y0) || 1, lx = (px[r1] - x0) / ll, ly = (py[r1] - y0) / ll;
+      if (mx * lx + my * ly < 0.6 || mx * ly - my * lx > 0) continue;
+      let W = L2, dest = -1, ex = 0, ey = 0;
+      const ramp = [L2];
+      for (let hop = 0; hop < 6 && dest < 0; hop++) {
+        const b = reg.rStart[W] + reg.rCount[W] - 1;
+        ex = px[b];
+        ey = py[b];
+        const nx = endsAt(ex, ey, W).filter(([rj]) => reg.rCls[rj] <= 12);
+        const road = nx.find(([rj]) => !LINK(reg.rCls[rj]) && !MAIN(reg.rCls[rj]) && reg.rName[rj] > 0) || nx.find(([rj]) => !LINK(reg.rCls[rj]) && reg.rName[rj] > 0);
+        if (road) {
+          dest = road[0];
+          break;
+        }
+        const on = nx.find(([rj, first]) => first && LINK(reg.rCls[rj]));
+        if (!on) break;
+        W = on[0];
+        ramp.push(W);
+      }
+      if (dest < 0 || reg.rName[dest] === reg.rName[M2]) continue;
+      const A = back(M2, qM, 400 - pre);
+      if (!A) continue;
+      {
+        const [ax, ay, tx, ty, ri, sAl] = A, hw = paintHw(reg, ri, sAl);
+        for (const o of [4, 5.5, 7, 9]) {
+          const sx = ax + ty * (hw + o), sy = ay - tx * (hw + o);
+          if (sx < lx0 - 20 || sx >= lx0 + s + 20 || sy < ly0 - 20 || sy >= ly0 + s + 20) break;
+          const gx = reg.x0 + sx, gy = reg.y0 + sy;
+          if (world2.nearestRoad(gx, gy) > 2.5 && world2.sdfAt(gx, gy) > 3) {
+            if (sx >= lx0 && sx < lx0 + s && sy >= ly0 && sy < ly0 + s && level(ax, ay, gx, gy)) stand(gx, gy, face(tx, ty), reg.rName[dest], 0, ex, ey);
+            break;
+          }
+        }
+      }
+      let gone = 0;
+      for (const R3 of ramp) {
+        const ra2 = reg.rStart[R3], n = reg.rCount[R3];
+        for (let k = ra2; k < ra2 + n - 1 && gone >= 0; k++) {
+          const l = cum[k + 1] - cum[k] || 1, tx = (px[k + 1] - px[k]) / l, ty = (py[k + 1] - py[k]) / l;
+          for (let u = 0; u < l && gone >= 0; u += 8) {
+            if ((gone += 8) < 30) continue;
+            if (gone > 320) {
+              gone = -1;
+              break;
+            }
+            const hw = paintHw(reg, R3, cum[k] + u - cum[ra2]), rx = px[k] + tx * u, ry = py[k] + ty * u;
+            const sx = rx - ty * (hw + 3.4), sy = ry + tx * (hw + 3.4), gx = reg.x0 + sx, gy = reg.y0 + sy;
+            if (world2.nearestRoad(gx, gy) < 3 || world2.sdfAt(gx, gy) < 3) continue;
+            if (sx >= lx0 && sx < lx0 + s && sy >= ly0 && sy < ly0 + s && level(rx, ry, gx, gy) && level(x0, y0, gx, gy)) {
+              const fx = tx + mx, fy = ty + my, fl = Math.hypot(fx, fy) || 1;
+              stand(gx, gy, face(fx / fl, fy / fl), reg.rName[dest], 1, ex, ey);
+            }
+            gone = -1;
+          }
+        }
+        if (gone < 0) break;
+      }
+    }
+  }
   function boardItems(world2, reg, mx0, my0, s, cx, cy, cz) {
     const out = [], p32 = new Float64Array(3);
     if (!reg || !reg.nRoads) return new Float32Array(0);
@@ -6669,6 +7108,12 @@
       cyl(mx, my, h, p32);
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, kind, ad, 0);
     }
+    exitSigns(world2, reg, lx0, ly0, s, (mx, my, yaw, name, code) => {
+      const h = world2.groundH(mx, my, true);
+      if (world2.g.water || world2.g.deck > -1e8 && world2.g.deck < h + 8) return;
+      cyl(mx, my, h, p32);
+      out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, 2, name, code);
+    });
     return new Float32Array(out);
   }
   function signItems(world2, reg, mx0, my0, s, cx, cy, cz) {
@@ -6698,8 +7143,16 @@
     };
     zD = null;
     hNode = -1e9;
-    nameSigns(world2, reg, lx0, ly0, s, put2);
+    const sigs = [], hyds = [], xsigns = [];
+    if (f && f.nP) for (let i = 0; i < f.nP; i++) {
+      if (f.px[i] < lx0 - 100 || f.px[i] > lx0 + s + 100 || f.py[i] < ly0 - 100 || f.py[i] > ly0 + s + 100) continue;
+      if (f.kind[i] === SIGNAL) sigs.push([f.px[i], f.py[i]]);
+      else if (f.kind[i] === HYDRANT) hyds.push([f.px[i], f.py[i], 1]);
+    }
+    nameSigns(world2, reg, lx0, ly0, s, put2, hyds);
     speedSigns(world2, reg, lx0, ly0, s, put2);
+    noEntrySigns(world2, reg, lx0, ly0, s, put2);
+    thickSigns(world2, reg, lx0, ly0, s, put2);
     if (!f || !f.nP) return new Float32Array(out);
     for (let i = 0; i < f.nP; i++) {
       const x = f.px[i], y = f.py[i];
@@ -6739,6 +7192,36 @@
             const reach = f.apOne[j] ? 2 * hw : hw;
             put2(ox, oy, t - Math.PI / 2, reach > 7.5 ? PART.SIGNAL_LONG : PART.SIGNAL, phase, reach);
           } else put2(ox, oy, t - Math.PI / 2, k === STOP ? PART.STOP : k === GIVEWAY ? PART.YIELD : PART.CROSSBUCK, 0, 0);
+        }
+      } else if (k === CROSSING2) {
+        if (zD !== null || !f.sub[i]) continue;
+        if (!(world2.nearestRoad(mx, my) < 1.5)) continue;
+        const nr = world2._nr, rg = nr.reg, cl = rg.rCls[nr.road], one = rg.rFlags[nr.road] & 1, hwX = nr.hw;
+        if (cl < 4 || cl > 11 || hwX < 2.6) continue;
+        if (sigs.some(([sx, sy]) => Math.abs(sx - x) < 35 && Math.abs(sy - y) < 35 && Math.hypot(sx - x, sy - y) < 35)) continue;
+        let t = null;
+        for (let j = f.first[i], e = j + f.napp[i]; j < e; j++) if (!f.apFoot[j]) {
+          t = f.apH[j];
+          break;
+        }
+        if (t === null) continue;
+        const dx = Math.cos(t), dy = Math.sin(t), dev = world2.coverAt(mx, my, 0);
+        const near = (px, py, yaw, part2) => xsigns.some(([qx, qy, qy2, qp]) => qp === part2 && Math.hypot(qx - px, qy - py) < 12 && Math.cos(qy2 - yaw) > 0.8);
+        if (!one && hwX <= 6.5 && dev >= 0.45 && hash2(i * 5 + 1, 77) <= 0.55) {
+          const off2 = hash2(i, 13) < 0.5 ? -2.6 : 2.6, yaw = Math.atan2(dx, -dy);
+          if (!near(mx + dx * off2, my + dy * off2, yaw, PART.PADDLE) && !near(mx + dx * off2, my + dy * off2, yaw + Math.PI, PART.PADDLE)) {
+            put2(mx + dx * off2, my + dy * off2, yaw, PART.PADDLE, 0, 0);
+            xsigns.push([mx + dx * off2, my + dy * off2, yaw, PART.PADDLE]);
+          }
+        }
+        if (roadCount(f, i) <= 2 && hash2(i * 3 + 7, 91) < 0.67) {
+          for (const dir of one ? [1] : [1, -1]) {
+            const ax = dx * dir, ay = dy * dir;
+            const ox = mx - ax * 1 + ay * (hwX + 1), oy = my - ay * 1 - ax * (hwX + 1);
+            if (!kerbSide(world2, ox, oy, 0.6, ks) || near(ks.x, ks.y, Math.atan2(-ax, ay), PART.PED_XING)) continue;
+            put2(ks.x, ks.y, Math.atan2(-ax, ay), PART.PED_XING, 0, 0);
+            xsigns.push([ks.x, ks.y, Math.atan2(-ax, ay), PART.PED_XING]);
+          }
         }
       } else if (k === HYDRANT) {
         if (zD === null && kerbSide(world2, mx, my, 0.6, ks)) put2(ks.x, ks.y, ks.yaw, PART.HYDRANT, 0, 0);
@@ -11751,6 +12234,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     setVersions(meta.versions);
     world = new World(meta, parts);
     world.lcAt = (mx, my) => lcAt(mx, my, 0);
+    world.sidewalkAt = (mx, my) => sidewalkAt(world, mx, my);
     realBuildings = !!(meta.tiles && meta.tiles.buildings);
     measured = new Set(meta.tiles && meta.tiles.measured ? meta.tiles.measured : []);
     treeFiles = new Set(meta.tiles && meta.tiles.trees ? meta.tiles.trees : []);

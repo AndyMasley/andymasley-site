@@ -15232,6 +15232,15 @@ void main() {
       u[2] = s30;
     }
   }
+  function uncyl(p, out) {
+    const r = Math.hypot(p[1], p[2]);
+    let th = Math.atan2(-p[2], -p[1]);
+    if (th < 0) th += 2 * Math.PI;
+    out[0] = p[0] + L / 2;
+    out[1] = th * R;
+    out[2] = R - r;
+    return out;
+  }
   var RS3 = ROOT / 4;
   var RNX = NX * 4;
   var RNY = NY * 4;
@@ -19475,7 +19484,10 @@ uniform float uWinter;    // January after snow: on the boxes' roofs, as HOUSE_F
 #ifdef SIGNS
 uniform sampler2D uNameTex;   // the tile's street names, a row to each (terrain.js nameAtlas), and how many rows
 uniform float uNameRows;
-uniform sampler2D uFaceTex;   // the speed limit signs' faces, 15 to 65 by fives (terrain.js speedFaces)
+uniform sampler2D uFaceTex;   // the signs' faces: speed limits, the crosswalk sign, ONE WAY, DO NOT ENTER (terrain.js signFaces)
+// a point (q: 0 to 1 across, 0 to 1 up) of one of those faces' rectangles (x, y, w, h in the canvas's 512 by 1024
+// pixels, from its top: terrain.js SIGN_RECTS)
+vec2 faceAt(vec4 r, vec2 q) { return vec2((r.x + q.x * r.z) / 512.0, 1.0 - (r.y + (1.0 - q.y) * r.w) / 1024.0); }
 uniform sampler2D uAdTex;     // the billboards' ads, a row to each (terrain.js adFaces)
 #endif
 varying vec3 vRel;
@@ -19849,7 +19861,53 @@ void main() {
       }
     #endif
     #ifdef SIGNS
-      if (vStyle > 12.5) {
+      if (vStyle > 21.5 && vStyle < 22.5) {
+        // a highway guide sign's face (22; feat.js exitSigns, the billboards' part 2): white on green, a border 4 to 10 cm
+        // in from its edge and three lines of words, each a row of the tile's atlas from the sign's first (vAux); the
+        // sheeting sends a car's lamps back
+        float e = min(min(vObj.x + 2.4, 2.4 - vObj.x), min(vObj.y - 2.1, 4.6 - vObj.y));
+        float wht = step(0.04, e) * (1.0 - step(0.10, e));
+        float ln = clamp(floor((4.53 - vObj.y) / 0.72), 0.0, 2.0);
+        float vG = (vObj.y - (3.86 - 0.72 * ln)) / 0.62, uG = (vObj.x + 2.2) / 4.4;
+        if (vG > 0.0 && vG < 1.0 && uG > 0.0 && uG < 1.0 && uNameRows > 0.5 && vAux > 0.5)
+          wht = max(wht, texture2D(uNameTex, vec2(uG, 1.0 - (vAux + ln - clamp(vG, 0.02, 0.98)) / uNameRows)).r);
+        alb = mix(vec3(0.0, 0.13, 0.045), vec3(0.78), wht);           // (the MUTCD's green: a little lighter than a blade's)
+        emis = alb * headlamp(vRel, N) * 3.0;
+      } else if (vStyle > 14.5) {
+        // the in-street crosswalk sign (15, 16: front and back, both read the right way round), ONE WAY (17 from the
+        // front, its arrow to the right; 18 from behind, the face with the arrow to the left, so it points the same
+        // way), DO NOT ENTER (19) and THICKLY SETTLED (23): their faces from the atlas, and the sheeting sends a car's
+        // lamps back
+        vec2 fq;
+        vec4 fr;
+        if (vStyle > 22.5) {
+          fq = vec2(clamp(vObj.x / 0.76 + 0.5, 0.0, 1.0), clamp((vObj.y - 2.095) / 0.61, 0.005, 0.995));
+          fr = vec4(256.0, 608.0, 192.0, 154.0);
+        } else if (vStyle > 19.5) {
+          // the crossing sign (20: its square, turned 45 degrees to stand as a diamond, read in its own frame) and its
+          // arrow plaque (21)
+          if (vStyle < 20.5) {
+            vec2 d = vec2(vObj.x, vObj.y - 2.2);
+            fq = clamp(vec2(d.x + d.y, d.y - d.x) * 0.70711 / 0.76 + 0.5, 0.004, 0.996);
+            fr = vec4(128.0, 608.0, 128.0, 128.0);
+          } else {
+            fq = vec2(clamp(vObj.x / 0.61 + 0.5, 0.0, 1.0), clamp((vObj.y - 1.40) / 0.30, 0.01, 0.99));
+            fr = vec4(128.0, 736.0, 128.0, 64.0);
+          }
+        } else if (vStyle < 16.5) {
+          fq = vec2(clamp(vObj.x / 0.30 + 0.5, 0.0, 1.0), clamp((vObj.y - 0.345) / 0.91, 0.003, 0.997));
+          if (vStyle > 15.5) fq.x = 1.0 - fq.x;
+          fr = vec4(0.0, 480.0, 128.0, 384.0);
+        } else if (vStyle < 18.5) {
+          fq = vec2(clamp(vObj.x / 0.91 + 0.5, 0.0, 1.0), clamp((vObj.y - 2.15) / 0.30, 0.01, 0.99));
+          if (vStyle > 17.5) { fq.x = 1.0 - fq.x; fr = vec4(128.0, 544.0, 192.0, 64.0); } else fr = vec4(128.0, 480.0, 192.0, 64.0);
+        } else {
+          fq = vec2(clamp(vObj.x / 0.76 + 0.5, 0.0, 1.0), clamp((vObj.y - 1.77) / 0.76, 0.005, 0.995));
+          fr = vec4(320.0, 480.0, 128.0, 128.0);
+        }
+        alb = texture2D(uFaceTex, faceAt(fr, fq)).rgb * 0.8;
+        emis = alb * headlamp(vRel, N) * 3.0;
+      } else if (vStyle > 12.5) {
         // a billboard's face (feat.js boardItems; -13 a bulletin, 14.6 by 4.3 m from 9.0 m up; -14 a poster panel, 7.0 by
         // 3.2 m from 3.2 m up): its ad's row of the ads (vAux the ad; a poster has its own row, terrain.js adFaces), lit at
         // night by the lamps under it, brighter toward its foot
@@ -19865,7 +19923,7 @@ void main() {
         // sends a car's lamps back as the name blades' does
         vec2 fq = vec2(clamp(vObj.x / 0.61 + 0.5, 0.0, 1.0), clamp((vObj.y - 2.0) / 0.76, 0.005, 0.995));
         float row = clamp(floor((vAux - 15.0) / 5.0 + 0.5), 0.0, 10.0);
-        alb = vec3(0.78) * texture2D(uFaceTex, vec2(fq.x, 1.0 - (row + 1.0 - fq.y) / 11.0)).r;
+        alb = texture2D(uFaceTex, faceAt(vec4(mod(row, 4.0) * 128.0, floor(row / 4.0) * 160.0, 128.0, 160.0), fq)).rgb * 0.8;
         emis = alb * headlamp(vRel, N) * 3.0;
       } else if (vStyle > 9.5) {
         // a street name blade (feat.js nameSigns): its street's name in white on green from the tile's atlas (terrain.js
@@ -22837,31 +22895,216 @@ void main() {
     Heights: "Hts",
     Turnpike: "Tpke"
   };
-  function speedFaces() {
-    const W = 128, H = 160, n = 11, cv2 = document.createElement("canvas");
-    cv2.width = W;
-    cv2.height = H * n;
+  var SIGN_RECTS = {
+    speed: [0, 0, 128, 160],
+    paddle: [0, 480, 128, 384],
+    oneR: [128, 480, 192, 64],
+    oneL: [128, 544, 192, 64],
+    dne: [320, 480, 128, 128],
+    xing: [128, 608, 128, 128],
+    arrow: [128, 736, 128, 64],
+    thick: [256, 608, 192, 154]
+  };
+  function signFaces() {
+    const cv2 = document.createElement("canvas");
+    cv2.width = 512;
+    cv2.height = 1024;
     const g = cv2.getContext("2d");
+    const font = (px2) => "bold " + px2 + 'px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+    const rrect = (x, y, w, h, r) => {
+      g.beginPath();
+      if (g.roundRect) g.roundRect(x, y, w, h, r);
+      else g.rect(x, y, w, h);
+    };
     g.fillStyle = "#fff";
-    g.fillRect(0, 0, W, H * n);
+    g.fillRect(0, 0, 512, 1024);
     g.textAlign = "center";
     g.textBaseline = "middle";
-    g.fillStyle = "#000";
-    g.strokeStyle = "#000";
-    for (let k = 0; k < n; k++) {
-      const y02 = H * k;
+    for (let k = 0; k < 11; k++) {
+      const x02 = k % 4 * 128, y02 = Math.floor(k / 4) * 160;
+      g.strokeStyle = "#000";
+      g.fillStyle = "#000";
       g.lineWidth = 4;
-      g.beginPath();
-      if (g.roundRect) g.roundRect(6, y02 + 6, W - 12, H - 12, 9);
-      else g.rect(6, y02 + 6, W - 12, H - 12);
+      rrect(x02 + 6, y02 + 6, 116, 148, 9);
       g.stroke();
-      g.font = 'bold 27px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
-      g.fillText("SPEED", W / 2, y02 + 33);
-      g.fillText("LIMIT", W / 2, y02 + 62);
-      g.font = 'bold 64px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
-      g.fillText(String(15 + 5 * k), W / 2, y02 + 114);
+      g.font = font(27);
+      g.fillText("SPEED", x02 + 64, y02 + 33);
+      g.fillText("LIMIT", x02 + 64, y02 + 62);
+      g.font = font(64);
+      g.fillText(String(15 + 5 * k), x02 + 64, y02 + 114);
+    }
+    {
+      const [x02, y02] = SIGN_RECTS.paddle;
+      g.strokeStyle = "#000";
+      g.lineWidth = 4;
+      rrect(x02 + 5, y02 + 5, 118, 374, 8);
+      g.stroke();
+      g.fillStyle = "#000";
+      g.font = font(30);
+      g.fillText("STATE", x02 + 64, y02 + 34);
+      g.fillText("LAW", x02 + 64, y02 + 66);
+      g.fillStyle = "#c8102e";
+      g.beginPath();
+      g.moveTo(x02 + 22, y02 + 92);
+      g.lineTo(x02 + 106, y02 + 92);
+      g.lineTo(x02 + 64, y02 + 164);
+      g.closePath();
+      g.fill();
+      g.fillStyle = "#fff";
+      g.beginPath();
+      g.moveTo(x02 + 38, y02 + 101);
+      g.lineTo(x02 + 90, y02 + 101);
+      g.lineTo(x02 + 64, y02 + 146);
+      g.closePath();
+      g.fill();
+      g.fillStyle = "#000";
+      g.font = font(28);
+      g.fillText("TO", x02 + 64, y02 + 186);
+      g.fillStyle = "#c5e01b";
+      g.fillRect(x02 + 18, y02 + 206, 92, 98);
+      g.fillStyle = "#000";
+      g.strokeStyle = "#000";
+      g.lineCap = "round";
+      g.lineWidth = 9;
+      g.beginPath();
+      g.arc(x02 + 68, y02 + 224, 8, 0, 6.2832);
+      g.fill();
+      g.beginPath();
+      g.moveTo(x02 + 66, y02 + 238);
+      g.lineTo(x02 + 60, y02 + 268);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x02 + 60, y02 + 268);
+      g.lineTo(x02 + 48, y02 + 294);
+      g.moveTo(x02 + 60, y02 + 268);
+      g.lineTo(x02 + 76, y02 + 292);
+      g.stroke();
+      g.lineWidth = 7;
+      g.beginPath();
+      g.moveTo(x02 + 46, y02 + 258);
+      g.lineTo(x02 + 64, y02 + 244);
+      g.lineTo(x02 + 84, y02 + 258);
+      g.stroke();
+      g.font = font(23);
+      g.fillText("WITHIN", x02 + 64, y02 + 328);
+      g.save();
+      g.translate(x02 + 64, y02 + 354);
+      g.font = font(23);
+      const cw = g.measureText("CROSSWALK").width;
+      if (cw > 108) g.scale(108 / cw, 1);
+      g.fillText("CROSSWALK", 0, 0);
+      g.restore();
+    }
+    for (const [key2, dir] of [["oneR", 1], ["oneL", -1]]) {
+      const [x02, y02] = SIGN_RECTS[key2];
+      g.fillStyle = "#000";
+      g.fillRect(x02, y02, 192, 64);
+      g.fillStyle = "#fff";
+      g.beginPath();
+      const X = (u) => x02 + (dir > 0 ? u : 192 - u);
+      g.moveTo(X(10), y02 + 19);
+      g.lineTo(X(148), y02 + 19);
+      g.lineTo(X(148), y02 + 7);
+      g.lineTo(X(184), y02 + 32);
+      g.lineTo(X(148), y02 + 57);
+      g.lineTo(X(148), y02 + 45);
+      g.lineTo(X(10), y02 + 45);
+      g.closePath();
+      g.fill();
+      g.fillStyle = "#000";
+      g.font = font(22);
+      g.fillText("ONE WAY", x02 + 96 - dir * 14, y02 + 33);
+    }
+    {
+      const [x02, y02] = SIGN_RECTS.xing;
+      g.fillStyle = "#c5e01b";
+      g.fillRect(x02, y02, 128, 128);
+      g.strokeStyle = "#000";
+      g.lineWidth = 5;
+      rrect(x02 + 6, y02 + 6, 116, 116, 8);
+      g.stroke();
+      g.save();
+      g.translate(x02 + 64, y02 + 64);
+      g.rotate(Math.PI / 4);
+      g.fillStyle = "#000";
+      g.strokeStyle = "#000";
+      g.lineCap = "round";
+      g.lineWidth = 9;
+      g.beginPath();
+      g.arc(4, -34, 8, 0, 6.2832);
+      g.fill();
+      g.beginPath();
+      g.moveTo(2, -20);
+      g.lineTo(-4, 8);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(-4, 8);
+      g.lineTo(-16, 34);
+      g.moveTo(-4, 8);
+      g.lineTo(12, 32);
+      g.stroke();
+      g.lineWidth = 7;
+      g.beginPath();
+      g.moveTo(-18, -2);
+      g.lineTo(0, -14);
+      g.lineTo(20, -2);
+      g.stroke();
+      g.restore();
+      const [ax2, ay2] = SIGN_RECTS.arrow;
+      g.fillStyle = "#c5e01b";
+      g.fillRect(ax2, ay2, 128, 64);
+      g.strokeStyle = "#000";
+      g.lineWidth = 4;
+      rrect(ax2 + 4, ay2 + 4, 120, 56, 6);
+      g.stroke();
+      g.fillStyle = "#000";
+      g.strokeStyle = "#000";
+      g.lineWidth = 8;
+      g.lineCap = "butt";
+      g.beginPath();
+      g.moveTo(ax2 + 86, ay2 + 16);
+      g.lineTo(ax2 + 50, ay2 + 44);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(ax2 + 36, ay2 + 54);
+      g.lineTo(ax2 + 44, ay2 + 30);
+      g.lineTo(ax2 + 60, ay2 + 48);
+      g.closePath();
+      g.fill();
+    }
+    {
+      const [x02, y02, w02, h02] = SIGN_RECTS.thick;
+      g.fillStyle = "#f2c200";
+      g.fillRect(x02, y02, w02, h02);
+      g.strokeStyle = "#000";
+      g.lineWidth = 6;
+      rrect(x02 + 7, y02 + 7, w02 - 14, h02 - 14, 10);
+      g.stroke();
+      g.fillStyle = "#000";
+      g.font = font(46);
+      for (const [txt, y] of [["THICKLY", y02 + 52], ["SETTLED", y02 + 104]]) {
+        g.save();
+        g.translate(x02 + w02 / 2, y);
+        const tw = g.measureText(txt).width;
+        if (tw > w02 - 36) g.scale((w02 - 36) / tw, 1);
+        g.fillText(txt, 0, 0);
+        g.restore();
+      }
+    }
+    {
+      const [x02, y02] = SIGN_RECTS.dne;
+      g.fillStyle = "#c8102e";
+      g.beginPath();
+      g.arc(x02 + 64, y02 + 64, 58, 0, 6.2832);
+      g.fill();
+      g.fillStyle = "#fff";
+      g.fillRect(x02 + 18, y02 + 55, 92, 18);
+      g.font = font(20);
+      g.fillText("DO NOT", x02 + 64, y02 + 36);
+      g.fillText("ENTER", x02 + 64, y02 + 93);
     }
     const tex = new vh(cv2);
+    tex.colorSpace = sn;
     tex.anisotropy = 4;
     return tex;
   }
@@ -23883,6 +24126,61 @@ void main() {
           f.translate(0, 2.38, 0.042);
           add2(f.toNonIndexed(), [-12, 0, 0], 32);
         }
+        add2(box2(0.36, 0.05, 0.36, 0, 0.025, 0), [0.025, 0.025, 0.025], 33);
+        add2(box2(0.07, 0.3, 0.04, 0, 0.2, 0), [0.62, 0.47, 0.03], 33);
+        add2(box2(0.305, 0.915, 0.012, 0, 0.8, 0), [0.62, 0.62, 0.6], 33);
+        {
+          const f = new Fs(0.3, 0.91);
+          f.translate(0, 0.8, 9e-3);
+          add2(f.toNonIndexed(), [-15, 0, 0], 33);
+          const b = new Fs(0.3, 0.91);
+          b.rotateY(Math.PI);
+          b.translate(0, 0.8, -9e-3);
+          add2(b.toNonIndexed(), [-16, 0, 0], 33);
+        }
+        add2(box2(0.915, 0.305, 0.012, 0, 2.3, 0), [0.02, 0.02, 0.02], 34);
+        {
+          const f = new Fs(0.91, 0.3);
+          f.translate(0, 2.3, 9e-3);
+          add2(f.toNonIndexed(), [-17, 0, 0], 34);
+          const b = new Fs(0.91, 0.3);
+          b.rotateY(Math.PI);
+          b.translate(0, 2.3, -9e-3);
+          add2(b.toNonIndexed(), [-18, 0, 0], 34);
+        }
+        add2(box2(0.05, 2.75, 0.05, 0, 1.375, 0), galv, 36);
+        {
+          const f = new Fs(0.76, 0.76);
+          f.rotateZ(Math.PI / 4);
+          f.translate(0, 2.2, 0.04);
+          add2(f.toNonIndexed(), [-20, 0, 0], 36);
+          const b = new Fs(0.76, 0.76);
+          b.rotateZ(Math.PI / 4);
+          b.rotateY(Math.PI);
+          b.translate(0, 2.2, 0.03);
+          add2(b.toNonIndexed(), [0.3, 0.31, 0.32], 36);
+          const pf2 = new Fs(0.61, 0.3);
+          pf2.translate(0, 1.55, 0.04);
+          add2(pf2.toNonIndexed(), [-21, 0, 0], 36);
+          const pb = new Fs(0.61, 0.3);
+          pb.rotateY(Math.PI);
+          pb.translate(0, 1.55, 0.03);
+          add2(pb.toNonIndexed(), [0.3, 0.31, 0.32], 36);
+        }
+        add2(box2(0.05, 2.6, 0.05, 0, 1.3, 0), galv, 35);
+        add2(box2(0.762, 0.762, 8e-3, 0, 2.15, 0.035), [0.3, 0.31, 0.32], 35);
+        {
+          const f = new Fs(0.76, 0.76);
+          f.translate(0, 2.15, 0.042);
+          add2(f.toNonIndexed(), [-19, 0, 0], 35);
+        }
+        add2(box2(0.05, 2.85, 0.05, 0, 1.425, 0), galv, 37);
+        add2(box2(0.762, 0.61, 8e-3, 0, 2.4, 0.035), [0.3, 0.31, 0.32], 37);
+        {
+          const f = new Fs(0.76, 0.61);
+          f.translate(0, 2.4, 0.042);
+          add2(f.toNonIndexed(), [-23, 0, 0], 37);
+        }
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1, COVER: 1 });
@@ -23890,7 +24188,7 @@ void main() {
         this.signMat.uniforms.uNameTex = { value: new an(new Uint8Array(4), 1, 1) };
         this.signMat.uniforms.uNameTex.value.needsUpdate = true;
         this.signMat.uniforms.uNameRows = { value: 0 };
-        this.signMat.uniforms.uFaceTex = { value: speedFaces() };
+        this.signMat.uniforms.uFaceTex = { value: signFaces() };
         const T = [];
         const tAdd = (g, c, p) => T.push(part(col(g, ...c), p));
         const insul = [0.42, 0.4, 0.36];
@@ -23973,13 +24271,26 @@ void main() {
             bAdd(box2(0.06, 0.06, 1, x, 3, 0.5), steel2, 1);
             bAdd(box2(0.34, 0.18, 0.26, x, 3.05, 1.05), lamp, 1);
           }
+          for (const x of [-1.7, 1.7]) bAdd(box2(0.22, 4.4, 0.22, x, 2.2, -0.14), [0.3, 0.31, 0.32], 2);
+          bAdd(box2(4.8, 2.5, 0.05, 0, 3.35, 0), [0, 0.13, 0.045], 2);
+          {
+            const f = new Fs(4.8, 2.5);
+            f.translate(0, 3.35, 0.031);
+            bAdd(f.toNonIndexed(), [-22, 0, 0], 2);
+          }
+          {
+            const f = new Fs(4.8, 2.5);
+            f.rotateY(Math.PI);
+            f.translate(0, 3.35, -0.031);
+            bAdd(f.toNonIndexed(), [0.3, 0.31, 0.32], 2);
+          }
           this.boardGeo = merge(BB);
           this.boardGeo.computeVertexNormals();
           this.boardMat = mk(0, [this.boardR * 0.85, this.boardR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1, COVER: 1 });
           this.boardMat.alphaToCoverage = true;
           this.boardMat.uniforms.uNameTex = this.signMat ? this.signMat.uniforms.uNameTex : { value: new an(new Uint8Array(4), 1, 1) };
           this.boardMat.uniforms.uNameRows = { value: 0 };
-          this.boardMat.uniforms.uFaceTex = this.signMat ? this.signMat.uniforms.uFaceTex : { value: speedFaces() };
+          this.boardMat.uniforms.uFaceTex = this.signMat ? this.signMat.uniforms.uFaceTex : { value: signFaces() };
           this.boardMat.uniforms.uAdTex = { value: adFaces() };
           if (this.signMat) this.signMat.uniforms.uAdTex = this.boardMat.uniforms.uAdTex;
         }
@@ -24159,8 +24470,9 @@ void main() {
     }
     // A tile's street names lettered for its blades (feat.js nameSigns, LIT_FS SIGNS): a row 256 by 40 pixels to each
     // name, white on black (the shader reads it as a mask), the name in a bold narrow face with its kind of street
-    // abbreviated as Massachusetts signs have it ("Walnut St", "Massachusetts Ave"), inside a white border.  The names
-    // come with the page (main.js names); a tile made before they arrive keeps blank blades.
+    // abbreviated as Massachusetts signs have it ("Walnut St", "Massachusetts Ave"), inside a white border; and the lines
+    // of its highway guide signs (feat.js exitSigns), bigger and with no border.  The names come with the page (main.js
+    // names); a tile made before they arrive keeps blank blades.
     nameAtlas(list) {
       const W = 256, H = 40, n = list.length, names = this.game.names;
       const cv2 = document.createElement("canvas");
@@ -24174,10 +24486,11 @@ void main() {
       g.lineWidth = 2;
       g.textAlign = "center";
       g.textBaseline = "middle";
-      g.font = 'bold 27px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
       for (let k = 0; k < n; k++) {
-        g.strokeRect(4, H * k + 4, W - 8, H - 8);
-        const txt = names ? signText(names[list[k]] || "") : "";
+        const r = list[k];
+        if (!r.big) g.strokeRect(4, H * k + 4, W - 8, H - 8);
+        g.font = "bold " + (r.big ? 31 : 27) + 'px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+        const txt = r.text !== void 0 ? r.text : names ? signText(names[r.name] || "") : "";
         if (!txt) continue;
         const w = g.measureText(txt).width, maxW = W - 22;
         g.save();
@@ -24609,7 +24922,7 @@ void main() {
           if (pt === 30 || pt === 31) {
             let sl2 = nameSlot.get(d[o + 5]);
             if (sl2 === void 0) {
-              sl2 = nameList.length < 100 ? nameList.push(d[o + 5]) : 0;
+              sl2 = nameList.length < 100 ? nameList.push({ name: d[o + 5] }) : 0;
               nameSlot.set(d[o + 5], sl2);
             }
             inst[i * 4] = sl2;
@@ -24624,6 +24937,16 @@ void main() {
           S2.set(1, 1, 1);
           inst[i * 4] = d[o + 5];
           inst[i * 4 + 1] = d[o + 4];
+          if (d[o + 4] === 2) {
+            const v = d[o + 6], gore = v % 2, w = (v - gore) / 2, at = uncyl([m.center[0] + d[o], m.center[1] + d[o + 1], m.center[2] + d[o + 2]], [0, 0, 0]);
+            const wd2 = this.game.world, towns = this.game.meta && this.game.meta.towns;
+            const tw = wd2 && wd2.townAt ? wd2.townAt(at[0] + 8 * (w % 2048 - 1024), at[1] + 8 * (Math.floor(w / 2048) - 1024)) : 0;
+            inst[i * 4] = 0;
+            if (nameList.length + 3 <= 100) {
+              inst[i * 4] = nameList.length + 1;
+              nameList.push({ name: d[o + 5], big: 1 }, { text: tw && towns && towns[tw - 1] ? towns[tw - 1].n : "", big: 1 }, { text: gore ? "EXIT" : "1/4 MILE", big: 1 });
+            }
+          }
         } else if (m.kind === "cars") {
           const hsh = d[o + 4], tall = hsh * 7.13 % 1;
           Q.setFromAxisAngle(Y, d[o + 3]);
