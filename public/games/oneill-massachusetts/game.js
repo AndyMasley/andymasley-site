@@ -19012,15 +19012,17 @@ void main() {
   }
   if (kLc > 0.0 && lc >= 20) {
     // the courts, fields, tracks, pools, greens and playgrounds that are mapped (feat.js paintAreas)
-    vec3 sc = lc == 20 ? mix(vec3(0.050, 0.110, 0.024), vec3(0.062, 0.128, 0.028), nB)           // mown turf
-            : lc == 21 ? vec3(0.040, 0.120, 0.030)                                                // artificial turf
+    // (the grasses toned toward the summer photographs' own: they had been half again as saturated as the lawns and
+    // fields beside them, and a ball field or a fairway glowed lime from the air)
+    vec3 sc = lc == 20 ? mix(vec3(0.056, 0.098, 0.032), vec3(0.066, 0.112, 0.036), nB)           // mown turf
+            : lc == 21 ? vec3(0.036, 0.100, 0.032)                                                // artificial turf
             : lc == 22 ? vec3(0.040, 0.115, 0.060)                                                // a coloured hard court
             : lc == 23 ? mix(vec3(0.060, 0.060, 0.062), vec3(0.150, 0.146, 0.140), lcConc)        // asphalt or concrete
             : lc == 24 ? vec3(0.105, 0.135, 0.090)                                                // clay (Har-Tru)
             : lc == 25 ? vec3(0.260, 0.050, 0.030)                                                // a synthetic track
             : lc == 26 ? vec3(0.060, 0.330, 0.460)                                                // a pool
-            : lc == 27 ? vec3(0.040, 0.170, 0.022)                                                // a green
-            : lc == 28 ? mix(vec3(0.058, 0.150, 0.026), vec3(0.068, 0.165, 0.030), nB)           // a fairway or tee
+            : lc == 27 ? vec3(0.048, 0.135, 0.030)                                                // a green
+            : lc == 28 ? mix(vec3(0.060, 0.122, 0.032), vec3(0.070, 0.135, 0.036), nB)           // a fairway or tee
             : lc == 29 ? mix(vec3(0.045, 0.088, 0.022), vec3(0.058, 0.100, 0.026), nB)           // rough
             : lc == 30 ? vec3(0.180, 0.110, 0.055)                                                // wood chips
             : vec3(0.240, 0.130, 0.065);                                                          // infield dirt
@@ -19471,6 +19473,28 @@ varying float vStyle;
 #if defined(FOLIAGE) || defined(COVER)
 ${VEG_FS}
 #endif
+#ifdef FOLIAGE
+// ---- a crown's leaf clumps (main): value noise, and a bump from screen-space derivatives (as BARRIERS' own)
+float fHash(ivec2 p) {
+  uint h = uint(p.x) * 374761393u + uint(p.y) * 668265263u;
+  h = (h ^ (h >> 13u)) * 1274126177u;
+  return float(h ^ (h >> 16u)) / 4294967296.0;
+}
+float fNoise(vec2 x) {
+  vec2 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  ivec2 c = ivec2(i);
+  return mix(mix(fHash(c), fHash(c + ivec2(1, 0)), f.x), mix(fHash(c + ivec2(0, 1)), fHash(c + ivec2(1, 1)), f.x), f.y);
+}
+vec3 fBump(vec3 pos, vec3 N, float h) {
+  vec3 dpx = dFdx(pos), dpy = dFdy(pos);
+  float dhx = dFdx(h), dhy = dFdy(h);
+  vec3 r1 = cross(dpy, N), r2 = cross(N, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (dhx * r1 + dhy * r2);
+  return normalize(abs(det) * N - grad);
+}
+#endif
 #ifdef DECAL_FADE
 uniform vec2 uCoverR;        // where it fades out (terrain.js decalMat), in a share of its coverage
 float decalIgn(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
@@ -19665,11 +19689,41 @@ void main() {
   #endif
   vec3 emis = vec3(0.0);
   vec3 col;
+  float leafK = 1.0;
   if (uKind > 0.5 && uKind < 1.5) {
     // foliage: wrap lighting and a little translucency so crowns do not go black
+    #ifdef FOLIAGE
+      // the crown's leaves in clumps: the hollows between them darker, each clump lit on its own side, and a ragged
+      // outline where the crown turns away.  A clump is about a metre close up and grows with distance to about three
+      // pixels (by octaves, blended), so a far crown still breaks into a few lumps instead of a smooth ball; past
+      // about 4 m a pixel it would only shimmer, and fades.  Fixed to the ground, so steady as one moves.
+      float ts = max(1.15, length(fwidth(P)) * 3.2);
+      float detail = 1.0 - smoothstep(3.6, 4.8, ts);
+      float cln = 0.5, hB = 0.0;
+      if (detail > 0.0) {
+        float lv = log2(ts / 1.15), fo = fract(lv), s0 = 1.15 * exp2(floor(lv));
+        vec3 aN = abs(N), q0 = P / s0, q1 = P / (2.0 * s0) + 7.3;
+        float wsum = aN.x + aN.y + aN.z;
+        float c0 = (fNoise(q0.yz + 3.1) * aN.x + fNoise(q0.xz + 7.7) * aN.y + fNoise(q0.xy + 1.3) * aN.z) / wsum;
+        float c1 = (fNoise(q1.yz + 9.1) * aN.x + fNoise(q1.xz + 5.2) * aN.y + fNoise(q1.xy + 4.4) * aN.z) / wsum;
+        cln = mix(c0, c1, fo);
+        cln = 0.5 + (cln - 0.5) * (1.0 + 0.6 * fo * (1.0 - fo));         // (the blend's lost contrast back)
+        hB = cln * 0.5 * s0 * (1.0 + fo);
+      }
+      vec3 Nb = fBump(vRel, N, hB);           // (out here: a slope across the screen needs all four pixels of a quad)
+      if (detail > 0.0) {
+        alb *= mix(1.0, 0.6 + 0.62 * smoothstep(0.22, 0.78, cln), detail);
+        N = normalize(mix(N, Nb, 0.8 * detail));
+        leafK = mix(1.0, smoothstep(0.04, 0.2, abs(dot(N, V)) + (cln - 0.56) * 0.5), detail);
+      }
+    #endif
     float sd; vec3 Ts = sunTrans(P, Ld, sd); sunE = uSunCol * Ts;
     float w = clamp((dot(N, Ld) + 0.45) / 1.45, 0.0, 1.0);
     alb *= 0.8 + 0.4 * vAux;
+    #ifdef FOLIAGE
+      // each crown a little yellower or bluer, as the same tree's leaves are drawn up close (TREE_FS)
+      alb *= mix(vec3(1.10, 1.03, 0.84), vec3(0.88, 0.97, 1.06), vAux);
+    #endif
     float sh = sunShadow(vRel, N, Ld);
     col = alb * 1.55 * (sunE * (w + 0.18 * max(dot(-V, Ld), 0.0)) * (0.12 + 0.88 * sh) + uAmbIrr * (0.5 + 0.5 * max(dot(N, up), 0.0)) + uBounce * (0.5 - 0.5 * dot(N, up)));
     col += alb * 1.55 * headlamp(vRel, N);
@@ -19765,7 +19819,7 @@ void main() {
   vec3 T, S;
   atmosphere(P, T, S);
   #if defined(FOLIAGE) || defined(COVER)
-    gl_FragColor = vec4(col * T + S, vegCover());           // (a plant's or a box's share of its coverage: VEG_FS)
+    gl_FragColor = vec4(col * T + S, vegCover() * leafK);           // (a plant's or a box's share of its coverage: VEG_FS)
   #elif defined(DECAL_FADE)
     float cD = 1.0 - smoothstep(uCoverR.x, uCoverR.y, length(vRel));
     gl_FragColor = vec4(col * T + S, cD >= 0.999 ? 1.0 : clamp(cD + (decalIgn(gl_FragCoord.xy) - 0.5) * 0.24, 0.0, 1.0));
@@ -20267,7 +20321,7 @@ void main() {
   else if (mat < 4.5) vColA = vec3(0.33, 0.12, 0.085);
   else if (mat < 5.5) vColA = vec3(0.46, 0.45, 0.42);
   else if (mat < 6.5) vColA = vec3(0.34, 0.31, 0.27);
-  else if (mat < 7.5) vColA = clad > 254.5 ? vec3(0.060, 0.064, 0.060) : vColB;     // a bridge's railing (decks.js): dark painted metal
+  else if (mat < 7.5) vColA = clad > 254.5 || aW.w < -1.5 ? vec3(0.060, 0.064, 0.060) : vColB;     // a bridge's railing (decks.js) and a stoop's (houses.js site): dark painted metal
   else if (mat < 9.5) vColA = (cls > 13.5 && cls < 15.5 && mat < 8.5) ? vec3(0.085, 0.075, 0.068) : vec3(0.40, 0.42, 0.43);      // the girders of a railway bridge are dark painted steel
   else if (mat < 10.5) vColA = vec3(0.085, 0.084, 0.086);          // a driveway
   else if (mat < 11.5) vColA = carPaint(fract(seed * 0.618 + 0.31));  // a car on it: paint,
@@ -20868,6 +20922,11 @@ uniform float uParked;     // the share of the kerbside spaces taken just now (m
 #if defined(FOLIAGE) || defined(TREES)
 uniform float uWinter;     // (a bare broadleaf crown casts no shadow but its trunk's)
 #endif
+#ifdef FOLIAGE
+uniform vec3 uCam, uSunPos;
+varying vec3 vRay;         // from the lamp to the point (DEPTH_LEAFY_FS)
+varying float vRim;        // 1 where the envelope's surface turns edge-on to the lamp, 0 where it faces it
+#endif
 void main() {
   #ifdef BOX
     float keep = aPart > 1.5 ? 1.0 : 0.0;
@@ -20897,7 +20956,40 @@ void main() {
   #ifdef TRAIN
     pos.z = clamp(pos.z, aInst.z, aInst.w);         // (a train going into a tunnel: trains.js)
   #endif
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * (instanceMatrix * vec4(pos * keep, 1.0));
+  vec4 wpD = modelMatrix * (instanceMatrix * vec4(pos * keep, 1.0));
+  #ifdef FOLIAGE
+    vRay = uCam + wpD.xyz - uSunPos;
+    // (the broadleaf envelope is an ellipsoid round 8.3 m up, 3.6 m wide and 4.3 high: terrain.js treeShadowGeo; a
+    // cone's sides count as half turned)
+    vec3 nL = aPart < 0.5 ? normalize(vec3(position.x / 3.6, (position.y - 8.3) / 4.3, position.z / 3.6)) : vec3(0.0);
+    vec3 nW = normalize(mat3(modelMatrix) * (mat3(instanceMatrix) * nL) + 1e-6);
+    vRim = aPart < 0.5 ? 1.0 - abs(dot(nW, normalize(vRay))) : 0.5;
+  #endif
+  gl_Position = projectionMatrix * viewMatrix * wpD;
+}`
+  );
+  var DEPTH_LEAFY_FS = (
+    /* glsl */
+    `
+varying vec3 vRay;
+varying float vRim;
+float lHash(ivec2 p) {
+  uint h = uint(p.x) * 374761393u + uint(p.y) * 668265263u;
+  h = (h ^ (h >> 13u)) * 1274126177u;
+  return float(h ^ (h >> 16u)) / 4294967296.0;
+}
+float lNoise(vec2 x) {
+  vec2 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  ivec2 c = ivec2(i);
+  return mix(mix(lHash(c), lHash(c + ivec2(1, 0)), f.x), mix(lHash(c + ivec2(0, 1)), lHash(c + ivec2(1, 1)), f.x), f.y);
+}
+void main() {
+  // the ray's direction from the lamp on the axis, as metres on the ground under it (about R out)
+  vec3 d = normalize(vRay);
+  vec2 q = vec2(d.x, atan(d.z, d.y)) * ${R.toFixed(1)};
+  // about two fifths of it open inside, more toward the rim (a sixth, at 0.34, did not show in a render)
+  if (lNoise(q / 1.6) * 0.62 + lNoise(q / 0.7 + 17.3) * 0.38 < 0.44 + 0.1 * smoothstep(0.55, 0.95, vRim)) discard;
 }`
   );
   var TREE_POS = (
@@ -31091,12 +31183,12 @@ void main() {
       });
       this.depthMat.leaves = { hi: mkLeaves("LOD_HI"), mid: mkLeaves("LOD_MID") };
       this.depthMat.under = this.depthMat.leaves.hi;
-      const mkD = (defines) => new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
+      const mkD = (defines) => new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: defines.FOLIAGE ? DEPTH_LEAFY_FS : DEPTH_FS, defines, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.crowns = mkD({ FOLIAGE: 1, THIN: 1 });
       this.depthMat.boxes = mkD({ BOX: 1 });
-      this.depthMat.crowns.uniforms = { uVegBand: this.U.uVegBand, uWinter: this.U.uWinter };
+      this.depthMat.crowns.uniforms = { uVegBand: this.U.uVegBand, uWinter: this.U.uWinter, uCam: this.U.uCam, uSunPos: this.U.uSunPos };
       this.depthMat.proxies = mkD({ FOLIAGE: 1, SPLIT: 1, THIN: 1 });
-      this.depthMat.proxies.uniforms = { uLod: this.U.uLod, uVegBand: this.U.uVegBand, uWinter: this.U.uWinter };
+      this.depthMat.proxies.uniforms = { uLod: this.U.uLod, uVegBand: this.U.uVegBand, uWinter: this.U.uWinter, uCam: this.U.uCam, uSunPos: this.U.uSunPos };
       this.shadowSwap = [];
       this.renderer.setRenderTarget(this.shadowRT);
       this.renderer.clear();

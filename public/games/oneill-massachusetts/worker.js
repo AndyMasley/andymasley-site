@@ -3785,6 +3785,7 @@
     const du = porch && typeof porch === "object" && porch.door === porch.door ? porch.door : lay && lay.doors.length ? lay.doors[0] : doorAt(len, cls, seed, M2.T[3]);
     const floorY = y0 + found;
     let walkFrom = 0.25;
+    let walkAl = du;
     const wbox = (a0, a1, o0, o1, ya, yb2, which) => {
       const us = [p0u + tu * a0 + nu * o0, p0u + tu * a1 + nu * o0, p0u + tu * a0 + nu * o1, p0u + tu * a1 + nu * o1];
       const vs = [p0v + tv * a0 + nv * o0, p0v + tv * a1 + nv * o0, p0v + tv * a0 + nv * o1, p0v + tv * a1 + nv * o1];
@@ -3802,15 +3803,56 @@
       const fh = FLOOR[cls];
       walkFrom = porchAt(M2, setM, p0u, p0v, tu, tv, nu, nv, a0, a1, dep, floorY, floorY + decks * fh - 0.25, yb, du, decks, fh);
     } else if (found > 0.2 && len > 2.5) {
-      walkFrom = floorY - y0 > 0.45 ? 1.64 : 1.32;
+      const H = floorY - yb;
+      const tr = Math.max(1, Math.min(10, Math.round(H / 0.18) - 1)), rise = H / (tr + 1), run = tr * 0.28;
+      const turn = tr <= 5 ? 0 : du + 0.8 + run <= len - 0.1 ? 1 : du - 0.8 - run >= 0.1 ? -1 : 0;
+      const land = turn ? 1.5 : 1;
       setM(MAT.CONCRETE);
       M2.W[0] = 1.6;
       M2.W[1] = 0;
       M2.W[2] = 0;
       M2.W[3] = -1;
-      wbox(du - 0.8, du + 0.8, 0, 1, yb, floorY, 55);
-      wbox(du - 0.8, du + 0.8, 1, 1.32, yb, floorY - 0.2, 55);
-      if (floorY - y0 > 0.45) wbox(du - 0.8, du + 0.8, 1.32, 1.64, yb, floorY - 0.4, 55);
+      if (H > 1.4) {
+        wbox(du - 0.8, du + 0.8, 0, land, floorY - 0.32, floorY, 55);
+        wbox(du - 0.8, du - 0.5, land - 0.3, land, yb, floorY - 0.32, 55);
+        wbox(du + 0.5, du + 0.8, land - 0.3, land, yb, floorY - 0.32, 55);
+      } else wbox(du - 0.8, du + 0.8, 0, land, yb, floorY, 55);
+      if (!turn) {
+        for (let i = 1; i <= tr; i++) wbox(du - 0.8, du + 0.8, land + (i - 1) * 0.28, land + i * 0.28, yb, floorY - i * rise, 55);
+        walkFrom = land + run;
+      } else {
+        for (let i = 1; i <= tr; i++) {
+          const a0 = turn > 0 ? du + 0.8 + (i - 1) * 0.28 : du - 0.8 - i * 0.28;
+          wbox(a0, a0 + 0.28, 0.05, land - 0.1, yb, floorY - i * rise, 55);
+        }
+        walkFrom = 0.1;
+        walkAl = du + turn * (0.8 + run + 0.62);
+      }
+      if (H > 0.6) {
+        setM(MAT.RAIL);
+        M2.W[0] = 0;
+        M2.W[3] = -2;
+        const Q = (al, o) => [p0u + tu * al + nu * o, p0v + tv * al + nv * o];
+        const railQ = (q0, q1, y0r, y1r, n) => {
+          const ln = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]);
+          const i0 = M2.v(q0[0], y0r, q0[1], n[0], 0, n[1], 0, 0), i1 = M2.v(q1[0], y1r, q1[1], n[0], 0, n[1], ln, 0);
+          const i2 = M2.v(q1[0], y1r + 0.95, q1[1], n[0], 0, n[1], ln, 0.95), i3 = M2.v(q0[0], y0r + 0.95, q0[1], n[0], 0, n[1], 0, 0.95);
+          M2.quad(i0, i1, i2, i3);
+        };
+        if (!turn) {
+          for (const sg of [-1, 1]) {
+            const al = du + sg * 0.76, n = [tu * sg, tv * sg];
+            railQ(Q(al, 0.05), Q(al, land), floorY, floorY, n);
+            railQ(Q(al, land), Q(al, walkFrom), floorY, yb + rise, n);
+          }
+        } else {
+          const far = du - turn * 0.78, foot = du + turn * (0.8 + run);
+          railQ(Q(far, 0.05), Q(far, land - 0.02), floorY, floorY, [-tu * turn, -tv * turn]);
+          railQ(Q(far, land - 0.02), Q(du + turn * 0.8, land - 0.02), floorY, floorY, [nu, nv]);
+          railQ(Q(du + turn * 0.8, land - 0.12), Q(foot, land - 0.12), floorY, yb + rise, [nu, nv]);
+        }
+        M2.W[3] = -1;
+      }
     }
     if (env && cls !== CLS.GARAGE && cls !== CLS.BARN) {
       const at = (al2, o) => [p0u + tu * al2 + nu * o, p0v + tv * al2 + nv * o];
@@ -3830,11 +3872,11 @@
       M2.W[2] = 0;
       M2.W[3] = -1;
       if (walkFrom >= 0) {
-        const P2 = at(du, walkFrom + 0.3);
+        const P2 = at(walkAl, walkFrom + 0.3);
         const reach = env.roadEdge(P2[0], P2[1], nu, nv, 30);
         if (reach > 0.5) {
           setM(MAT.CONCRETE);
-          strip(du, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
+          strip(walkAl, 1.15, walkFrom - 0.05, walkFrom + 0.3 + reach + 0.25);
         }
       }
       let al = NaN, run = -1, known = false, bestF = 0.6;
@@ -10876,6 +10918,7 @@
     if (!walk) o.w0 = KERB_W;
     return o;
   }
+  var kerbDebug = { V: null };
   function kerbTris(world2, mx0, my0, s, cx, cy, cz, lc) {
     const reg = world2.regionAt(mx0 + s / 2, my0 + s / 2);
     if (!reg || !reg.nRoads) return new Float32Array(0);
@@ -10904,16 +10947,16 @@
       if (k && lo < wmax + BACK + RC && hi > -RC) active[j * (NC - 1) + i] = 1;
     }
     const V2 = /* @__PURE__ */ new Map();
+    kerbDebug.V = V2;
     const vert = (i, j) => {
       const key2 = j * N + i;
       let v = V2.get(key2);
       if (v) return v;
       const x = mx0 + i * R2, y = my0 + j * R2;
       info(world2, x, y, co);
-      v = { x, y, ue: co.ue, k: co.k, w0: co.w0, w1: co.w1, i, j, drive: -1, t: 0, veg: -1 };
+      v = { x, y, ue: co.ue, k: co.k, w0: co.w0, w1: co.w1, i, j, drive: -1, veg: -1 };
       if (reg.streets && streetsCovered(reg.streets, x - reg.x0, y - reg.y0)) v.k = 0;
       else if (v.k && v.ue > -2 && v.ue < 6 && inIsland(x, y)) v.k = 0;
-      v.t = tOf(v.ue, v.w0, v.w1);
       V2.set(key2, v);
       return v;
     };
@@ -11021,26 +11064,25 @@
       const g = away(v);
       if (!g) return 0;
       const [gx, gy] = g;
-      for (const back of [1, 2.5]) {
-        const t = v.w1 - v.ue + back, x = v.x + gx * t, y = v.y + gy * t;
+      for (const back of [1, 2.5, 6]) {
+        const t2 = v.w1 - v.ue + back, x = v.x + gx * t2, y = v.y + gy * t2;
         if (lc(x, y) !== 1 || inBuilding(x, y)) return 0;
       }
+      const t = v.w1 - v.ue + 1.75;
+      let sides = 0;
+      for (const o of [-5, 5]) if (lc(v.x + gx * t - gy * o, v.y + gy * t + gx * o) === 1) sides++;
+      if (sides === 2) return 0;
       v.drive = 1;
       return 1;
     };
-    const tOf = (ue, w0, w1) => {
-      if (ue < KERB_W) return ue / KERB_W;
-      if (ue < w0) return 1 + (ue - KERB_W) / Math.max(w0 - KERB_W, 1e-3);
-      if (ue < w1) return 2 + (ue - w0) / Math.max(w1 - w0, 1e-3);
-      return 3 + (ue - w1);
-    };
-    const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, ue: a.ue + (b.ue - a.ue) * t, t: a.t + (b.t - a.t) * t, veg: a.veg + (b.veg - a.veg) * t });
-    const half = (Q, val, above) => {
+    const gOf = (v, k) => k === 0 ? v.ue : k === 1 ? v.ue - KERB_W : k === 2 ? v.ue - v.w0 : v.ue - v.w1;
+    const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, ue: a.ue + (b.ue - a.ue) * t, w0: a.w0 + (b.w0 - a.w0) * t, w1: a.w1 + (b.w1 - a.w1) * t, veg: a.veg + (b.veg - a.veg) * t });
+    const half = (Q, k, above) => {
       const R22 = [];
       for (let i = 0; i < Q.length; i++) {
-        const a = Q[i], b = Q[(i + 1) % Q.length], ia = above ? a.t >= val : a.t <= val, ib = above ? b.t >= val : b.t <= val;
+        const a = Q[i], b = Q[(i + 1) % Q.length], ga = gOf(a, k), gb = gOf(b, k), ia = above ? ga >= 0 : ga <= 0, ib = above ? gb >= 0 : gb <= 0;
         if (ia) R22.push(a);
-        if (ia !== ib) R22.push(lerp(a, b, (val - a.t) / (b.t - a.t)));
+        if (ia !== ib) R22.push(lerp(a, b, ga / (ga - gb)));
       }
       return R22;
     };
@@ -11048,18 +11090,18 @@
       const Q = half(P2, lo, true);
       return Q.length < 3 ? Q : half(Q, hi, false);
     };
-    const faceAt = (P2, lv, vv, toward) => {
+    const faceAt = (P2, k, vv, toward) => {
       const Z = [];
       for (let i = 0; i < 3; i++) {
-        const p = P2[i], q = P2[(i + 1) % 3];
-        if (p.t < lv !== q.t < lv) Z.push(lerp(p, q, (lv - p.t) / (q.t - p.t)));
+        const p = P2[i], q = P2[(i + 1) % 3], gp = gOf(p, k), gq = gOf(q, k);
+        if (gp < 0 !== gq < 0) Z.push(lerp(p, q, gp / (gp - gq)));
       }
       if (Z.length !== 2) return;
       const [s0, s1] = Z;
       const h0 = CURB2 * rise(vv, s0.x, s0.y, s0.ue), h12 = CURB2 * rise(vv, s1.x, s1.y, s1.ue);
       if (h0 < 5e-3 && h12 < 5e-3) return;
-      const [a, b, c] = P2;
-      const gx = (b.t - a.t) * (c.y - a.y) - (c.t - a.t) * (b.y - a.y), gy = (c.t - a.t) * (b.x - a.x) - (b.t - a.t) * (c.x - a.x);
+      const [a, b, c] = P2, ga = gOf(a, k), gb = gOf(b, k), gc = gOf(c, k);
+      const gx = (gb - ga) * (c.y - a.y) - (gc - ga) * (b.y - a.y), gy = (gc - ga) * (b.x - a.x) - (gb - ga) * (c.x - a.x);
       const sgn = ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0 ? 1 : -1) * (toward ? -1 : 1);
       const gl = Math.hypot(gx, gy) || 1, wx = sgn * gx / gl, wy = sgn * gy / gl;
       const g0 = ground(s0.x, s0.y), g1 = ground(s1.x, s1.y);
@@ -11072,8 +11114,8 @@
     const triangle = (a, b, c) => {
       const own = [a, b, c].reduce((p, q) => q.ue < p.ue ? q : p);
       if (!own.k) return;
-      if (a.t > 3 && b.t > 3 && c.t > 3) return;
-      if (a.t < 0 && b.t < 0 && c.t < 0) return;
+      if (gOf(a, 3) > 0 && gOf(b, 3) > 0 && gOf(c, 3) > 0) return;
+      if (a.ue < 0 && b.ue < 0 && c.ue < 0) return;
       for (const p of [a, b, c]) {
         if (p.k) driveAt(p);
         vegAt(p);
