@@ -4057,6 +4057,11 @@
       this.image = t;
     }
   };
+  var vh = class extends Ae {
+    constructor(t, e, n, i, r, a, o, l, c) {
+      super(t, e, n, i, r, a, o, l, c), this.isCanvasTexture = true, this.needsUpdate = true;
+    }
+  };
   var ei = class extends Ae {
     constructor(t, e, n = xn, i, r, a, o = Te, l = Te, c, h = Qn, d = 1) {
       if (h !== Qn && h !== ri) throw new Error("THREE.DepthTexture: format must be either THREE.DepthFormat or THREE.DepthStencilFormat");
@@ -15233,6 +15238,7 @@ void main() {
   var RM = 160;
   var RCELL = 128;
   var RREG = 72;
+  var N_ADS = 20;
   var WCELL = 32;
   var WPAD = 14;
   var DCELL = 256;
@@ -19427,6 +19433,9 @@ void main() {
   vCol2 = vec3(0.0);
   vAux = 0.0;
   vStyle = -1.0;
+  #ifdef GLOSS
+    if (aCol.r < -8.5) vStyle = 9.0;          // the car's number plate (cars.js plateUV; LIT_FS maPlate)
+  #endif
   #ifdef USE_INSTANCING
     vec4 ip = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
     #ifdef SCATTER
@@ -19460,8 +19469,14 @@ ${SHADOW}
 uniform float uLights;
 uniform vec3 uSkyRefl;
 uniform float uKind;      // 0 plain vertex colour, 1 foliage, 2 building walls, 3 water, 4 emissive
-#if defined(BLD) || (defined(CAR) && defined(COVER))
+#if defined(BLD) || defined(PARKED)
 uniform float uWinter;    // January after snow: on the boxes' roofs, as HOUSE_FS puts it on the detailed ones, and on parked cars
+#endif
+#ifdef SIGNS
+uniform sampler2D uNameTex;   // the tile's street names, a row to each (terrain.js nameAtlas), and how many rows
+uniform float uNameRows;
+uniform sampler2D uFaceTex;   // the speed limit signs' faces, 15 to 65 by fives (terrain.js speedFaces)
+uniform sampler2D uAdTex;     // the billboards' ads, a row to each (terrain.js adFaces)
 #endif
 varying vec3 vRel;
 varying vec3 vNor;
@@ -19671,6 +19686,34 @@ vec3 barrier(float T, float pal, vec2 q, inout vec3 N, out float cut) {
   return c;
 }
 #endif
+#ifdef GLOSS
+// A Massachusetts number plate (cars.js CM.PLATE; uv across it as read, 0 to 1): white, "Massachusetts" in red script
+// along its top, six red characters across its middle and "The Spirit of America" small under them.  The characters
+// are each car's own (s its seed: blocks of a 3 by 5 grid, as letters and numbers fill one); where a stroke is under a
+// pixel the band takes its mean ink instead, so a plate across the street reads white with its red line of characters.
+vec3 maPlate(vec2 uv, float s, vec2 fw) {
+  float sharp = 1.0 - smoothstep(0.5, 1.1, max(fw.x * 21.0, fw.y * 11.0));
+  float ink = 0.0;
+  if (uv.y > 0.27 && uv.y < 0.71 && uv.x > 0.06 && uv.x < 0.94) {
+    float q = (uv.x - 0.06) / 0.88 * 6.0, gi = floor(q);
+    vec2 c = vec2((fract(q) - 0.13) / 0.74 * 3.0, (uv.y - 0.27) / 0.44 * 5.0);
+    float on = 0.0;
+    if (c.x > 0.0 && c.x < 3.0) {
+      vec2 ci = floor(c);
+      float h = fract(sin(dot(vec3(ci, gi) + vec3(s * 17.3, s * 5.1, s * 3.7), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+      // (a character's outline is mostly ink, its inner strokes less often)
+      float inner = ci.x == 1.0 && (ci.y == 1.0 || ci.y == 3.0) ? 1.0 : 0.0;
+      on = step(inner > 0.5 ? 0.85 : 0.3, h);
+    }
+    ink = mix(0.45, on, sharp);
+  } else if (uv.y > 0.79 && uv.y < 0.93 && abs(uv.x - 0.5) < 0.27) {
+    ink = mix(0.35, step(0.45, fract(sin(floor(uv.x * 70.0) * 91.7 + floor(uv.y * 14.0) * 13.1) * 437.5)), sharp);
+  } else if (uv.y > 0.08 && uv.y < 0.17 && abs(uv.x - 0.5) < 0.31) {
+    ink = mix(0.25, step(0.55, fract(sin(floor(uv.x * 90.0) * 51.3) * 917.1)), sharp);
+  }
+  return mix(vec3(0.66, 0.66, 0.64), vec3(0.30, 0.02, 0.028), ink);
+}
+#endif
 void main() {
   vec3 P = uCam + vRel;
   float r = length(P.yz);
@@ -19680,6 +19723,9 @@ void main() {
   vec3 V = normalize(-vRel);
   vec3 Ld, sunE;
   vec3 alb = vCol;
+  #ifdef GLOSS
+    vec2 plFw = fwidth(vCol.yz);           // (out here, for maPlate: a slope needs all of a quad's pixels)
+  #endif
   #ifdef BARRIERS
   if (vCol.r < -0.5) {
     float bn = floor(-vCol.r), bT = floor(bn / 64.0), cut;
@@ -19780,7 +19826,7 @@ void main() {
       emis = vec3(1.0, 0.72, 0.38) * (win * lit + spark * 1.2) * dark * 0.9;
     }
     if (uKind > 3.5) emis = vCol * (0.6 + 2.2 * (1.0 - smoothstep(0.03, 0.2, dot(sunE, vec3(0.33)) * max(dot(up, Ld), 0.0))));
-    #if defined(CAR) && defined(COVER)
+    #ifdef PARKED
       // a parked car after the snowfall: snow on its roof, hood and trunk, and on the glass that faces up (paint, glass)
       if (uWinter > 0.0 && (vStyle > 0.5 && vStyle < 1.5 || vStyle > 3.5 && vStyle < 4.5)) alb = mix(alb, vec3(0.62, 0.64, 0.68), uWinter * smoothstep(0.72, 0.9, dot(N, up)));
     #endif
@@ -19792,7 +19838,47 @@ void main() {
         emis = vStyle > 4.5 ? vec3(1.0, 0.66, 0.30) * (1.5 * night) : vStyle > 3.5 ? vec3(1.0, 0.72, 0.38) * (0.28 * night) : vStyle > 2.5 ? vec3(0.9, 0.03, 0.02) * (0.03 + 0.15 * night) : vec3(1.0, 0.95, 0.8) * (0.3 + 1.7 * night);
       }
     #endif
+    #ifdef GLOSS
+      if (vStyle > 8.5 && vStyle < 9.5) {
+        // a number plate, Massachusetts's (maPlate), and at night the back one lit by its lamp on a car that has its on
+        alb = maPlate(vCol.yz, vAux, plFw);
+        emis = vec3(0.0);
+        #ifdef LAMPS
+          if (vObj.z > 0.0) emis = alb * 0.22 * (1.0 - smoothstep(0.035, 0.16, dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6));
+        #endif
+      }
+    #endif
     #ifdef SIGNS
+      if (vStyle > 12.5) {
+        // a billboard's face (feat.js boardItems; -13 a bulletin, 14.6 by 4.3 m from 9.0 m up; -14 a poster panel, 7.0 by
+        // 3.2 m from 3.2 m up): its ad's row of the ads (vAux the ad; a poster has its own row, terrain.js adFaces), lit at
+        // night by the lamps under it, brighter toward its foot
+        bool poster = vStyle > 13.5;
+        vec2 aq = poster ? vec2(clamp(vObj.x / 7.0 + 0.5, 0.0, 1.0), clamp((vObj.y - 3.2) / 3.2, 0.005, 0.995))
+                         : vec2(clamp(vObj.x / 14.6 + 0.5, 0.0, 1.0), clamp((vObj.y - 9.0) / 4.3, 0.005, 0.995));
+        // (a poster's lettering is the right half of its ad's row)
+        alb = texture2D(uAdTex, vec2((poster ? 0.5 : 0.0) + 0.5 * aq.x, 1.0 - (vAux + 1.0 - aq.y) / ${N_ADS}.0)).rgb * 0.82;
+        float nightB = 1.0 - smoothstep(0.035, 0.16, dot(sunE, vec3(0.3, 0.5, 0.2)) * max(dot(up, Ld), 0.0) + dot(uAmbIrr, vec3(0.33)) * 0.6);
+        emis = alb * nightB * mix(0.55, 0.25, aq.y);
+      } else if (vStyle > 11.5) {
+        // a speed limit sign's face (feat.js speedSigns): its speed's row of the faces (vAux the speed), and the sheeting
+        // sends a car's lamps back as the name blades' does
+        vec2 fq = vec2(clamp(vObj.x / 0.61 + 0.5, 0.0, 1.0), clamp((vObj.y - 2.0) / 0.76, 0.005, 0.995));
+        float row = clamp(floor((vAux - 15.0) / 5.0 + 0.5), 0.0, 10.0);
+        alb = vec3(0.78) * texture2D(uFaceTex, vec2(fq.x, 1.0 - (row + 1.0 - fq.y) / 11.0)).r;
+        emis = alb * headlamp(vRel, N) * 3.0;
+      } else if (vStyle > 9.5) {
+        // a street name blade (feat.js nameSigns): its street's name in white on green from the tile's atlas (terrain.js
+        // nameAtlas, a row to a name, vAux its row from 1), read the right way round from either side (-10 the front
+        // face, -11 the back), the blade at 2.62 m or the one above it at 2.80 m.  The sheeting sends a car's lamps back
+        // toward them, so at night the name stands out in the headlights.
+        float uN = clamp(vObj.x / 0.9 + 0.5, 0.0, 1.0);
+        if (vStyle > 10.5) uN = 1.0 - uN;
+        float vN = clamp((vObj.y - (vObj.y > 2.71 ? 2.725 : 2.545)) / 0.15, 0.02, 0.98);
+        float txt = uNameRows > 0.5 && vAux > 0.5 ? texture2D(uNameTex, vec2(uN, 1.0 - (vAux - vN) / uNameRows)).r : 0.0;
+        alb = mix(vec3(0.0, 0.085, 0.035), vec3(0.78), txt);
+        emis = alb * headlamp(vRel, N) * 3.0;
+      } else
       // a traffic signal's lenses: green for 44% of its cycle, yellow for 6%, red for the rest; the cross street's
       // half a cycle on (feat.js sets the phase)
       if (vStyle > 5.5) {
@@ -20930,6 +21016,8 @@ varying float vRim;        // 1 where the envelope's surface turns edge-on to th
 void main() {
   #ifdef BOX
     float keep = aPart > 1.5 ? 1.0 : 0.0;
+  #elif defined(POLE)
+    float keep = ((aPart > 1.5 && aPart < 2.5) || abs(aPart - aInst.y) < 0.5 || (aPart > 2.5 && aInst.z > 0.5)) ? 1.0 : 0.0;
   #else
     float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
   #endif
@@ -22665,7 +22753,8 @@ void main() {
     panel(-0.44 * wF, 0.44 * wF, bF - 0.135, bF - 0.035, zF, -1, CM.DARK);
     panel(-0.64 * wF, 0.64 * wF, uF + 0.035, uF + 0.115, zF, -1, CM.DARK);
     for (const sx2 of [-1, 1]) panel(sx2 * 0.48 * wB, sx2 * (0.95 * wB - 0.02), bB - 0.15, bB - 0.03, zB, 1, CM.TAIL);
-    panel(-0.17, 0.17, bB - 0.29, bB - 0.17, zB, 1, CM.PLATE);
+    const plates = [[-0.155, 0.155, bB - 0.32, bB - 0.165, zB, 1], [-0.155, 0.155, uF + 0.06, uF + 0.215, zF - 0.01, -1]];
+    for (const [x02, x1, y02, y1, z, dir] of plates) panel(x02, x1, y02, y1, z, dir, CM.PLATE);
     panel(-0.66 * wB, 0.66 * wB, uB + 0.03, uB + 0.1, zB, 1, CM.DARK);
     {
       const zm = S2.a0 + 0.3, wm = key(S2.hw, zm), ym = key(S2.belt, zm) + 0.03;
@@ -22694,7 +22783,14 @@ void main() {
         flat([[xi2, yc2, zc2], i0, i1], [-sx2, 0, 0], CM.TYRE);
       }
     }
-    return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M), n: M.length, len: st[ns2 - 1] - st[0], wheel: W };
+    return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M), n: M.length, len: st[ns2 - 1] - st[0], wheel: W, plates };
+  }
+  function plateUV(m, i) {
+    const x = m.pos[i * 3], y = m.pos[i * 3 + 1], z = m.pos[i * 3 + 2];
+    const [x02, x1, y02, y1, , dir] = m.plates[z < 0 ? 1 : 0];
+    let u = (x - x02) / (x1 - x02);
+    if (dir < 0) u = 1 - u;
+    return [-9, u, (y - y02) / (y1 - y02)];
   }
 
   // src/terrain.js
@@ -22722,6 +22818,194 @@ void main() {
     strip((k) => k * N1, (k) => base + 2 * N1 + k);
     strip((k) => k * N1 + N, (k) => base + 3 * N1 + k);
     return new me(new Uint16Array(idx), 1);
+  }
+  var SIGN_ABBR = {
+    Street: "St",
+    Avenue: "Ave",
+    Road: "Rd",
+    Lane: "Ln",
+    Drive: "Dr",
+    Court: "Ct",
+    Place: "Pl",
+    Terrace: "Ter",
+    Parkway: "Pkwy",
+    Highway: "Hwy",
+    Square: "Sq",
+    Boulevard: "Blvd",
+    Circle: "Cir",
+    Extension: "Ext",
+    Heights: "Hts",
+    Turnpike: "Tpke"
+  };
+  function speedFaces() {
+    const W = 128, H = 160, n = 11, cv2 = document.createElement("canvas");
+    cv2.width = W;
+    cv2.height = H * n;
+    const g = cv2.getContext("2d");
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, W, H * n);
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillStyle = "#000";
+    g.strokeStyle = "#000";
+    for (let k = 0; k < n; k++) {
+      const y02 = H * k;
+      g.lineWidth = 4;
+      g.beginPath();
+      if (g.roundRect) g.roundRect(6, y02 + 6, W - 12, H - 12, 9);
+      else g.rect(6, y02 + 6, W - 12, H - 12);
+      g.stroke();
+      g.font = 'bold 27px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+      g.fillText("SPEED", W / 2, y02 + 33);
+      g.fillText("LIMIT", W / 2, y02 + 62);
+      g.font = 'bold 64px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+      g.fillText(String(15 + 5 * k), W / 2, y02 + 114);
+    }
+    const tex = new vh(cv2);
+    tex.anisotropy = 4;
+    return tex;
+  }
+  var ADS = [
+    ["#1f5130", "#ffffff", "#9be564", "LEGAL WEED", "STILL CAN\u2019T FIND PARKING  21+", "leaf"],
+    ["#2b2d42", "#ffffff", "#8ac926", "WELCOME, NEIGHBORS", "YOU KNOW WHY YOU\u2019RE HERE  21+", "leaf"],
+    ["#f4f1de", "#3d405b", "#2a9d8f", "PURITANS HATE THIS", "CANNABIS  NEXT EXIT  21+", "leaf"],
+    ["#e63946", "#ffffff", "#ffffff", "DON\u2019T DRIVE HIGH", "THE ROTARY IS HARD ENOUGH", "circle"],
+    ["#264653", "#e9c46a", "#e9c46a", "EDIBLES", "START LOW. GO SLOW.  21+", "leaf"],
+    ["#0b3954", "#ffffff", "#bfd7ea", "IT\u2019S NOT A ROTARY", "IT\u2019S A LIFESTYLE", "circle"],
+    ["#ffd60a", "#001d3d", "#001d3d", "USE YOUR BLINKER", "JUST KIDDING. WE KNOW.", "arrow"],
+    ["#ffffff", "#c1121f", "#003049", "NOR\u2019EASTER SALE", "BREAD  MILK  EGGS  PANIC", "flake"],
+    ["#5e3023", "#f3e9dc", "#c08552", "ICED COFFEE", "IT\u2019S 9 DEGREES. TREAT YOURSELF.", "cup"],
+    ["#0d1b2a", "#e0e1dd", "#ffb703", "PAHK THE CAH", "ANYWHERE. GOOD LUCK.", "car"],
+    ["#e9ecef", "#212529", "#e85d04", "TAKE A LEFT WHERE", "THE GAS STATION USED TO BE", "arrow"],
+    ["#14213d", "#ffffff", "#fca311", "HIT A POTHOLE?", "SO DID EVERYONE  1-800-555-0142", "stripe"],
+    ["#6c757d", "#ffffff", "#ffd166", "THE BIG DIG IS DONE", "PROBABLY", "stripe"],
+    ["#7b2cbf", "#ffffff", "#ffd60a", "WICKED SMAHT", "TUTORING  617-555-0123", "none"],
+    ["#caf0f8", "#03045e", "#0077b6", "SNOW?", "WE CALL THAT APRIL", "flake"],
+    ["#c1121f", "#fdf0d5", "#fdf0d5", "TRAFFIC AHEAD", "THERE IS ALWAYS TRAFFIC AHEAD", "none"],
+    ["#fefae0", "#283618", "#606c38", "TOWN MEETING", "FOUR HOURS ON ONE STOP SIGN", "none"],
+    ["#003049", "#ffffff", "#f77f00", "MERGE LIKE A ZIPPER", "NOT LIKE A MASSHOLE", "arrow"],
+    ["#f8f9fa", "#9d0208", "#9d0208", "CHOWDAH", "IT\u2019S NOT SOUP. IT\u2019S A RELIGION.", "bowl"],
+    ["#2d6a4f", "#ffffff", "#ffffff", "THIS SPACE AVAILABLE", "SO IS PARKING. JUST KIDDING.", "none"]
+  ];
+  function adFaces() {
+    const W = 512, H = 150, n = N_ADS, cv2 = document.createElement("canvas");
+    cv2.width = W * 2;
+    cv2.height = H * n;
+    const g = cv2.getContext("2d");
+    const font = (px2) => "bold " + px2 + 'px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+    const fit = (txt, px2, maxW) => {
+      g.font = font(px2);
+      const w = g.measureText(txt).width;
+      return w > maxW ? px2 * maxW / w : px2;
+    };
+    const mark = (art, x, y, r) => {
+      g.lineWidth = r * 0.14;
+      g.lineCap = "round";
+      if (art === "leaf") {
+        for (const [a, l] of [[-90, 1], [-55, 0.82], [-125, 0.82], [-25, 0.6], [-155, 0.6], [5, 0.38], [-185, 0.38]]) {
+          const t = a * Math.PI / 180, L2 = r * 1.05 * l;
+          g.save();
+          g.translate(x, y + r * 0.45);
+          g.rotate(t + Math.PI / 2);
+          g.beginPath();
+          g.ellipse(0, -L2 / 2, L2 * 0.17, L2 / 2, 0, 0, 6.2832);
+          g.fill();
+          g.restore();
+        }
+        g.fillRect(x - r * 0.04, y + r * 0.4, r * 0.08, r * 0.5);
+      } else if (art === "circle") {
+        g.beginPath();
+        g.arc(x, y, r * 0.7, 0, 6.2832);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x + r * 0.7, y);
+        g.lineTo(x + r * 0.95, y - r * 0.2);
+        g.lineTo(x + r * 0.95, y + r * 0.2);
+        g.closePath();
+        g.fill();
+      } else if (art === "arrow") {
+        g.beginPath();
+        g.moveTo(x - r * 0.8, y + r * 0.6);
+        g.lineTo(x - r * 0.8, y - r * 0.1);
+        g.lineTo(x + r * 0.2, y - r * 0.1);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x + r * 0.7, y - r * 0.1);
+        g.lineTo(x + r * 0.15, y - r * 0.55);
+        g.lineTo(x + r * 0.15, y + r * 0.35);
+        g.closePath();
+        g.fill();
+      } else if (art === "flake") {
+        for (let a = 0; a < 3; a++) {
+          const c = Math.cos(a * 1.047), si2 = Math.sin(a * 1.047);
+          g.beginPath();
+          g.moveTo(x - r * 0.8 * c, y - r * 0.8 * si2);
+          g.lineTo(x + r * 0.8 * c, y + r * 0.8 * si2);
+          g.stroke();
+        }
+      } else if (art === "cup") {
+        g.beginPath();
+        g.moveTo(x - r * 0.5, y - r * 0.6);
+        g.lineTo(x + r * 0.5, y - r * 0.6);
+        g.lineTo(x + r * 0.35, y + r * 0.75);
+        g.lineTo(x - r * 0.35, y + r * 0.75);
+        g.closePath();
+        g.fill();
+        g.beginPath();
+        g.moveTo(x + r * 0.1, y - r * 0.6);
+        g.lineTo(x + r * 0.4, y - r * 1);
+        g.stroke();
+      } else if (art === "car") {
+        g.fillRect(x - r * 0.9, y - r * 0.05, r * 1.8, r * 0.5);
+        g.fillRect(x - r * 0.5, y - r * 0.45, r * 1, r * 0.45);
+        g.beginPath();
+        g.arc(x - r * 0.5, y + r * 0.5, r * 0.22, 0, 6.2832);
+        g.arc(x + r * 0.5, y + r * 0.5, r * 0.22, 0, 6.2832);
+        g.fill();
+      } else if (art === "bowl") {
+        g.beginPath();
+        g.arc(x, y - r * 0.1, r * 0.8, 0, Math.PI);
+        g.fill();
+        g.fillRect(x - r * 0.9, y - r * 0.18, r * 1.8, r * 0.12);
+      }
+    };
+    for (let k = 0; k < 2 * n; k++) {
+      const poster = k >= n, [bg, fg, ac2, head, sub, art] = ADS[k % n], y02 = H * (k % n);
+      g.save();
+      g.beginPath();
+      g.rect(poster ? W : 0, y02, W, H);
+      g.clip();
+      g.fillStyle = bg;
+      g.fillRect(poster ? W : 0, y02, W, H);
+      const Wl2 = poster ? 330 : W;
+      if (poster) {
+        g.translate(W, 0);
+        g.scale(W / Wl2, 1);
+      }
+      g.fillStyle = ac2;
+      g.strokeStyle = ac2;
+      if (art === "stripe") g.fillRect(0, y02 + H - 16, Wl2, 9);
+      const hasMark = art !== "none" && art !== "stripe", mx2 = hasMark ? poster ? 46 : 64 : 0;
+      if (hasMark) mark(art, mx2, y02 + 70, poster ? 34 : 46);
+      const left = hasMark ? mx2 * 2 : 14, cx2 = (left + Wl2 - 14) / 2, aw = Wl2 - 14 - left;
+      g.fillStyle = fg;
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.font = font(fit(head, 64, aw));
+      g.fillText(head, cx2, y02 + 60);
+      g.font = font(fit(sub, 30, aw));
+      g.fillText(sub, cx2, y02 + 113);
+      g.restore();
+    }
+    const tex = new vh(cv2);
+    tex.colorSpace = sn;
+    tex.anisotropy = 4;
+    return tex;
+  }
+  function signText(name) {
+    const w = name.trim().split(/\s+/);
+    if (w.length > 1 && SIGN_ABBR[w[w.length - 1]]) w[w.length - 1] = SIGN_ABBR[w[w.length - 1]];
+    return w.join(" ");
   }
   var Terrain = class {
     constructor(game2) {
@@ -23330,7 +23614,7 @@ void main() {
         const CC = [[-1, 0, 0], [0.03, 0.045, 0.06], [0.02, 0.02, 0.022], [0.015, 0.015, 0.017], [0.36, 0.37, 0.39], [-2, 0, 0], [-3, 0, 0], [0.55, 0.55, 0.52], [0.035, 0.035, 0.038]];
         const one = (variant) => {
           const m = carMesh(variant, 0), g = new Yt(), c = new Float32Array(m.n * 3);
-          for (let i = 0; i < m.n; i++) c.set(CC[m.mat[i]], i * 3);
+          for (let i = 0; i < m.n; i++) c.set(m.mat[i] === CM.PLATE ? plateUV(m, i) : CC[m.mat[i]], i * 3);
           g.setAttribute("position", new me(m.pos, 3));
           g.setAttribute("normal", new me(m.nor, 3));
           g.setAttribute("aCol", new me(c, 3));
@@ -23365,6 +23649,17 @@ void main() {
         const glow = new Yt();
         glow.setAttribute("position", new me(new Float32Array([-2.58, 7.955, -0.11, -2.02, 7.955, -0.11, -2.02, 7.955, 0.11, -2.58, 7.955, -0.11, -2.02, 7.955, 0.11, -2.58, 7.955, 0.11]), 3));
         glow.setAttribute("normal", new me(new Float32Array([0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0]), 3));
+        const stub = new Rr(0.1, 0.145, 7.6, 6, 1);
+        stub.translate(0, 3.8, 0);
+        stub.rotateX(0.035);
+        stub.translate(0, -0.2, 0.42);
+        const tbox = new qi(0.16, 0.42, 0.12);
+        tbox.translate(0, 5.6, 0.57);
+        const band3 = (y) => {
+          const g = new qi(0.34, 0.05, 0.82);
+          g.translate(0, y, 0.21);
+          return part(col(g.toNonIndexed(), 0.13, 0.135, 0.14), 3);
+        };
         this.poleGeo = merge([
           part(col(pole.toNonIndexed(), ...wood), 2),
           part(col(arm.toNonIndexed(), ...wood), 2),
@@ -23372,17 +23667,22 @@ void main() {
           part(col(can.toNonIndexed(), ...grey), 0),
           part(col(larm.toNonIndexed(), ...grey), 1),
           part(col(head.toNonIndexed(), ...grey), 1),
-          part(col(glow, -5, 0, 0), 1)
+          part(col(glow, -5, 0, 0), 1),
+          part(col(stub.toNonIndexed(), 0.082, 0.073, 0.063), 3),
+          part(col(tbox.toNonIndexed(), 0.2, 0.21, 0.2), 3),
+          band3(2.4),
+          band3(4.9)
         ]);
         this.poleGeo.computeVertexNormals();
-        this.poleMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, COVER: 1 });
-        this.carMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1 });
+        this.poleMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, COVER: 1, POLE: 1 });
+        this.carMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
         this.poleMat.alphaToCoverage = this.carMat.alphaToCoverage = true;
         this.carMat.side = Mi;
         this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.03 } } });
       }
       this.signR = this.game.realBuildings ? q.signR || 0 : 0;
       this.powerR = this.game.realBuildings ? q.powerR || 0 : 0;
+      this.boardR = this.signR ? Math.max(900, this.signR * 4) : 0;
       if (this.signR || this.powerR) {
         const beam = (ax2, ay2, az, bx2, by2, bz, w, d) => {
           const L2 = Math.hypot(bx2 - ax2, by2 - ay2, bz - az) || 0.01;
@@ -23560,10 +23860,37 @@ void main() {
         add2(box2(0.6, 2.2, 0.3, 0, 1.1, 0), dockGrey, 26);
         add2(box2(0.62, 0.5, 0.02, 0, 1.95, 0.16), shareBlue, 26);
         add2(box2(0.5, 0.9, 0.02, 0, 1.2, 0.16), [0.5, 0.5, 0.48], 26);
+        const signGreen = [0, 0.085, 0.035];
+        const blade = (y, p) => {
+          add2(box2(0.92, 0.155, 0.012, 0, y, 0), signGreen, p);
+          const f = new Fs(0.9, 0.15);
+          f.translate(0, y, 9e-3);
+          add2(f.toNonIndexed(), [-10, 0, 0], p);
+          const b = new Fs(0.9, 0.15);
+          b.rotateY(Math.PI);
+          b.translate(0, y, -9e-3);
+          add2(b.toNonIndexed(), [-11, 0, 0], p);
+        };
+        add2(box2(0.05, 3, 0.05, 0, 1.5, 0), galv, 30);
+        add2(box2(0.07, 0.03, 0.07, 0, 3, 0), galv, 30);
+        blade(2.62, 30);
+        add2(box2(0.06, 0.05, 0.06, 0, 2.71, 0), galv, 31);
+        blade(2.8, 31);
+        add2(box2(0.05, 2.85, 0.05, 0, 1.425, 0), galv, 32);
+        add2(box2(0.61, 0.76, 8e-3, 0, 2.38, 0.035), [0.3, 0.31, 0.32], 32);
+        {
+          const f = new Fs(0.61, 0.76);
+          f.translate(0, 2.38, 0.042);
+          add2(f.toNonIndexed(), [-12, 0, 0], 32);
+        }
         this.signGeo = merge(P2);
         this.signGeo.computeVertexNormals();
         this.signMat = mk(0, [this.signR * 0.85, this.signR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1, COVER: 1 });
         this.signMat.alphaToCoverage = true;
+        this.signMat.uniforms.uNameTex = { value: new an(new Uint8Array(4), 1, 1) };
+        this.signMat.uniforms.uNameTex.value.needsUpdate = true;
+        this.signMat.uniforms.uNameRows = { value: 0 };
+        this.signMat.uniforms.uFaceTex = { value: speedFaces() };
         const T = [];
         const tAdd = (g, c, p) => T.push(part(col(g, ...c), p));
         const insul = [0.42, 0.4, 0.36];
@@ -23616,6 +23943,46 @@ void main() {
         this.towerGeo.computeVertexNormals();
         this.towerMat = mk(0, [this.powerR * 0.85, this.powerR * 0.98], [-2, -1], { PARTS: 1, COVER: 1 });
         this.towerMat.alphaToCoverage = true;
+        if (this.boardR) {
+          const BB = [], bAdd = (g, c, p) => BB.push(part(col(g, ...c), p));
+          const steel2 = [0.16, 0.165, 0.17], back = [0.2, 0.205, 0.21], lamp = [-5, 0, 0];
+          bAdd(cylY(0.42, 0.55, 9.6, 10, 0, -0.4, -0.75), steel2, 0);
+          bAdd(box2(1.6, 0.5, 1.4, 0, 9, -0.75), steel2, 0);
+          for (const y of [9.05, 13.25]) bAdd(box2(14.8, 0.28, 0.28, 0, y, -0.32), steel2, 0);
+          for (const x of [-6.9, -3.45, 0, 3.45, 6.9]) bAdd(box2(0.22, 4.4, 0.22, x, 11.15, -0.32), steel2, 0);
+          bAdd(box2(14.6, 4.3, 0.1, 0, 11.15, 0), back, 0);
+          {
+            const f = new Fs(14.6, 4.3);
+            f.translate(0, 11.15, 0.054);
+            bAdd(f.toNonIndexed(), [-13, 0, 0], 0);
+          }
+          bAdd(box2(14.6, 0.06, 1, 0, 8.86, 0.55), steel2, 0);
+          bAdd(box2(14.6, 0.05, 0.05, 0, 9.9, 1.03), steel2, 0);
+          for (const x of [-5.5, -1.85, 1.85, 5.5]) {
+            bAdd(box2(0.08, 0.08, 1.1, x, 8.95, 1.15), steel2, 0);
+            bAdd(box2(0.42, 0.22, 0.3, x, 9.05, 1.7), lamp, 0);
+          }
+          for (const x of [-2.3, 2.3]) bAdd(box2(0.32, 6.6, 0.32, x, 3.1, -0.3), steel2, 1);
+          bAdd(box2(7, 3.2, 0.08, 0, 4.8, 0), back, 1);
+          {
+            const f = new Fs(7, 3.2);
+            f.translate(0, 4.8, 0.044);
+            bAdd(f.toNonIndexed(), [-14, 0, 0], 1);
+          }
+          for (const x of [-1.8, 1.8]) {
+            bAdd(box2(0.06, 0.06, 1, x, 3, 0.5), steel2, 1);
+            bAdd(box2(0.34, 0.18, 0.26, x, 3.05, 1.05), lamp, 1);
+          }
+          this.boardGeo = merge(BB);
+          this.boardGeo.computeVertexNormals();
+          this.boardMat = mk(0, [this.boardR * 0.85, this.boardR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, PARTS: 1, SIGNS: 1, COVER: 1 });
+          this.boardMat.alphaToCoverage = true;
+          this.boardMat.uniforms.uNameTex = this.signMat ? this.signMat.uniforms.uNameTex : { value: new an(new Uint8Array(4), 1, 1) };
+          this.boardMat.uniforms.uNameRows = { value: 0 };
+          this.boardMat.uniforms.uFaceTex = this.signMat ? this.signMat.uniforms.uFaceTex : { value: speedFaces() };
+          this.boardMat.uniforms.uAdTex = { value: adFaces() };
+          if (this.signMat) this.signMat.uniforms.uAdTex = this.boardMat.uniforms.uAdTex;
+        }
         this.pwireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.045 } } });
         const LM = [], lAdd = (g, c, p) => LM.push(part(col(g, ...c), p));
         const orange = [0.62, 0.12, 0.02], paleW = [0.6, 0.6, 0.58], steel = [0.27, 0.28, 0.29], conc = [0.33, 0.31, 0.28];
@@ -23790,6 +24157,39 @@ void main() {
         uniforms: Object.assign({}, this.U, { uHouseFade: { value: new et(q.deckR - 40, q.deckR) }, uHouseR: { value: this.houseR || 420 } })
       }) : null;
     }
+    // A tile's street names lettered for its blades (feat.js nameSigns, LIT_FS SIGNS): a row 256 by 40 pixels to each
+    // name, white on black (the shader reads it as a mask), the name in a bold narrow face with its kind of street
+    // abbreviated as Massachusetts signs have it ("Walnut St", "Massachusetts Ave"), inside a white border.  The names
+    // come with the page (main.js names); a tile made before they arrive keeps blank blades.
+    nameAtlas(list) {
+      const W = 256, H = 40, n = list.length, names = this.game.names;
+      const cv2 = document.createElement("canvas");
+      cv2.width = W;
+      cv2.height = H * n;
+      const g = cv2.getContext("2d");
+      g.fillStyle = "#000";
+      g.fillRect(0, 0, W, H * n);
+      g.fillStyle = "#fff";
+      g.strokeStyle = "#fff";
+      g.lineWidth = 2;
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.font = 'bold 27px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+      for (let k = 0; k < n; k++) {
+        g.strokeRect(4, H * k + 4, W - 8, H - 8);
+        const txt = names ? signText(names[list[k]] || "") : "";
+        if (!txt) continue;
+        const w = g.measureText(txt).width, maxW = W - 22;
+        g.save();
+        g.translate(W / 2, H * k + H / 2 + 1);
+        if (w > maxW) g.scale(maxW / w, 1);
+        g.fillText(txt, 0, 0);
+        g.restore();
+      }
+      const tex = new vh(cv2);
+      tex.anisotropy = 4;
+      return tex;
+    }
     updateScatter(camC) {
       const g = this.game, q = g.quality;
       if (!q.scatter) return;
@@ -23814,6 +24214,7 @@ void main() {
       if (this.streetR) kinds.push(["poles", 8, ...ask(this.streetR)], ["cars", 8, ...ask(this.streetR)], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, ...ask(this.signR)], ["paint", 8, ...ask(Math.min(this.signR, 260))], ["gpaint", 7, ...ask(this.signR * 2)], ["streets", 8, ...ask(Math.min(this.signR * 1.6, 420))], ["kerbs", 8, ...ask(Math.min(this.signR, 160))], ["rails", 7, ...ask(Math.min(this.signR * 1.6, 520))]);
       if (this.powerR) kinds.push(["power", 6, ...ask(this.powerR)], ["pwires", 6, Math.min(this.powerR, 3e3)]);
+      if (this.boardR) kinds.push(["boards", 7, ...ask(this.boardR)]);
       const [bx2, by2] = this.aheadMap || [0, 0], b2 = bx2 * bx2 + by2 * by2;
       for (const [kind, level, rad, shows] of kinds) {
         if (alt > Math.max(shows ? rad : 0, (shows || rad) * 1.2)) continue;
@@ -23857,6 +24258,11 @@ void main() {
               for (const name of Object.keys(g2.attributes)) if (name !== "aInst") g2.deleteAttribute(name);
               g2.setIndex(null);
               g2.dispose();
+            }
+            if (t.nameMat) {
+              t.nameMat.dispose();
+              t.nameTex.dispose();
+              t.nameMat = t.nameTex = null;
             }
             for (const m of [t.mesh].concat(t.nm || [])) {
               this.scene.remove(m);
@@ -24125,8 +24531,8 @@ void main() {
       }
       const d = m.data, st = m.stride;
       const inv = new Ht().copy(basis).transpose();
-      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "ftrees" ? this.farTreeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : this.bldGeo;
-      const mat = m.kind === "trees" ? this.treeMat : m.kind === "ftrees" ? this.farTreeMat : m.kind === "under" ? this.underMat : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : this.bldMat;
+      const geo = m.kind === "trees" ? this.treeGeo : m.kind === "ftrees" ? this.farTreeGeo : m.kind === "under" ? this.leafGeos.hi[7] : m.kind === "grass" ? this.grassGeo : m.kind === "corn" ? this.cornGeo : m.kind === "clumps" ? this.clumpGeo : m.kind === "poles" ? this.poleGeo : m.kind === "cars" ? this.carGeo : m.kind === "signs" ? this.signGeo : m.kind === "power" ? this.towerGeo : m.kind === "boards" ? this.boardGeo : this.bldGeo;
+      const mat = m.kind === "trees" ? this.treeMat : m.kind === "ftrees" ? this.farTreeMat : m.kind === "under" ? this.underMat : m.kind === "grass" ? this.grassMat : m.kind === "corn" ? this.cornMat : m.kind === "clumps" ? this.clumpMat : m.kind === "poles" ? this.poleMat : m.kind === "cars" ? this.carMat : m.kind === "signs" ? this.signMat : m.kind === "power" ? this.towerMat : m.kind === "boards" ? this.boardMat : this.bldMat;
       const mesh = new bo(geo, mat, n);
       const inst = new Float32Array(n * 4);
       const roofA = m.kind === "buildings" && st >= 12 ? new Float32Array(n * 4) : null;
@@ -24150,6 +24556,7 @@ void main() {
         );
       }
       let nTrees = 0;
+      const nameSlot = /* @__PURE__ */ new Map(), nameList = [];
       const ext = new C();
       const lp2 = new Float32Array(n * 3), mid = new C();
       for (let i = 0; i < n; i++) {
@@ -24192,16 +24599,30 @@ void main() {
           S2.set(1, 0.92 + 0.16 * d[o + 4], 1);
           inst[i * 4] = d[o + 4];
           inst[i * 4 + 1] = d[o + 4] < 0.14 ? 0 : d[o + 4] < 0.56 ? 1 : 5;
+          inst[i * 4 + 2] = (d[o + 4] * 31.7 + 0.37) % 1 < 0.13 ? 1 : 0;
         } else if (m.kind === "signs") {
           const pt = d[o + 4], lh = LAMP_H[pt];
           Q.setFromAxisAngle(Y, d[o + 3]);
           S2.set(pt === 28 ? clamp2(d[o + 6], 1, 20) : 1, pt === 8 && d[o + 5] > 2 ? d[o + 5] / 10 : lh && d[o + 6] > 0 ? clamp2(d[o + 6] / lh, 0.6, 1.6) : 1, 1);
           inst[i * 4] = d[o + 4] === 8 ? 0 : d[o + 5];
           inst[i * 4 + 1] = d[o + 4];
+          if (pt === 30 || pt === 31) {
+            let sl2 = nameSlot.get(d[o + 5]);
+            if (sl2 === void 0) {
+              sl2 = nameList.length < 100 ? nameList.push(d[o + 5]) : 0;
+              nameSlot.set(d[o + 5], sl2);
+            }
+            inst[i * 4] = sl2;
+          }
         } else if (m.kind === "power") {
           Q.setFromAxisAngle(Y, d[o + 3]);
           S2.set(1, 1, 1);
           inst[i * 4] = 0;
+          inst[i * 4 + 1] = d[o + 4];
+        } else if (m.kind === "boards") {
+          Q.setFromAxisAngle(Y, d[o + 3]);
+          S2.set(1, 1, 1);
+          inst[i * 4] = d[o + 5];
           inst[i * 4 + 1] = d[o + 4];
         } else if (m.kind === "cars") {
           const hsh = d[o + 4], tall = hsh * 7.13 % 1;
@@ -24245,6 +24666,18 @@ void main() {
       if (wallA) g2.setAttribute("aWall", new vi(wallA, 4));
       mesh.geometry = g2;
       t.shared = Object.keys(geo.attributes);
+      if (nameList.length) {
+        t.nameTex = this.nameAtlas(nameList);
+        t.nameMat = new Rn({
+          vertexShader: mat.vertexShader,
+          fragmentShader: mat.fragmentShader,
+          defines: mat.defines,
+          side: mat.side,
+          uniforms: Object.assign({}, mat.uniforms, { uNameTex: { value: t.nameTex }, uNameRows: { value: nameList.length } })
+        });
+        t.nameMat.alphaToCoverage = mat.alphaToCoverage;
+        mesh.material = t.nameMat;
+      }
       if (m.kind === "ftrees") {
         const rank = new Float32Array(n);
         for (let i = 0; i < n; i++) rank[i] = d[i * st + 9];
@@ -24422,6 +24855,9 @@ void main() {
   #else
     #ifdef FARTREE
       float keep = 1.0;
+    #elif defined(POLE)
+      // (a utility pole: the pole itself, its transformer or lamp by aInst.y, and the old pole beside it by aInst.z)
+      float keep = ((aPart > 1.5 && aPart < 2.5) || abs(aPart - aInst.y) < 0.5 || (aPart > 2.5 && aInst.z > 0.5)) ? 1.0 : 0.0;
     #else
       float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
     #endif
@@ -24598,14 +25034,17 @@ void main() {
   #endif
   vAux = aInst.x;
   #ifdef CAR
-    if (aCol.r < -4.5) { vCol = vec3(0.45, 0.42, 0.36); vStyle = 5.0; }
+    if (aCol.r < -8.5) { vCol = aCol; vStyle = 9.0; }        // a number plate: where across it (cars.js plateUV)
+    else if (aCol.r < -4.5) { vCol = vec3(0.45, 0.42, 0.36); vStyle = 5.0; }
     else if (aCol.r < -3.5) { vCol = vec3(0.05, 0.07, 0.09); vStyle = 4.0; }
     else if (aCol.r < -2.5) { vCol = vec3(0.30, 0.02, 0.02); vStyle = 3.0; }
     else if (aCol.r < -1.5) { vCol = vec3(0.55, 0.55, 0.50); vStyle = 2.0; }
     else if (aCol.r < -0.5) { vCol = carPaint(aInst.x); vStyle = 1.0; }
-    #ifdef COVER
+    #ifdef PARKED
       // a parked car is there for a while, not for good (item 130): each space along the kerb (street.js) is taken or
-      // free by the hour, more of them overnight when the street's people are home than in the working day
+      // free by the hour, more of them overnight when the street's people are home than in the working day.  (Only the
+      // parked cars: under COVER, which the poles and signs share for their fade, it had taken a third of the utility
+      // poles, street lamps and signals away by day as well.)
       if (fract(aInst.x * 7.31 + 0.13) > uParked) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
     #endif
   #endif
@@ -25410,7 +25849,7 @@ void main() {
         if (!is2(i)) continue;
         pos.set(m.pos.subarray(i * 3, i * 3 + 3), o * 3);
         nor.set(m.nor.subarray(i * 3, i * 3 + 3), o * 3);
-        col.set(CAR_COL[m.mat[i]], o * 3);
+        col.set(m.mat[i] === CM.PLATE ? plateUV(m, i) : CAR_COL[m.mat[i]], o * 3);
         o++;
       }
       const g = new Yt();
@@ -27031,6 +27470,7 @@ void main() {
   };
 
   // src/street.js
+  var DROP_CLS = /* @__PURE__ */ new Set([CLS.HOUSE, CLS.CAPE, CLS.RANCH, CLS.TRIPLE, CLS.ROW, CLS.MULTI]);
   var P = { x: 0, y: 0, z: 0, tx: 1, ty: 0 };
   function pointAt(reg, ri2, s30) {
     const cum = reg.cum, px2 = reg.px, py2 = reg.py;
@@ -31164,7 +31604,9 @@ void main() {
       this.U.uShadowInfo2.value.set(1 / S2, Rs22, 0);
       const mk = (vs2) => new Rn({ vertexShader: vs2, fragmentShader: DEPTH_FS, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat = { houses: mk(DEPTH_HOUSE_VS), trees: mk(DEPTH_SCATTER_VS), plain: mk(DEPTH_PLAIN_VS) };
-      this.depthMat.poles = this.depthMat.trees;
+      this.depthMat.poles = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { POLE: 1 }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
+      this.depthMat.traffic = this.depthMat.trees;
+      this.depthMat.boards = this.depthMat.trees;
       this.depthMat.trees = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { TREES: 1 }, uniforms: { uWinter: this.U.uWinter }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.cars = new Rn({ vertexShader: DEPTH_SCATTER_VS, fragmentShader: DEPTH_FS, defines: { PARKED: 1 }, uniforms: { uParked: this.U.uParked }, side: Bn, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 1.2, polygonOffsetUnits: 2 });
       this.depthMat.decks = this.depthMat.houses;
@@ -31258,7 +31700,7 @@ void main() {
       for (const t of this.terrain.visScatter) {
         const m = t.mesh;
         const kind = t.kind, inReach = Math.hypot(t.mid[0] - c[0] - v.F.x, t.mid[1] - c[1] - v.F.y, t.mid[2] - c[2] - v.F.z) <= reach + t.rad;
-        const casts = inReach && (k ? kind === "trees" || kind === "buildings" || kind === "decks" : kind === "houses" || kind === "decks" || kind === "trees" || kind === "under" || kind === "poles" || kind === "cars" || kind === "rails");
+        const casts = inReach && (k ? kind === "trees" || kind === "buildings" || kind === "decks" : kind === "houses" || kind === "decks" || kind === "trees" || kind === "under" || kind === "poles" || kind === "cars" || kind === "rails" || kind === "boards");
         if (t.near && t.nm) {
           for (const nm2 of t.nm) {
             const lod = nm2.userData.lod;
@@ -31304,7 +31746,7 @@ void main() {
         if (tm2.visible && !k) {
           tm2.layers.enable(1);
           sw.push(tm2, tm2.material);
-          tm2.material = this.depthMat.cars;
+          tm2.material = this.depthMat.traffic;
         } else tm2.layers.disable(1);
       }
       if (this.trains) for (const m of this.trains.meshes) {

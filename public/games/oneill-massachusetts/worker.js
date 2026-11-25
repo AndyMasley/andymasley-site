@@ -355,6 +355,7 @@
   var RM = 160;
   var RCELL = 128;
   var RREG = 72;
+  var N_ADS = 20;
   var WCELL = 32;
   var WPAD = 14;
   var DCELL = 256;
@@ -3078,7 +3079,8 @@
     panel(-0.44 * wF, 0.44 * wF, bF - 0.135, bF - 0.035, zF, -1, CM.DARK);
     panel(-0.64 * wF, 0.64 * wF, uF + 0.035, uF + 0.115, zF, -1, CM.DARK);
     for (const sx of [-1, 1]) panel(sx * 0.48 * wB, sx * (0.95 * wB - 0.02), bB - 0.15, bB - 0.03, zB, 1, CM.TAIL);
-    panel(-0.17, 0.17, bB - 0.29, bB - 0.17, zB, 1, CM.PLATE);
+    const plates = [[-0.155, 0.155, bB - 0.32, bB - 0.165, zB, 1], [-0.155, 0.155, uF + 0.06, uF + 0.215, zF - 0.01, -1]];
+    for (const [x0, x1, y0, y1, z, dir] of plates) panel(x0, x1, y0, y1, z, dir, CM.PLATE);
     panel(-0.66 * wB, 0.66 * wB, uB + 0.03, uB + 0.1, zB, 1, CM.DARK);
     {
       const zm = S.a0 + 0.3, wm = key(S.hw, zm), ym = key(S.belt, zm) + 0.03;
@@ -3107,7 +3109,7 @@
         flat2([[xi, yc, zc], i0, i1], [-sx, 0, 0], CM.TYRE);
       }
     }
-    return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M2), n: M2.length, len: st2[ns - 1] - st2[0], wheel: W };
+    return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M2), n: M2.length, len: st2[ns - 1] - st2[0], wheel: W, plates };
   }
 
   // src/houses.js
@@ -5120,6 +5122,8 @@
   var POLE_GAP = 42;
   var SLOT = 6.4;
   var _lg = {};
+  var WIRES = [[-1.05, 8.66, 0.75], [0, 10.12, 0.7], [1.05, 8.66, 0.75], [-0.2, 7.35, 0.85], [0.16, 6.4, 0.95], [0.1, 5.85, 1.05]];
+  var DROP_CLS = /* @__PURE__ */ new Set([CLS.HOUSE, CLS.CAPE, CLS.RANCH, CLS.TRIPLE, CLS.ROW, CLS.MULTI]);
   var _shS = { r: 0, l: 0, b: 0 };
   var P = { x: 0, y: 0, z: 0, tx: 1, ty: 0 };
   function roadBoxes(reg) {
@@ -5194,6 +5198,24 @@
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0, pad = 60;
     const A = { mx: 0, my: 0, h: 0, yaw: 0, tx: 0, ty: 0 }, B = { mx: 0, my: 0, h: 0, yaw: 0, tx: 0, ty: 0 };
     const inTile = (mx, my) => mx >= mx0 && mx < mx0 + s && my >= my0 && my < my0 + s;
+    let H = null;
+    const homes = () => {
+      if (H) return H;
+      H = [];
+      if (!reg.nBld) return H;
+      const cs = 368;
+      for (let cj = Math.floor((my0 - 50 - reg.y0) / cs); cj <= Math.floor((my0 + s + 50 - reg.y0) / cs); cj++)
+        for (let ci = Math.floor((mx0 - 50 - reg.x0) / cs); ci <= Math.floor((mx0 + s + 50 - reg.x0) / cs); ci++) {
+          const d = cellBuildings(reg, ci, cj);
+          if (!d) continue;
+          for (let k = 0; k < d.length; k += 16) {
+            if (d[k] < mx0 - 50 || d[k] > mx0 + s + 50 || d[k + 1] < my0 - 50 || d[k + 1] > my0 + s + 50) continue;
+            if (!DROP_CLS.has(d[k + 6]) || d[k + 2] * d[k + 3] > 450) continue;
+            H.push([d[k], d[k + 1], d[k + 2] / 2, d[k + 3] / 2, Math.cos(d[k + 4]), Math.sin(d[k + 4]), d[k + 5]]);
+          }
+        }
+      return H;
+    };
     for (let ri = 0; ri < reg.nRoads; ri++) {
       if (box2[ri * 4] > lx0 + s + pad || box2[ri * 4 + 2] < lx0 - pad || box2[ri * 4 + 1] > ly0 + s + pad || box2[ri * 4 + 3] < ly0 - pad) continue;
       const q0 = reg.rStart[ri], sA = reg.cum[q0], sB = reg.cum[q0 + reg.rCount[ri] - 1], hw = reg.rHw[ri], cls = reg.rCls[ri];
@@ -5205,7 +5227,7 @@
           if (kind === "poles") {
             cyl(A.mx, A.my, A.h, p32);
             out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, hash2(k * 7 + 3, reg.rName[ri] + 11));
-          } else if (!photographed(reg, ri, (k + 1) * POLE_GAP) && poleAt(world2, reg, ri, k + 1, B) && !cityPoles(reg, B.mx, B.my)) {
+          } else if (drops(world2, reg, ri, k * POLE_GAP, A, homes(), cx, cy, cz, p32, out), !photographed(reg, ri, (k + 1) * POLE_GAP) && poleAt(world2, reg, ri, k + 1, B) && !cityPoles(reg, B.mx, B.my)) {
             const span = Math.hypot(B.mx - A.mx, B.my - A.my);
             if (span > POLE_GAP * 1.6) continue;
             let clear = true;
@@ -5214,7 +5236,7 @@
               if (world2.g.deck > -1e8 && world2.g.deck < A.h + 12) clear = false;
             }
             if (!clear) continue;
-            for (const [lat, hgt, sag] of [[-1.05, 8.66, 0.75], [0, 10.12, 0.7], [1.05, 8.66, 0.75], [0.16, 6.4, 0.95]]) {
+            for (const [lat, hgt, sag] of WIRES) {
               let px0 = 0, py0 = 0, pz0 = 0;
               for (let j = 0; j <= 6; j++) {
                 const u = j / 6, lx = lat, mx = A.mx + (B.mx - A.mx) * u + (A.ty + (B.ty - A.ty) * u) * lx, my = A.my + (B.my - A.my) * u - (A.tx + (B.tx - A.tx) * u) * lx;
@@ -5279,6 +5301,7 @@
           cyl(A.mx, A.my, A.h, p32);
           out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, A.yaw, mp.carries[i] === 1 ? 0.3 : mp.carries[i] === 2 ? 0.05 : 0.9);
         } else {
+          drops(world2, reg, mp.road[i], mp.s[i], A, homes(), cx, cy, cz, p32, out);
           const j = mp.next[i];
           if (j >= 0 && j < mp.n && poleAtS(world2, reg, mp.road[j], mp.s[j], mp.side[j], B) && !cityPoles(reg, B.mx, B.my)) wireSpan(world2, A, B, cx, cy, cz, p32, out);
         }
@@ -5310,12 +5333,39 @@
     }
     return new Float32Array(out);
   }
+  function drops(world2, reg, ri, sP, A, H, cx, cy, cz, p32, out) {
+    if (!H.length) return;
+    const p = pointAt(reg, ri, sP), rx = reg.x0 + p.x, ry = reg.y0 + p.y, tx = p.tx, ty = p.ty, hw = reg.rHw[ri];
+    for (const [bx, by, bw, bd, c, sn, wallH] of H) {
+      const dx = bx - rx, dy = by - ry;
+      if (Math.abs(dx) > 60 || Math.abs(dy) > 60) continue;
+      const along2 = dx * tx + dy * ty, across2 = Math.abs(dx * ty - dy * tx);
+      if (Math.abs(along2) > POLE_GAP / 2 || across2 < hw + 3 || across2 > hw + 45) continue;
+      const ax = A.mx - bx, ay = A.my - by, u = ax * c + ay * sn, v = -ax * sn + ay * c;
+      const cu = u < 0 ? -bw : bw, cv = v < 0 ? -bd : bd;
+      const qx = bx + cu * c - cv * sn, qy = by + cu * sn + cv * c;
+      const L2 = Math.hypot(qx - A.mx, qy - A.my);
+      if (L2 < 6 || L2 > 40) continue;
+      const e = world2.nearestRoad(bx, by), nr = world2._nr;
+      if (!(e < 60) || nr.road !== ri && nr.reg === reg && reg.rCls[nr.road] < 13) continue;
+      const hq = world2.groundH(qx, qy, true) + clamp2(wallH - 0.6, 2.8, 5.4), ha = A.h + 7.05, sag = 0.25 + 0.022 * L2;
+      let px0 = 0, py0 = 0, pz0 = 0;
+      for (let j = 0; j <= 5; j++) {
+        const t = j / 5;
+        cyl(A.mx + (qx - A.mx) * t, A.my + (qy - A.my) * t, ha + (hq - ha) * t - 4 * sag * t * (1 - t), p32);
+        if (j > 0) out.push(px0, py0, pz0, p32[0] - cx, p32[1] - cy, p32[2] - cz);
+        px0 = p32[0] - cx;
+        py0 = p32[1] - cy;
+        pz0 = p32[2] - cz;
+      }
+    }
+  }
   function wireSpan(world2, A, B, cx, cy, cz, p32, out) {
     for (let j = 1; j < 6; j++) {
       world2.groundH(A.mx + (B.mx - A.mx) * j / 6, A.my + (B.my - A.my) * j / 6, true);
       if (world2.g.deck > -1e8 && world2.g.deck < A.h + 12) return;
     }
-    for (const [lat, hgt, sag] of [[-1.05, 8.66, 0.75], [0, 10.12, 0.7], [1.05, 8.66, 0.75], [0.16, 6.4, 0.95]]) {
+    for (const [lat, hgt, sag] of WIRES) {
       let px0 = 0, py0 = 0, pz0 = 0;
       for (let j = 0; j <= 6; j++) {
         const u = j / 6, mx = A.mx + (B.mx - A.mx) * u + (A.ty + (B.ty - A.ty) * u) * lat, my = A.my + (B.my - A.my) * u - (A.tx + (B.tx - A.tx) * u) * lat;
@@ -5332,12 +5382,599 @@
     return !!(st2 && st2.poles && streetsPainted(st2, mx - reg.x0, my - reg.y0));
   }
 
+  // src/islands.js
+  var KERB_H = 0.15;
+  var APRON_H = 0.06;
+  var TOP_W = 0.15;
+  var BANK_W = 1;
+  var STEP = 1.5;
+  var COL = {
+    kerb: [0.25, 0.245, 0.24],
+    conc: [0.27, 0.262, 0.248],
+    apron: [0.3, 0.276, 0.255],
+    grass: [0.075, 0.14, 0.035],
+    paint: [0.78, 0.78, 0.74]
+  };
+  var ISL = [];
+  var YLD = [];
+  function setRoundabouts(j) {
+    ISL = [];
+    YLD = [];
+    for (const r of j && j.isl || []) {
+      const P2 = [[r[3], r[4]]];
+      let x = Math.round(r[3] * 100), y = Math.round(r[4] * 100);
+      for (let i = 5; i + 1 < r.length && typeof r[i] === "number"; i += 2) {
+        x += r[i];
+        y += r[i + 1];
+        P2.push([x / 100, y / 100]);
+      }
+      const last = r[r.length - 1];
+      let col = last && typeof last === "object" && !Array.isArray(last) && last.c ? last.c : null;
+      if (col) {
+        const m = (col[0] + col[1] + col[2]) / 3;
+        col = col.map((v) => m * Math.min(1.18, Math.max(0.85, v / m)));
+      }
+      if (P2.length < 3) continue;
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, cx = 0, cy = 0;
+      for (const [px, py] of P2) {
+        x0 = Math.min(x0, px);
+        x1 = Math.max(x1, px);
+        y0 = Math.min(y0, py);
+        y1 = Math.max(y1, py);
+        cx += px;
+        cy += py;
+      }
+      const Pd = clean(r[0] !== 2 ? hullIfRound(P2) : P2, 0.5);
+      ISL.push({ kind: r[0], apron: r[1] / 10, surf: r[2], col, P: Pd, box: [x0, y0, x1, y1], cx: cx / P2.length, cy: cy / P2.length });
+    }
+    for (const y of j && j.yld || []) YLD.push(y);
+  }
+  function inIsland(x, y) {
+    for (const I of ISL) {
+      if (x < I.box[0] || x > I.box[2] || y < I.box[1] || y > I.box[3]) continue;
+      let c = false;
+      const P2 = I.P;
+      for (let i = 0, j = P2.length - 1; i < P2.length; j = i++) {
+        const [xi, yi] = P2[i], [xj, yj] = P2[j];
+        if (yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+      }
+      if (c) return true;
+    }
+    return false;
+  }
+  var polyArea2 = (P2) => {
+    let s = 0;
+    for (let i = 0, j = P2.length - 1; i < P2.length; j = i++) s += (P2[j][0] - P2[i][0]) * (P2[j][1] + P2[i][1]);
+    return s / 2;
+  };
+  function clean(P2, d) {
+    const out = [P2[0]];
+    for (let i = 1; i < P2.length; i++) {
+      const q = out[out.length - 1];
+      if (Math.hypot(P2[i][0] - q[0], P2[i][1] - q[1]) >= d) out.push(P2[i]);
+    }
+    while (out.length > 3 && Math.hypot(out[0][0] - out[out.length - 1][0], out[0][1] - out[out.length - 1][1]) < d) out.pop();
+    return out.length >= 3 ? out : P2;
+  }
+  function convex(P2) {
+    for (let i = 0; i < P2.length; i++) {
+      const a = P2[i], b = P2[(i + 1) % P2.length], c = P2[(i + 2) % P2.length];
+      if ((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) < -1e-9) return false;
+    }
+    return true;
+  }
+  function hullIfRound(P2) {
+    const Q = P2.map((p) => p.slice()).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const p of Q) {
+      while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+      lo.push(p);
+    }
+    for (let i = Q.length - 1; i >= 0; i--) {
+      const p = Q[i];
+      while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop();
+      up.push(p);
+    }
+    const H = lo.slice(0, -1).concat(up.slice(0, -1));
+    return H.length >= 3 && polyArea2(H) <= polyArea2(P2) * 1.04 ? H : P2;
+  }
+  function inset(P2, d) {
+    const n = P2.length, out = [];
+    for (let i = 0; i < n; i++) {
+      const a = P2[(i + n - 1) % n], b = P2[i], c = P2[(i + 1) % n];
+      let ux = b[0] - a[0], uy = b[1] - a[1], vx = c[0] - b[0], vy = c[1] - b[1];
+      const ul = Math.hypot(ux, uy) || 1, vl = Math.hypot(vx, vy) || 1;
+      ux /= ul;
+      uy /= ul;
+      vx /= vl;
+      vy /= vl;
+      let nx = -uy - vy, ny = ux + vx;
+      const nl = Math.hypot(nx, ny);
+      if (nl < 1e-6) {
+        nx = -uy;
+        ny = ux;
+      } else {
+        nx /= nl;
+        ny /= nl;
+      }
+      const cosh = Math.max(0.5, nx * -uy + ny * ux);
+      out.push([b[0] + nx * d / cosh, b[1] + ny * d / cosh]);
+    }
+    return out;
+  }
+  function earcut(P2) {
+    const idx = P2.map((_, i) => i), tris = [];
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const inTri = (p, a, b, c) => cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
+    let guard = 0;
+    while (idx.length > 3 && guard++ < 1e4) {
+      let cut = false;
+      for (let k = 0; k < idx.length; k++) {
+        const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
+        const a = P2[i0], b = P2[i1], c = P2[i2];
+        if (cross(a, b, c) <= 1e-9) continue;
+        let ok = true;
+        for (const j of idx) {
+          if (j === i0 || j === i1 || j === i2) continue;
+          if (inTri(P2[j], a, b, c)) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        tris.push([i0, i1, i2]);
+        idx.splice(k, 1);
+        cut = true;
+        break;
+      }
+      if (!cut) break;
+    }
+    if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
+    return tris;
+  }
+  function islandTris(world2, mx0, my0, s, cx, cy, cz, lc) {
+    if (!ISL.length && !YLD.length) return new Float32Array(0);
+    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), A3 = new Float64Array(3);
+    const hc = /* @__PURE__ */ new Map();
+    const ground = (x, y) => {
+      const key2 = Math.round(x * 20) * 1e7 + Math.round(y * 20);
+      let h = hc.get(key2);
+      if (h === void 0) {
+        h = world2.groundH(x, y, true);
+        hc.set(key2, h);
+      }
+      return h;
+    };
+    const inTile = (x, y) => x >= mx0 && x < mx0 + s && y >= my0 && y < my0 + s;
+    const tri4 = (a, b, c, col, want) => {
+      const P2 = [a, b, c].map(([x, y, h]) => {
+        cyl(x, y, h, p32);
+        return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
+      });
+      let nx, ny, nz;
+      if (want) [nx, ny, nz] = want;
+      else {
+        const [x, y, h] = a;
+        cyl(x, y, h, p32);
+        cyl(x, y, h + 1, u3);
+        nx = u3[0] - p32[0];
+        ny = u3[1] - p32[1];
+        nz = u3[2] - p32[2];
+      }
+      const e1 = [P2[1][0] - P2[0][0], P2[1][1] - P2[0][1], P2[1][2] - P2[0][2]], e2 = [P2[2][0] - P2[0][0], P2[2][1] - P2[0][1], P2[2][2] - P2[0][2]];
+      const fx = e1[1] * e2[2] - e1[2] * e2[1], fy = e1[2] * e2[0] - e1[0] * e2[2], fz = e1[0] * e2[1] - e1[1] * e2[0];
+      const order = fx * nx + fy * ny + fz * nz >= 0 ? [0, 1, 2] : [0, 2, 1];
+      for (const i of order) out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, col[0], col[1], col[2]);
+    };
+    const flat2 = (a, b, c, col, h, depth = 0) => {
+      const lab = Math.hypot(a[0] - b[0], a[1] - b[1]), lbc = Math.hypot(b[0] - c[0], b[1] - c[1]), lca = Math.hypot(c[0] - a[0], c[1] - a[1]);
+      const l = Math.max(lab, lbc, lca);
+      if (l > 3 && depth < 12) {
+        const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+        if (l === lab) {
+          const ab = m(a, b);
+          flat2(a, ab, c, col, h, depth + 1);
+          flat2(ab, b, c, col, h, depth + 1);
+        } else if (l === lbc) {
+          const bc = m(b, c);
+          flat2(a, b, bc, col, h, depth + 1);
+          flat2(a, bc, c, col, h, depth + 1);
+        } else {
+          const ca = m(c, a);
+          flat2(a, b, ca, col, h, depth + 1);
+          flat2(ca, b, c, col, h, depth + 1);
+        }
+        return;
+      }
+      tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
+    };
+    const band = (a0, a1, b0, b1, ha, hb, col) => {
+      const A0 = [a0[0], a0[1], ground(a0[0], a0[1]) + ha], A1 = [a1[0], a1[1], ground(a1[0], a1[1]) + ha];
+      const B0 = [b0[0], b0[1], ground(b0[0], b0[1]) + hb], B1 = [b1[0], b1[1], ground(b1[0], b1[1]) + hb];
+      tri4(A0, A1, B1, col);
+      tri4(A0, B1, B0, col);
+    };
+    const face = (a, b, h0, h12, col) => {
+      const L2 = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (L2 < 0.01) return;
+      const wx = (b[1] - a[1]) / L2, wy = -(b[0] - a[0]) / L2;
+      const g0 = ground(a[0], a[1]), g1 = ground(b[0], b[1]);
+      cyl((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (g0 + g1) / 2, p32);
+      cyl((a[0] + b[0]) / 2 + wx, (a[1] + b[1]) / 2 + wy, (g0 + g1) / 2, A3);
+      const want = [A3[0] - p32[0], A3[1] - p32[1], A3[2] - p32[2]];
+      tri4([a[0], a[1], g0 + h12], [b[0], b[1], g1 + h0], [b[0], b[1], g1 + h12], col, want);
+      tri4([a[0], a[1], g0 + h12], [a[0], a[1], g0 + h0], [b[0], b[1], g1 + h0], col, want);
+    };
+    const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    for (const I of ISL) {
+      if (I.box[2] < mx0 - 1 || I.box[0] > mx0 + s + 1 || I.box[3] < my0 - 1 || I.box[1] > my0 + s + 1) continue;
+      const P2 = I.P, n = P2.length;
+      if (I.kind === 1 && I.grassTop === void 0 && lc) {
+        let nP = 0, nK = 0;
+        for (let q = 0; q < 24; q++) {
+          const t = (q + 0.5) / 24, a = P2[Math.floor(t * n)], f = 0.25 + 0.5 * (q * 7 % 24) / 24;
+          const v = lc(I.cx + (a[0] - I.cx) * f, I.cy + (a[1] - I.cy) * f);
+          if (v < 0) continue;
+          nK++;
+          if (v === 1 || v === 14) nP++;
+        }
+        if (nK >= 12) I.grassTop = nP >= nK / 2;
+      }
+      const flatTop = I.kind !== 1 || I.grassTop === true;
+      const base = I.kind === 1 && I.apron > 0 ? APRON_H : 0;
+      const Q = I.kind === 1 && I.apron > 0 ? inset(P2, I.apron) : P2;
+      const T1 = inset(Q, TOP_W), T2 = I.kind === 1 ? inset(Q, TOP_W + BANK_W) : null;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const L2 = Math.hypot(P2[j][0] - P2[i][0], P2[j][1] - P2[i][1]), m = Math.max(1, Math.ceil(L2 / STEP));
+        for (let k = 0; k < m; k++) {
+          const t0 = k / m, t1 = (k + 1) / m;
+          const a = lerp(P2[i], P2[j], t0), b = lerp(P2[i], P2[j], t1);
+          if (!inTile((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)) continue;
+          const qa = lerp(Q[i], Q[j], t0), qb = lerp(Q[i], Q[j], t1);
+          if (base > 0) {
+            face(a, b, -0.03, base, COL.kerb);
+            band(a, b, qa, qb, base, base, I.col || COL.apron);
+            face(qa, qb, base, base + KERB_H, COL.kerb);
+          } else face(a, b, -0.03, KERB_H, COL.kerb);
+          const top = base + KERB_H;
+          const ta = lerp(T1[i], T1[j], t0), tb = lerp(T1[i], T1[j], t1);
+          band(qa, qb, ta, tb, top, top, COL.kerb);
+          if (T2 && !flatTop) {
+            const ua = lerp(T2[i], T2[j], t0), ub = lerp(T2[i], T2[j], t1);
+            band(ta, tb, ua, ub, top, -0.05, COL.grass);
+          }
+        }
+      }
+      if (flatTop && inTile(I.cx, I.cy)) {
+        const col = I.kind !== 1 && I.surf ? I.col || COL.conc : COL.grass;
+        const h = (x, y) => ground(x, y) + base + KERB_H;
+        let tris = convex(T1) ? null : earcut(T1);
+        if (!tris || tris.length < T1.length - 2) {
+          let mx = 0, my = 0;
+          for (const p of T1) {
+            mx += p[0];
+            my += p[1];
+          }
+          const M2 = [mx / T1.length, my / T1.length];
+          for (let i = 0; i < T1.length; i++) flat2(M2, T1[i], T1[(i + 1) % T1.length], col, h);
+        } else for (const [i0, i1, i2] of tris) flat2(T1[i0], T1[i1], T1[i2], col, h);
+      }
+    }
+    for (const [x, y, ux, uy, from, to] of YLD) {
+      if (!inTile(x, y)) continue;
+      const zD = deckOwner(world2, x, y);
+      if (zD === null) {
+        world2.groundH(x, y, true);
+        if (world2.g.water) continue;
+      }
+      const h = (px, py) => surfaceH(world2, px, py, zD) + 0.017;
+      const nx = uy, ny = -ux, B = 0.5, G = 0.25, Hh = 0.75;
+      const k = Math.max(1, Math.floor((to - from + G) / (B + G)));
+      const t0 = (from + to) / 2 - (k * (B + G) - G) / 2;
+      for (let q = 0; q < k; q++) {
+        const ta = t0 + q * (B + G), tb = ta + B, tm = (ta + tb) / 2;
+        const a = [x + nx * ta, y + ny * ta], b = [x + nx * tb, y + ny * tb], c = [x + nx * tm - ux * Hh, y + ny * tm - uy * Hh];
+        tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], COL.paint);
+      }
+    }
+    return new Float32Array(out);
+  }
+
+  // src/kerbs.js
+  var CURB = 0.15;
+  var KERB_W = 0.17;
+  var BACK = 1;
+  var R2 = 1;
+  var RC = 4;
+  var CROSSING = 3;
+  var COL2 = {
+    kerb: [0.25, 0.245, 0.24],
+    walk: [0.27, 0.262, 0.248],
+    grass: [0.075, 0.14, 0.035],
+    face: [0.235, 0.23, 0.226]
+  };
+  var _pe = {};
+  function pavingEdge(world2, x, y) {
+    return info(world2, x, y, _pe).ue;
+  }
+  var _cx = {};
+  function info(world2, x, y, o) {
+    o.ue = 56;
+    o.k = 0;
+    o.w0 = 1.25;
+    o.w1 = 2.8;
+    const e = world2.nearestRoad(x, y);
+    if (!(e < 14)) return o;
+    const nr = world2._nr, rg = nr.reg, ri = nr.road;
+    if (rg.rCls[ri] >= 14 || rg.rFlags[ri] & 6) return o;
+    const pw = paintHw(rg, ri, nr.s - rg.cum[rg.rStart[ri]]);
+    const kd = roadKind(rg, ri), style = kd & 3;
+    let ue = nr.d - pw;
+    if (style === 1 || style === 2) {
+      ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
+      const cxr = e < 8 ? world2.crossingAt(x, y, _cx) : null;
+      if (cxr && cxr.e > -12) {
+        const r = Math.min(9, Math.max(4, 3 + 0.5 * Math.min(pw, cxr.hw))), a0 = nr.d - pw, b0 = -cxr.e;
+        const ru = Math.max(r, Math.min(a0, b0)) - Math.hypot(Math.max(r - a0, 0), Math.max(r - b0, 0));
+        if (ru < ue) ue = ru;
+      }
+    }
+    o.ue = ue;
+    if (pw < 2.4) return o;
+    const S = sidesOf(rg, ri), k6 = kd >> 6 & 1;
+    let kerb = k6, wft = 0;
+    if (S) {
+      kerb = S[2] >> (nr.side > 0 ? 0 : 1) & 1;
+      wft = Math.min(nr.side > 0 ? S[0] : S[1], 31);
+    }
+    const cov = world2.coverAt(x, y, 0);
+    if (!S && cov < 0.15) return o;
+    o.k = kerb;
+    const urban = smoothstep(0.62, 0.8, cov);
+    o.w0 = 1.25 + (0.17 - 1.25) * urban;
+    const walk = S ? wft > 0 : k6 === 1;
+    o.w1 = !walk ? KERB_W : S ? o.w0 + wft * 0.3048 : 2.8 + 0.6 * urban;
+    if (!walk) o.w0 = KERB_W;
+    return o;
+  }
+  var kerbDebug = { V: null };
+  function kerbTris(world2, mx0, my0, s, cx, cy, cz, lc) {
+    const reg = world2.regionAt(mx0 + s / 2, my0 + s / 2);
+    if (!reg || !reg.nRoads) return new Float32Array(0);
+    const NC = Math.round(s / RC) + 1, co = { ue: 0, k: 0, w0: 0, w1: 0 };
+    const cue = new Float32Array(NC * NC), ck = new Uint8Array(NC * NC), cw = new Float32Array(NC * NC);
+    let any = false;
+    for (let j = 0; j < NC; j++) for (let i = 0; i < NC; i++) {
+      info(world2, mx0 + i * RC, my0 + j * RC, co);
+      cue[j * NC + i] = co.ue;
+      ck[j * NC + i] = co.k;
+      cw[j * NC + i] = co.w1;
+      if (co.k) any = true;
+    }
+    if (!any) return new Float32Array(0);
+    const N = Math.round(s / R2) + 1, F = Math.round(RC / R2);
+    const active = new Uint8Array((NC - 1) * (NC - 1));
+    for (let j = 0; j < NC - 1; j++) for (let i = 0; i < NC - 1; i++) {
+      let k = 0, lo = 1e9, hi = -1e9, wmax = 0;
+      for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        const q = (j + b) * NC + i + a;
+        k |= ck[q];
+        lo = Math.min(lo, cue[q]);
+        hi = Math.max(hi, cue[q]);
+        wmax = Math.max(wmax, cw[q]);
+      }
+      if (k && lo < wmax + BACK + RC && hi > -RC) active[j * (NC - 1) + i] = 1;
+    }
+    const V2 = /* @__PURE__ */ new Map();
+    kerbDebug.V = V2;
+    const vert = (i, j) => {
+      const key2 = j * N + i;
+      let v = V2.get(key2);
+      if (v) return v;
+      const x = mx0 + i * R2, y = my0 + j * R2;
+      info(world2, x, y, co);
+      v = { x, y, ue: co.ue, k: co.k, w0: co.w0, w1: co.w1, i, j, drive: -1, veg: -1 };
+      if (reg.streets && streetsCovered(reg.streets, x - reg.x0, y - reg.y0)) v.k = 0;
+      else if (v.k && v.ue > -2 && v.ue < 6 && inIsland(x, y)) v.k = 0;
+      V2.set(key2, v);
+      return v;
+    };
+    const X = [];
+    const f = reg.feat;
+    if (f) for (let q = 0; q < f.nP; q++) {
+      if (f.kind[q] !== CROSSING) continue;
+      const x = reg.x0 + f.px[q], y = reg.y0 + f.py[q];
+      if (x < mx0 - 25 || x > mx0 + s + 25 || y < my0 - 25 || y > my0 + s + 25) continue;
+      let t = null;
+      for (let a = f.first[q], e = a + f.napp[q]; a < e; a++) if (!f.apFoot[a]) {
+        t = f.apH[a];
+        break;
+      }
+      if (t !== null) X.push([x, y, Math.cos(t), Math.sin(t)]);
+    }
+    const B = [];
+    if (reg.nBld) {
+      const cs = 368;
+      for (let cj = Math.floor((my0 - 10 - reg.y0) / cs); cj <= Math.floor((my0 + s + 10 - reg.y0) / cs); cj++)
+        for (let ci = Math.floor((mx0 - 10 - reg.x0) / cs); ci <= Math.floor((mx0 + s + 10 - reg.x0) / cs); ci++) {
+          const d = cellBuildings(reg, ci, cj);
+          if (!d) continue;
+          for (let k = 0; k < d.length; k += 16) {
+            if (d[k] < mx0 - 30 || d[k] > mx0 + s + 30 || d[k + 1] < my0 - 30 || d[k + 1] > my0 + s + 30) continue;
+            B.push([d[k], d[k + 1], d[k + 2] / 2 + 0.5, d[k + 3] / 2 + 0.5, Math.cos(d[k + 4]), Math.sin(d[k + 4])]);
+          }
+        }
+    }
+    const inBuilding = (x, y) => {
+      for (const [bx, by, hw, hd, c, sn] of B) {
+        const dx = x - bx, dy = y - by;
+        if (Math.abs(dx) > 40 || Math.abs(dy) > 40) continue;
+        if (Math.abs(dx * c + dy * sn) <= hw && Math.abs(-dx * sn + dy * c) <= hd) return true;
+      }
+      return false;
+    };
+    const rise = (v, x, y, ue) => {
+      let r = 1;
+      for (const [px, py, dx, dy] of X) {
+        const ax = x - px, ay = y - py;
+        if (Math.abs(ax) > 30 || Math.abs(ay) > 30) continue;
+        const along2 = Math.abs(ax * dx + ay * dy);
+        if (along2 >= 2.45) continue;
+        r = Math.min(r, Math.max(along2 < 1.65 ? 0 : smoothstep(1.65, 2.45, along2), smoothstep(0, 1.8, ue)));
+      }
+      if (v.drive > 0) r = Math.min(r, smoothstep(0, Math.max(v.w0, 1.2), ue));
+      return r;
+    };
+    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), A3 = new Float64Array(3);
+    const hc = /* @__PURE__ */ new Map();
+    const ground = (x, y) => {
+      const key2 = Math.round(x * 20) * 1e7 + Math.round(y * 20);
+      let h = hc.get(key2);
+      if (h === void 0) {
+        h = world2.groundH(x, y, true);
+        hc.set(key2, h);
+      }
+      return h;
+    };
+    const tri4 = (a, b, c, col, want) => {
+      const P2 = [a, b, c].map(([x, y, h]) => {
+        cyl(x, y, h, p32);
+        return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
+      });
+      let nx, ny, nz;
+      if (want) [nx, ny, nz] = want;
+      else {
+        const [x, y, h] = a;
+        cyl(x, y, h, p32);
+        cyl(x, y, h + 1, u3);
+        nx = u3[0] - p32[0];
+        ny = u3[1] - p32[1];
+        nz = u3[2] - p32[2];
+      }
+      const e1 = [P2[1][0] - P2[0][0], P2[1][1] - P2[0][1], P2[1][2] - P2[0][2]], e2 = [P2[2][0] - P2[0][0], P2[2][1] - P2[0][1], P2[2][2] - P2[0][2]];
+      const fx = e1[1] * e2[2] - e1[2] * e2[1], fy = e1[2] * e2[0] - e1[0] * e2[2], fz = e1[0] * e2[1] - e1[1] * e2[0];
+      const order = fx * nx + fy * ny + fz * nz >= 0 ? [0, 1, 2] : [0, 2, 1];
+      const per = Array.isArray(col[0]);
+      for (const i of order) {
+        const c2 = per ? col[i] : col;
+        out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, c2[0], c2[1], c2[2]);
+      }
+    };
+    const away = (v) => {
+      const n = (vi, vj) => V2.get(vj * N + vi);
+      const l = n(v.i - 1, v.j) || v, r = n(v.i + 1, v.j) || v, d = n(v.i, v.j - 1) || v, u = n(v.i, v.j + 1) || v;
+      const gx = r.ue - l.ue, gy = u.ue - d.ue, gl = Math.hypot(gx, gy);
+      return gl < 1e-3 ? null : [gx / gl, gy / gl];
+    };
+    const vegAt = (v) => {
+      if (v.veg >= 0) return v.veg;
+      v.veg = 0;
+      if (!lc || v.w0 <= KERB_W + 0.05) return 0;
+      const g = away(v);
+      if (!g) return 0;
+      const t = (KERB_W + v.w0) / 2 - v.ue, c = lc(v.x + g[0] * t, v.y + g[1] * t);
+      v.veg = c >= 2 && c !== 14 && c !== 15 ? 1 : 0;
+      return v.veg;
+    };
+    const driveAt = (v) => {
+      if (v.drive >= 0) return v.drive;
+      v.drive = 0;
+      if (!lc || v.ue < -0.5 || v.ue > v.w1 + BACK) return 0;
+      const g = away(v);
+      if (!g) return 0;
+      const [gx, gy] = g;
+      for (const back of [1, 2.5, 6]) {
+        const t2 = v.w1 - v.ue + back, x = v.x + gx * t2, y = v.y + gy * t2;
+        if (lc(x, y) !== 1 || inBuilding(x, y)) return 0;
+      }
+      const t = v.w1 - v.ue + 1.75;
+      let sides = 0;
+      for (const o of [-5, 5]) if (lc(v.x + gx * t - gy * o, v.y + gy * t + gx * o) === 1) sides++;
+      if (sides === 2) return 0;
+      v.drive = 1;
+      return 1;
+    };
+    const gOf = (v, k) => k === 0 ? v.ue : k === 1 ? v.ue - KERB_W : k === 2 ? v.ue - v.w0 : v.ue - v.w1;
+    const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, ue: a.ue + (b.ue - a.ue) * t, w0: a.w0 + (b.w0 - a.w0) * t, w1: a.w1 + (b.w1 - a.w1) * t, veg: a.veg + (b.veg - a.veg) * t });
+    const half = (Q, k, above) => {
+      const R22 = [];
+      for (let i = 0; i < Q.length; i++) {
+        const a = Q[i], b = Q[(i + 1) % Q.length], ga = gOf(a, k), gb = gOf(b, k), ia = above ? ga >= 0 : ga <= 0, ib = above ? gb >= 0 : gb <= 0;
+        if (ia) R22.push(a);
+        if (ia !== ib) R22.push(lerp(a, b, ga / (ga - gb)));
+      }
+      return R22;
+    };
+    const clip2 = (P2, lo, hi) => {
+      const Q = half(P2, lo, true);
+      return Q.length < 3 ? Q : half(Q, hi, false);
+    };
+    const faceAt = (P2, k, vv, toward) => {
+      const Z = [];
+      for (let i = 0; i < 3; i++) {
+        const p = P2[i], q = P2[(i + 1) % 3], gp = gOf(p, k), gq = gOf(q, k);
+        if (gp < 0 !== gq < 0) Z.push(lerp(p, q, gp / (gp - gq)));
+      }
+      if (Z.length !== 2) return;
+      const [s0, s1] = Z;
+      const h0 = CURB * rise(vv, s0.x, s0.y, s0.ue), h12 = CURB * rise(vv, s1.x, s1.y, s1.ue);
+      if (h0 < 5e-3 && h12 < 5e-3) return;
+      const [a, b, c] = P2, ga = gOf(a, k), gb = gOf(b, k), gc = gOf(c, k);
+      const gx = (gb - ga) * (c.y - a.y) - (gc - ga) * (b.y - a.y), gy = (gc - ga) * (b.x - a.x) - (gb - ga) * (c.x - a.x);
+      const sgn = ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0 ? 1 : -1) * (toward ? -1 : 1);
+      const gl = Math.hypot(gx, gy) || 1, wx = sgn * gx / gl, wy = sgn * gy / gl;
+      const g0 = ground(s0.x, s0.y), g1 = ground(s1.x, s1.y);
+      cyl((s0.x + s1.x) / 2, (s0.y + s1.y) / 2, (g0 + g1) / 2, p32);
+      cyl((s0.x + s1.x) / 2 + wx, (s0.y + s1.y) / 2 + wy, (g0 + g1) / 2, A3);
+      const want = [A3[0] - p32[0], A3[1] - p32[1], A3[2] - p32[2]];
+      tri4([s0.x, s0.y, g0 + h0], [s1.x, s1.y, g1 - 0.03], [s1.x, s1.y, g1 + h12], COL2.face, want);
+      tri4([s0.x, s0.y, g0 + h0], [s0.x, s0.y, g0 - 0.03], [s1.x, s1.y, g1 - 0.03], COL2.face, want);
+    };
+    const triangle = (a, b, c) => {
+      const own = [a, b, c].reduce((p, q) => q.ue < p.ue ? q : p);
+      if (!own.k) return;
+      if (gOf(a, 3) > 0 && gOf(b, 3) > 0 && gOf(c, 3) > 0) return;
+      if (a.ue < 0 && b.ue < 0 && c.ue < 0) return;
+      for (const p of [a, b, c]) {
+        if (p.k) driveAt(p);
+        vegAt(p);
+      }
+      const vv = { w0: own.w0, w1: own.w1, drive: [a, b, c].some((p) => p.drive === 1) ? 1 : 0 };
+      const P2 = [a, b, c];
+      for (const [lo, hi, col0] of [[0, 1, COL2.kerb], [1, 2, "strip"], [2, 3, COL2.walk]]) {
+        const Q = clip2(P2, lo, hi);
+        if (Q.length < 3) continue;
+        const H = Q.map((q) => [q.x, q.y, ground(q.x, q.y) + CURB * rise(vv, q.x, q.y, q.ue)]);
+        const C2 = col0 === "strip" ? Q.map((q) => {
+          const f2 = smoothstep(0.25, 0.75, Math.max(0, Math.min(1, q.veg)));
+          return [0, 1, 2].map((k) => COL2.walk[k] + (COL2.grass[k] - COL2.walk[k]) * f2);
+        }) : null;
+        for (let i = 1; i + 1 < H.length; i++) tri4(H[0], H[i], H[i + 1], C2 ? [C2[0], C2[i], C2[i + 1]] : col0);
+      }
+      faceAt(P2, 0, vv, true);
+      faceAt(P2, 3, vv, false);
+    };
+    for (let cj = 0; cj < NC - 1; cj++) for (let ci = 0; ci < NC - 1; ci++) {
+      if (!active[cj * (NC - 1) + ci]) continue;
+      for (let b = 0; b < F; b++) for (let a = 0; a < F; a++) {
+        const i = ci * F + a, j = cj * F + b;
+        if (i >= N - 1 || j >= N - 1) continue;
+        const v00 = vert(i, j), v10 = vert(i + 1, j), v01 = vert(i, j + 1), v11 = vert(i + 1, j + 1);
+        triangle(v00, v10, v11);
+        triangle(v00, v11, v01);
+      }
+    }
+    return new Float32Array(out);
+  }
+
   // src/feat.js
   var MAGIC = 827606342;
   var SIGNAL = 0;
   var STOP = 1;
   var GIVEWAY = 2;
-  var CROSSING = 3;
+  var CROSSING2 = 3;
   var LEVEL = 4;
   var FLAGPOLE = 11;
   var HYDRANT = 12;
@@ -5377,7 +6014,10 @@
     KIOSK: 26,
     SIGNAL_HEAD: 27,
     SIGNAL_ARM: 28,
-    SIGNAL_MAST: 29
+    SIGNAL_MAST: 29,
+    NAME_POST: 30,
+    NAME_TOP: 31,
+    SPEED: 32
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -5774,6 +6414,263 @@
     return true;
   }
   var ks = { x: 0, y: 0, yaw: 0 };
+  var NAMED = (c) => c === 2 || c === 4 || c === 6 || c === 8 || c === 10 || c === 11 || c === 12;
+  function nameSigns(world2, reg, lx0, ly0, s, put2) {
+    if (!reg.nRoads || !reg.gstart) return;
+    const px = reg.px, py = reg.py, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems;
+    const ok = (ri) => NAMED(reg.rCls[ri]) && reg.rName[ri] > 0 && !(reg.rTun && reg.rTun[ri]) && !(reg.rFlags[ri] & 6) && reg.rCount[ri] >= 2;
+    const J = [];
+    const seen = /* @__PURE__ */ new Set();
+    const arm = (ri, q, x, y) => {
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1, out = [];
+      let dx = px[q + 1] - px[q], dy = py[q + 1] - py[q];
+      const l = Math.hypot(dx, dy) || 1;
+      dx /= l;
+      dy /= l;
+      const atA = q === a && Math.hypot(x - px[a], y - py[a]) < 1.2, atB = q + 1 === b && Math.hypot(x - px[b], y - py[b]) < 1.2;
+      if (!atB) out.push([dx, dy]);
+      if (!atA) out.push([-dx, -dy]);
+      return out;
+    };
+    const segs = [], had = /* @__PURE__ */ new Set();
+    const gx0 = clamp2(Math.floor((lx0 - 2 + RM) / RCELL), 0, gw - 1), gx1 = clamp2(Math.floor((lx0 + s + 2 + RM) / RCELL), 0, gw - 1);
+    const gy0 = clamp2(Math.floor((ly0 - 2 + RM) / RCELL), 0, gw - 1), gy1 = clamp2(Math.floor((ly0 + s + 2 + RM) / RCELL), 0, gw - 1);
+    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
+      const c = gy * gw + gx;
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k];
+        if (had.has(q)) continue;
+        had.add(q);
+        if (!ok(segR[q])) continue;
+        const ax = px[q], ay = py[q], bx = px[q + 1], by = py[q + 1];
+        if (Math.max(ax, bx) < lx0 - 2 || Math.min(ax, bx) > lx0 + s + 2 || Math.max(ay, by) < ly0 - 2 || Math.min(ay, by) > ly0 + s + 2) continue;
+        segs.push(q);
+      }
+    }
+    const tryEnd = (x, y, sx, sy, vx, vy) => {
+      const l2 = vx * vx + vy * vy, t = l2 > 0 ? clamp2(((x - sx) * vx + (y - sy) * vy) / l2, 0, 1) : 0;
+      return Math.hypot(x - sx - vx * t, y - sy - vy * t) < 1;
+    };
+    for (let i = 0; i < segs.length; i++) {
+      const q = segs[i], ri = segR[q];
+      const ax = px[q], ay = py[q], bx = px[q + 1], by = py[q + 1];
+      const x0 = Math.min(ax, bx) - 1, x1 = Math.max(ax, bx) + 1, y0 = Math.min(ay, by) - 1, y1 = Math.max(ay, by) + 1;
+      for (let j = i + 1; j < segs.length; j++) {
+        const pj = segs[j], rj = segR[pj];
+        if (rj === ri || reg.rName[rj] === reg.rName[ri]) continue;
+        const cx2 = px[pj], cy2 = py[pj], dx2 = px[pj + 1], dy2 = py[pj + 1];
+        if (Math.max(cx2, dx2) < x0 || Math.min(cx2, dx2) > x1 || Math.max(cy2, dy2) < y0 || Math.min(cy2, dy2) > y1) continue;
+        let ix = NaN, iy = NaN;
+        const ex = bx - ax, ey = by - ay, fx = dx2 - cx2, fy = dy2 - cy2, den = ex * fy - ey * fx;
+        if (Math.abs(den) > 1e-9) {
+          const t = ((cx2 - ax) * fy - (cy2 - ay) * fx) / den, u = ((cx2 - ax) * ey - (cy2 - ay) * ex) / den;
+          if (t >= -0.02 && t <= 1.02 && u >= -0.02 && u <= 1.02) {
+            ix = ax + ex * t;
+            iy = ay + ey * t;
+          }
+        }
+        if (isNaN(ix)) {
+          for (const [x, y] of [[ax, ay], [bx, by]]) if (isNaN(ix) && tryEnd(x, y, cx2, cy2, fx, fy)) {
+            ix = x;
+            iy = y;
+          }
+          for (const [x, y] of [[cx2, cy2], [dx2, dy2]]) if (isNaN(ix) && tryEnd(x, y, ax, ay, ex, ey)) {
+            ix = x;
+            iy = y;
+          }
+        }
+        if (isNaN(ix) || ix < lx0 || ix >= lx0 + s || iy < ly0 || iy >= ly0 + s) continue;
+        const key2 = Math.round(ix / 6) + "," + Math.round(iy / 6) + "," + Math.min(reg.rName[ri], reg.rName[rj]) + "," + Math.max(reg.rName[ri], reg.rName[rj]);
+        if (seen.has(key2)) continue;
+        seen.add(key2);
+        J.push([ix, iy, ri, q, rj, pj]);
+      }
+    }
+    const done = [];
+    for (const [ix, iy, ri, q, rj, pj] of J) {
+      if (done.some(([x, y]) => Math.hypot(x - ix, y - iy) < 12)) continue;
+      {
+        const ux = px[q + 1] - px[q], uy = py[q + 1] - py[q], vx = px[pj + 1] - px[pj], vy = py[pj + 1] - py[pj];
+        if (Math.abs(ux * vx + uy * vy) > 0.85 * Math.hypot(ux, uy) * Math.hypot(vx, vy)) continue;
+      }
+      done.push([ix, iy]);
+      let [A, qa, B, qb] = reg.rCls[ri] >= reg.rCls[rj] ? [ri, q, rj, pj] : [rj, pj, ri, q];
+      const armsA = arm(A, qa, ix, iy), armsB = arm(B, qb, ix, iy);
+      if (!armsA.length || !armsB.length) continue;
+      const hwA = reg.rHw[A], hwB = reg.rHw[B], mx = reg.x0 + ix, my = reg.y0 + iy;
+      const h0 = hash2(Math.round(ix * 3), Math.round(iy * 3));
+      let placed = false;
+      for (const c of [0.8, 1.2, 1.6, 2, 2.5, 3, 3.6]) {
+        for (let k = 0; k < armsA.length * armsB.length && !placed; k++) {
+          const kk = (k + Math.floor(h0 * 4)) % (armsA.length * armsB.length);
+          const da = armsA[kk % armsA.length], db = armsB[Math.floor(kk / armsA.length) % armsB.length];
+          const sn = Math.max(Math.abs(da[0] * db[1] - da[1] * db[0]), 0.5), a = (hwB + c) / sn, b = (hwA + c) / sn;
+          const x = mx + da[0] * a + db[0] * b, y = my + da[1] * a + db[1] * b;
+          if (pavingEdge(world2, x, y) < 0.6 || world2.nearestRoad(x, y) < 0.6 || world2.sdfAt(x, y) < 2) continue;
+          const yA = Math.atan2(da[1], da[0]), yB = Math.atan2(db[1], db[0]);
+          if (put2(x, y, yA, PART.NAME_POST, reg.rName[A], 0) === void 0) continue;
+          put2(x, y, yB, PART.NAME_TOP, reg.rName[B], 0);
+          placed = true;
+        }
+        if (placed) break;
+      }
+    }
+  }
+  var SPEED_OK = (v) => v >= 20 && v <= 65 && v % 5 === 0;
+  function speedSigns(world2, reg, lx0, ly0, s, put2) {
+    if (!reg.nRoads || !reg.gstart || !reg.rMph) return;
+    const px = reg.px, py = reg.py, cum = reg.cum, segR = reg.segR, gw = reg.gw, gs = reg.gstart, gi = reg.gitems;
+    const road = (c) => c <= 12 && c !== 1 && c !== 3 && c !== 5 && c !== 7 && c !== 9;
+    const cellOf = (x, y) => clamp2(Math.floor((y + RM) / RCELL), 0, gw - 1) * gw + clamp2(Math.floor((x + RM) / RCELL), 0, gw - 1);
+    const onFrom = (ri, x, y, dx, dy) => {
+      const c = cellOf(x, y);
+      let best = -1, bs = -1;
+      for (let k = gs[c]; k < gs[c + 1]; k++) {
+        const q = gi[k], rj = segR[q];
+        if (rj === ri || !road(reg.rCls[rj])) continue;
+        const a = reg.rStart[rj], b = a + reg.rCount[rj] - 1;
+        let ex, ey;
+        if (q === a && Math.hypot(px[a] - x, py[a] - y) < 0.5) {
+          ex = px[a] - px[a + 1];
+          ey = py[a] - py[a + 1];
+        } else if (q + 1 === b && Math.hypot(px[b] - x, py[b] - y) < 0.5) {
+          ex = px[b] - px[b - 1];
+          ey = py[b] - py[b - 1];
+        } else continue;
+        const l = Math.hypot(ex, ey) || 1, cs = (ex * dx + ey * dy) / l;
+        if (cs < 0.77) continue;
+        const sc = cs + (reg.rName[rj] === reg.rName[ri] && reg.rName[ri] > 0 ? 1 : 0);
+        if (sc > bs) {
+          bs = sc;
+          best = rj;
+        }
+      }
+      return best;
+    };
+    const at = (ri, d) => {
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1, s0 = cum[a] + d;
+      let q = a;
+      while (q < b - 1 && cum[q + 1] < s0) q++;
+      const l = cum[q + 1] - cum[q] || 1, t = clamp2((s0 - cum[q]) / l, 0, 1);
+      return [px[q] + (px[q + 1] - px[q]) * t, py[q] + (py[q + 1] - py[q]) * t, (px[q + 1] - px[q]) / l, (py[q + 1] - py[q]) / l];
+    };
+    const place = (ri, d, dir, mph) => {
+      const [x, y, ux, uy] = at(ri, d), tx = ux * dir, ty = uy * dir;
+      if (x < lx0 - 12 || x >= lx0 + s + 12 || y < ly0 - 12 || y >= ly0 + s + 12) return;
+      const hw = paintHw(reg, ri, d);
+      for (const c of [0.8, 1.2, 1.7, 2.3, 3]) {
+        const sx = x + ty * (hw + c), sy = y - tx * (hw + c);
+        if (sx < lx0 || sx >= lx0 + s || sy < ly0 || sy >= ly0 + s) return;
+        const mx = reg.x0 + sx, my = reg.y0 + sy;
+        if (pavingEdge(world2, mx, my) < 0.5 || world2.nearestRoad(mx, my) < 0.5 || world2.sdfAt(mx, my) < 2) continue;
+        if (put2(mx, my, Math.atan2(-tx, ty), PART.SPEED, mph, 0) !== void 0) return;
+      }
+    };
+    const ways = /* @__PURE__ */ new Set();
+    const gx0 = clamp2(Math.floor((lx0 - 40 + RM) / RCELL), 0, gw - 1), gx1 = clamp2(Math.floor((lx0 + s + 40 + RM) / RCELL), 0, gw - 1);
+    const gy0 = clamp2(Math.floor((ly0 - 40 + RM) / RCELL), 0, gw - 1), gy1 = clamp2(Math.floor((ly0 + s + 40 + RM) / RCELL), 0, gw - 1);
+    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
+      const c = gy * gw + gx;
+      for (let k = gs[c]; k < gs[c + 1]; k++) ways.add(segR[gi[k]]);
+    }
+    for (const ri of ways) {
+      const mph = reg.rMph[ri];
+      if (!SPEED_OK(mph) || !road(reg.rCls[ri]) || reg.rFlags[ri] & 6 || reg.rTun && reg.rTun[ri] || reg.rCount[ri] < 2) continue;
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1, L2 = cum[b] - cum[a], one = reg.rFlags[ri] & 1;
+      if (L2 < 40) continue;
+      for (const dir of one ? [1] : [1, -1]) {
+        const [x, y] = dir > 0 ? [px[a], py[a]] : [px[b], py[b]];
+        const [dx, dy] = dir > 0 ? [px[a + 1] - px[a], py[a + 1] - py[a]] : [px[b - 1] - px[b], py[b - 1] - py[b]];
+        const l = Math.hypot(dx, dy) || 1;
+        const d0 = Math.min(30, L2 / 3);
+        const [sx0, sy0] = at(ri, dir > 0 ? d0 : L2 - d0);
+        if (sx0 >= lx0 - 12 && sx0 < lx0 + s + 12 && sy0 >= ly0 - 12 && sy0 < ly0 + s + 12) {
+          const rj = onFrom(ri, x, y, dx / l, dy / l), from = rj >= 0 ? reg.rMph[rj] : 0;
+          if (from && from !== mph) place(ri, dir > 0 ? d0 : L2 - d0, dir, mph);
+        }
+        for (let k = 1; d0 + 1200 * k < L2 - 300; k++) place(ri, dir > 0 ? d0 + 1200 * k : L2 - d0 - 1200 * k, dir, mph);
+      }
+    }
+  }
+  function boardItems(world2, reg, mx0, my0, s, cx, cy, cz) {
+    const out = [], p32 = new Float64Array(3);
+    if (!reg || !reg.nRoads) return new Float32Array(0);
+    const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0, GAP = 180;
+    const B = [];
+    if (reg.nBld) {
+      const cs = 368;
+      for (let cj = Math.floor((my0 - 110 - reg.y0) / cs); cj <= Math.floor((my0 + s + 110 - reg.y0) / cs); cj++)
+        for (let ci = Math.floor((mx0 - 110 - reg.x0) / cs); ci <= Math.floor((mx0 + s + 110 - reg.x0) / cs); ci++) {
+          const d = cellBuildings(reg, ci, cj);
+          if (!d) continue;
+          for (let k = 0; k < d.length; k += 16) {
+            if (d[k] < mx0 - 110 || d[k] > mx0 + s + 110 || d[k + 1] < my0 - 110 || d[k + 1] > my0 + s + 110) continue;
+            B.push([d[k], d[k + 1], d[k + 2] / 2 + 3, d[k + 3] / 2 + 3, Math.cos(d[k + 4]), Math.sin(d[k + 4])]);
+          }
+        }
+    }
+    const inBuilding = (x, y) => {
+      for (const [bx, by, hw, hd, c, sn] of B) {
+        const dx = x - bx, dy = y - by;
+        if (Math.abs(dx) > 60 || Math.abs(dy) > 60) continue;
+        if (Math.abs(dx * c + dy * sn) <= hw && Math.abs(-dx * sn + dy * c) <= hd) return true;
+      }
+      return false;
+    };
+    const cum = reg.cum, px = reg.px, py = reg.py, cand = [], M2 = 70;
+    for (let ri = 0; ri < reg.nRoads; ri++) {
+      const cls = reg.rCls[ri];
+      if (cls !== 0 && cls !== 2 && cls !== 4 || reg.rFlags[ri] & 4 || cls === 4 && reg.rFlags[ri] & 2 || reg.rTun && reg.rTun[ri] || reg.rCount[ri] < 2) continue;
+      const a = reg.rStart[ri], b = a + reg.rCount[ri] - 1;
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (let q = a; q <= b; q++) {
+        if (px[q] < x0) x0 = px[q];
+        if (px[q] > x1) x1 = px[q];
+        if (py[q] < y0) y0 = py[q];
+        if (py[q] > y1) y1 = py[q];
+      }
+      if (x1 < lx0 - 60 - M2 || x0 > lx0 + s + 60 + M2 || y1 < ly0 - 60 - M2 || y0 > ly0 + s + 60 + M2) continue;
+      const one = reg.rFlags[ri] & 1, hw = reg.rHw[ri], big = cls !== 4;
+      for (let k = Math.ceil(cum[a] / GAP); k * GAP <= cum[b] - 20; k++) {
+        const sk = k * GAP;
+        if (sk < cum[a] + 20) continue;
+        let q = a;
+        while (q < b - 1 && cum[q + 1] < sk) q++;
+        const l = cum[q + 1] - cum[q] || 1, t = clamp2((sk - cum[q]) / l, 0, 1);
+        const gx = Math.round((reg.x0 + px[q] + (px[q + 1] - px[q]) * t) / 10), gy = Math.round((reg.y0 + py[q] + (py[q + 1] - py[q]) * t) / 10);
+        const h12 = hash2(gx * 7 + 3, gy * 5 + cls + 17), h2 = hash2(gx * 13 + 1, gy * 3 + 29), h3 = hash2(gx * 5 + 11, gy + 41);
+        const ux = (px[q + 1] - px[q]) / l, uy = (py[q + 1] - py[q]) / l, dir = one || h2 < 0.5 ? 1 : -1, tx = ux * dir, ty = uy * dir;
+        const ox = px[q] + (px[q + 1] - px[q]) * t + ty * hw, oy = py[q] + (py[q + 1] - py[q]) * t - tx * hw;
+        if (ox < lx0 - 40 - M2 || ox >= lx0 + s + 40 + M2 || oy < ly0 - 40 - M2 || oy >= ly0 + s + 40 + M2) continue;
+        const dev = world2.coverAt(reg.x0 + ox, reg.y0 + oy, 0);
+        if (dev < 0.25) continue;
+        const pk = big ? 0.02 + 0.33 * clamp2((dev - 0.35) / 0.45, 0, 1) : 0.12 * clamp2((dev - 0.5) / 0.35, 0, 1);
+        if (h12 > pk) continue;
+        const ca = 0.906, sa = 0.423;
+        const nx = -ca * tx - sa * ty, ny = -ca * ty + sa * tx;
+        const ex = -ny, ey = nx, hwF = big ? 7.3 : 3.5;
+        for (const back of big ? [13 + 17 * h3, 9, 6.5] : [5 + 7 * h3, 4]) {
+          const x = ox + ty * back, y = oy - tx * back;
+          if (x < lx0 - M2 || x >= lx0 + s + M2 || y < ly0 - M2 || y >= ly0 + s + M2) continue;
+          const mx = reg.x0 + x, my = reg.y0 + y;
+          let clear = world2.nearestRoad(mx, my) > (big ? 5 : 3) && world2.sdfAt(mx, my) > 4 && !inBuilding(mx, my);
+          for (const sgn of [-1, 1]) if (clear && (world2.nearestRoad(mx + ex * hwF * sgn, my + ey * hwF * sgn) < 1.5 || world2.sdfAt(mx + ex * hwF * sgn, my + ey * hwF * sgn) < 2)) clear = false;
+          if (!clear) continue;
+          const h = world2.groundH(mx, my, true);
+          if (world2.g.water || world2.g.deck > -1e8 && world2.g.deck < h + 16) continue;
+          cand.push([mx, my, h, Math.atan2(nx, -ny), big ? 0 : 1, Math.floor(hash2(gx * 3 + 5, gy * 11 + 7) * N_ADS) % N_ADS, h12, x, y]);
+          break;
+        }
+      }
+    }
+    for (const [mx, my, h, yaw, kind, ad, draw, x, y] of cand) {
+      if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
+      if (cand.some((o) => o[6] < draw && Math.hypot(o[0] - mx, o[1] - my) < 60 && Math.cos(o[3] - yaw) > 0.8)) continue;
+      cyl(mx, my, h, p32);
+      out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, kind, ad, 0);
+    }
+    return new Float32Array(out);
+  }
   function signItems(world2, reg, mx0, my0, s, cx, cy, cz) {
     const f = reg.feat;
     const out = [], p32 = new Float64Array(3);
@@ -5782,7 +6679,6 @@
       cyl(mx, my, h, p32);
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, PART.FLEXPOST, 0, 0);
     });
-    if (!f || !f.nP) return new Float32Array(out);
     let zD = null;
     let hNode = 0;
     const put2 = (mx, my, yaw, part2, phase, arm, lift) => {
@@ -5800,6 +6696,11 @@
       out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, yaw, part2, phase, arm);
       return h + (lift || 0);
     };
+    zD = null;
+    hNode = -1e9;
+    nameSigns(world2, reg, lx0, ly0, s, put2);
+    speedSigns(world2, reg, lx0, ly0, s, put2);
+    if (!f || !f.nP) return new Float32Array(out);
     for (let i = 0; i < f.nP; i++) {
       const x = f.px[i], y = f.py[i];
       if (x < lx0 || x >= lx0 + s || y < ly0 || y >= ly0 + s) continue;
@@ -5966,7 +6867,7 @@
       zD = deckOwner(world2, mx, my, true);
       if (zD === null && besideBridge(world2, mx, my)) continue;
       hNode = world2.groundH(mx, my, true);
-      if (k === CROSSING) {
+      if (k === CROSSING2) {
         let hw;
         if (zD !== null) {
           world2.nearestDeck(mx, my, zD + 0.6);
@@ -6068,7 +6969,7 @@
     if (!f || !f.nP) return { cw, sig };
     for (let i = 0; i < f.nP; i++) {
       const k = f.kind[i];
-      if (k !== CROSSING && k !== SIGNAL) continue;
+      if (k !== CROSSING2 && k !== SIGNAL) continue;
       const x = reg.x0 + f.px[i], y = reg.y0 + f.py[i];
       if (x < mx0 - 40 || x > mx0 + s + 40 || y < my0 - 40 || y > my0 + s + 40) continue;
       if (k === SIGNAL) {
@@ -6125,7 +7026,7 @@
     const near = [];
     for (let q = 0; q < (f.nP || 0); q++) {
       const k = f.kind[q], x = f.px[q], y = f.py[q];
-      if ((k === CROSSING || k === SIGNAL || k === STOP) && x > lx0 - 45 && x < lx0 + s + 45 && y > ly0 - 45 && y < ly0 + s + 45) near.push(q);
+      if ((k === CROSSING2 || k === SIGNAL || k === STOP) && x > lx0 - 45 && x < lx0 + s + 45 && y > ly0 - 45 && y < ly0 + s + 45) near.push(q);
     }
     for (let i = 0; i < f.nW; i++) {
       const ax = f.wx[i], ay = f.wy[i];
@@ -6166,7 +7067,7 @@
         const vx = mx - (reg.x0 + f.px[q]), vy = my - (reg.y0 + f.py[q]), along2 = vx * ux + vy * uy, lat = Math.abs(vx * uy - vy * ux);
         if (along2 < -2 || along2 > 40 || lat > hw + 3) continue;
         const k2 = f.kind[q];
-        if (k2 === CROSSING) painted = Math.max(painted, along2 + 2);
+        if (k2 === CROSSING2) painted = Math.max(painted, along2 + 2);
         else if (along2 < 3) painted = Math.max(painted, b0 + 3.7);
         else painted = Math.max(painted, along2 + 1);
       }
@@ -7654,7 +8555,7 @@
   // src/tunnels.js
   var SHELL = 0.6;
   var KERB = 0.22;
-  var STEP = 1.5;
+  var STEP2 = 1.5;
   function onTube(reg, lx, ly, z, ri, walls = 1) {
     return !isNaN(floorAt(reg, lx, ly, z, ri, walls));
   }
@@ -7850,7 +8751,7 @@
         const i3 = M2.v(t[0], t[1], t[2], cxB * nl, nu, -cyB * nl, uB, tv0);
         M2.quad(i0, i1, i2, i3);
       };
-      const n = Math.max(1, Math.ceil(len / STEP)), cov = { [-1]: new Uint8Array(n), [1]: new Uint8Array(n) };
+      const n = Math.max(1, Math.ceil(len / STEP2)), cov = { [-1]: new Uint8Array(n), [1]: new Uint8Array(n) };
       const open = (sg) => {
         const out = [];
         let start = -1;
@@ -10249,8 +11150,8 @@
 
   // src/streets.js
   var TS = RS2 / 64;
-  var CURB = 0.15;
-  var COL = {
+  var CURB2 = 0.15;
+  var COL3 = {
     1: [0.27, 0.262, 0.248],
     2: [0.105, 0.052, 0.04],
     3: [0.1, 0.099, 0.101],
@@ -10268,7 +11169,7 @@
   };
   var GRASSY = /* @__PURE__ */ new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 20]);
   var LIP = 0.05;
-  var RAMP_COL = { 0: [0.32, 0.312, 0.296], 1: COL[2], 2: COL[3], 3: [0.2, 0.198, 0.19] };
+  var RAMP_COL = { 0: [0.32, 0.312, 0.296], 1: COL3[2], 2: COL3[3], 3: [0.2, 0.198, 0.19] };
   var PANEL = [0.17, 0.04, 0.03];
   var RAMP_STEP = 0.3;
   var UV = new Float64Array(3);
@@ -10434,16 +11335,16 @@
       tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
     };
     const ox = mx0, oy = my0;
-    const raisedH = (x, y) => ground(x, y) + CURB;
+    const raisedH = (x, y) => ground(x, y) + CURB2;
     const { V: V2, T, C: C2 } = d;
     for (let t = 0; t < C2.length; t++) {
       const cls = C2[t], ia = T[t * 3], ib = T[t * 3 + 1], ic = T[t * 3 + 2];
       const a = [ox + V2[ia * 2] * k, oy + V2[ia * 2 + 1] * k], b = [ox + V2[ib * 2] * k, oy + V2[ib * 2 + 1] * k], c = [ox + V2[ic * 2] * k, oy + V2[ic * 2 + 1] * k];
       if (cls < 64) {
-        let col = COL[cls];
+        let col = COL3[cls];
         if (cls === 5) {
           const v = lc((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3);
-          if (GRASSY.has(v)) col = COL.grass;
+          if (GRASSY.has(v)) col = COL3.grass;
         }
         flat2(a, b, c, col, raisedH);
       } else {
@@ -10452,11 +11353,11 @@
           world2.groundH((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, true);
           if (world2.g.water) continue;
         }
-        flat2(a, b, c, COL[cls] || COL[64], (x, y) => surfaceH(world2, x, y, zD) + 0.015);
+        flat2(a, b, c, COL3[cls] || COL3[64], (x, y) => surfaceH(world2, x, y, zD) + 0.015);
       }
     }
     for (const ln of d.lines) {
-      const n = ln.xy.length / 2, hw = ln.w / 2, col = COL[64 + ln.col] || COL[64];
+      const n = ln.xy.length / 2, hw = ln.w / 2, col = COL3[64 + ln.col] || COL3[64];
       if (n < 2) continue;
       const P2 = [];
       for (let i = 0; i < n; i++) P2.push([ox + ln.xy[i * 2] * k, oy + ln.xy[i * 2 + 1] * k]);
@@ -10495,7 +11396,7 @@
         const ax = ox + rg.xy[i * 2] * k, ay = oy + rg.xy[i * 2 + 1] * k, bx = ox + rg.xy[j * 2] * k, by = oy + rg.xy[j * 2 + 1] * k;
         const L2 = Math.hypot(bx - ax, by - ay);
         if (L2 < 0.01) continue;
-        const wx = (by - ay) / L2, wy = -(bx - ax) / L2, col = rg.fl[i] === 1 ? COL.kerb : COL.face;
+        const wx = (by - ay) / L2, wy = -(bx - ax) / L2, col = rg.fl[i] === 1 ? COL3.kerb : COL3.face;
         const m = Math.max(1, Math.ceil(L2 / 3));
         for (let s2 = 0; s2 < m; s2++) {
           const f0 = s2 / m, f1 = (s2 + 1) / m;
@@ -10504,8 +11405,8 @@
           cyl((x0 + x1) / 2, (y0 + y1) / 2, (g0 + g1) / 2, p32);
           cyl((x0 + x1) / 2 + wx, (y0 + y1) / 2 + wy, (g0 + g1) / 2, A);
           const want = [A[0] - p32[0], A[1] - p32[1], A[2] - p32[2]];
-          tri4([x0, y0, g0 + CURB], [x1, y1, g1 - 0.03], [x1, y1, g1 + CURB], col, want);
-          tri4([x0, y0, g0 + CURB], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], col, want);
+          tri4([x0, y0, g0 + CURB2], [x1, y1, g1 - 0.03], [x1, y1, g1 + CURB2], col, want);
+          tri4([x0, y0, g0 + CURB2], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], col, want);
         }
       }
     }
@@ -10517,7 +11418,7 @@
       const on = (u, v, lift) => {
         rampAt(r, u, v, Q);
         const x = Q[0] + RX, y = Q[1] + RY;
-        return [x, y, ground(x, y) + CURB * rampF(R3, Q[0], Q[1]) + lift];
+        return [x, y, ground(x, y) + CURB2 * rampF(R3, Q[0], Q[1]) + lift];
       };
       const grid = (rows, cols, uv, col, lift) => {
         const G = [];
@@ -10543,8 +11444,8 @@
         cyl((x0 + x1) / 2, (y0 + y1) / 2, (g0 + g1) / 2, p32);
         cyl((x0 + x1) / 2 + wx, (y0 + y1) / 2 + wy, (g0 + g1) / 2, A);
         const want = [A[0] - p32[0], A[1] - p32[1], A[2] - p32[2]];
-        tri4([x0, y0, h0], [x1, y1, g1 - 0.03], [x1, y1, h12], COL.kerb, want);
-        tri4([x0, y0, h0], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], COL.kerb, want);
+        tri4([x0, y0, h0], [x1, y1, g1 - 0.03], [x1, y1, h12], COL3.kerb, want);
+        tri4([x0, y0, h0], [x0, y0, g0 - 0.03], [x1, y1, g1 - 0.03], COL3.kerb, want);
       }
       if (r.fl & 1) {
         const pv0 = 0.05, pv1 = Math.max(pv0 + 0.2, Math.min(0.66, r.D - 0.05)), pw = Math.max(0.3, hw - 0.05);
@@ -10559,591 +11460,8 @@
       const a = 0.45, c = 0.3;
       const Q2 = [[-a, -c], [a, -c], [a, c], [-a, c]].map(([u, v]) => [x + tx * u + ty * v, y + ty * u - tx * v]);
       const h = (xx, yy) => ground(xx, yy) + 0.012;
-      flat2(Q2[0], Q2[1], Q2[2], COL.basin, h);
-      flat2(Q2[0], Q2[2], Q2[3], COL.basin, h);
-    }
-    return new Float32Array(out);
-  }
-
-  // src/islands.js
-  var KERB_H = 0.15;
-  var APRON_H = 0.06;
-  var TOP_W = 0.15;
-  var BANK_W = 1;
-  var STEP2 = 1.5;
-  var COL2 = {
-    kerb: [0.25, 0.245, 0.24],
-    conc: [0.27, 0.262, 0.248],
-    apron: [0.3, 0.276, 0.255],
-    grass: [0.075, 0.14, 0.035],
-    paint: [0.78, 0.78, 0.74]
-  };
-  var ISL = [];
-  var YLD = [];
-  function setRoundabouts(j) {
-    ISL = [];
-    YLD = [];
-    for (const r of j && j.isl || []) {
-      const P2 = [[r[3], r[4]]];
-      let x = Math.round(r[3] * 100), y = Math.round(r[4] * 100);
-      for (let i = 5; i + 1 < r.length && typeof r[i] === "number"; i += 2) {
-        x += r[i];
-        y += r[i + 1];
-        P2.push([x / 100, y / 100]);
-      }
-      const last = r[r.length - 1];
-      let col = last && typeof last === "object" && !Array.isArray(last) && last.c ? last.c : null;
-      if (col) {
-        const m = (col[0] + col[1] + col[2]) / 3;
-        col = col.map((v) => m * Math.min(1.18, Math.max(0.85, v / m)));
-      }
-      if (P2.length < 3) continue;
-      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, cx = 0, cy = 0;
-      for (const [px, py] of P2) {
-        x0 = Math.min(x0, px);
-        x1 = Math.max(x1, px);
-        y0 = Math.min(y0, py);
-        y1 = Math.max(y1, py);
-        cx += px;
-        cy += py;
-      }
-      const Pd = clean(r[0] !== 2 ? hullIfRound(P2) : P2, 0.5);
-      ISL.push({ kind: r[0], apron: r[1] / 10, surf: r[2], col, P: Pd, box: [x0, y0, x1, y1], cx: cx / P2.length, cy: cy / P2.length });
-    }
-    for (const y of j && j.yld || []) YLD.push(y);
-  }
-  function inIsland(x, y) {
-    for (const I of ISL) {
-      if (x < I.box[0] || x > I.box[2] || y < I.box[1] || y > I.box[3]) continue;
-      let c = false;
-      const P2 = I.P;
-      for (let i = 0, j = P2.length - 1; i < P2.length; j = i++) {
-        const [xi, yi] = P2[i], [xj, yj] = P2[j];
-        if (yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
-      }
-      if (c) return true;
-    }
-    return false;
-  }
-  var polyArea2 = (P2) => {
-    let s = 0;
-    for (let i = 0, j = P2.length - 1; i < P2.length; j = i++) s += (P2[j][0] - P2[i][0]) * (P2[j][1] + P2[i][1]);
-    return s / 2;
-  };
-  function clean(P2, d) {
-    const out = [P2[0]];
-    for (let i = 1; i < P2.length; i++) {
-      const q = out[out.length - 1];
-      if (Math.hypot(P2[i][0] - q[0], P2[i][1] - q[1]) >= d) out.push(P2[i]);
-    }
-    while (out.length > 3 && Math.hypot(out[0][0] - out[out.length - 1][0], out[0][1] - out[out.length - 1][1]) < d) out.pop();
-    return out.length >= 3 ? out : P2;
-  }
-  function convex(P2) {
-    for (let i = 0; i < P2.length; i++) {
-      const a = P2[i], b = P2[(i + 1) % P2.length], c = P2[(i + 2) % P2.length];
-      if ((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) < -1e-9) return false;
-    }
-    return true;
-  }
-  function hullIfRound(P2) {
-    const Q = P2.map((p) => p.slice()).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-    const lo = [], up = [];
-    for (const p of Q) {
-      while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
-      lo.push(p);
-    }
-    for (let i = Q.length - 1; i >= 0; i--) {
-      const p = Q[i];
-      while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop();
-      up.push(p);
-    }
-    const H = lo.slice(0, -1).concat(up.slice(0, -1));
-    return H.length >= 3 && polyArea2(H) <= polyArea2(P2) * 1.04 ? H : P2;
-  }
-  function inset(P2, d) {
-    const n = P2.length, out = [];
-    for (let i = 0; i < n; i++) {
-      const a = P2[(i + n - 1) % n], b = P2[i], c = P2[(i + 1) % n];
-      let ux = b[0] - a[0], uy = b[1] - a[1], vx = c[0] - b[0], vy = c[1] - b[1];
-      const ul = Math.hypot(ux, uy) || 1, vl = Math.hypot(vx, vy) || 1;
-      ux /= ul;
-      uy /= ul;
-      vx /= vl;
-      vy /= vl;
-      let nx = -uy - vy, ny = ux + vx;
-      const nl = Math.hypot(nx, ny);
-      if (nl < 1e-6) {
-        nx = -uy;
-        ny = ux;
-      } else {
-        nx /= nl;
-        ny /= nl;
-      }
-      const cosh = Math.max(0.5, nx * -uy + ny * ux);
-      out.push([b[0] + nx * d / cosh, b[1] + ny * d / cosh]);
-    }
-    return out;
-  }
-  function earcut(P2) {
-    const idx = P2.map((_, i) => i), tris = [];
-    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-    const inTri = (p, a, b, c) => cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0;
-    let guard = 0;
-    while (idx.length > 3 && guard++ < 1e4) {
-      let cut = false;
-      for (let k = 0; k < idx.length; k++) {
-        const i0 = idx[(k + idx.length - 1) % idx.length], i1 = idx[k], i2 = idx[(k + 1) % idx.length];
-        const a = P2[i0], b = P2[i1], c = P2[i2];
-        if (cross(a, b, c) <= 1e-9) continue;
-        let ok = true;
-        for (const j of idx) {
-          if (j === i0 || j === i1 || j === i2) continue;
-          if (inTri(P2[j], a, b, c)) {
-            ok = false;
-            break;
-          }
-        }
-        if (!ok) continue;
-        tris.push([i0, i1, i2]);
-        idx.splice(k, 1);
-        cut = true;
-        break;
-      }
-      if (!cut) break;
-    }
-    if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
-    return tris;
-  }
-  function islandTris(world2, mx0, my0, s, cx, cy, cz, lc) {
-    if (!ISL.length && !YLD.length) return new Float32Array(0);
-    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), A3 = new Float64Array(3);
-    const hc = /* @__PURE__ */ new Map();
-    const ground = (x, y) => {
-      const key2 = Math.round(x * 20) * 1e7 + Math.round(y * 20);
-      let h = hc.get(key2);
-      if (h === void 0) {
-        h = world2.groundH(x, y, true);
-        hc.set(key2, h);
-      }
-      return h;
-    };
-    const inTile = (x, y) => x >= mx0 && x < mx0 + s && y >= my0 && y < my0 + s;
-    const tri4 = (a, b, c, col, want) => {
-      const P2 = [a, b, c].map(([x, y, h]) => {
-        cyl(x, y, h, p32);
-        return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
-      });
-      let nx, ny, nz;
-      if (want) [nx, ny, nz] = want;
-      else {
-        const [x, y, h] = a;
-        cyl(x, y, h, p32);
-        cyl(x, y, h + 1, u3);
-        nx = u3[0] - p32[0];
-        ny = u3[1] - p32[1];
-        nz = u3[2] - p32[2];
-      }
-      const e1 = [P2[1][0] - P2[0][0], P2[1][1] - P2[0][1], P2[1][2] - P2[0][2]], e2 = [P2[2][0] - P2[0][0], P2[2][1] - P2[0][1], P2[2][2] - P2[0][2]];
-      const fx = e1[1] * e2[2] - e1[2] * e2[1], fy = e1[2] * e2[0] - e1[0] * e2[2], fz = e1[0] * e2[1] - e1[1] * e2[0];
-      const order = fx * nx + fy * ny + fz * nz >= 0 ? [0, 1, 2] : [0, 2, 1];
-      for (const i of order) out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, col[0], col[1], col[2]);
-    };
-    const flat2 = (a, b, c, col, h, depth = 0) => {
-      const lab = Math.hypot(a[0] - b[0], a[1] - b[1]), lbc = Math.hypot(b[0] - c[0], b[1] - c[1]), lca = Math.hypot(c[0] - a[0], c[1] - a[1]);
-      const l = Math.max(lab, lbc, lca);
-      if (l > 3 && depth < 12) {
-        const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-        if (l === lab) {
-          const ab = m(a, b);
-          flat2(a, ab, c, col, h, depth + 1);
-          flat2(ab, b, c, col, h, depth + 1);
-        } else if (l === lbc) {
-          const bc = m(b, c);
-          flat2(a, b, bc, col, h, depth + 1);
-          flat2(a, bc, c, col, h, depth + 1);
-        } else {
-          const ca = m(c, a);
-          flat2(a, b, ca, col, h, depth + 1);
-          flat2(ca, b, c, col, h, depth + 1);
-        }
-        return;
-      }
-      tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], col);
-    };
-    const band = (a0, a1, b0, b1, ha, hb, col) => {
-      const A0 = [a0[0], a0[1], ground(a0[0], a0[1]) + ha], A1 = [a1[0], a1[1], ground(a1[0], a1[1]) + ha];
-      const B0 = [b0[0], b0[1], ground(b0[0], b0[1]) + hb], B1 = [b1[0], b1[1], ground(b1[0], b1[1]) + hb];
-      tri4(A0, A1, B1, col);
-      tri4(A0, B1, B0, col);
-    };
-    const face = (a, b, h0, h12, col) => {
-      const L2 = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (L2 < 0.01) return;
-      const wx = (b[1] - a[1]) / L2, wy = -(b[0] - a[0]) / L2;
-      const g0 = ground(a[0], a[1]), g1 = ground(b[0], b[1]);
-      cyl((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (g0 + g1) / 2, p32);
-      cyl((a[0] + b[0]) / 2 + wx, (a[1] + b[1]) / 2 + wy, (g0 + g1) / 2, A3);
-      const want = [A3[0] - p32[0], A3[1] - p32[1], A3[2] - p32[2]];
-      tri4([a[0], a[1], g0 + h12], [b[0], b[1], g1 + h0], [b[0], b[1], g1 + h12], col, want);
-      tri4([a[0], a[1], g0 + h12], [a[0], a[1], g0 + h0], [b[0], b[1], g1 + h0], col, want);
-    };
-    const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-    for (const I of ISL) {
-      if (I.box[2] < mx0 - 1 || I.box[0] > mx0 + s + 1 || I.box[3] < my0 - 1 || I.box[1] > my0 + s + 1) continue;
-      const P2 = I.P, n = P2.length;
-      if (I.kind === 1 && I.grassTop === void 0 && lc) {
-        let nP = 0, nK = 0;
-        for (let q = 0; q < 24; q++) {
-          const t = (q + 0.5) / 24, a = P2[Math.floor(t * n)], f = 0.25 + 0.5 * (q * 7 % 24) / 24;
-          const v = lc(I.cx + (a[0] - I.cx) * f, I.cy + (a[1] - I.cy) * f);
-          if (v < 0) continue;
-          nK++;
-          if (v === 1 || v === 14) nP++;
-        }
-        if (nK >= 12) I.grassTop = nP >= nK / 2;
-      }
-      const flatTop = I.kind !== 1 || I.grassTop === true;
-      const base = I.kind === 1 && I.apron > 0 ? APRON_H : 0;
-      const Q = I.kind === 1 && I.apron > 0 ? inset(P2, I.apron) : P2;
-      const T1 = inset(Q, TOP_W), T2 = I.kind === 1 ? inset(Q, TOP_W + BANK_W) : null;
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        const L2 = Math.hypot(P2[j][0] - P2[i][0], P2[j][1] - P2[i][1]), m = Math.max(1, Math.ceil(L2 / STEP2));
-        for (let k = 0; k < m; k++) {
-          const t0 = k / m, t1 = (k + 1) / m;
-          const a = lerp(P2[i], P2[j], t0), b = lerp(P2[i], P2[j], t1);
-          if (!inTile((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)) continue;
-          const qa = lerp(Q[i], Q[j], t0), qb = lerp(Q[i], Q[j], t1);
-          if (base > 0) {
-            face(a, b, -0.03, base, COL2.kerb);
-            band(a, b, qa, qb, base, base, I.col || COL2.apron);
-            face(qa, qb, base, base + KERB_H, COL2.kerb);
-          } else face(a, b, -0.03, KERB_H, COL2.kerb);
-          const top = base + KERB_H;
-          const ta = lerp(T1[i], T1[j], t0), tb = lerp(T1[i], T1[j], t1);
-          band(qa, qb, ta, tb, top, top, COL2.kerb);
-          if (T2 && !flatTop) {
-            const ua = lerp(T2[i], T2[j], t0), ub = lerp(T2[i], T2[j], t1);
-            band(ta, tb, ua, ub, top, -0.05, COL2.grass);
-          }
-        }
-      }
-      if (flatTop && inTile(I.cx, I.cy)) {
-        const col = I.kind !== 1 && I.surf ? I.col || COL2.conc : COL2.grass;
-        const h = (x, y) => ground(x, y) + base + KERB_H;
-        let tris = convex(T1) ? null : earcut(T1);
-        if (!tris || tris.length < T1.length - 2) {
-          let mx = 0, my = 0;
-          for (const p of T1) {
-            mx += p[0];
-            my += p[1];
-          }
-          const M2 = [mx / T1.length, my / T1.length];
-          for (let i = 0; i < T1.length; i++) flat2(M2, T1[i], T1[(i + 1) % T1.length], col, h);
-        } else for (const [i0, i1, i2] of tris) flat2(T1[i0], T1[i1], T1[i2], col, h);
-      }
-    }
-    for (const [x, y, ux, uy, from, to] of YLD) {
-      if (!inTile(x, y)) continue;
-      const zD = deckOwner(world2, x, y);
-      if (zD === null) {
-        world2.groundH(x, y, true);
-        if (world2.g.water) continue;
-      }
-      const h = (px, py) => surfaceH(world2, px, py, zD) + 0.017;
-      const nx = uy, ny = -ux, B = 0.5, G = 0.25, Hh = 0.75;
-      const k = Math.max(1, Math.floor((to - from + G) / (B + G)));
-      const t0 = (from + to) / 2 - (k * (B + G) - G) / 2;
-      for (let q = 0; q < k; q++) {
-        const ta = t0 + q * (B + G), tb = ta + B, tm = (ta + tb) / 2;
-        const a = [x + nx * ta, y + ny * ta], b = [x + nx * tb, y + ny * tb], c = [x + nx * tm - ux * Hh, y + ny * tm - uy * Hh];
-        tri4([a[0], a[1], h(a[0], a[1])], [b[0], b[1], h(b[0], b[1])], [c[0], c[1], h(c[0], c[1])], COL2.paint);
-      }
-    }
-    return new Float32Array(out);
-  }
-
-  // src/kerbs.js
-  var CURB2 = 0.15;
-  var KERB_W = 0.17;
-  var BACK = 1;
-  var R2 = 1;
-  var RC = 4;
-  var CROSSING2 = 3;
-  var COL3 = {
-    kerb: [0.25, 0.245, 0.24],
-    walk: [0.27, 0.262, 0.248],
-    grass: [0.075, 0.14, 0.035],
-    face: [0.235, 0.23, 0.226]
-  };
-  var _cx = {};
-  function info(world2, x, y, o) {
-    o.ue = 56;
-    o.k = 0;
-    o.w0 = 1.25;
-    o.w1 = 2.8;
-    const e = world2.nearestRoad(x, y);
-    if (!(e < 14)) return o;
-    const nr = world2._nr, rg = nr.reg, ri = nr.road;
-    if (rg.rCls[ri] >= 14 || rg.rFlags[ri] & 6) return o;
-    const pw = paintHw(rg, ri, nr.s - rg.cum[rg.rStart[ri]]);
-    const kd = roadKind(rg, ri), style = kd & 3;
-    let ue = nr.d - pw;
-    if (style === 1 || style === 2) {
-      ue = Math.abs(nr.u - (nr.d - nr.hw)) < 1e-4 ? nr.d - pw : Math.min(nr.u, nr.d - pw);
-      const cxr = e < 8 ? world2.crossingAt(x, y, _cx) : null;
-      if (cxr && cxr.e > -12) {
-        const r = Math.min(9, Math.max(4, 3 + 0.5 * Math.min(pw, cxr.hw))), a0 = nr.d - pw, b0 = -cxr.e;
-        const ru = Math.max(r, Math.min(a0, b0)) - Math.hypot(Math.max(r - a0, 0), Math.max(r - b0, 0));
-        if (ru < ue) ue = ru;
-      }
-    }
-    o.ue = ue;
-    if (pw < 2.4) return o;
-    const S = sidesOf(rg, ri), k6 = kd >> 6 & 1;
-    let kerb = k6, wft = 0;
-    if (S) {
-      kerb = S[2] >> (nr.side > 0 ? 0 : 1) & 1;
-      wft = Math.min(nr.side > 0 ? S[0] : S[1], 31);
-    }
-    const cov = world2.coverAt(x, y, 0);
-    if (!S && cov < 0.15) return o;
-    o.k = kerb;
-    const urban = smoothstep(0.62, 0.8, cov);
-    o.w0 = 1.25 + (0.17 - 1.25) * urban;
-    const walk = S ? wft > 0 : k6 === 1;
-    o.w1 = !walk ? KERB_W : S ? o.w0 + wft * 0.3048 : 2.8 + 0.6 * urban;
-    if (!walk) o.w0 = KERB_W;
-    return o;
-  }
-  var kerbDebug = { V: null };
-  function kerbTris(world2, mx0, my0, s, cx, cy, cz, lc) {
-    const reg = world2.regionAt(mx0 + s / 2, my0 + s / 2);
-    if (!reg || !reg.nRoads) return new Float32Array(0);
-    const NC = Math.round(s / RC) + 1, co = { ue: 0, k: 0, w0: 0, w1: 0 };
-    const cue = new Float32Array(NC * NC), ck = new Uint8Array(NC * NC), cw = new Float32Array(NC * NC);
-    let any = false;
-    for (let j = 0; j < NC; j++) for (let i = 0; i < NC; i++) {
-      info(world2, mx0 + i * RC, my0 + j * RC, co);
-      cue[j * NC + i] = co.ue;
-      ck[j * NC + i] = co.k;
-      cw[j * NC + i] = co.w1;
-      if (co.k) any = true;
-    }
-    if (!any) return new Float32Array(0);
-    const N = Math.round(s / R2) + 1, F = Math.round(RC / R2);
-    const active = new Uint8Array((NC - 1) * (NC - 1));
-    for (let j = 0; j < NC - 1; j++) for (let i = 0; i < NC - 1; i++) {
-      let k = 0, lo = 1e9, hi = -1e9, wmax = 0;
-      for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
-        const q = (j + b) * NC + i + a;
-        k |= ck[q];
-        lo = Math.min(lo, cue[q]);
-        hi = Math.max(hi, cue[q]);
-        wmax = Math.max(wmax, cw[q]);
-      }
-      if (k && lo < wmax + BACK + RC && hi > -RC) active[j * (NC - 1) + i] = 1;
-    }
-    const V2 = /* @__PURE__ */ new Map();
-    kerbDebug.V = V2;
-    const vert = (i, j) => {
-      const key2 = j * N + i;
-      let v = V2.get(key2);
-      if (v) return v;
-      const x = mx0 + i * R2, y = my0 + j * R2;
-      info(world2, x, y, co);
-      v = { x, y, ue: co.ue, k: co.k, w0: co.w0, w1: co.w1, i, j, drive: -1, veg: -1 };
-      if (reg.streets && streetsCovered(reg.streets, x - reg.x0, y - reg.y0)) v.k = 0;
-      else if (v.k && v.ue > -2 && v.ue < 6 && inIsland(x, y)) v.k = 0;
-      V2.set(key2, v);
-      return v;
-    };
-    const X = [];
-    const f = reg.feat;
-    if (f) for (let q = 0; q < f.nP; q++) {
-      if (f.kind[q] !== CROSSING2) continue;
-      const x = reg.x0 + f.px[q], y = reg.y0 + f.py[q];
-      if (x < mx0 - 25 || x > mx0 + s + 25 || y < my0 - 25 || y > my0 + s + 25) continue;
-      let t = null;
-      for (let a = f.first[q], e = a + f.napp[q]; a < e; a++) if (!f.apFoot[a]) {
-        t = f.apH[a];
-        break;
-      }
-      if (t !== null) X.push([x, y, Math.cos(t), Math.sin(t)]);
-    }
-    const B = [];
-    if (reg.nBld) {
-      const cs = 368;
-      for (let cj = Math.floor((my0 - 10 - reg.y0) / cs); cj <= Math.floor((my0 + s + 10 - reg.y0) / cs); cj++)
-        for (let ci = Math.floor((mx0 - 10 - reg.x0) / cs); ci <= Math.floor((mx0 + s + 10 - reg.x0) / cs); ci++) {
-          const d = cellBuildings(reg, ci, cj);
-          if (!d) continue;
-          for (let k = 0; k < d.length; k += 16) {
-            if (d[k] < mx0 - 30 || d[k] > mx0 + s + 30 || d[k + 1] < my0 - 30 || d[k + 1] > my0 + s + 30) continue;
-            B.push([d[k], d[k + 1], d[k + 2] / 2 + 0.5, d[k + 3] / 2 + 0.5, Math.cos(d[k + 4]), Math.sin(d[k + 4])]);
-          }
-        }
-    }
-    const inBuilding = (x, y) => {
-      for (const [bx, by, hw, hd, c, sn] of B) {
-        const dx = x - bx, dy = y - by;
-        if (Math.abs(dx) > 40 || Math.abs(dy) > 40) continue;
-        if (Math.abs(dx * c + dy * sn) <= hw && Math.abs(-dx * sn + dy * c) <= hd) return true;
-      }
-      return false;
-    };
-    const rise = (v, x, y, ue) => {
-      let r = 1;
-      for (const [px, py, dx, dy] of X) {
-        const ax = x - px, ay = y - py;
-        if (Math.abs(ax) > 30 || Math.abs(ay) > 30) continue;
-        const along2 = Math.abs(ax * dx + ay * dy);
-        if (along2 >= 2.45) continue;
-        r = Math.min(r, Math.max(along2 < 1.65 ? 0 : smoothstep(1.65, 2.45, along2), smoothstep(0, 1.8, ue)));
-      }
-      if (v.drive > 0) r = Math.min(r, smoothstep(0, Math.max(v.w0, 1.2), ue));
-      return r;
-    };
-    const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3), A3 = new Float64Array(3);
-    const hc = /* @__PURE__ */ new Map();
-    const ground = (x, y) => {
-      const key2 = Math.round(x * 20) * 1e7 + Math.round(y * 20);
-      let h = hc.get(key2);
-      if (h === void 0) {
-        h = world2.groundH(x, y, true);
-        hc.set(key2, h);
-      }
-      return h;
-    };
-    const tri4 = (a, b, c, col, want) => {
-      const P2 = [a, b, c].map(([x, y, h]) => {
-        cyl(x, y, h, p32);
-        return [p32[0] - cx, p32[1] - cy, p32[2] - cz];
-      });
-      let nx, ny, nz;
-      if (want) [nx, ny, nz] = want;
-      else {
-        const [x, y, h] = a;
-        cyl(x, y, h, p32);
-        cyl(x, y, h + 1, u3);
-        nx = u3[0] - p32[0];
-        ny = u3[1] - p32[1];
-        nz = u3[2] - p32[2];
-      }
-      const e1 = [P2[1][0] - P2[0][0], P2[1][1] - P2[0][1], P2[1][2] - P2[0][2]], e2 = [P2[2][0] - P2[0][0], P2[2][1] - P2[0][1], P2[2][2] - P2[0][2]];
-      const fx = e1[1] * e2[2] - e1[2] * e2[1], fy = e1[2] * e2[0] - e1[0] * e2[2], fz = e1[0] * e2[1] - e1[1] * e2[0];
-      const order = fx * nx + fy * ny + fz * nz >= 0 ? [0, 1, 2] : [0, 2, 1];
-      const per = Array.isArray(col[0]);
-      for (const i of order) {
-        const c2 = per ? col[i] : col;
-        out.push(P2[i][0], P2[i][1], P2[i][2], nx, ny, nz, c2[0], c2[1], c2[2]);
-      }
-    };
-    const away = (v) => {
-      const n = (vi, vj) => V2.get(vj * N + vi);
-      const l = n(v.i - 1, v.j) || v, r = n(v.i + 1, v.j) || v, d = n(v.i, v.j - 1) || v, u = n(v.i, v.j + 1) || v;
-      const gx = r.ue - l.ue, gy = u.ue - d.ue, gl = Math.hypot(gx, gy);
-      return gl < 1e-3 ? null : [gx / gl, gy / gl];
-    };
-    const vegAt = (v) => {
-      if (v.veg >= 0) return v.veg;
-      v.veg = 0;
-      if (!lc || v.w0 <= KERB_W + 0.05) return 0;
-      const g = away(v);
-      if (!g) return 0;
-      const t = (KERB_W + v.w0) / 2 - v.ue, c = lc(v.x + g[0] * t, v.y + g[1] * t);
-      v.veg = c >= 2 && c !== 14 && c !== 15 ? 1 : 0;
-      return v.veg;
-    };
-    const driveAt = (v) => {
-      if (v.drive >= 0) return v.drive;
-      v.drive = 0;
-      if (!lc || v.ue < -0.5 || v.ue > v.w1 + BACK) return 0;
-      const g = away(v);
-      if (!g) return 0;
-      const [gx, gy] = g;
-      for (const back of [1, 2.5, 6]) {
-        const t2 = v.w1 - v.ue + back, x = v.x + gx * t2, y = v.y + gy * t2;
-        if (lc(x, y) !== 1 || inBuilding(x, y)) return 0;
-      }
-      const t = v.w1 - v.ue + 1.75;
-      let sides = 0;
-      for (const o of [-5, 5]) if (lc(v.x + gx * t - gy * o, v.y + gy * t + gx * o) === 1) sides++;
-      if (sides === 2) return 0;
-      v.drive = 1;
-      return 1;
-    };
-    const gOf = (v, k) => k === 0 ? v.ue : k === 1 ? v.ue - KERB_W : k === 2 ? v.ue - v.w0 : v.ue - v.w1;
-    const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, ue: a.ue + (b.ue - a.ue) * t, w0: a.w0 + (b.w0 - a.w0) * t, w1: a.w1 + (b.w1 - a.w1) * t, veg: a.veg + (b.veg - a.veg) * t });
-    const half = (Q, k, above) => {
-      const R22 = [];
-      for (let i = 0; i < Q.length; i++) {
-        const a = Q[i], b = Q[(i + 1) % Q.length], ga = gOf(a, k), gb = gOf(b, k), ia = above ? ga >= 0 : ga <= 0, ib = above ? gb >= 0 : gb <= 0;
-        if (ia) R22.push(a);
-        if (ia !== ib) R22.push(lerp(a, b, ga / (ga - gb)));
-      }
-      return R22;
-    };
-    const clip2 = (P2, lo, hi) => {
-      const Q = half(P2, lo, true);
-      return Q.length < 3 ? Q : half(Q, hi, false);
-    };
-    const faceAt = (P2, k, vv, toward) => {
-      const Z = [];
-      for (let i = 0; i < 3; i++) {
-        const p = P2[i], q = P2[(i + 1) % 3], gp = gOf(p, k), gq = gOf(q, k);
-        if (gp < 0 !== gq < 0) Z.push(lerp(p, q, gp / (gp - gq)));
-      }
-      if (Z.length !== 2) return;
-      const [s0, s1] = Z;
-      const h0 = CURB2 * rise(vv, s0.x, s0.y, s0.ue), h12 = CURB2 * rise(vv, s1.x, s1.y, s1.ue);
-      if (h0 < 5e-3 && h12 < 5e-3) return;
-      const [a, b, c] = P2, ga = gOf(a, k), gb = gOf(b, k), gc = gOf(c, k);
-      const gx = (gb - ga) * (c.y - a.y) - (gc - ga) * (b.y - a.y), gy = (gc - ga) * (b.x - a.x) - (gb - ga) * (c.x - a.x);
-      const sgn = ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0 ? 1 : -1) * (toward ? -1 : 1);
-      const gl = Math.hypot(gx, gy) || 1, wx = sgn * gx / gl, wy = sgn * gy / gl;
-      const g0 = ground(s0.x, s0.y), g1 = ground(s1.x, s1.y);
-      cyl((s0.x + s1.x) / 2, (s0.y + s1.y) / 2, (g0 + g1) / 2, p32);
-      cyl((s0.x + s1.x) / 2 + wx, (s0.y + s1.y) / 2 + wy, (g0 + g1) / 2, A3);
-      const want = [A3[0] - p32[0], A3[1] - p32[1], A3[2] - p32[2]];
-      tri4([s0.x, s0.y, g0 + h0], [s1.x, s1.y, g1 - 0.03], [s1.x, s1.y, g1 + h12], COL3.face, want);
-      tri4([s0.x, s0.y, g0 + h0], [s0.x, s0.y, g0 - 0.03], [s1.x, s1.y, g1 - 0.03], COL3.face, want);
-    };
-    const triangle = (a, b, c) => {
-      const own = [a, b, c].reduce((p, q) => q.ue < p.ue ? q : p);
-      if (!own.k) return;
-      if (gOf(a, 3) > 0 && gOf(b, 3) > 0 && gOf(c, 3) > 0) return;
-      if (a.ue < 0 && b.ue < 0 && c.ue < 0) return;
-      for (const p of [a, b, c]) {
-        if (p.k) driveAt(p);
-        vegAt(p);
-      }
-      const vv = { w0: own.w0, w1: own.w1, drive: [a, b, c].some((p) => p.drive === 1) ? 1 : 0 };
-      const P2 = [a, b, c];
-      for (const [lo, hi, col0] of [[0, 1, COL3.kerb], [1, 2, "strip"], [2, 3, COL3.walk]]) {
-        const Q = clip2(P2, lo, hi);
-        if (Q.length < 3) continue;
-        const H = Q.map((q) => [q.x, q.y, ground(q.x, q.y) + CURB2 * rise(vv, q.x, q.y, q.ue)]);
-        const C2 = col0 === "strip" ? Q.map((q) => {
-          const f2 = smoothstep(0.25, 0.75, Math.max(0, Math.min(1, q.veg)));
-          return [0, 1, 2].map((k) => COL3.walk[k] + (COL3.grass[k] - COL3.walk[k]) * f2);
-        }) : null;
-        for (let i = 1; i + 1 < H.length; i++) tri4(H[0], H[i], H[i + 1], C2 ? [C2[0], C2[i], C2[i + 1]] : col0);
-      }
-      faceAt(P2, 0, vv, true);
-      faceAt(P2, 3, vv, false);
-    };
-    for (let cj = 0; cj < NC - 1; cj++) for (let ci = 0; ci < NC - 1; ci++) {
-      if (!active[cj * (NC - 1) + ci]) continue;
-      for (let b = 0; b < F; b++) for (let a = 0; a < F; a++) {
-        const i = ci * F + a, j = cj * F + b;
-        if (i >= N - 1 || j >= N - 1) continue;
-        const v00 = vert(i, j), v10 = vert(i + 1, j), v01 = vert(i, j + 1), v11 = vert(i + 1, j + 1);
-        triangle(v00, v10, v11);
-        triangle(v00, v11, v01);
-      }
+      flat2(Q2[0], Q2[1], Q2[2], COL3.basin, h);
+      flat2(Q2[0], Q2[2], Q2[3], COL3.basin, h);
     }
     return new Float32Array(out);
   }
@@ -12691,6 +13009,11 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     if (kind === "kerbs") {
       const arr2 = kerbTris(world, mx0, my0, s, cx, cy, cz, lcAt);
       postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 9 }, [arr2.buffer]);
+      return;
+    }
+    if (kind === "boards") {
+      const arr2 = reg ? boardItems(world, reg, mx0, my0, s, cx, cy, cz) : new Float32Array(0);
+      postMessage({ type: "scatter", id: q.id, key: q.key, kind, center: [cx, cy, cz], my: my0 + s / 2, data: arr2, stride: 7 }, [arr2.buffer]);
       return;
     }
     if (kind === "signs" || kind === "paint" || kind === "gpaint" || kind === "rails" || kind === "power" || kind === "pwires") {
