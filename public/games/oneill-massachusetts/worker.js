@@ -5224,7 +5224,14 @@
     // and the things Mapillary found at the street's edge (mlyObjects): a pedestrian signal, a parking meter, a cabinet
     PED_HEAD: 49,
     METER: 50,
-    CABINET: 51
+    CABINET: 51,
+    // and its street furniture (mlyFurniture): a solar compactor, a litter bin, a banner on its own post and on a lamp,
+    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox
+    BIN: 52,
+    BIN_CAN: 53,
+    BANNER: 54,
+    BANNER_ON: 58,
+    MAILBOX: 62
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -6058,6 +6065,112 @@
         }
       }
   }
+  var MFU = null;
+  function setMlyFurniture(buf, towns) {
+    MFU = null;
+    if (!buf || buf.byteLength < 8) return;
+    const dv = new DataView(buf);
+    if (dv.getUint32(0, true) !== 844449357) return;
+    const n = dv.getUint32(4, true), cells = /* @__PURE__ */ new Map();
+    const X = new Int32Array(buf, 8, n), Y = new Int32Array(buf, 8 + 4 * n, n), T = new Uint16Array(buf, 8 + 8 * n, n);
+    const K = new Uint8Array(buf, 8 + 10 * n, n);
+    for (let i = 0; i < n; i++) {
+      const k = Math.floor(Y[i] / 2e3) * 4096 + Math.floor(X[i] / 2e3);
+      let L2 = cells.get(k);
+      if (!L2) cells.set(k, L2 = []);
+      L2.push(i);
+    }
+    const solar = /* @__PURE__ */ new Set();
+    if (towns) towns.forEach((t, i) => {
+      if (/^(boston|cambridge|somerville)$/i.test(t.n || "")) solar.add(i + 1);
+    });
+    MFU = { X, Y, T, K, cells, solar };
+  }
+  var LAMP_TOP = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
+  var SHOPS = new Uint8Array(16);
+  for (const c of [7, 10, 11, 13]) SHOPS[c] = 1;
+  function mlyFurniture(world2, reg, f, mx0, my0, s, put2) {
+    if (!MFU) return;
+    const { X, Y, T, K, cells, solar } = MFU, placed = [];
+    let shops = null;
+    const shopNear = (x, y) => {
+      if (!shops) {
+        shops = [];
+        if (reg.nBld) for (let cj = Math.floor((my0 - 40 - reg.y0) / 368); cj <= Math.floor((my0 + s + 40 - reg.y0) / 368); cj++)
+          for (let ci = Math.floor((mx0 - 40 - reg.x0) / 368); ci <= Math.floor((mx0 + s + 40 - reg.x0) / 368); ci++) {
+            const d = cellBuildings(reg, ci, cj);
+            if (d) {
+              for (let k = 0; k < d.length; k += 16) if (SHOPS[d[k + 6]] && d[k] > mx0 - 70 && d[k] < mx0 + s + 70 && d[k + 1] > my0 - 70 && d[k + 1] < my0 + s + 70) shops.push(d[k], d[k + 1], Math.max(d[k + 2], d[k + 3]) / 2);
+            }
+          }
+      }
+      for (let j = 0; j < shops.length; j += 3) if (Math.hypot(shops[j] - x, shops[j + 1] - y) < 30 + shops[j + 2]) return true;
+      return false;
+    };
+    const mapped = (kind, x, y, r, sub) => {
+      if (!f || !f.nP) return -1;
+      for (let i = 0; i < f.nP; i++) if (f.kind[i] === kind && (sub === void 0 || f.sub[i] === sub) && Math.hypot(reg.x0 + f.px[i] - x, reg.y0 + f.py[i] - y) < r) return i;
+      return -1;
+    };
+    const rowOf = (i, x, y, sd, tx, ty) => {
+      let n = 0;
+      for (let gy = Math.floor((Y[i] - 250) / 2e3); gy <= Math.floor((Y[i] + 250) / 2e3); gy++)
+        for (let gx = Math.floor((X[i] - 250) / 2e3); gx <= Math.floor((X[i] + 250) / 2e3); gx++)
+          for (const j of cells.get(gy * 4096 + gx) || []) {
+            if (j === i || K[j] !== 3) continue;
+            const dx = X[j] / 10 - x, dy = Y[j] / 10 - y, al = dx * tx + dy * ty, ac = (dx * ty - dy * tx) * sd;
+            if (Math.abs(al) < 25 && ac > -4 && ac < 8) n++;
+          }
+      return n;
+    };
+    for (let gy = Math.floor(my0 / 200); gy <= Math.floor((my0 + s) / 200); gy++)
+      for (let gx = Math.floor(mx0 / 200); gx <= Math.floor((mx0 + s) / 200); gx++) {
+        for (const i of cells.get(gy * 4096 + gx) || []) {
+          const x = X[i] / 10, y = Y[i] / 10, k = K[i];
+          if (x < mx0 || x >= mx0 + s || y < my0 || y >= my0 + s) continue;
+          if (!(world2.nearestRoad(x, y) < 12)) continue;
+          const nr = world2._nr;
+          if (nr.reg.rCls[nr.road] === 13) continue;
+          const sd = nr.side, d0 = nr.d, hw = nr.hw, tx = nr.tx, ty = nr.ty;
+          if ((k === 3 || k === 5) && !shopNear(x, y)) continue;
+          if (k === 3 && rowOf(i, x, y, sd, tx, ty) >= 2) continue;
+          if (k === 5 && world2.sidewalkAt && world2.sidewalkAt(x, y) === 0) continue;
+          if (k === 1 && (mapped(BENCH, x, y, 3) >= 0 || mapped(BUSSTOP, x, y, 6, 1) >= 0)) continue;
+          if (k === 2 && (mapped(BIKEPARK, x, y, 8) >= 0 || mapped(BIKESHARE, x, y, 8) >= 0)) continue;
+          let part2 = -1, lift = 0, ok;
+          if (k === 4) {
+            const li = mapped(LAMP, x, y, 3);
+            const lp = li >= 0 ? lampPart(f.sub[li]) : -1;
+            if (lp >= 0) {
+              const lx = reg.x0 + f.px[li], ly = reg.y0 + f.py[li];
+              if (world2.nearestDeck(lx, ly) < 4 || !kerbSide(world2, lx, ly, 0.7, ks)) continue;
+              const lh = (f.h[li] > 0 ? clamp2(f.h[li] / LAMP_TOP[lp], 0.6, 1.6) : 1) * LAMP_TOP[lp];
+              part2 = PART.BANNER_ON;
+              lift = clamp2(lh - 0.45, 4.3, 5.6) - 4.95;
+            } else {
+              ok = kerbSide(world2, x - sd * (d0 - 0.3 * hw) * ty, y + sd * (d0 - 0.3 * hw) * tx, 0.45, ks);
+              if (!ok) continue;
+              part2 = PART.BANNER;
+            }
+            part2 += Math.floor(hash2(T[i], 41) * 4);
+          } else if (k === 2) {
+            if (!kerbSide(world2, x - sd * (d0 - 0.3 * hw) * ty, y + sd * (d0 - 0.3 * hw) * tx, 0.6, ks)) continue;
+          } else if (!kerbSide(world2, x, y, k === 1 ? 0.6 : 0.5, ks)) continue;
+          if (!(world2.nearestRoad(ks.x, ks.y) > 0.2)) continue;
+          let near = false;
+          for (let j = 0; j < placed.length && !near; j += 2) near = Math.hypot(placed[j] - ks.x, placed[j + 1] - ks.y) < 0.8;
+          if (near) continue;
+          let ok2 = false;
+          if (k === 1) ok2 = put2(ks.x, ks.y, ks.yaw, world2.coreAt(ks.x, ks.y) >= 0.6 ? PART.BENCH_METAL : PART.BENCH, 0, 0) !== void 0;
+          else if (k === 2) {
+            for (const o of [-0.45, 0.45]) ok2 = put2(ks.x + tx * o, ks.y + ty * o, ks.yaw, PART.BIKE_HOOP, 0, 0) !== void 0 || ok2;
+          } else if (k === 3) ok2 = put2(ks.x, ks.y, ks.yaw + Math.PI, solar.has(T[i]) ? PART.BIN : PART.BIN_CAN, 0, 0) !== void 0;
+          else if (k === 4) ok2 = put2(ks.x, ks.y, ks.yaw, part2, 0, 0, lift) !== void 0;
+          else ok2 = put2(ks.x, ks.y, ks.yaw + Math.PI, PART.MAILBOX, 0, 0) !== void 0;
+          if (ok2) placed.push(ks.x, ks.y);
+        }
+      }
+  }
   var TOWNX = null;
   function setTownLines(j) {
     TOWNX = /* @__PURE__ */ new Map();
@@ -6549,6 +6662,7 @@
     if (!f || !f.nP) {
       mlySigns(world2, f, reg, mx0, my0, s, put2, ruled);
       mlyObjects(world2, mx0, my0, s, put2);
+      mlyFurniture(world2, reg, f, mx0, my0, s, put2);
       return new Float32Array(out);
     }
     for (let i = 0; i < f.nP; i++) {
@@ -6674,6 +6788,7 @@
     hNode = -1e9;
     mlySigns(world2, f, reg, mx0, my0, s, put2, ruled);
     mlyObjects(world2, mx0, my0, s, put2);
+    mlyFurniture(world2, reg, f, mx0, my0, s, put2);
     return new Float32Array(out);
   }
   function surveyed(reg, lx, ly) {
@@ -12919,6 +13034,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var msignsReady = null;
   var mobjsReady = null;
   var mmarkReady = null;
+  var mfurnReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -13044,6 +13160,11 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     const mmf = meta.files && meta.files.mmark;
     mmarkReady = mmf ? fetchRetry(vurl("data/" + mmf.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
       if (b) setMlyMarkings(b);
+    }).catch(() => {
+    }) : null;
+    const mff = meta.files && meta.files.mfurn;
+    mfurnReady = mff ? fetchRetry(vurl("data/" + mff.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
+      if (b) setMlyFurniture(b, meta.towns);
     }).catch(() => {
     }) : null;
     const pf = meta.files && meta.files.piers;
@@ -14551,6 +14672,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (m.type === "scatter" && m.kind === "signs" && townxReady) await townxReady;
       if (m.type === "scatter" && m.kind === "signs" && msignsReady) await msignsReady;
       if (m.type === "scatter" && m.kind === "signs" && mobjsReady) await mobjsReady;
+      if (m.type === "scatter" && m.kind === "signs" && mfurnReady) await mfurnReady;
       if (m.type === "scatter" && m.kind === "paint" && mmarkReady) await mmarkReady;
       if (wallsReady) await wallsReady;
       if (liftedReady) await liftedReady;

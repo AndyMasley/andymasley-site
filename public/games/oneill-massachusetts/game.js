@@ -24801,6 +24801,34 @@ void main() {
           add2(box2(1.1, 0.12, 0.7, 0, 0.06, 0), [0.4, 0.39, 0.37], 51);
           add2(box2(0.9, 1.35, 0.55, 0, 0.12 + 0.675, 0), [0.47, 0.48, 0.48], 51);
           add2(box2(5e-3, 1.2, 0.012, 0, 0.8, 0.281), [0.2, 0.2, 0.2], 51);
+          add2(box2(0.64, 1.18, 0.64, 0, 0.59, 0), [0.04, 0.11, 0.07], 52);
+          add2(box2(0.66, 0.08, 0.66, 0, 1.22, 0), [0.07, 0.08, 0.09], 52);
+          add2(box2(0.5, 0.02, 0.5, 0, 1.265, 0), [0.03, 0.04, 0.07], 52);
+          add2(box2(0.42, 0.24, 0.02, 0, 0.98, 0.325), [0.32, 0.33, 0.34], 52);
+          add2(cylY(0.29, 0.29, 0.84, 12, 0, 0, 0), [0.035, 0.09, 0.055], 53);
+          add2(cylY(0.297, 0.297, 0.07, 12, 0, 0.66, 0), [0.025, 0.027, 0.026], 53);
+          add2(cylY(0.31, 0.24, 0.1, 12, 0, 0.84, 0), [0.025, 0.027, 0.026], 53);
+          const BAN = [[0.3, 0.04, 0.06], [0.04, 0.07, 0.2], [0.04, 0.17, 0.08], [0.55, 0.38, 0.06]], post = [0.03, 0.05, 0.04];
+          BAN.forEach((c, j) => {
+            for (const p of [54 + j, 58 + j]) {
+              add2(box2(0.03, 0.03, 0.64, 0, 4.95, 0.37), post, p);
+              add2(box2(0.03, 0.03, 0.64, 0, 3.45, 0.37), post, p);
+              add2(box2(0.012, 1.18, 0.6, 0, 4.3, 0.39), c, p);
+              add2(box2(0.012, 0.22, 0.6, 0, 3.6, 0.39), [0.78, 0.77, 0.74], p);
+            }
+            add2(cylY(0.06, 0.075, 5.4, 8, 0, 0, 0), post, 54 + j);
+            add2(cylY(0.09, 0.03, 0.16, 8, 0, 5.4, 0), post, 54 + j);
+          });
+          add2(box2(0.46, 0.92, 0.53, 0, 0.62, 0), [0.02, 0.08, 0.26], 62);
+          {
+            const d = new Rr(0.23, 0.23, 0.53, 10, 1, false, 0, Math.PI);
+            d.rotateX(Math.PI / 2);
+            d.rotateZ(Math.PI / 2);
+            d.translate(0, 1.08, 0);
+            add2(d.toNonIndexed(), [0.02, 0.08, 0.26], 62);
+          }
+          add2(box2(0.3, 0.05, 0.02, 0, 1, 0.27), [0.55, 0.56, 0.57], 62);
+          for (const [lx2, lz] of [[-0.19, -0.22], [0.19, -0.22], [-0.19, 0.22], [0.19, 0.22]]) add2(box2(0.04, 0.16, 0.04, lx2, 0.08, lz), [0.02, 0.06, 0.2], 62);
         }
         add2(box2(0.05, 2.85, 0.05, 0, 1.425, 0), galv, 37);
         add2(box2(0.762, 0.61, 8e-3, 0, 2.4, 0.035), [0.3, 0.31, 0.32], 37);
@@ -25807,6 +25835,8 @@ void main() {
     float reach = 1.0;
   #elif defined(PARTS)
     float keep = abs(aPart - aInst.y) < 0.5 ? 1.0 : 0.0;        // every part is one kind of thing (feat.js)
+    // (each instance runs through every part's vertices: another part's stop here, out of view, before the work below)
+    if (keep < 0.5) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); return; }
     vec4 wc = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
     float jit = fract(aInst.x * 7.77 + 0.31 + aInst.y * 0.13);
     float reach = 1.0;
@@ -26336,7 +26366,14 @@ void main() {
     // and the things Mapillary found at the street's edge (mlyObjects): a pedestrian signal, a parking meter, a cabinet
     PED_HEAD: 49,
     METER: 50,
-    CABINET: 51
+    CABINET: 51,
+    // and its street furniture (mlyFurniture): a solar compactor, a litter bin, a banner on its own post and on a lamp,
+    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox
+    BIN: 52,
+    BIN_CAN: 53,
+    BANNER: 54,
+    BANNER_ON: 58,
+    MAILBOX: 62
   };
   function parseFeat(e) {
     const dv2 = new DataView(e.buffer, e.byteOffset, e.byteLength);
@@ -26640,6 +26677,8 @@ void main() {
     [PART.MS_OM, 27],
     [PART.MS_SQ, 12]
   ];
+  var SHOPS = new Uint8Array(16);
+  for (const c of [7, 10, 11, 13]) SHOPS[c] = 1;
   var BIKE = (() => {
     const g = [], S2 = (u02, v02, u1, v1) => g.push(["s", (v02 + 0.4) * 1.9, u02, (v1 + 0.4) * 1.9, u1, 0.1]);
     for (const cu of [-0.5, 0.5]) for (let q = 0; q < 9; q++) {
