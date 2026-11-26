@@ -15248,6 +15248,50 @@ void main() {
   var RCELL = 128;
   var RREG = 72;
   var N_ADS = 20;
+  var MS_FACES = [
+    [512, 0, 128, 160],
+    [640, 0, 128, 160],
+    [768, 0, 128, 160],
+    [896, 0, 128, 160],
+    // 0 NO TURN ON RED, 1 keep right, 2 END SCHOOL ZONE, 3 DO NOT PASS
+    [512, 160, 128, 160],
+    [640, 160, 128, 160],
+    [768, 160, 128, 160],
+    [896, 160, 128, 192],
+    // 4 DO NOT BLOCK INTERSECTION, 5 LEFT TURN YIELD ON GREEN, 6 chevron, 7 NO PARKING
+    [512, 320, 128, 128],
+    [640, 320, 128, 128],
+    [768, 320, 128, 128],
+    // 8 no left turn, 9 no right turn, 10 no U-turn
+    [512, 448, 128, 128],
+    [640, 448, 128, 128],
+    [768, 448, 128, 128],
+    [896, 448, 128, 128],
+    // 11 NO TURNS, 12 hospital, 13 curve, 14 turn
+    [512, 576, 128, 128],
+    [640, 576, 128, 128],
+    [768, 576, 128, 128],
+    [896, 576, 128, 128],
+    // 15 stop ahead, 16 signal ahead, 17 merge, 18 lane ends
+    [512, 704, 128, 128],
+    [640, 704, 128, 128],
+    [768, 704, 128, 128],
+    [896, 704, 128, 128],
+    // 19 added lane, 20 side road, 21 crossroad, 22 bicycles
+    [512, 832, 128, 128],
+    [640, 832, 128, 128],
+    [768, 832, 128, 128],
+    // 23 deer, 24 school, 25 pedestrians
+    [896, 832, 128, 86],
+    [896, 352, 32, 96],
+    // 26 WRONG WAY, 27 object marker
+    [128, 480, 192, 64],
+    [128, 544, 192, 64],
+    [320, 480, 128, 128],
+    // 28, 29 ONE WAY (right, left), 30 DO NOT ENTER (the rule signs' own)
+    [896, 920, 96, 96]
+    // 31 a pedestrian signal's face (feat.js mlyObjects; lit)
+  ];
   var WCELL = 32;
   var WPAD = 14;
   var DCELL = 256;
@@ -18165,6 +18209,9 @@ float sunShadowFast(vec3 rel, vec3 N, vec3 Ld) { return 1.0; }
 const vec3 ASPHALT = vec3(0.100, 0.099, 0.101);
 const vec3 SIDEWALK = vec3(0.270, 0.262, 0.248);
 const vec3 KERB = vec3(0.250, 0.245, 0.240);
+// a town's bituminous (asphalt) sidewalk, a little paler than its street: the suburbs' and country towns' walks, the
+// cities' and the town centres' concrete (walkConc: TERRAIN_FS, kerbs.js)
+const vec3 WALK_ASPH = vec3(0.118, 0.115, 0.112);
 `
   );
   var STREET_PAINT = (
@@ -19116,7 +19163,9 @@ void main() {
   land = mix(land, vec3(0.115, 0.105, 0.088), shoulder * 0.7);
   land = mix(land, asphalt, paved);
   land = mix(land, bedCol * (0.85 + 0.3 * nB), bed);
-  land = mix(land, SIDEWALK * (1.0 - 0.45 * joint), walk);
+  // (concrete in the cities and the town centres, asphalt in the suburbs and the country towns: kerbs.js walkConc)
+  float walkConc = max(smoothstep(0.50, 0.70, aux.b), smoothstep(0.86, 0.92, cov.r));
+  land = mix(land, mix(WALK_ASPH * (0.92 + 0.16 * nB), SIDEWALK * (1.0 - 0.45 * joint), walkConc), walk);
   land = mix(land, KERB, kerb);
   if (surf == 2 || surf == 3 || surf == 10) mark *= 1.0 - paved;      // (no lines are painted on brick, setts or planks)
   land = mix(land, markCol, mark);
@@ -19485,9 +19534,10 @@ uniform float uWinter;    // January after snow: on the boxes' roofs, as HOUSE_F
 uniform sampler2D uNameTex;   // the tile's street names, a row to each (terrain.js nameAtlas), and how many rows
 uniform float uNameRows;
 uniform sampler2D uFaceTex;   // the signs' faces: speed limits, the crosswalk sign, ONE WAY, DO NOT ENTER (terrain.js signFaces)
-// a point (q: 0 to 1 across, 0 to 1 up) of one of those faces' rectangles (x, y, w, h in the canvas's 512 by 1024
-// pixels, from its top: terrain.js SIGN_RECTS)
-vec2 faceAt(vec4 r, vec2 q) { return vec2((r.x + q.x * r.z) / 512.0, 1.0 - (r.y + (1.0 - q.y) * r.w) / 1024.0); }
+// a point (q: 0 to 1 across, 0 to 1 up) of one of those faces' rectangles (x, y, w, h in the canvas's 1024 by 1024
+// pixels, from its top: terrain.js SIGN_RECTS, and common.js MS_FACES for the signs Mapillary found, in MSF)
+vec2 faceAt(vec4 r, vec2 q) { return vec2((r.x + q.x * r.z) / 1024.0, 1.0 - (r.y + (1.0 - q.y) * r.w) / 1024.0); }
+const vec4 MSF[${MS_FACES.length}] = vec4[${MS_FACES.length}](${MS_FACES.map((r) => "vec4(" + r.map((v) => v.toFixed(1)).join(", ") + ")").join(", ")});
 uniform sampler2D uAdTex;     // the billboards' ads, a row to each (terrain.js adFaces)
 #endif
 varying vec3 vRel;
@@ -19861,7 +19911,32 @@ void main() {
       }
     #endif
     #ifdef SIGNS
-      if (vStyle > 21.5 && vStyle < 22.5) {
+      if (vStyle > 25.5) {
+        // a sign Mapillary found (26; feat.js mlySigns): its face from the atlas (MSF), its code the instance's (64 on
+        // for the face read mirrored, a left-hand sign from the right-hand one), where across it from the shape's own
+        // coordinates (terrain.js signGeo msFace); the sheeting sends a car's lamps back
+        float fc = vAux > 63.5 ? vAux - 64.0 : vAux;
+        if (vStyle > 26.5) fc = 57.0 - fc;          // (27: ONE WAY's other face, the arrow the other way on the face)
+        vec2 q = clamp(vCol.yz, 0.004, 0.996);
+        if (vAux > 63.5) q.x = 1.0 - q.x;
+        alb = texture2D(uFaceTex, faceAt(MSF[int(clamp(fc, 0.0, ${MS_FACES.length - 1}.0) + 0.5)], q)).rgb * 0.8;
+        emis = alb * headlamp(vRel, N) * 3.0;
+        if (fc > 30.5 && fc < 31.5) { emis = alb * 2.2; alb *= 0.3; }     // (a pedestrian signal: its hand lit, an LED's)
+      } else if (vStyle > 23.5) {
+        // a town line sign (24; feat.js townSigns): the bookleaf page from the face atlas (white, its border, ENTERING),
+        // the town's name and the year it was incorporated from the tile's atlas (its two rows from vAux), black; the
+        // sheeting sends a car's lamps back
+        vec2 q = vec2(vObj.x / 0.91 + 0.5, (vObj.y - 1.45) / 0.76);
+        alb = texture2D(uFaceTex, faceAt(vec4(256.0, 768.0, 240.0, 200.0), clamp(q, 0.005, 0.995))).rgb * 0.8;
+        float row = vAux, ink = 0.0;
+        vec2 nq = vec2((q.x - 0.06) / 0.88, (q.y - 0.30) / 0.24), yq = vec2((q.x - 0.26) / 0.48, (q.y - 0.10) / 0.13);
+        if (uNameRows > 0.5 && vAux > 0.5) {
+          if (nq.x > 0.0 && nq.x < 1.0 && nq.y > 0.0 && nq.y < 1.0) ink = texture2D(uNameTex, vec2(nq.x, 1.0 - (row - clamp(nq.y, 0.02, 0.98)) / uNameRows)).r;
+          if (yq.x > 0.0 && yq.x < 1.0 && yq.y > 0.0 && yq.y < 1.0) ink = max(ink, texture2D(uNameTex, vec2(yq.x, 1.0 - (row + 1.0 - clamp(yq.y, 0.02, 0.98)) / uNameRows)).r);
+        }
+        alb = mix(alb, vec3(0.025), ink);
+        emis = alb * headlamp(vRel, N) * 3.0;
+      } else if (vStyle > 21.5 && vStyle < 22.5) {
         // a highway guide sign's face (22; feat.js exitSigns, the billboards' part 2): white on green, a border 4 to 10 cm
         // in from its edge and three lines of words, each a row of the tile's atlas from the sign's first (vAux); the
         // sheeting sends a car's lamps back
@@ -22903,11 +22978,19 @@ void main() {
     dne: [320, 480, 128, 128],
     xing: [128, 608, 128, 128],
     arrow: [128, 736, 128, 64],
-    thick: [256, 608, 192, 154]
+    thick: [256, 608, 192, 154],
+    book: [256, 768, 240, 200]
   };
+  var BOOKLEAF = (() => {
+    const P2 = [[-0.455, 0], [0.455, 0], [0.455, 0.66]];
+    const q = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * c[1] + t * t * b[1]];
+    for (let i = 1; i <= 10; i++) P2.push(q([0.455, 0.66], [0.25, 0.82], [0, 0.69], i / 10));
+    for (let i = 1; i <= 10; i++) P2.push(q([0, 0.69], [-0.25, 0.82], [-0.455, 0.66], i / 10));
+    return P2;
+  })();
   function signFaces() {
     const cv2 = document.createElement("canvas");
-    cv2.width = 512;
+    cv2.width = 1024;
     cv2.height = 1024;
     const g = cv2.getContext("2d");
     const font = (px2) => "bold " + px2 + 'px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
@@ -22917,7 +23000,7 @@ void main() {
       else g.rect(x, y, w, h);
     };
     g.fillStyle = "#fff";
-    g.fillRect(0, 0, 512, 1024);
+    g.fillRect(0, 0, 1024, 1024);
     g.textAlign = "center";
     g.textBaseline = "middle";
     for (let k = 0; k < 11; k++) {
@@ -23073,6 +23156,31 @@ void main() {
       g.fill();
     }
     {
+      const [x02, y02, w02, h02] = SIGN_RECTS.book, kx2 = w02 / 0.91, ky2 = h02 / 0.76;
+      const at = ([x, y]) => [x02 + w02 / 2 + x * kx2, y02 + h02 - y * ky2];
+      g.fillStyle = "#ffffff";
+      g.fillRect(x02, y02, w02, h02);
+      g.strokeStyle = "#000";
+      g.lineWidth = 3.5;
+      g.lineJoin = "round";
+      g.beginPath();
+      BOOKLEAF.forEach((p, i) => {
+        const [a, b] = at([p[0] * 0.96, p[1] * 0.965 + 0.0135]);
+        if (i) g.lineTo(a, b);
+        else g.moveTo(a, b);
+      });
+      g.closePath();
+      g.stroke();
+      g.fillStyle = "#000";
+      g.font = font(26);
+      g.save();
+      g.translate(x02 + w02 / 2, y02 + h02 - 0.585 * ky2);
+      const tw = g.measureText("ENTERING").width;
+      if (tw > w02 * 0.5) g.scale(w02 * 0.5 / tw, 1);
+      g.fillText("ENTERING", 0, 0);
+      g.restore();
+    }
+    {
       const [x02, y02, w02, h02] = SIGN_RECTS.thick;
       g.fillStyle = "#f2c200";
       g.fillRect(x02, y02, w02, h02);
@@ -23103,10 +23211,466 @@ void main() {
       g.fillText("DO NOT", x02 + 64, y02 + 36);
       g.fillText("ENTER", x02 + 64, y02 + 93);
     }
+    msFaces(g, font, rrect);
     const tex = new vh(cv2);
     tex.colorSpace = sn;
     tex.anisotropy = 4;
     return tex;
+  }
+  function msFaces(g, font, rrect) {
+    const YEL = "#f3c300", FYG = "#c5e01b", RED3 = "#c8102e", BLK = "#000", WHT = "#fff";
+    const F = MS_FACES;
+    const at = (i) => {
+      const [x, y, w2, h2] = F[i];
+      g.save();
+      g.translate(x + w2 / 2, y + h2 / 2);
+      return [w2, h2];
+    };
+    const text = (lines, size, top, gap, col) => {
+      g.fillStyle = col || BLK;
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      lines.forEach((t, i) => {
+        g.font = font(size[i] || size[0]);
+        const w2 = g.measureText(t).width;
+        g.save();
+        g.translate(0, top + gap * i);
+        if (w2 > 110) g.scale(110 / w2, 1);
+        g.fillText(t, 0, 0);
+        g.restore();
+      });
+    };
+    const white = (w2, h2, border) => {
+      g.fillStyle = WHT;
+      g.fillRect(-w2 / 2, -h2 / 2, w2, h2);
+      g.strokeStyle = border || BLK;
+      g.lineWidth = 4;
+      rrect(-w2 / 2 + 5, -h2 / 2 + 5, w2 - 10, h2 - 10, 7);
+      g.stroke();
+    };
+    const diamond = (bg) => {
+      g.fillStyle = WHT;
+      g.fillRect(-64, -64, 128, 128);
+      g.fillStyle = bg;
+      g.beginPath();
+      g.moveTo(0, -63);
+      g.lineTo(63, 0);
+      g.lineTo(0, 63);
+      g.lineTo(-63, 0);
+      g.closePath();
+      g.fill();
+      g.strokeStyle = BLK;
+      g.lineWidth = 4;
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(0, -55);
+      g.lineTo(55, 0);
+      g.lineTo(0, 55);
+      g.lineTo(-55, 0);
+      g.closePath();
+      g.stroke();
+    };
+    const arrow = (pts, w2, head) => {
+      g.strokeStyle = BLK;
+      g.fillStyle = BLK;
+      g.lineWidth = w2;
+      g.lineCap = "butt";
+      g.lineJoin = "round";
+      const [ax2, ay2] = pts[pts.length - 2], [bx2, by2] = pts[pts.length - 1], l = Math.hypot(bx2 - ax2, by2 - ay2), ux2 = (bx2 - ax2) / l, uy2 = (by2 - ay2) / l;
+      g.beginPath();
+      g.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length - 1; i++) g.lineTo(pts[i][0], pts[i][1]);
+      g.lineTo(bx2 - ux2 * head * 0.6, by2 - uy2 * head * 0.6);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(bx2, by2);
+      g.lineTo(bx2 - ux2 * head - uy2 * head * 0.62, by2 - uy2 * head + ux2 * head * 0.62);
+      g.lineTo(bx2 - ux2 * head + uy2 * head * 0.62, by2 - uy2 * head - ux2 * head * 0.62);
+      g.closePath();
+      g.fill();
+    };
+    const curveArrow = (x02, y02, cx1, cy1, cx2, cy2, x1, y1, w2, head) => {
+      g.strokeStyle = BLK;
+      g.fillStyle = BLK;
+      g.lineWidth = w2;
+      g.lineCap = "butt";
+      const ux0 = x1 - cx2, uy0 = y1 - cy2, l = Math.hypot(ux0, uy0), ux2 = ux0 / l, uy2 = uy0 / l;
+      g.beginPath();
+      g.moveTo(x02, y02);
+      g.bezierCurveTo(cx1, cy1, cx2, cy2, x1 - ux2 * head * 0.6, y1 - uy2 * head * 0.6);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x1, y1);
+      g.lineTo(x1 - ux2 * head - uy2 * head * 0.62, y1 - uy2 * head + ux2 * head * 0.62);
+      g.lineTo(x1 - ux2 * head + uy2 * head * 0.62, y1 - uy2 * head - ux2 * head * 0.62);
+      g.closePath();
+      g.fill();
+    };
+    const slash = () => {
+      g.strokeStyle = RED3;
+      g.lineWidth = 10;
+      g.beginPath();
+      g.arc(0, 0, 46, 0, 6.2832);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(-32.5, -32.5);
+      g.lineTo(32.5, 32.5);
+      g.stroke();
+    };
+    let w, h;
+    [w, h] = at(0);
+    white(w, h);
+    text(["NO", "TURN", "ON", "RED"], [30], -51, 34);
+    g.restore();
+    [w, h] = at(2);
+    white(w, h);
+    text(["END", "SCHOOL", "ZONE"], [30], -42, 42);
+    g.restore();
+    [w, h] = at(3);
+    white(w, h);
+    text(["DO", "NOT", "PASS"], [36], -44, 44);
+    g.restore();
+    [w, h] = at(4);
+    white(w, h);
+    text(["DO NOT", "BLOCK", "INTER-", "SECTION"], [27], -51, 34);
+    g.restore();
+    [w, h] = at(1);
+    white(w, h);
+    g.fillStyle = BLK;
+    rrect(-36, -4, 24, 58, 12);
+    g.fill();
+    g.strokeStyle = BLK;
+    g.lineWidth = 13;
+    g.lineCap = "butt";
+    g.beginPath();
+    g.moveTo(-18, -66);
+    g.bezierCurveTo(-18, -36, 22, -40, 22, -8);
+    g.stroke();
+    arrow([[22, -10], [22, 52]], 13, 26);
+    g.restore();
+    [w, h] = at(5);
+    white(w, h);
+    text(["LEFT TURN", "YIELD", "ON"], [26, 30, 30], -54, 32);
+    g.fillStyle = "#111";
+    g.beginPath();
+    g.arc(0, 50, 22, 0, 6.2832);
+    g.fill();
+    g.fillStyle = "#1fbf4a";
+    g.beginPath();
+    g.arc(0, 50, 16, 0, 6.2832);
+    g.fill();
+    g.restore();
+    [w, h] = at(6);
+    g.fillStyle = YEL;
+    g.fillRect(-w / 2, -h / 2, w, h);
+    g.strokeStyle = BLK;
+    g.lineWidth = 4;
+    rrect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10, 6);
+    g.stroke();
+    g.fillStyle = BLK;
+    g.beginPath();
+    g.moveTo(-34, -56);
+    g.lineTo(-6, -56);
+    g.lineTo(34, 0);
+    g.lineTo(-6, 56);
+    g.lineTo(-34, 56);
+    g.lineTo(6, 0);
+    g.closePath();
+    g.fill();
+    g.restore();
+    [w, h] = at(7);
+    white(w, h, RED3);
+    text(["NO", "PARKING", "ANY", "TIME"], [36, 28, 30, 30], -62, 40, RED3);
+    g.restore();
+    [w, h] = at(8);
+    white(w, h);
+    arrow([[12, 34], [12, -4], [-30, -4]], 12, 24);
+    slash();
+    g.restore();
+    [w, h] = at(9);
+    white(w, h);
+    arrow([[-12, 34], [-12, -4], [30, -4]], 12, 24);
+    slash();
+    g.restore();
+    [w, h] = at(10);
+    white(w, h);
+    g.strokeStyle = BLK;
+    g.lineWidth = 12;
+    g.beginPath();
+    g.moveTo(12, 34);
+    g.lineTo(12, -6);
+    g.arc(-4, -6, 16, 0, Math.PI, true);
+    g.stroke();
+    arrow([[-20, -6], [-20, 10], [-20, 26]], 12, 22);
+    slash();
+    g.restore();
+    [w, h] = at(11);
+    white(w, h);
+    text(["NO", "TURNS"], [36], -20, 42);
+    g.restore();
+    [w, h] = at(12);
+    g.fillStyle = "#0b4ea2";
+    g.fillRect(-w / 2, -h / 2, w, h);
+    g.strokeStyle = WHT;
+    g.lineWidth = 4;
+    rrect(-w / 2 + 6, -h / 2 + 6, w - 12, h - 12, 8);
+    g.stroke();
+    g.fillStyle = WHT;
+    g.fillRect(-34, -38, 18, 76);
+    g.fillRect(16, -38, 18, 76);
+    g.fillRect(-16, -8, 32, 16);
+    g.restore();
+    [w, h] = at(13);
+    diamond(YEL);
+    curveArrow(-14, 40, -14, 4, 16, 2, 16, -38, 12, 22);
+    g.restore();
+    [w, h] = at(14);
+    diamond(YEL);
+    arrow([[-12, 40], [-12, -10], [36, -10]], 12, 22);
+    g.restore();
+    [w, h] = at(15);
+    diamond(YEL);
+    arrow([[0, 42], [0, -2]], 11, 18);
+    g.fillStyle = RED3;
+    g.beginPath();
+    for (let k = 0; k < 8; k++) {
+      const a = Math.PI / 8 + k * Math.PI / 4;
+      g.lineTo(19 * Math.cos(a), -22 + 19 * Math.sin(a));
+    }
+    g.closePath();
+    g.fill();
+    g.restore();
+    [w, h] = at(16);
+    diamond(YEL);
+    g.fillStyle = BLK;
+    rrect(-13, -38, 26, 76, 6);
+    g.fill();
+    [["#e3241b", -24], ["#f6b300", 0], ["#1fbf4a", 24]].forEach(([c, y]) => {
+      g.fillStyle = c;
+      g.beginPath();
+      g.arc(0, y, 8.5, 0, 6.2832);
+      g.fill();
+    });
+    g.restore();
+    [w, h] = at(17);
+    diamond(YEL);
+    arrow([[-8, 42], [-8, -40]], 12, 22);
+    g.strokeStyle = BLK;
+    g.lineWidth = 11;
+    g.beginPath();
+    g.moveTo(28, 38);
+    g.quadraticCurveTo(26, 4, -6, -8);
+    g.stroke();
+    g.restore();
+    [w, h] = at(18);
+    diamond(YEL);
+    g.strokeStyle = BLK;
+    g.lineWidth = 10;
+    g.beginPath();
+    g.moveTo(-14, 44);
+    g.lineTo(-14, -44);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(16, 44);
+    g.lineTo(16, 8);
+    g.lineTo(2, -12);
+    g.lineTo(2, -44);
+    g.stroke();
+    g.restore();
+    [w, h] = at(19);
+    diamond(YEL);
+    arrow([[-14, 42], [-14, -38]], 11, 20);
+    curveArrow(30, 38, 26, 18, 14, 10, 14, -38, 11, 20);
+    g.restore();
+    [w, h] = at(20);
+    diamond(YEL);
+    g.strokeStyle = BLK;
+    g.lineWidth = 12;
+    g.beginPath();
+    g.moveTo(-6, 46);
+    g.lineTo(-6, -46);
+    g.moveTo(-6, 4);
+    g.lineTo(38, 4);
+    g.stroke();
+    g.restore();
+    [w, h] = at(21);
+    diamond(YEL);
+    g.strokeStyle = BLK;
+    g.lineWidth = 12;
+    g.beginPath();
+    g.moveTo(0, 46);
+    g.lineTo(0, -46);
+    g.moveTo(-46, 0);
+    g.lineTo(46, 0);
+    g.stroke();
+    g.restore();
+    [w, h] = at(22);
+    diamond(FYG);
+    g.strokeStyle = BLK;
+    g.lineWidth = 5;
+    g.beginPath();
+    g.arc(-20, 14, 13, 0, 6.2832);
+    g.stroke();
+    g.beginPath();
+    g.arc(20, 14, 13, 0, 6.2832);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-20, 14);
+    g.lineTo(-6, -8);
+    g.lineTo(14, -8);
+    g.lineTo(20, 14);
+    g.moveTo(-6, -8);
+    g.lineTo(2, 14);
+    g.lineTo(14, -8);
+    g.stroke();
+    g.fillStyle = BLK;
+    g.beginPath();
+    g.arc(4, -32, 7, 0, 6.2832);
+    g.fill();
+    g.lineWidth = 7;
+    g.beginPath();
+    g.moveTo(2, -24);
+    g.lineTo(-4, -10);
+    g.stroke();
+    g.restore();
+    [w, h] = at(23);
+    diamond(YEL);
+    g.fillStyle = BLK;
+    g.beginPath();
+    [[-34, -2], [-22, -10], [4, -12], [18, -22], [22, -36], [28, -34], [26, -20], [34, -16], [30, -10], [18, -8], [16, 4], [30, 26], [24, 30], [8, 10], [-14, 10], [-24, 30], [-32, 28], [-26, 8], [-38, 4]].forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+    g.closePath();
+    g.fill();
+    g.strokeStyle = BLK;
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(22, -36);
+    g.lineTo(18, -46);
+    g.moveTo(20, -42);
+    g.lineTo(12, -44);
+    g.moveTo(26, -35);
+    g.lineTo(32, -46);
+    g.stroke();
+    g.restore();
+    [w, h] = at(25);
+    diamond(FYG);
+    g.fillStyle = BLK;
+    g.strokeStyle = BLK;
+    g.lineCap = "round";
+    g.lineWidth = 9;
+    g.beginPath();
+    g.arc(4, -34, 8, 0, 6.2832);
+    g.fill();
+    g.beginPath();
+    g.moveTo(2, -20);
+    g.lineTo(-4, 8);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-4, 8);
+    g.lineTo(-16, 34);
+    g.moveTo(-4, 8);
+    g.lineTo(12, 32);
+    g.stroke();
+    g.lineWidth = 7;
+    g.beginPath();
+    g.moveTo(-18, -2);
+    g.lineTo(0, -14);
+    g.lineTo(20, -2);
+    g.stroke();
+    g.restore();
+    [w, h] = at(24);
+    g.fillStyle = WHT;
+    g.fillRect(-64, -64, 128, 128);
+    g.fillStyle = FYG;
+    g.beginPath();
+    g.moveTo(0, -63);
+    g.lineTo(63, -14);
+    g.lineTo(63, 63);
+    g.lineTo(-63, 63);
+    g.lineTo(-63, -14);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = BLK;
+    g.lineWidth = 4;
+    g.lineJoin = "round";
+    g.beginPath();
+    g.moveTo(0, -55);
+    g.lineTo(56, -11);
+    g.lineTo(56, 56);
+    g.lineTo(-56, 56);
+    g.lineTo(-56, -11);
+    g.closePath();
+    g.stroke();
+    g.fillStyle = BLK;
+    g.strokeStyle = BLK;
+    g.lineCap = "round";
+    for (const [cx2, s30] of [[-14, 1], [18, 0.82]]) {
+      g.beginPath();
+      g.arc(cx2, 2 - 26 * s30, 7 * s30, 0, 6.2832);
+      g.fill();
+      g.lineWidth = 9 * s30;
+      g.beginPath();
+      g.moveTo(cx2, 10 - 26 * s30 + 6);
+      g.lineTo(cx2 - 2, 26);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(cx2 - 2, 26);
+      g.lineTo(cx2 - 12 * s30, 46);
+      g.moveTo(cx2 - 2, 26);
+      g.lineTo(cx2 + 10 * s30, 46);
+      g.stroke();
+      g.lineWidth = 6 * s30;
+      g.beginPath();
+      g.moveTo(cx2 - 14 * s30, 14);
+      g.lineTo(cx2, -2);
+      g.lineTo(cx2 + 14 * s30, 12);
+      g.stroke();
+    }
+    g.restore();
+    [w, h] = at(26);
+    g.fillStyle = RED3;
+    g.fillRect(-w / 2, -h / 2, w, h);
+    g.strokeStyle = WHT;
+    g.lineWidth = 3;
+    rrect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 5);
+    g.stroke();
+    text(["WRONG", "WAY"], [26], -17, 32, WHT);
+    g.restore();
+    [w, h] = at(31);
+    g.fillStyle = "#050505";
+    g.fillRect(-w / 2, -h / 2, w, h);
+    g.fillStyle = "#ff7a1a";
+    g.beginPath();
+    rrect(-34, -10, 26, 30, 7);
+    g.fill();
+    for (let f = 0; f < 4; f++) {
+      rrect(-34 + f * 6.5, -32 + (f === 0 || f === 3 ? 6 : 0), 5, 26, 2.5);
+      g.fill();
+    }
+    rrect(-10, -6, 7, 18, 3);
+    g.fill();
+    g.fillStyle = "#1a1a1a";
+    g.font = font(40);
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText("88", 22, 2);
+    g.restore();
+    [w, h] = at(27);
+    g.fillStyle = YEL;
+    g.fillRect(-w / 2, -h / 2, w, h);
+    g.fillStyle = BLK;
+    g.beginPath();
+    g.rect(-w / 2, -h / 2, w, h);
+    g.clip();
+    for (let k = -6; k < 6; k++) {
+      g.beginPath();
+      g.moveTo(-16, k * 16);
+      g.lineTo(-16, k * 16 + 8);
+      g.lineTo(16, k * 16 + 40);
+      g.lineTo(16, k * 16 + 32);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
   }
   var ADS = [
     ["#1f5130", "#ffffff", "#9be564", "LEGAL WEED", "STILL CAN\u2019T FIND PARKING  21+", "leaf"],
@@ -23722,7 +24286,7 @@ void main() {
           nv2 += g.attributes.position.count;
           ni2 += g.index ? g.index.count : g.attributes.position.count;
         }
-        const pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3), prt = new Float32Array(nv2), idx = new Uint16Array(ni2);
+        const pos = new Float32Array(nv2 * 3), nor = new Float32Array(nv2 * 3), colr = new Float32Array(nv2 * 3), prt = new Float32Array(nv2), idx = nv2 > 65535 ? new Uint32Array(ni2) : new Uint16Array(ni2);
         let vo = 0, io = 0;
         for (const g of list) {
           const n = g.attributes.position.count;
@@ -23918,7 +24482,8 @@ void main() {
         ]);
         this.poleGeo.computeVertexNormals();
         this.poleMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, COVER: 1, POLE: 1 });
-        this.carMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
+        this.carR = Math.min(this.streetR, 260);
+        this.carMat = mk(0, [this.carR * 0.85, this.carR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
         this.poleMat.alphaToCoverage = this.carMat.alphaToCoverage = true;
         this.carMat.side = Mi;
         this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.03 } } });
@@ -24173,6 +24738,69 @@ void main() {
           const f = new Fs(0.76, 0.76);
           f.translate(0, 2.15, 0.042);
           add2(f.toNonIndexed(), [-19, 0, 0], 35);
+        }
+        add2(box2(0.06, 2.12, 0.06, 0, 1.06, -0.06), galv, 38);
+        {
+          const sh = new Zi(BOOKLEAF.map(([x, y]) => new et(x, y)));
+          const f = new Wo(sh);
+          f.translate(0, 1.45, 0.012);
+          add2(f.toNonIndexed(), [-24, 0, 0], 38);
+          const b = new Wo(sh);
+          b.rotateY(Math.PI);
+          b.translate(0, 1.45, -0.012);
+          add2(b.toNonIndexed(), [0.3, 0.31, 0.32], 38);
+        }
+        {
+          const faceUV = (g, code, flip) => {
+            g.computeBoundingBox();
+            const bb = g.boundingBox, a = g.attributes.position, n = a.count, c = new Float32Array(n * 3);
+            for (let i = 0; i < n; i++) {
+              const u = (a.getX(i) - bb.min.x) / (bb.max.x - bb.min.x || 1);
+              c[i * 3] = code;
+              c[i * 3 + 1] = flip ? 1 - u : u;
+              c[i * 3 + 2] = (a.getY(i) - bb.min.y) / (bb.max.y - bb.min.y || 1);
+            }
+            g.setAttribute("aCol", new me(c, 3));
+            return g;
+          };
+          const msSign = (p, pts, y02, back) => {
+            const sh = new Zi(pts.map(([x, y]) => new et(x, y)));
+            let top = 0;
+            for (const [, y] of pts) top = Math.max(top, y);
+            add2(box2(0.05, y02 + top + 0.03, 0.05, 0, (y02 + top + 0.03) / 2, 0), galv, p);
+            const f = new Wo(sh);
+            f.translate(0, y02, 0.056);
+            P2.push(part(faceUV(f.toNonIndexed(), -26, false), p));
+            const b = new Wo(sh);
+            b.rotateY(Math.PI);
+            b.translate(0, y02, 0.04);
+            if (back) P2.push(part(faceUV(b.toNonIndexed(), -27, true), p));
+            else add2(b.toNonIndexed(), [0.3, 0.31, 0.32], p);
+          };
+          const rect = (w, h) => [[-w / 2, 0], [w / 2, 0], [w / 2, h], [-w / 2, h]];
+          msSign(39, rect(0.61, 0.76), 2);
+          msSign(40, rect(0.76, 0.91), 2);
+          msSign(41, rect(0.61, 0.61), 2);
+          msSign(42, [[0, 0], [0.537, 0.537], [0, 1.075], [-0.537, 0.537]], 1.7);
+          msSign(43, rect(0.46, 0.61), 1.5);
+          msSign(44, rect(0.3, 0.46), 2);
+          msSign(45, rect(0.3, 0.91), 1.2);
+          msSign(46, rect(0.91, 0.61), 1);
+          msSign(47, [[-0.455, 0], [0.455, 0], [0.455, 0.55], [0, 0.91], [-0.455, 0.55]], 2);
+          msSign(48, rect(0.91, 0.3), 2.1, true);
+          add2(cylY(0.055, 0.065, 2.9, 8, 0, 0, 0), dark, 49);
+          add2(box2(0.44, 0.44, 0.24, 0, 2.62, 0.17), dark, 49);
+          {
+            const f = new Fs(0.38, 0.38);
+            f.translate(0, 2.62, 0.302);
+            P2.push(part(faceUV(f.toNonIndexed(), -26, false), 49));
+          }
+          add2(cylY(0.04, 0.04, 1.05, 6, 0, 0, 0), [0.16, 0.17, 0.18], 50);
+          add2(box2(0.26, 0.42, 0.2, 0, 1.25, 0), [0.34, 0.35, 0.36], 50);
+          add2(box2(0.2, 0.12, 0.012, 0, 1.33, 0.104), [0.02, 0.025, 0.03], 50);
+          add2(box2(1.1, 0.12, 0.7, 0, 0.06, 0), [0.4, 0.39, 0.37], 51);
+          add2(box2(0.9, 1.35, 0.55, 0, 0.12 + 0.675, 0), [0.47, 0.48, 0.48], 51);
+          add2(box2(5e-3, 1.2, 0.012, 0, 0.8, 0.281), [0.2, 0.2, 0.2], 51);
         }
         add2(box2(0.05, 2.85, 0.05, 0, 1.425, 0), galv, 37);
         add2(box2(0.762, 0.61, 8e-3, 0, 2.4, 0.035), [0.3, 0.31, 0.32], 37);
@@ -24492,10 +25120,10 @@ void main() {
         g.font = "bold " + (r.big ? 31 : 27) + 'px "Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
         const txt = r.text !== void 0 ? r.text : names ? signText(names[r.name] || "") : "";
         if (!txt) continue;
-        const w = g.measureText(txt).width, maxW = W - 22;
+        const sx2 = r.wide || 1, w = g.measureText(txt).width * sx2, maxW = W - 22;
         g.save();
         g.translate(W / 2, H * k + H / 2 + 1);
-        if (w > maxW) g.scale(maxW / w, 1);
+        g.scale(sx2 * (w > maxW ? maxW / w : 1), 1);
         g.fillText(txt, 0, 0);
         g.restore();
       }
@@ -24524,7 +25152,7 @@ void main() {
         kinds.push(["under", 9, u * 1.5, u], ["grass", 10, 70, 44], ["corn", 9, 115, 84]);
       }
       const ask = (r) => [r * 1.15, r];
-      if (this.streetR) kinds.push(["poles", 8, ...ask(this.streetR)], ["cars", 8, ...ask(this.streetR)], ["wires", 8, Math.min(this.streetR, 200)]);
+      if (this.streetR) kinds.push(["poles", 8, ...ask(this.streetR)], ["cars", 8, ...ask(this.carR)], ["wires", 8, Math.min(this.streetR, 200)]);
       if (this.signR) kinds.push(["signs", 8, ...ask(this.signR)], ["paint", 8, ...ask(Math.min(this.signR, 260))], ["gpaint", 7, ...ask(this.signR * 2)], ["streets", 8, ...ask(Math.min(this.signR * 1.6, 420))], ["kerbs", 8, ...ask(Math.min(this.signR, 160))], ["rails", 7, ...ask(Math.min(this.signR * 1.6, 520))]);
       if (this.powerR) kinds.push(["power", 6, ...ask(this.powerR)], ["pwires", 6, Math.min(this.powerR, 3e3)]);
       if (this.boardR) kinds.push(["boards", 7, ...ask(this.boardR)]);
@@ -24926,6 +25554,13 @@ void main() {
               nameSlot.set(d[o + 5], sl2);
             }
             inst[i * 4] = sl2;
+          } else if (pt === 38) {
+            const towns = this.game.meta && this.game.meta.towns, t2 = d[o + 5], yr2 = d[o + 6];
+            inst[i * 4] = 0;
+            if (t2 && towns && towns[t2 - 1] && nameList.length + 2 <= 100) {
+              inst[i * 4] = nameList.length + 1;
+              nameList.push({ text: towns[t2 - 1].n.toUpperCase(), big: 1, wide: 1.3 }, { text: yr2 ? "INC. " + yr2 : "", big: 1, wide: 1.3 });
+            }
           }
         } else if (m.kind === "power") {
           Q.setFromAxisAngle(Y, d[o + 3]);
@@ -25373,7 +26008,7 @@ void main() {
   #endif
   #ifdef SIGNS
     // a signal's lenses: -6 red, -7 yellow, -8 green (LIT_FS lights the one its cycle is on)
-    if (aCol.r < -5.5) { vStyle = -aCol.r; vCol = vec3(0.03); }
+    if (aCol.r < -5.5) { vStyle = -aCol.r; vCol = aCol.r < -25.5 ? vec3(0.03, aCol.g, aCol.b) : vec3(0.03); }      // (26: where across its face)
   #endif
   #ifdef BLD
     // the same colours the detailed house would have (the roof piece is part 1)
@@ -25646,6 +26281,63 @@ void main() {
 
   // src/feat.js
   var MAGIC = 827606342;
+  var PART = {
+    STOP: 0,
+    YIELD: 1,
+    SIGNAL: 2,
+    SIGNAL_LONG: 3,
+    CROSSBUCK: 4,
+    HYDRANT: 5,
+    BUS: 6,
+    SHELTER: 7,
+    FLAGPOLE: 8,
+    LAMP: 9,
+    FLEXPOST: 10,
+    LANTERN_BLACK: 11,
+    LANTERN_BRONZE: 12,
+    LANTERN_GREEN: 13,
+    POSTTOP: 14,
+    CROOK: 15,
+    BENCH: 16,
+    BENCH_BARE: 17,
+    BENCH_METAL: 18,
+    BENCH_METAL_BARE: 19,
+    BENCH_STONE: 20,
+    BOLLARD: 21,
+    BOLLARD_STEEL: 22,
+    BIKE_HOOP: 23,
+    BIKE_POST: 24,
+    DOCK: 25,
+    KIOSK: 26,
+    SIGNAL_HEAD: 27,
+    SIGNAL_ARM: 28,
+    SIGNAL_MAST: 29,
+    NAME_POST: 30,
+    NAME_TOP: 31,
+    SPEED: 32,
+    PADDLE: 33,
+    ONE_WAY: 34,
+    NO_ENTRY: 35,
+    PED_XING: 36,
+    THICK: 37,
+    TOWN: 38,
+    // the shapes of the signs Mapillary found (mlySigns; terrain.js signGeo): 24 x 30 and 30 x 36 inch rectangles, 24 inch
+    // squares, 30 inch diamonds, chevrons, NO PARKING, object markers, WRONG WAY, the school pentagon, ONE WAY on a post
+    MS_RECT: 39,
+    MS_RECTL: 40,
+    MS_SQ: 41,
+    MS_DIA: 42,
+    MS_CHEV: 43,
+    MS_NOPARK: 44,
+    MS_OM: 45,
+    MS_WW: 46,
+    MS_PENT: 47,
+    MS_ONE: 48,
+    // and the things Mapillary found at the street's edge (mlyObjects): a pedestrian signal, a parking meter, a cabinet
+    PED_HEAD: 49,
+    METER: 50,
+    CABINET: 51
+  };
   function parseFeat(e) {
     const dv2 = new DataView(e.buffer, e.byteOffset, e.byteLength);
     if (dv2.getUint32(0, true) !== MAGIC) throw new Error("bad feature file");
@@ -25896,6 +26588,58 @@ void main() {
     }
     return f;
   }
+  var MS2 = [
+    null,
+    [PART.NO_ENTRY, 0],
+    [PART.MS_ONE, 28],
+    [PART.MS_ONE, 29],
+    [PART.MS_DIA, 25],
+    [PART.SPEED, 0],
+    // 1 DO NOT ENTER, 2-3 ONE WAY, 4 crossing, 5 speed
+    [PART.MS_NOPARK, 7],
+    [PART.MS_RECT, 0],
+    // 6 NO PARKING, 7 NO TURN ON RED
+    [PART.MS_SQ, 8],
+    [PART.MS_SQ, 9],
+    [PART.MS_SQ, 10],
+    [PART.MS_SQ, 11],
+    // 8 no left, 9 no right, 10 no U-turn, 11 NO TURNS
+    [PART.MS_RECT, 1],
+    [PART.MS_RECT, 65],
+    [PART.MS_PENT, 24],
+    [PART.MS_RECT, 2],
+    // 12-13 keep right, left, 14 school, 15 END SCHOOL ZONE
+    [PART.MS_RECT, 3],
+    [PART.MS_RECT, 4],
+    [PART.MS_RECTL, 5],
+    [PART.MS_CHEV, 6],
+    [PART.MS_CHEV, 70],
+    // 16 DNP, 17 DNBI, 18 LTYG, 19-20 chevrons
+    [PART.MS_DIA, 13],
+    [PART.MS_DIA, 77],
+    [PART.MS_DIA, 14],
+    [PART.MS_DIA, 78],
+    // 21-22 curve, 23-24 turn (right, left)
+    [PART.MS_DIA, 15],
+    [PART.MS_DIA, 16],
+    [PART.MS_DIA, 17],
+    [PART.MS_DIA, 81],
+    // 25 stop ahead, 26 signal ahead, 27-28 merge
+    [PART.MS_DIA, 18],
+    [PART.MS_DIA, 82],
+    [PART.MS_DIA, 19],
+    [PART.MS_DIA, 83],
+    // 29-30 lane ends, 31-32 added lane
+    [PART.MS_DIA, 20],
+    [PART.MS_DIA, 84],
+    [PART.MS_DIA, 21],
+    [PART.MS_DIA, 22],
+    [PART.MS_DIA, 23],
+    // 33-34 side road, 35 crossroad, 36 bicycles, 37 deer
+    [PART.MS_WW, 26],
+    [PART.MS_OM, 27],
+    [PART.MS_SQ, 12]
+  ];
   var ARROW = {
     through: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42]],
     left: [["s", 0, 0, 1.25, 0], ["s", 1.25, 0, 1.75, -0.5], ["h", 1.75, -0.5, 0.7071, -0.7071, 0.75, 0.38]],
@@ -26044,6 +26788,8 @@ void main() {
     o.look = look;
     return o;
   }
+  var WALL_OK = new Uint8Array(18);
+  for (const c of [2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17]) WALL_OK[c] = 1;
   var B_STEP = [1.5, 3, 1];
   function barPoint(world, mx2, my2, o) {
     o.ok = false;
@@ -27813,6 +28559,23 @@ void main() {
     return P;
   }
   var poleSide = (reg, ri2) => reg.rName[ri2] & 1 ? 1 : -1;
+  var _lgP = {};
+  var _shP = { r: 0, l: 0, b: 0 };
+  function parkSides(reg, ri2) {
+    const cls = reg.rCls[ri2], hw = reg.rHw[ri2], fl = reg.rFlags[ri2];
+    if (!(cls >= 10 && cls <= 12 || cls === 4 || cls === 6 || cls === 8) || hw < 3.4 || fl & 14) return 0;
+    let bits = (fl & 1 ? hw >= 3.5 : hw >= 4) ? 3 : poleSide(reg, ri2) < 0 ? 1 : 2;
+    const N = laneCounts(reg), st = N[ri2 * 4];
+    if (st === 1 || st === 2) {
+      const sh = shoulderOf(reg, ri2, hw, _shP);
+      const G = laneGeom(st, N[ri2 * 4 + 1], N[ri2 * 4 + 2], N[ri2 * 4 + 3], hw, 0, 0, _lgP, sh.r, sh.l);
+      const rR = st === 2 ? hw - (G.le + N[ri2 * 4 + 1] * G.w) : hw - (G.cR + N[ri2 * 4 + 1] * G.w);
+      const rL = st === 2 ? hw + G.le : hw + (G.cL - N[ri2 * 4 + 2] * G.w);
+      if (rR < 2) bits &= 2;
+      if (rL < 2) bits &= 1;
+    } else if (cls === 4) bits = 0;
+    return bits;
+  }
 
   // src/traffic.js
   var e32 = [0, 0, 0];
@@ -27911,19 +28674,18 @@ void main() {
         if (st === 2) return G.le + G.w * (Math.floor(pick * Math.max(1, Math.round(N[ri2 * 4 + 1]))) + 0.5);
         const n2 = Math.max(1, Math.round(N[ri2 * 4 + (dir > 0 ? 1 : 2)]));
         let off2 = (dir > 0 ? G.cR : -G.cL) + G.w * (Math.floor(pick * n2) + 0.5);
-        const parking2 = (cls >= 10 && cls <= 12 || cls === 6 || cls === 8) && hw >= 3.4 && !(fl & 14);
-        if (parking2 && dir === -poleSide(reg, ri2)) off2 = Math.max(0.75, Math.min(off2, hw - 2.65));
+        if (parkSides(reg, ri2) & (dir > 0 ? 1 : 2)) off2 = Math.max(0.75, Math.min(off2, hw - 2.65));
         return off2;
       }
       if (fl & 1) {
         const n2 = Math.max(1, Math.min(lanes || 9, Math.round(hw * 2 / 3.6)));
-        return (Math.floor(pick * n2) + 0.5) * 2 * hw / n2 - hw;
+        const ps2 = parkSides(reg, ri2), lo2 = ps2 & 2 ? -hw + 2.65 : -hw + 1, hi2 = ps2 & 1 ? hw - 2.65 : hw - 1;
+        return Math.max(Math.min(lo2, hi2), Math.min(Math.max(lo2, hi2), (Math.floor(pick * n2) + 0.5) * 2 * hw / n2 - hw));
       }
       const n = Math.max(1, Math.min((lanes || 2) >> 1, Math.round(hw / 3.3)));
       const k = Math.floor(pick * n);
       let off = Math.min((k + 0.5) * hw / n, 1.75 + 3.5 * k);
-      const parking = (cls >= 10 && cls <= 12 || cls === 6 || cls === 8) && hw >= 3.4 && !(fl & 14);
-      if (parking && dir === -poleSide(reg, ri2)) off = Math.max(0.75, Math.min(off, hw - 2.65));
+      if (parkSides(reg, ri2) & (dir > 0 ? 1 : 2)) off = Math.max(0.75, Math.min(off, hw - 2.65));
       return off;
     }
     // where the car should be on its road now: c.gx, c.gy on the map, c.tx, c.ty the way it faces, c.gz the road's height
@@ -32715,7 +33477,7 @@ void main() {
       U.uPxK.value = 2 * Math.tan(this.camera.fov * Math.PI / 360) / Math.max(this.renderer.domElement.height, 1);
       {
         const hr2 = this.sky.hours, day = smooth01((hr2 - 6) / 3) * (1 - smooth01((hr2 - 16) / 5));
-        U.uParked.value = 1 - 0.33 * day;
+        U.uParked.value = 1 - 0.2 * day;
       }
       const lum = this.sky.update(this.paused && !this.title ? 0 : dt, camC);
       let target = clamp2(1.25 / (Math.pow(lum, 0.62) + 0.14), 0.9, 8);
@@ -32747,9 +33509,10 @@ void main() {
       const r = this.renderer, cam = this.camera;
       const agl = p.camMap[2] - this.groundUnderCam;
       const split = clamp2(agl * 0.5, (this.quality.treeR + 160) / 1.5, 4e3), nearFar = split * 1.5;
-      this.renderShadow();
       this.skip = (this.skip || 0) + 1;
-      if (!(this.software && !this.terrain.settled() && this.skip % 8)) {
+      const drawNow = !(this.software && !this.terrain.settled() && this.skip % 8);
+      if (drawNow) this.renderShadow();
+      if (drawNow) {
         r.clear();
         cam.near = split;
         cam.far = 46e4;
