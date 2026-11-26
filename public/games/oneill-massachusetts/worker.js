@@ -6690,8 +6690,8 @@
     return cx >= 0 && cy >= 0 && cx < st2.covW && cy < st2.covW && (bm[cy * st2.rowB + (cx >> 3)] >> (cx & 7) & 1) === 1;
   }
   function paintTris(world2, reg, mx0, my0, s, cx, cy, cz) {
-    const f = reg.feat;
-    if (!f || !f.nP && !f.nW && !f.dt) return new Float32Array(0);
+    const f = reg.feat || NOFEAT;
+    if (!MMK && !f.nP && !f.nW && !f.dt) return new Float32Array(0);
     const out = [], p32 = new Float64Array(3), u3 = new Float64Array(3);
     const lx0 = mx0 - reg.x0, ly0 = my0 - reg.y0;
     const WHITE = [0.78, 0.78, 0.74];
@@ -6799,6 +6799,11 @@
       }
     }
     if (f.nW) laneArrows(world2, reg, f, lx0, ly0, s, quad5, tri4, (h) => {
+      hNode = h;
+      zD = null;
+    }, WHITE);
+    zD = null;
+    mlyMarkings(world2, reg, f, lx0, ly0, s, quad5, tri4, (h) => {
       hNode = h;
       zD = null;
     }, WHITE);
@@ -6979,6 +6984,161 @@
     const G = lanesAt(o.reg, o.road, o.s - o.reg.cum[o.reg.rStart[o.road]], _lg);
     if (G.style !== 1) return 0;
     return o.tx * dx + o.ty * dy >= 0 ? G.cR : -G.cL;
+  }
+  var NOFEAT = { nP: 0, nW: 0, nB: 0, nG: 0 };
+  var MMK = null;
+  function setMlyMarkings(buf) {
+    MMK = null;
+    if (!buf || buf.byteLength < 8) return;
+    const dv = new DataView(buf);
+    if (dv.getUint32(0, true) !== 827018573) return;
+    const n = dv.getUint32(4, true), cells = /* @__PURE__ */ new Map();
+    const X = new Int32Array(buf, 8, n), Y = new Int32Array(buf, 8 + 4 * n, n), K = new Uint8Array(buf, 8 + 8 * n, n);
+    for (let i = 0; i < n; i++) {
+      const k = Math.floor(Y[i] / 2e3) * 4096 + Math.floor(X[i] / 2e3);
+      let L2 = cells.get(k);
+      if (!L2) cells.set(k, L2 = []);
+      L2.push(i);
+    }
+    MMK = { X, Y, K, cells };
+  }
+  var BIKE = (() => {
+    const g = [], S = (u0, v0, u1, v1) => g.push(["s", (v0 + 0.4) * 1.9, u0, (v1 + 0.4) * 1.9, u1, 0.1]);
+    for (const cu of [-0.5, 0.5]) for (let q = 0; q < 9; q++) {
+      const a0 = q * Math.PI * 2 / 9, a1 = (q + 1) * Math.PI * 2 / 9;
+      S(cu + 0.34 * Math.cos(a0), 0.34 * Math.sin(a0), cu + 0.34 * Math.cos(a1), 0.34 * Math.sin(a1));
+    }
+    const RA = [-0.5, 0], BB = [-0.04, 0.02], SE = [-0.2, 0.52], HD = [0.36, 0.5], FA = [0.5, 0];
+    for (const [p, q] of [[RA, BB], [RA, SE], [BB, SE], [SE, HD], [BB, HD], [HD, FA], [[-0.32, 0.56], [-0.1, 0.56]], [[0.28, 0.62], [0.46, 0.6]], [HD, [0.34, 0.62]]]) S(p[0], p[1], q[0], q[1]);
+    return g;
+  })();
+  var SHARROW = [["s", 2.25, -0.45, 2.7, 0, 0.18], ["s", 2.7, 0, 2.25, 0.45, 0.18], ["s", 2.85, -0.45, 3.3, 0, 0.18], ["s", 3.3, 0, 2.85, 0.45, 0.18]];
+  var BIKE_ARROW = [["s", 2.25, 0, 3, 0, 0.12], ["h", 3, 0, 1, 0, 0.6, 0.26]];
+  var FONT = {
+    S: [[1, 0.78, 0.88, 1, 0.12, 1, 0, 0.88, 0, 0.62, 0.12, 0.5, 0.88, 0.5, 1, 0.38, 1, 0.12, 0.88, 0, 0.12, 0, 0, 0.22]],
+    T: [[0, 1, 1, 1], [0.5, 1, 0.5, 0]],
+    O: [[0.14, 0, 0.86, 0, 1, 0.14, 1, 0.86, 0.86, 1, 0.14, 1, 0, 0.86, 0, 0.14, 0.14, 0]],
+    P: [[0, 0, 0, 1, 0.86, 1, 1, 0.88, 1, 0.62, 0.86, 0.5, 0, 0.5]],
+    B: [[0, 0, 0, 1, 0.8, 1, 0.94, 0.88, 0.94, 0.62, 0.8, 0.52, 0, 0.52], [0.8, 0.52, 1, 0.4, 1, 0.12, 0.86, 0, 0, 0]],
+    U: [[0, 1, 0, 0.14, 0.14, 0, 0.86, 0, 1, 0.14, 1, 1]],
+    L: [[0, 1, 0, 0, 1, 0]],
+    W: [[0, 1, 0.22, 0, 0.5, 0.62, 0.78, 0, 1, 1]],
+    C: [[1, 0.86, 0.86, 1, 0.14, 1, 0, 0.86, 0, 0.14, 0.14, 0, 0.86, 0, 1, 0.14]],
+    H: [[0, 0, 0, 1], [1, 0, 1, 1], [0, 0.5, 1, 0.5]]
+  };
+  var WORDS = { 12: "STOP", 13: "BUS", 14: "SLOW", 15: "SCHOOL" };
+  function wordGlyph(word, width) {
+    const n = word.length, gap = 0.12, wl = Math.min(0.62, (width - (n - 1) * gap) / n), tot = n * wl + (n - 1) * gap, g = [];
+    for (let i = 0; i < n; i++) for (const line of FONT[word[i]] || []) for (let j = 0; j + 3 < line.length; j += 2)
+      g.push(["s", line[j + 1] * 2.4, -tot / 2 + i * (wl + gap) + line[j] * wl, line[j + 3] * 2.4, -tot / 2 + i * (wl + gap) + line[j + 2] * wl, 0.13]);
+    return g;
+  }
+  var _lgM = {};
+  function mlyMarkings(world2, reg, f, lx0, ly0, s, quad5, tri4, ground, col) {
+    if (!MMK) return;
+    const { X, Y, K, cells } = MMK, mx0 = reg.x0 + lx0, my0 = reg.y0 + ly0;
+    const xs = [], ss = [];
+    for (let i = 0; i < (f.nP || 0); i++) {
+      const k = f.kind[i], x = reg.x0 + f.px[i], y = reg.y0 + f.py[i];
+      if (x < mx0 - 40 || x > mx0 + s + 40 || y < my0 - 40 || y > my0 + s + 40) continue;
+      if (k === CROSSING) xs.push(x, y);
+      else if (k === STOP || k === SIGNAL) ss.push(x, y);
+    }
+    const near = (L2, x, y, r) => {
+      for (let j = 0; j < L2.length; j += 2) if (Math.hypot(L2[j] - x, L2[j + 1] - y) < r) return true;
+      return false;
+    };
+    const done = [], R_DUP = [0, 8, 6, 6, 25, 10];
+    const dup = (x, y, tx, ty, grp) => {
+      for (let j = 0; j < done.length; j += 5) {
+        const g = done[j + 4];
+        const r = g === grp ? R_DUP[grp] : grp >= 3 && g >= 3 ? 5 : 0;
+        if (r && (grp <= 2 || done[j + 2] * tx + done[j + 3] * ty > 0.7) && Math.hypot(done[j] - x, done[j + 1] - y) < r) return true;
+      }
+      done.push(x, y, tx, ty, grp);
+      return false;
+    };
+    const draw = (g, ox, oy, tx, ty, ts, k) => {
+      const rx = ty, ry = -tx, at = (a, c) => [ox + tx * a + rx * (ts + c * k), oy + ty * a + ry * (ts + c * k)];
+      for (const e of g) {
+        if (e[0] === "s") {
+          const A = at(e[1], e[2]), B = at(e[3], e[4]), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]), w = e[5] || 0.15;
+          if (L2 < 1e-3) continue;
+          const dx = (B[0] - A[0]) / L2, dy = (B[1] - A[1]) / L2;
+          quad5(A[0] - dx * w / 2, A[1] - dy * w / 2, dx, dy, 0, L2 + w, -w / 2, w / 2, col);
+        } else {
+          const [, a, c, da, dc, len, hb] = e;
+          tri4(at(a + dc * hb, c - da * hb), at(a - dc * hb, c + da * hb), at(a + da * len, c + dc * len), col);
+        }
+      }
+    };
+    for (let gy = Math.floor(my0 / 200); gy <= Math.floor((my0 + s) / 200); gy++)
+      for (let gx = Math.floor(mx0 / 200); gx <= Math.floor((mx0 + s) / 200); gx++) {
+        for (const i of cells.get(gy * 4096 + gx) || []) {
+          const x = X[i] / 10, y = Y[i] / 10, kind = K[i];
+          if (x < mx0 || x >= mx0 + s || y < my0 || y >= my0 + s) continue;
+          if (surveyPainted(reg, x - reg.x0, y - reg.y0)) continue;
+          if (!(world2.nearestRoad(x, y) < 0.5)) continue;
+          const nr = world2._nr, R3 = nr.reg, ri = nr.road;
+          if (R3.rCls[ri] >= 13 || R3.rFlags[ri] & 6) continue;
+          const sR = nr.s - R3.cum[R3.rStart[ri]], hw = paintHw(R3, ri, sR), lat = nr.side * nr.d, ntx = nr.tx, nty = nr.ty;
+          const fx = x - lat * nty, fy = y + lat * ntx;
+          if (deckOwner(world2, x, y, true) !== null || besideBridge(world2, x, y)) continue;
+          const h0 = world2.groundH(x, y, true);
+          ground(h0);
+          if (world2.g.water) continue;
+          if (kind <= 2 && onOtherWay(R3, x - R3.x0, y - R3.y0, h0, ri)) continue;
+          if (kind === 1) {
+            if (near(xs, x, y, 12) || hw < 2.2 || dup(fx, fy, 0, 0, 1)) continue;
+            const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2)), c0 = -nb * 0.6 + 0.3;
+            for (let b = 0; b < nb; b++) quad5(fx, fy, ntx, nty, -1.5, 1.5, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, col);
+            continue;
+          }
+          const G = lanesAt(R3, ri, sR, _lgM), one = G.style === 2 || R3.rFlags[ri] & 1;
+          const sg = one || G.style !== 1 ? one ? 1 : lat >= 0 ? 1 : -1 : lat >= G.y ? 1 : -1;
+          const tx = ntx * sg, ty = nty * sg, off2 = lat * sg;
+          let le, nd;
+          if (G.style === 1) {
+            le = sg > 0 ? G.cR : -G.cL;
+            nd = sg > 0 ? G.nF : G.nB;
+          } else if (G.style === 2) {
+            le = G.le;
+            nd = G.nF;
+          } else {
+            le = one ? -hw + 0.3 : 0;
+            nd = 1;
+          }
+          const lw = G.style === 1 || G.style === 2 ? G.w : one ? 2 * hw - 0.6 : hw - 0.3;
+          if (kind === 2) {
+            if (near(ss, x, y, 30) || hw < 2.5 || dup(fx, fy, tx, ty, 2)) continue;
+            const c1 = hw - 0.3, c0 = one ? -hw + 0.3 : G.style === 1 ? le + 0.15 : 0.15;
+            if (c1 - c0 > 1.5) quad5(fx, fy, tx, ty, -0.225, 0.225, c0, c1, col);
+            continue;
+          }
+          if (!(nd >= 1) || !(lw >= 2.2)) continue;
+          const l = clamp2(Math.floor((off2 - le) / lw), 0, nd - 1), ts = le + lw * (l + 0.5);
+          if (kind >= 3 && kind <= 10) {
+            if (G.style !== 1 && G.style !== 2) continue;
+            let mapped = false;
+            for (let w = 0; w < (f.nW || 0) && !mapped; w++) {
+              const ux = Math.cos(f.wHd[w]), uy = Math.sin(f.wHd[w]), vx = x - reg.x0 - f.wx[w], vy = y - reg.y0 - f.wy[w], along2 = vx * ux + vy * uy;
+              mapped = ux * tx + uy * ty > 0.8 && along2 > -40 && along2 < 5 && Math.abs(vx * uy - vy * ux) < 12;
+            }
+            if (mapped || dup(x, y, tx, ty, 3)) continue;
+            const g = GLYPH[[0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8][kind]];
+            draw(g, fx - tx * 1.4, fy - ty * 1.4, tx, ty, ts, Math.min(1, lw / 3.2));
+            continue;
+          }
+          if (kind === 11) {
+            if (dup(x, y, tx, ty, 4)) continue;
+            const xsr = xsOf(R3, ri), b = xsr ? sg > 0 ? bikeByte(xsr[1], xsr[2], xsr[3]) : bikeByte(xsr[4], xsr[5], xsr[6]) : 0, zone = bikeZone(b);
+            const c = zone > 0 ? hw - Math.min(zone, 1.8) / 2 - 0.1 : ts;
+            draw(zone > 0 ? BIKE.concat(BIKE_ARROW) : BIKE.concat(SHARROW), fx - tx * 1, fy - ty * 1, tx, ty, c, 1);
+            continue;
+          }
+          if (WORDS[kind] && !dup(x, y, tx, ty, 5)) draw(wordGlyph(WORDS[kind], Math.min(lw, 3.6) - 0.5), fx - tx * 1.2, fy - ty * 1.2, tx, ty, ts, 1);
+        }
+      }
   }
   var ARROW = {
     through: [["s", 0, 0, 1.65, 0], ["h", 1.65, 0, 1, 0, 1.1, 0.42]],
@@ -12758,6 +12918,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var townxReady = null;
   var msignsReady = null;
   var mobjsReady = null;
+  var mmarkReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -12878,6 +13039,11 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     const mof = meta.files && meta.files.mobjs;
     mobjsReady = mof ? fetchRetry(vurl("data/" + mof.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
       if (b) setMlyObjects(b);
+    }).catch(() => {
+    }) : null;
+    const mmf = meta.files && meta.files.mmark;
+    mmarkReady = mmf ? fetchRetry(vurl("data/" + mmf.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
+      if (b) setMlyMarkings(b);
     }).catch(() => {
     }) : null;
     const pf = meta.files && meta.files.piers;
@@ -14385,6 +14551,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (m.type === "scatter" && m.kind === "signs" && townxReady) await townxReady;
       if (m.type === "scatter" && m.kind === "signs" && msignsReady) await msignsReady;
       if (m.type === "scatter" && m.kind === "signs" && mobjsReady) await mobjsReady;
+      if (m.type === "scatter" && m.kind === "paint" && mmarkReady) await mmarkReady;
       if (wallsReady) await wallsReady;
       if (liftedReady) await liftedReady;
       if (stationsReady) await stationsReady;
