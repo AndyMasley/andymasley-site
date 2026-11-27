@@ -3148,7 +3148,9 @@
     // water falling over a dam's spillway (dams.js); a solar panel (solar.js); a church's steeple (steeples.js)
     FALLS: 27,
     SOLAR: 28,
-    STEEPLE: 29
+    STEEPLE: 29,
+    // a shop's sign (shopSigns, HOUSE_FS)
+    SIGN: 30
   };
   var FLOOR = [2.75, 2.6, 2.7, 3, 2.6, 5, 3, 3.7, 7, 8, 3.9, 3.9, 4.6, 6, 3.1, 2.8];
   var FOUND = [0.5, 0.45, 0.35, 0.6, 0.1, 0.2, 0.4, 0.2, 0.15, 0.6, 0.5, 0.3, 0, 0.15, 0.7, 0.6];
@@ -3337,6 +3339,107 @@
     if (nb >= 2 && (cls === CLS.TRIPLE || cls === CLS.MULTI || cls === CLS.ROW)) bi = seed & 1 ? 0 : nb - 1;
     return (bi + 0.5) * len / nb;
   }
+  var STORES = null;
+  function setStores(buf) {
+    STORES = null;
+    if (!buf || buf.byteLength < 8) return;
+    const dv = new DataView(buf);
+    if (dv.getUint32(0, true) !== 827609933) return;
+    const n = dv.getUint32(4, true), cells = /* @__PURE__ */ new Map();
+    const X = new Int32Array(buf, 8, n), Y = new Int32Array(buf, 8 + 4 * n, n);
+    for (let i = 0; i < n; i++) {
+      const k = Math.floor(Y[i] / 2e3) * 4096 + Math.floor(X[i] / 2e3);
+      let L2 = cells.get(k);
+      if (!L2) cells.set(k, L2 = []);
+      L2.push(i);
+    }
+    STORES = { X, Y, cells };
+  }
+  var SIGNED = new Uint8Array(16);
+  for (const c of [CLS.APART, CLS.COMM, CLS.CIVIC, CLS.TOWER, CLS.RETAIL]) SIGNED[c] = 1;
+  function shopSigns(M2, setM, walls, front, env, cls, found, y0, wallTop, id) {
+    if (!STORES || !SIGNED[cls]) return;
+    let R3 = 0;
+    for (const q of walls) R3 = Math.max(R3, Math.hypot(q[0], q[1]));
+    const { X, Y, cells } = STORES, mx = env.mx, my = env.my, r = R3 + 8;
+    const near = [];
+    for (let gy = Math.floor((my - r) * 10 / 2e3); gy <= Math.floor((my + r) * 10 / 2e3); gy++)
+      for (let gx = Math.floor((mx - r) * 10 / 2e3); gx <= Math.floor((mx + r) * 10 / 2e3); gx++)
+        for (const i of cells.get(gy * 4096 + gx) || []) {
+          const dx = X[i] / 10 - mx, dy = Y[i] / 10 - my;
+          if (dx * dx + dy * dy < r * r) near.push(i, env.ca * dx + env.sa * dy, -env.sa * dx + env.ca * dy);
+        }
+    if (!near.length) return;
+    const fh = FLOOR[cls], placed = [], faces = /* @__PURE__ */ new Map();
+    const shopWall = (wi) => (cls === CLS.COMM || cls === CLS.RETAIL) && wi === front && walls[wi][6] > 5;
+    for (let j = 0; j < near.length; j += 3) {
+      const pu = near[j + 1], pv = near[j + 2];
+      let best = -1, bs = 1e9, bt = 0;
+      for (let wi = 0; wi < walls.length; wi++) {
+        const [u02, v02, u12, v12, nu2, nv2, len2] = walls[wi];
+        if (len2 < 2.8 || cls === CLS.RETAIL && wi !== front) continue;
+        const du2 = (u12 - u02) / len2, dv2 = (v12 - v02) / len2, t = (pu - u02) * du2 + (pv - v02) * dv2, o = (pu - u02) * nu2 + (pv - v02) * nv2;
+        if (t < 0.3 || t > len2 - 0.3 || o < -2.5 || o > 8) continue;
+        const sc = Math.abs(o - 2);
+        if (sc < bs) {
+          bs = sc;
+          best = wi;
+          bt = t;
+        }
+      }
+      if (best < 0) continue;
+      const [u0, v0, u1, v1, nu, nv, len] = walls[best];
+      let faces0 = faces.get(best);
+      if (faces0 === void 0) {
+        const mu = (u0 + u1) / 2 + nu * 0.4, mv = (v0 + v1) / 2 + nv * 0.4;
+        faces0 = env.roadEdge(mu, mv, nu, nv, 35) >= 0;
+        faces.set(best, faces0);
+      }
+      if (!faces0) continue;
+      const shop = shopWall(best), H = cls === CLS.RETAIL ? 0.9 : 0.7;
+      const head = shop ? Math.min(fh - 0.75, 2.9) : cls === CLS.CIVIC ? 2.7 : cls === CLS.TOWER ? 2.9 : 2.45;
+      const yb0 = y0 + found + head + 0.12, yb1 = yb0 + H;
+      if (yb1 > y0 + wallTop - 0.25) continue;
+      const W = Math.min(clamp2(len * 0.5, 2.2, 5), len - 0.6), tc = clamp2(bt, W / 2 + 0.3, len - W / 2 - 0.3);
+      let clash = false;
+      for (let q = 0; q < placed.length && !clash; q += 3) clash = placed[q] === best && Math.abs(placed[q + 1] - tc) < (W + placed[q + 2]) / 2 + 0.2;
+      if (clash) continue;
+      placed.push(best, tc, W);
+      const du = (u1 - u0) / len, dv = (v1 - v0) / len;
+      const au = u0 + du * (tc - W / 2), av = v0 + dv * (tc - W / 2), bu = u0 + du * (tc + W / 2), bv = v0 + dv * (tc + W / 2);
+      const o0 = 0.02, o1 = 0.09;
+      const gseed = (id * 7 + j * 13 + Math.round(tc * 10)) % 4096;
+      const ci = Math.floor(h1(id * 5 + j + 3, gseed + 17) * 8) % 8;
+      setM(MAT.SIGN);
+      M2.W[0] = 0;
+      M2.W[1] = W;
+      M2.W[2] = ci + 8 * Math.round(H * 100) + 1024 * gseed;
+      M2.W[3] = 0;
+      const fa = M2.v(au + nu * o1, yb0, av + nv * o1, nu, 0, nv, 0, 0), fb = M2.v(bu + nu * o1, yb0, bv + nv * o1, nu, 0, nv, W, 0);
+      const fc = M2.v(bu + nu * o1, yb1, bv + nv * o1, nu, 0, nv, W, H), fd = M2.v(au + nu * o1, yb1, av + nv * o1, nu, 0, nv, 0, H);
+      M2.quad(fa, fb, fc, fd);
+      M2.W[1] = 0;
+      const A0 = [au + nu * o0, av + nv * o0], A1 = [au + nu * o1, av + nv * o1], B0 = [bu + nu * o0, bv + nv * o0], B1 = [bu + nu * o1, bv + nv * o1];
+      const side = (P2, Q, n0, n1, n2) => {
+        const a = M2.v(P2[0], yb0, P2[1], n0, n1, n2, 0, 0), b = M2.v(Q[0], yb0, Q[1], n0, n1, n2, 0, 0);
+        const c = M2.v(Q[0], yb1, Q[1], n0, n1, n2, 0, 0), d = M2.v(P2[0], yb1, P2[1], n0, n1, n2, 0, 0);
+        M2.quad(a, b, c, d);
+      };
+      side(A0, A1, -du, 0, -dv);
+      side(B1, B0, du, 0, dv);
+      const lid = (y, ny) => {
+        const a = M2.v(A0[0], y, A0[1], 0, ny, 0, 0, 0), b = M2.v(B0[0], y, B0[1], 0, ny, 0, 0, 0);
+        const c = M2.v(B1[0], y, B1[1], 0, ny, 0, 0, 0), d = M2.v(A1[0], y, A1[1], 0, ny, 0, 0, 0);
+        M2.quad(a, b, c, d);
+      };
+      lid(yb1, 1);
+      lid(yb0, -1);
+    }
+    M2.W[0] = 0;
+    M2.W[1] = 0;
+    M2.W[2] = 0;
+    M2.W[3] = -1;
+  }
   function building(M2, B, k, g, gmin, gmax, env) {
     const w = B[k + 2], d = B[k + 3], wallH = B[k + 5], cls = B[k + 6], roof = B[k + 7], side = B[k + 8], levels = Math.max(1, B[k + 9]);
     const mat = B[k + 12], seed = B[k + 13], id = B[k + 14], chimney = B[k + 11] > 0;
@@ -3456,6 +3559,7 @@
       M2.W[2] = 0;
       M2.W[3] = -1;
     }
+    shopSigns(M2, setM, W4, side, env, cls, found, y0, He - y0, id);
     const ov = cls === CLS.GARAGE ? 0.2 : cls === CLS.RANCH ? 0.5 : 0.36, rk = cls === CLS.GARAGE ? 0.15 : 0.26, th = 0.17;
     if (flat2) {
       setM(MAT.FLATROOF);
@@ -4658,6 +4762,14 @@
     M2.W[1] = 0;
     M2.W[2] = 0;
     M2.W[3] = -1;
+    if (SIGNED[cls] && STORES) {
+      const nP = P2.length / 3, Wl = [];
+      for (let i = 0; i < nP; i++) {
+        const j = (i + 1) % nP, u0 = P2[i * 3], v0 = P2[i * 3 + 1], u1 = P2[j * 3], v1 = P2[j * 3 + 1], len = Math.hypot(u1 - u0, v1 - v0);
+        Wl.push([u0, v0, u1, v1, len > 0 ? (v1 - v0) / len : 0, len > 0 ? -(u1 - u0) / len : 0, len]);
+      }
+      shopSigns(M2, setM, Wl, front, env, cls, found, y0, B[k + 5], id);
+    }
     if (LF) {
       if (!LF.R) underside(M2, setM, P2, T, [], LF.soff);
       else {
@@ -13059,6 +13171,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
   var mobjsReady = null;
   var mmarkReady = null;
   var mfurnReady = null;
+  var storesReady = null;
   var wallsReady = null;
   var liftedReady = null;
   var stationsReady = null;
@@ -13189,6 +13302,11 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
     const mff = meta.files && meta.files.mfurn;
     mfurnReady = mff ? fetchRetry(vurl("data/" + mff.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
       if (b) setMlyFurniture(b, meta.towns);
+    }).catch(() => {
+    }) : null;
+    const mst = meta.files && meta.files.mstore;
+    storesReady = mst ? fetchRetry(vurl("data/" + mst.file)).then((r) => r.ok ? r.arrayBuffer() : null).then((b) => {
+      if (b) setStores(b);
     }).catch(() => {
     }) : null;
     const pf = meta.files && meta.files.piers;
@@ -14697,6 +14815,7 @@ const vec3 SP_TINT[${TINT.length}] = vec3[${TINT.length}](${TINT.map(v3).join(",
       if (m.type === "scatter" && m.kind === "signs" && msignsReady) await msignsReady;
       if (m.type === "scatter" && m.kind === "signs" && mobjsReady) await mobjsReady;
       if (m.type === "scatter" && m.kind === "signs" && mfurnReady) await mfurnReady;
+      if (m.type === "scatter" && m.kind === "houses" && storesReady) await storesReady;
       if (m.type === "scatter" && m.kind === "paint" && mmarkReady) await mmarkReady;
       if (wallsReady) await wallsReady;
       if (liftedReady) await liftedReady;

@@ -20560,6 +20560,13 @@ void main() {
 precision highp float;
 precision highp int;
 precision highp sampler2DArray;
+// shop signs (mat 30, houses.js shopSigns): eight colourings, board and lettering, and sixteen capitals of 3 by 5
+// strokes (B C D F G H K L M N P R S T W Y: consonants only, so the made-up lettering spells no words)
+const vec3 SIGN_BG[8] = vec3[8](vec3(0.030, 0.110, 0.060), vec3(0.240, 0.030, 0.050), vec3(0.030, 0.050, 0.150),
+  vec3(0.020, 0.020, 0.022), vec3(0.660, 0.650, 0.610), vec3(0.420, 0.040, 0.030), vec3(0.600, 0.550, 0.420), vec3(0.070, 0.070, 0.075));
+const vec3 SIGN_FG[8] = vec3[8](vec3(0.780, 0.740, 0.620), vec3(0.780, 0.740, 0.620), vec3(0.800, 0.800, 0.780),
+  vec3(0.620, 0.460, 0.150), vec3(0.450, 0.040, 0.030), vec3(0.820, 0.810, 0.780), vec3(0.030, 0.100, 0.050), vec3(0.820, 0.810, 0.780));
+const int SIGN_GLYPH[16] = int[16](27566, 14627, 27502, 31140, 14699, 23533, 23469, 18727, 24557, 24573, 27556, 27565, 14478, 29842, 23549, 23186);
 ${ATMOS}
 ${NOISE}
 ${SHADOW}
@@ -21030,6 +21037,43 @@ void main() {
     float rail = bandf(dc, 0.7175, 0.05, la) * clamp(0.05 / (aa * 0.6), 0.0, 1.0);
     alb = mix(vec3(0.20, 0.19, 0.175), vec3(0.075, 0.058, 0.045), tie * 0.9);
     alb = mix(alb, vec3(0.30, 0.29, 0.29), rail) * (0.85 + 0.3 * vnoise(uv / 9.0));
+  } else if (mat == 30) {
+    // a shop's sign (houses.js shopSigns): a board in one of eight colourings with a thin frame and a line of made-up
+    // lettering in consonants only (what a sign says is not in the data; no vowels, so no words); its edges plain.
+    // vW: where the board starts along its wall (uv.x), its width, colouring + 8 x height in cm + 1024 x seed, its foot
+    // (uv.y)
+    float code = vW.z, sW = vW.y;
+    int ci = int(mod(code, 8.0) + 0.5), gs = int(floor(code / 1024.0) + 0.5);
+    vec3 bg = SIGN_BG[ci], fg = SIGN_FG[ci];
+    alb = bg;
+    roughness = 0.55;
+    if (sW > 0.01) {
+      float sH = mod(floor(code / 8.0 + 0.001), 128.0) / 100.0;
+      float su = uv.x - vW.x, sv = uv.y - vW.w;
+      float aa = max(max(px.x, px.y), 0.004);
+      float fw = 0.045;
+      float frame = 1.0 - smoothstep(fw - aa, fw + aa, min(min(su, sW - su), min(sv, sH - sv)));
+      // the lettering: capitals 0.52 of the board's height, 3 by 5 strokes each, in words
+      float ch = 0.52 * sH, gw = 0.62 * ch, cell = gw + 0.26 * ch;
+      float fill = 0.45 + 0.35 * hash2(ivec2(gs, 3));
+      int nG = clamp(int(sW * fill / cell), 2, 13);
+      float tw = float(nG) * cell - 0.26 * ch, lu = su - (sW - tw) * 0.5, lv = sv - (sH - ch) * 0.5;
+      float ink = 0.0;
+      if (lu > 0.0 && lu < tw && lv > 0.0 && lv < ch) {
+        int gi = int(lu / cell);
+        float gu = lu - float(gi) * cell;
+        bool space = gi > 1 && gi < nG - 2 && hash2(ivec2(gs, gi + 41)) < 0.16 && hash2(ivec2(gs, gi + 40)) >= 0.16;
+        if (gu < gw && !space) {
+          int bits = SIGN_GLYPH[int(hash2(ivec2(gs, gi)) * 15.999)];
+          int col = int(gu / gw * 3.0), row = int((1.0 - lv / ch) * 5.0);
+          ink = float((bits >> (14 - (min(row, 4) * 3 + min(col, 2)))) & 1);
+        }
+      }
+      // (far off the strokes are under a pixel: their share of the board instead)
+      float far = smoothstep(0.25, 0.7, aa / (ch / 5.0));
+      float inkK = mix(ink, (lu > 0.0 && lu < tw && lv > 0.0 && lv < ch) ? 0.42 : 0.0, far);
+      alb = mix(bg, fg, max(inkK, frame * 0.75));
+    }
   } else if (mat >= 20) {
     alb = coastSurface(mat, uv, RC - r, vW, seed, vRel, N, roughness);
   } else if (mat >= 11) {
@@ -26250,7 +26294,9 @@ void main() {
     // water falling over a dam's spillway (dams.js); a solar panel (solar.js); a church's steeple (steeples.js)
     FALLS: 27,
     SOLAR: 28,
-    STEEPLE: 29
+    STEEPLE: 29,
+    // a shop's sign (shopSigns, HOUSE_FS)
+    SIGN: 30
   };
   var BREC = 12;
   function cellBuildings(reg, cx2, cy2) {
@@ -26282,6 +26328,8 @@ void main() {
     return out;
   }
   var CAR_MAT = [MAT.CAR, MAT.CARGLASS, MAT.CARDARK, MAT.CARDARK, MAT.CARPALE, MAT.CARPALE, MAT.CARTAIL, MAT.CARPALE, MAT.CARDARK];
+  var SIGNED = new Uint8Array(16);
+  for (const c of [CLS.APART, CLS.COMM, CLS.CIVIC, CLS.TOWER, CLS.RETAIL]) SIGNED[c] = 1;
   var RULE_PORCH = { [CLS.HOUSE]: [0.65, 0.015], [CLS.MULTI]: [0.72, 0.08], [CLS.TRIPLE]: [0.74, 0.36] };
   function parseReal(buf) {
     const dv2 = new DataView(buf);
