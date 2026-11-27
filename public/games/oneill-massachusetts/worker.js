@@ -5226,12 +5226,13 @@
     METER: 50,
     CABINET: 51,
     // and its street furniture (mlyFurniture): a solar compactor, a litter bin, a banner on its own post and on a lamp,
-    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox
+    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox; and a utility box (mlyObjects)
     BIN: 52,
     BIN_CAN: 53,
     BANNER: 54,
     BANNER_ON: 58,
-    MAILBOX: 62
+    MAILBOX: 62,
+    PEDESTAL: 63
   };
   function lampPart(sub) {
     const mount = sub & 3, lantern = sub >> 2 & 1, colour = sub >> 3 & 3;
@@ -6039,9 +6040,28 @@
     }
     MOBJ = { X, Y, K, cells };
   }
-  function mlyObjects(world2, mx0, my0, s, put2) {
+  function mlyObjects(world2, reg, f, mx0, my0, s, put2) {
     if (!MOBJ) return;
     const { X, Y, K, cells } = MOBJ, placed = [];
+    const sigs = [], hasCab = /* @__PURE__ */ new Set();
+    if (f && f.nP) for (let i = 0; i < f.nP; i++) {
+      if (f.kind[i] !== SIGNAL) continue;
+      const x = reg.x0 + f.px[i], y = reg.y0 + f.py[i];
+      if (x > mx0 - 40 && x < mx0 + s + 40 && y > my0 - 40 && y < my0 + s + 40) sigs.push(x, y);
+    }
+    const cabinet = (x, y) => {
+      let best = -1, bd = 30;
+      for (let j = 0; j < sigs.length; j += 2) {
+        const d = Math.hypot(sigs[j] - x, sigs[j + 1] - y);
+        if (d < bd) {
+          bd = d;
+          best = j;
+        }
+      }
+      if (best < 0 || hasCab.has(best)) return false;
+      hasCab.add(best);
+      return true;
+    };
     for (let gy = Math.floor(my0 / 200); gy <= Math.floor((my0 + s) / 200); gy++)
       for (let gx = Math.floor(mx0 / 200); gx <= Math.floor((mx0 + s) / 200); gx++) {
         for (const i of cells.get(gy * 4096 + gx) || []) {
@@ -6060,8 +6080,8 @@
           let near = false;
           for (let j = 0; j < placed.length && !near; j += 2) near = Math.hypot(placed[j] - ks.x, placed[j + 1] - ks.y) < 0.9;
           if (near) continue;
-          const part2 = k === 1 ? PART.PED_HEAD : k === 2 ? PART.METER : PART.CABINET;
-          if (put2(ks.x, ks.y, k === 2 ? ks.yaw + Math.PI : ks.yaw, part2, k === 1 ? 31 : 0, 0) !== void 0) placed.push(ks.x, ks.y);
+          const part2 = k === 1 ? PART.PED_HEAD : k === 2 ? PART.METER : PART.PEDESTAL;
+          if (put2(ks.x, ks.y, k === 2 ? ks.yaw + Math.PI : ks.yaw, part2 === PART.PEDESTAL && cabinet(x, y) ? PART.CABINET : part2, k === 1 ? 31 : 0, 0) !== void 0) placed.push(ks.x, ks.y);
         }
       }
   }
@@ -6661,7 +6681,7 @@
     townSigns(world2, mx0, my0, s, put2);
     if (!f || !f.nP) {
       mlySigns(world2, f, reg, mx0, my0, s, put2, ruled);
-      mlyObjects(world2, mx0, my0, s, put2);
+      mlyObjects(world2, reg, f, mx0, my0, s, put2);
       mlyFurniture(world2, reg, f, mx0, my0, s, put2);
       return new Float32Array(out);
     }
@@ -6787,7 +6807,7 @@
     zD = null;
     hNode = -1e9;
     mlySigns(world2, f, reg, mx0, my0, s, put2, ruled);
-    mlyObjects(world2, mx0, my0, s, put2);
+    mlyObjects(world2, reg, f, mx0, my0, s, put2);
     mlyFurniture(world2, reg, f, mx0, my0, s, put2);
     return new Float32Array(out);
   }
@@ -7203,8 +7223,12 @@
           ground(h0);
           if (world2.g.water) continue;
           if (kind <= 2 && onOtherWay(R3, x - R3.x0, y - R3.y0, h0, ri)) continue;
-          if (kind === 1) {
+          if (kind === 1 || kind === 16) {
             if (near(xs, x, y, 12) || hw < 2.2 || dup(fx, fy, 0, 0, 1)) continue;
+            if (kind === 16) {
+              for (const a of [-1.5, 1.2]) quad5(fx, fy, ntx, nty, a, a + 0.3, -hw + 0.15, hw - 0.15, col);
+              continue;
+            }
             const nb = Math.max(2, Math.floor((2 * hw - 0.3) / 1.2)), c0 = -nb * 0.6 + 0.3;
             for (let b = 0; b < nb; b++) quad5(fx, fy, ntx, nty, -1.5, 1.5, c0 + b * 1.2 - 0.3, c0 + b * 1.2 + 0.3, col);
             continue;

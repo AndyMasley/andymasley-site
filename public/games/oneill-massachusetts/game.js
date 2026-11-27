@@ -24799,8 +24799,11 @@ void main() {
           add2(box2(0.26, 0.42, 0.2, 0, 1.25, 0), [0.34, 0.35, 0.36], 50);
           add2(box2(0.2, 0.12, 0.012, 0, 1.33, 0.104), [0.02, 0.025, 0.03], 50);
           add2(box2(1.1, 0.12, 0.7, 0, 0.06, 0), [0.4, 0.39, 0.37], 51);
-          add2(box2(0.9, 1.35, 0.55, 0, 0.12 + 0.675, 0), [0.47, 0.48, 0.48], 51);
+          add2(box2(0.9, 1.35, 0.55, 0, 0.12 + 0.675, 0), [0.36, 0.37, 0.37], 51);
           add2(box2(5e-3, 1.2, 0.012, 0, 0.8, 0.281), [0.2, 0.2, 0.2], 51);
+          add2(box2(0.86, 0.08, 0.66, 0, 0.04, 0), [0.3, 0.3, 0.28], 63);
+          add2(box2(0.72, 0.92, 0.52, 0, 0.08 + 0.46, 0), [0.055, 0.12, 0.075], 63);
+          add2(box2(6e-3, 0.8, 0.012, 0, 0.55, 0.266), [0.03, 0.06, 0.04], 63);
           add2(box2(0.64, 1.18, 0.64, 0, 0.59, 0), [0.04, 0.11, 0.07], 52);
           add2(box2(0.66, 0.08, 0.66, 0, 1.22, 0), [0.07, 0.08, 0.09], 52);
           add2(box2(0.5, 0.02, 0.5, 0, 1.265, 0), [0.03, 0.04, 0.07], 52);
@@ -26368,12 +26371,13 @@ void main() {
     METER: 50,
     CABINET: 51,
     // and its street furniture (mlyFurniture): a solar compactor, a litter bin, a banner on its own post and on a lamp,
-    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox
+    // each in four colourings (54 to 57, 58 to 61), the Postal Service's mailbox; and a utility box (mlyObjects)
     BIN: 52,
     BIN_CAN: 53,
     BANNER: 54,
     BANNER_ON: 58,
-    MAILBOX: 62
+    MAILBOX: 62,
+    PEDESTAL: 63
   };
   function parseFeat(e) {
     const dv2 = new DataView(e.buffer, e.byteOffset, e.byteLength);
