@@ -9538,6 +9538,43 @@
         }
       }
     }
+    const st2 = kind === "cars" && reg.feat && reg.feat.st;
+    if (st2) {
+      const cells = /* @__PURE__ */ new Map(), cell = (ci, cj) => {
+        const k = cj * 4096 + ci;
+        if (!cells.has(k)) cells.set(k, cellBuildings(reg, ci, cj));
+        return cells.get(k);
+      };
+      for (let i = 0; i < st2.n; i++) {
+        const ux = Math.cos(st2.hd[i]), uy = Math.sin(st2.hd[i]), sd = st2.fl[i] & 1 ? 1 : -1, n = st2.cnt[i], pit = st2.pit[i];
+        const nx = sd * uy, ny = -sd * ux, ml = pit * n / 2, L2 = st2.len[i];
+        const mxl = reg.x0 + st2.x[i] + ux * ml + nx * (st2.off[i] + 2), myl = reg.y0 + st2.y[i] + uy * ml + ny * (st2.off[i] + 2);
+        if (!inTile(mxl, myl) || L2 < 4.2 || pit < 2.2 || surveyPainted(reg, mxl - reg.x0, myl - reg.y0)) continue;
+        const a60 = (st2.fl[i] & 2) !== 0, dx = a60 ? 0.5 * ux + 0.866 * nx : nx, dy = a60 ? 0.5 * uy + 0.866 * ny : ny;
+        let homeA = 0, busyA = 0;
+        if (reg.nBld) for (let cj = Math.floor((myl - 70 - reg.y0) / 368); cj <= Math.floor((myl + 70 - reg.y0) / 368); cj++)
+          for (let ci = Math.floor((mxl - 70 - reg.x0) / 368); ci <= Math.floor((mxl + 70 - reg.x0) / 368); ci++) {
+            const d = cell(ci, cj);
+            if (d) for (let k = 0; k < d.length; k += 16) {
+              if (Math.hypot(d[k] - mxl, d[k + 1] - myl) > 70) continue;
+              const a = d[k + 2] * d[k + 3] * Math.max(1, d[k + 9]), c = d[k + 6];
+              if (c <= CLS.TRIPLE || c === CLS.APART || c === CLS.ROW || c === CLS.MULTI) homeA += a;
+              else if (c !== CLS.GARAGE && c !== CLS.BARN && c !== CLS.CANOPY) busyA += a;
+            }
+          }
+        const byDay = busyA >= homeA, full = clamp2(0.55 + 0.4 * world2.coreAt(mxl, myl), 0.55, 0.95);
+        for (let k = 0; k < n; k++) {
+          if (hash2(i * 131 + k * 7 + 3, reg.rx * 97 + reg.ry * 13) > full) continue;
+          const bx = reg.x0 + st2.x[i] + ux * pit * (k + 0.5) + nx * st2.off[i], by = reg.y0 + st2.y[i] + uy * pit * (k + 0.5) + ny * st2.off[i];
+          const mx = bx + dx * L2 / 2, my = by + dy * L2 / 2;
+          const h = world2.groundH(mx, my, true);
+          if (world2.g.water) continue;
+          const hsh = hash2(i * 17 + k * 29 + 5, reg.rx * 31 + reg.ry * 7 + 11), out1 = hash2(i + k * 3, 23) < 0.15 ? -1 : 1;
+          cyl(mx, my, h + 0.02, p32);
+          out.push(p32[0] - cx, p32[1] - cy, p32[2] - cz, Math.atan2(-dx * out1, dy * out1), byDay ? hsh + 10 : hsh);
+        }
+      }
+    }
     const mp = reg.feat && reg.feat.mp;
     if (mp && mp.n && (kind === "poles" || kind === "wires")) {
       if (!mp.tile) {

@@ -21199,7 +21199,7 @@ void main() {
     float keep = (aPart > 1.5 || abs(aPart - aInst.y) < 0.5) ? 1.0 : 0.0;
   #endif
   #ifdef PARKED
-    if (fract(aInst.x * 7.31 + 0.13) > uParked) keep = 0.0;       // (a car that has driven off casts no shadow)
+    if (fract(aInst.x * 7.31 + 0.13) > (aInst.z > 0.5 ? 0.15 + 0.65 * clamp((1.0 - uParked) * 5.0, 0.0, 1.0) : uParked)) keep = 0.0;       // (a car that has driven off casts no shadow; a lot's by day: SCATTER_VS)
   #endif
   #if defined(FOLIAGE) || defined(TREES)
     if (uWinter > 0.5 && aPart < 0.5) keep = 0.0;          // (part 0: a broadleaf's crown; 1 an evergreen's, 2 the trunk)
@@ -22962,6 +22962,134 @@ void main() {
     }
     return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M), n: M.length, len: st[ns2 - 1] - st[0], wheel: W, plates };
   }
+  function carFarMesh(variant = 0) {
+    const S2 = SPEC[variant], W = S2.wheel;
+    const P2 = [], N = [], M = [];
+    const tri = (a, b, c, na2, nb, nc2, m) => {
+      P2.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+      N.push(na2[0], na2[1], na2[2], nb[0], nb[1], nb[2], nc2[0], nc2[1], nc2[2]);
+      M.push(m, m, m);
+    };
+    const flat = (pts, want, m) => {
+      const a = pts[0], b = pts[1], c = pts[2];
+      let nx2 = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]), ny2 = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      const l = Math.hypot(nx2, ny2, nz) || 1;
+      nx2 /= l;
+      ny2 /= l;
+      nz /= l;
+      const back = nx2 * want[0] + ny2 * want[1] + nz * want[2] < 0;
+      const n = back ? [-nx2, -ny2, -nz] : [nx2, ny2, nz];
+      for (let i = 1; i < pts.length - 1; i++) back ? tri(a, pts[i + 1], pts[i], n, n, n, m) : tri(a, pts[i], pts[i + 1], n, n, n, m);
+    };
+    const K = [S2.top[0][0], S2.hw[1][0], S2.a0, S2.a1, S2.c0, S2.c1, S2.hw[S2.hw.length - 2][0], S2.top[S2.top.length - 1][0]];
+    const st = K.slice();
+    for (const zc2 of [W.zf, W.zr]) for (const t of [-1, 0, 1]) {
+      const z = zc2 + t * W.arch;
+      if (K.every((k) => Math.abs(k - z) > 0.12)) st.push(z);
+    }
+    st.sort((a, b) => a - b);
+    for (const zc2 of [S2.a0, S2.c1]) st.splice(st.indexOf(zc2), 0, zc2);
+    const cabin = (z) => z <= S2.a0 ? 0 : z < S2.a1 ? (z - S2.a0) / (S2.a1 - S2.a0) : z <= S2.c0 ? 1 : z < S2.c1 ? (S2.c1 - z) / (S2.c1 - S2.c0) : 0;
+    const KR = 9, RN = 2 * KR - 2;
+    const ring = (z) => {
+      const w = key(S2.hw, z), yb = key(S2.belt, z), yt = Math.max(key(S2.top, z), yb + 0.012), yu2 = key(S2.under, z), g = cabin(z);
+      let ya2 = 0;
+      for (const zc2 of [W.zf, W.zr]) {
+        const d = Math.abs(z - zc2);
+        if (d < W.arch + 1e-6) ya2 = Math.max(ya2, W.r * 0.93 + Math.sqrt(Math.max(W.arch * W.arch - d * d, 0)));
+      }
+      const ys0 = yu2 + 0.1, ys2 = Math.max(ys0, ya2), yw = Math.max(yu2, ya2);
+      const ym = Math.max(ys0 + (yb - ys0) * (S2.clad ? 0.3 : 0.42), ys2 + 0.035);
+      const x6 = w - mix(0.15, 0.2, g), x7 = x6 - mix(0.14, 0.11, g), y7 = yb + (yt - yb) * mix(0.8, 0.976, g);
+      const h = [[0, yu2], [w - 0.27, yw], [w - 0.012, ys2], [w + 0.01, ym], [w, yb - 0.055], [w - 0.045, yb], [w - 0.045, yb], [x7, y7], [0, yt]];
+      const out = [];
+      for (let j = 0; j < KR; j++) out.push([h[j][0], h[j][1], z]);
+      for (let j = KR - 2; j >= 1; j--) out.push([-h[j][0], h[j][1], z]);
+      return out;
+    };
+    const G = st.map(ring), ns2 = st.length;
+    const bandMat = (b, zm) => {
+      if (b > 7) b = 15 - b;
+      if (b <= 1) return CM.DARK;
+      if (b === 2) return S2.clad ? CM.CLAD : CM.PAINT;
+      if (b === 6) return zm < S2.a0 || zm > S2.c0 ? CM.PAINT : CM.GLASS;
+      if (b === 7) return zm > S2.a0 && zm < S2.a1 || zm > S2.c0 && zm < S2.c1 ? CM.GLASS : CM.PAINT;
+      return CM.PAINT;
+    };
+    const nrm = G.map((r) => r.map(() => [0, 0, 0]));
+    const live = (i, k) => st[i + 1] - st[i] > 1e-6 && k !== 5 && k !== 10;
+    for (let i = 0; i < ns2 - 1; i++) for (let k = 0; k < RN; k++) {
+      if (!live(i, k)) continue;
+      const k1 = (k + 1) % RN, A = G[i][k], B = G[i][k1], C3 = G[i + 1][k1], D = G[i + 1][k];
+      const ux2 = C3[0] - A[0], uy2 = C3[1] - A[1], uz = C3[2] - A[2], vx2 = D[0] - B[0], vy2 = D[1] - B[1], vz = D[2] - B[2];
+      const nx2 = uy2 * vz - uz * vy2, ny2 = uz * vx2 - ux2 * vz, nz = ux2 * vy2 - uy2 * vx2;
+      for (const q of [nrm[i][k], nrm[i][k1], nrm[i + 1][k1], nrm[i + 1][k]]) {
+        q[0] += nx2;
+        q[1] += ny2;
+        q[2] += nz;
+      }
+    }
+    for (const r of nrm) for (const q of r) {
+      const l = Math.hypot(q[0], q[1], q[2]) || 1;
+      q[0] /= l;
+      q[1] /= l;
+      q[2] /= l;
+    }
+    for (let i = 0; i < ns2; i++) for (const k of [0, KR - 1]) {
+      const q = nrm[i][k];
+      q[0] = 0;
+      const l = Math.hypot(q[1], q[2]) || 1;
+      q[1] /= l;
+      q[2] /= l;
+    }
+    for (let i = 0; i < ns2 - 1; i++) for (let k = 0; k < RN; k++) {
+      if (!live(i, k)) continue;
+      const k1 = (k + 1) % RN, m = bandMat(k, (st[i] + st[i + 1]) / 2);
+      tri(G[i][k], G[i][k1], G[i + 1][k1], nrm[i][k], nrm[i][k1], nrm[i + 1][k1], m);
+      tri(G[i][k], G[i + 1][k1], G[i + 1][k], nrm[i][k], nrm[i + 1][k1], nrm[i + 1][k], m);
+    }
+    const cap = (r, dir) => {
+      let cy2 = 0;
+      for (const p of r) cy2 += p[1];
+      cy2 /= r.length;
+      const c = [0, cy2, r[0][2]];
+      for (let k = 0; k < RN; k++) {
+        const k1 = (k + 1) % RN;
+        if (k === 5 || k === 10) continue;
+        flat([c, r[k], r[k1]], [0, 0, dir], CM.PAINT);
+      }
+    };
+    cap(G[0], -1);
+    cap(G[ns2 - 1], 1);
+    const zF = st[0] - 6e-3, zB = st[ns2 - 1] + 6e-3;
+    const wF = key(S2.hw, st[0]), bF = key(S2.belt, st[0]), wB = key(S2.hw, st[ns2 - 1]), bB = key(S2.belt, st[ns2 - 1]);
+    const panel = (x02, x1, y02, y1, z, dir, m) => flat([[x02, y02, z], [x1, y02, z], [x1, y1, z], [x02, y1, z]], [0, 0, dir], m);
+    for (const sx2 of [-1, 1]) panel(sx2 * 0.5 * wF, sx2 * (0.95 * wF - 0.02), bF - 0.125, bF - 0.02, zF, -1, CM.HEAD);
+    panel(-0.44 * wF, 0.44 * wF, bF - 0.135, bF - 0.035, zF, -1, CM.DARK);
+    for (const sx2 of [-1, 1]) panel(sx2 * 0.48 * wB, sx2 * (0.95 * wB - 0.02), bB - 0.15, bB - 0.03, zB, 1, CM.TAIL);
+    const seg = 6, rh = W.r * 0.6;
+    for (const sx2 of [-1, 1]) for (const zc2 of [W.zf, W.zr]) {
+      const xo2 = sx2 * (W.x + W.w / 2), xi2 = sx2 * (W.x - W.w / 2), xh = xo2 + sx2 * 4e-3, yc2 = W.r, o = [], hb = [];
+      for (let k = 0; k < seg; k++) {
+        const a02 = (k + 0.5) / seg * 2 * Math.PI, a1 = (k + 1.5) / seg * 2 * Math.PI, c02 = Math.cos(a02), s0 = Math.sin(a02), c1 = Math.cos(a1), s1 = Math.sin(a1);
+        const o02 = [xo2, yc2 + W.r * s0, zc2 + W.r * c02], o1 = [xo2, yc2 + W.r * s1, zc2 + W.r * c1], i0 = [xi2, yc2 + W.r * s0, zc2 + W.r * c02], i1 = [xi2, yc2 + W.r * s1, zc2 + W.r * c1];
+        const n0 = [0, s0, c02], n1 = [0, s1, c1];
+        if (sx2 > 0) {
+          tri(i0, o02, o1, n0, n0, n1, CM.TYRE);
+          tri(i0, o1, i1, n0, n1, n1, CM.TYRE);
+        } else {
+          tri(i0, o1, o02, n0, n1, n0, CM.TYRE);
+          tri(i0, i1, o1, n0, n1, n1, CM.TYRE);
+        }
+        o.push(o02);
+        hb.push([xh, yc2 + rh * s0, zc2 + rh * c02]);
+      }
+      flat(o, [sx2, 0, 0], CM.TYRE);
+      flat(hb, [sx2, 0, 0], CM.HUB);
+    }
+    for (let i = 0; i < P2.length; i++) P2[i] -= 0.02 * N[i];
+    return { pos: new Float32Array(P2), nor: new Float32Array(N), mat: new Uint8Array(M), n: M.length };
+  }
   function plateUV(m, i) {
     const x = m.pos[i * 3], y = m.pos[i * 3 + 1], z = m.pos[i * 3 + 2];
     const [x02, x1, y02, y1, , dir] = m.plates[z < 0 ? 1 : 0];
@@ -22977,6 +23105,7 @@ void main() {
   var FAR_KMIN = 0.12;
   var MORPH_IN = 450;
   var DETAIL = /* @__PURE__ */ new Set(["poles", "cars", "wires", "signs", "paint", "gpaint", "streets", "kerbs", "rails", "pwires"]);
+  var CAR_LOD = [100, 120];
   var LAMP_H = { 9: 8.6, 11: 4.82, 12: 4.82, 13: 4.82, 14: 4.4, 15: 5.38 };
   function gridIndex(N) {
     const N1 = N + 1, base = N1 * N1, idx = [];
@@ -24463,15 +24592,30 @@ void main() {
       }
       {
         const CC = [[-1, 0, 0], [0.03, 0.045, 0.06], [0.02, 0.02, 0.022], [0.015, 0.015, 0.017], [0.36, 0.37, 0.39], [-2, 0, 0], [-3, 0, 0], [0.55, 0.55, 0.52], [0.035, 0.035, 0.038]];
-        const one = (variant) => {
-          const m = carMesh(variant, 0), g = new Yt(), c = new Float32Array(m.n * 3);
-          for (let i = 0; i < m.n; i++) c.set(m.mat[i] === CM.PLATE ? plateUV(m, i) : CC[m.mat[i]], i * 3);
-          g.setAttribute("position", new me(m.pos, 3));
-          g.setAttribute("normal", new me(m.nor, 3));
-          g.setAttribute("aCol", new me(c, 3));
+        const one = (variant, far) => {
+          const m = far ? carFarMesh(variant) : carMesh(variant, 0), at = /* @__PURE__ */ new Map(), P2 = [], N = [], c = [], idx = new Uint16Array(m.n);
+          for (let i = 0; i < m.n; i++) {
+            const cc2 = m.mat[i] === CM.PLATE ? plateUV(m, i) : CC[m.mat[i]];
+            const k = m.pos[i * 3] + "," + m.pos[i * 3 + 1] + "," + m.pos[i * 3 + 2] + "," + m.nor[i * 3] + "," + m.nor[i * 3 + 1] + "," + m.nor[i * 3 + 2] + "," + cc2[0] + "," + cc2[1] + "," + cc2[2];
+            let j = at.get(k);
+            if (j === void 0) {
+              j = P2.length / 3;
+              at.set(k, j);
+              P2.push(m.pos[i * 3], m.pos[i * 3 + 1], m.pos[i * 3 + 2]);
+              N.push(m.nor[i * 3], m.nor[i * 3 + 1], m.nor[i * 3 + 2]);
+              c.push(cc2[0], cc2[1], cc2[2]);
+            }
+            idx[i] = j;
+          }
+          const g = new Yt();
+          g.setAttribute("position", new me(new Float32Array(P2), 3));
+          g.setAttribute("normal", new me(new Float32Array(N), 3));
+          g.setAttribute("aCol", new me(new Float32Array(c), 3));
+          g.setIndex(new me(idx, 1));
           return part(g, variant);
         };
         this.carGeo = merge([one(0), one(1)]);
+        this.carFarGeo = merge([one(0, true), one(1, true)]);
         this.trafficMat = mk(0, [1e8, 1e9], [-2, -1], { CAR: 1, GLOSS: 1, LAMPS: 1 });
         this.trafficMat.side = Mi;
         this.boatMat = this.trafficMat;
@@ -24527,9 +24671,10 @@ void main() {
         this.poleGeo.computeVertexNormals();
         this.poleMat = mk(0, [this.streetR * 0.85, this.streetR * 0.98], [-2, -1], { CAR: 1, LAMPS: 1, COVER: 1, POLE: 1 });
         this.carR = Math.min(this.streetR, 260);
-        this.carMat = mk(0, [this.carR * 0.85, this.carR * 0.98], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
-        this.poleMat.alphaToCoverage = this.carMat.alphaToCoverage = true;
-        this.carMat.side = Mi;
+        this.carMat = mk(0, [CAR_LOD[0], CAR_LOD[1]], [-2, -1], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
+        this.carFarMat = mk(0, [this.carR * 0.85, this.carR * 0.98], [CAR_LOD[0] - 20, CAR_LOD[1] - 20], { CAR: 1, GLOSS: 1, COVER: 1, PARKED: 1 });
+        this.poleMat.alphaToCoverage = this.carMat.alphaToCoverage = this.carFarMat.alphaToCoverage = true;
+        this.carMat.side = this.carFarMat.side = Mi;
         this.wireMat = new Rn({ vertexShader: WIRE_VS, fragmentShader: WIRE_FS, transparent: true, depthWrite: false, uniforms: { uAmbIrr: this.U.uAmbIrr, uSunCol: this.U.uSunCol, uPxK: this.U.uPxK, uWireW: { value: 0.03 } } });
       }
       this.signR = this.game.realBuildings ? q.signR || 0 : 0;
@@ -25280,7 +25425,7 @@ void main() {
               t.nameTex.dispose();
               t.nameMat = t.nameTex = null;
             }
-            for (const m of [t.mesh].concat(t.nm || [])) {
+            for (const m of [t.mesh].concat(t.nm || [], t.far || [])) {
               this.scene.remove(m);
               if (m.dispose) m.dispose();
               if (t.own) {
@@ -25341,6 +25486,11 @@ void main() {
             m.matrix.copy(t.mesh.matrix);
             m.matrixWorld.copy(m.matrix);
           }
+          if (t.far) {
+            t.far.visible = t.mesh.visible;
+            t.far.matrix.copy(t.mesh.matrix);
+            t.far.matrixWorld.copy(t.mesh.matrix);
+          }
         }
       }
     }
@@ -25350,6 +25500,7 @@ void main() {
       for (const t of this.visScatter) {
         const on2 = nearPass ? t.d - t.rad < nearFar : t.d + t.rad > nearFar;
         t.mesh.visible = on2 && t.plain !== false;
+        if (t.far) t.far.visible = t.mesh.visible;
         if (t.near && t.nm) for (const m of t.nm) m.visible = on2 && m.userData.want;
       }
     }
@@ -25658,11 +25809,12 @@ void main() {
             }
           }
         } else if (m.kind === "cars") {
-          const hsh = d[o + 4], tall = hsh * 7.13 % 1;
+          const lot = d[o + 4] >= 10 ? 1 : 0, hsh = d[o + 4] - 10 * lot, tall = hsh * 7.13 % 1;
           Q.setFromAxisAngle(Y, d[o + 3]);
           S2.set(0.97 + 0.06 * tall, 0.96 + 0.08 * (hsh * 3.7 % 1), 0.94 + 0.11 * (hsh * 5.3 % 1));
           inst[i * 4] = hsh;
           inst[i * 4 + 1] = tall > 0.55 ? 1 : 0;
+          inst[i * 4 + 2] = lot;
         } else {
           Q.setFromAxisAngle(Y, d[o + 4]);
           const sc2 = d[o + 3], ws2 = st >= 8 ? d[o + 7] : 0;
@@ -25747,6 +25899,22 @@ void main() {
       t.rad = rad + pad;
       t.kind = m.kind;
       this.scene.add(mesh);
+      if (m.kind === "cars" && this.carFarMat) {
+        const gf = new Yt();
+        gf.setIndex(this.carFarGeo.index);
+        for (const name in this.carFarGeo.attributes) gf.setAttribute(name, this.carFarGeo.attributes[name]);
+        gf.setAttribute("aInst", g2.attributes.aInst);
+        gf.boundingSphere = mesh.geometry.boundingSphere;
+        const fm = new bo(gf, this.carFarMat, n);
+        fm.instanceMatrix = mesh.instanceMatrix;
+        fm.boundingSphere = mesh.boundingSphere;
+        fm.frustumCulled = true;
+        fm.matrixAutoUpdate = false;
+        fm.visible = false;
+        t.far = fm;
+        t.geoShadow = gf;
+        this.scene.add(fm);
+      }
     }
   };
   var SCATTER_VS = (
@@ -26080,7 +26248,10 @@ void main() {
       // free by the hour, more of them overnight when the street's people are home than in the working day.  (Only the
       // parked cars: under COVER, which the poles and signs share for their fade, it had taken a third of the utility
       // poles, street lamps and signals away by day as well.)
-      if (fract(aInst.x * 7.31 + 0.13) > uParked) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+      // A parking lot's car by shops, offices and the like (aInst.z 1, street.js) is there by day: from about 15% of the
+      // stalls overnight to 80% at midday, as uParked goes from 1 to 0.8.
+      float parkedK = aInst.z > 0.5 ? 0.15 + 0.65 * clamp((1.0 - uParked) * 5.0, 0.0, 1.0) : uParked;
+      if (fract(aInst.x * 7.31 + 0.13) > parkedK) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
     #endif
   #endif
   #ifdef SIGNS
@@ -28752,6 +28923,7 @@ void main() {
       this.cnt = new Float64Array(BANDS);
       this.k = 1;
       const t = game2.terrain, geo = new Yt();
+      geo.setIndex(t.carGeo.index);
       for (const name in t.carGeo.attributes) geo.setAttribute(name, t.carGeo.attributes[name]);
       this.inst = new vi(new Float32Array(max * 4), 4);
       this.inst.setUsage(Zm);
@@ -32917,7 +33089,7 @@ void main() {
         m.layers.enable(1);
         sw.push(m, m.material);
         m.material = kind === "trees" ? k ? this.depthMat.crowns : split ? this.depthMat.proxies : this.depthMat.trees : k && kind === "buildings" ? this.depthMat.boxes : this.depthMat[kind];
-        if (kind === "trees" && t.geoShadow && (k || split)) {
+        if ((kind === "trees" || kind === "cars") && t.geoShadow && (k || split)) {
           geos.push(m, m.geometry);
           m.geometry = t.geoShadow;
         }
